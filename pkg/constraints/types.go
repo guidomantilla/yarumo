@@ -1,5 +1,7 @@
 package constraints
 
+import "cmp"
+
 // Signed is a constraint that permits any signed integer type.
 // If future releases of Go add new predeclared signed integer types,
 // this constraint will be modified to include them.
@@ -36,6 +38,10 @@ type Complex interface {
 }
 
 /**/
+
+type Comparable = comparable
+
+type Ordenable = cmp.Ordered
 
 type Number interface {
 	Integer | Float

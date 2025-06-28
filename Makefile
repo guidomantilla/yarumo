@@ -14,7 +14,6 @@ imports:
 	goimports-reviser -rm-unused -set-alias -format -recursive internal
 	goimports-reviser -rm-unused -set-alias -format -recursive pkg
 	goimports-reviser -rm-unused -set-alias -format -recursive sdk
-	goimports-reviser -rm-unused -set-alias -format -recursive tools
 	go mod tidy
 
 format:
@@ -24,10 +23,10 @@ vet:
 	go vet ./internal/... ./pkg/... ./sdk/... ./tools/...
 
 lint:
-	golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./internal/... ./pkg/... ./sdk/... ./tools/...
+	golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./internal/... ./pkg/... ./sdk/...
 
 test:
-	go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./internal/... ./pkg/... ./sdk/... ./tools/... 
+	go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./internal/... ./pkg/... ./sdk/...
 	cat .reports/coverage.out.tmp | grep -v "mocks.go" > .reports/coverage.out && rm .reports/coverage.out.tmp
 
 coverage: test

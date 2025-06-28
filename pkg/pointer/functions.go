@@ -1,6 +1,28 @@
 package pointer
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/guidomantilla/yarumo/pkg/constraints"
+)
+
+func IsPointer(v any) bool {
+	if IsNil(v) {
+		return false
+	}
+	return reflect.TypeOf(v).Kind() == reflect.Ptr
+}
+
+func IsType(v any, typeName string) bool {
+	if IsNil(v) {
+		return false
+	}
+	if IsPointer(v) {
+		v = reflect.ValueOf(v).Elem().Interface()
+		return reflect.TypeOf(v).String() == typeName
+	}
+	return reflect.TypeOf(v).String() == typeName
+}
 
 // Zero returns the zero value
 func Zero[T any]() T {
@@ -9,13 +31,13 @@ func Zero[T any]() T {
 }
 
 // IsZero returns true if argument is a zero value.
-func IsZero[T comparable](v T) bool {
+func IsZero[T constraints.Comparable](v T) bool {
 	var zero T
 	return zero == v
 }
 
 // IsNotZero returns true if argument is not a zero value.
-func IsNotZero[T comparable](v T) bool {
+func IsNotZero[T constraints.Comparable](v T) bool {
 	var zero T
 	return zero != v
 }
