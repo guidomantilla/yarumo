@@ -11,21 +11,23 @@ fetch-dependencies:
 	go mod download
 
 imports:
-	goimports-reviser -rm-unused -set-alias -format -recursive pkg
 	goimports-reviser -rm-unused -set-alias -format -recursive internal
+	goimports-reviser -rm-unused -set-alias -format -recursive pkg
+	goimports-reviser -rm-unused -set-alias -format -recursive sdk
+	goimports-reviser -rm-unused -set-alias -format -recursive tools
 	go mod tidy
 
 format:
-	go fmt ./pkg/... ./internal/...
+	go fmt ./internal/... ./pkg/... ./sdk/... ./tools/...
 
 vet:
-	go vet ./pkg/... ./internal/...
+	go vet ./internal/... ./pkg/... ./sdk/... ./tools/...
 
 lint:
-	golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./pkg/... ./internal/...
+	golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./internal/... ./pkg/... ./sdk/... ./tools/...
 
 test:
-	go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./pkg/... ./internal/...
+	go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./internal/... ./pkg/... ./sdk/... ./tools/... 
 	cat .reports/coverage.out.tmp | grep -v "mocks.go" > .reports/coverage.out && rm .reports/coverage.out.tmp
 
 coverage: test
