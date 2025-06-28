@@ -32,14 +32,12 @@ func Zero[T any]() T {
 
 // IsZero returns true if argument is a zero value.
 func IsZero[T constraints.Comparable](v T) bool {
-	var zero T
-	return zero == v
+	return Zero[T]() == v
 }
 
 // IsNotZero returns true if argument is not a zero value.
 func IsNotZero[T constraints.Comparable](v T) bool {
-	var zero T
-	return zero != v
+	return Zero[T]() != v
 }
 
 // Nil returns a nil pointer of type.
