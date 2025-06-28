@@ -35,14 +35,14 @@ func (server *grpcServer) Run(ctx context.Context) error {
 	server.ctx = ctx
 	log.Info().Msg(fmt.Sprintf("starting up - starting grpc server: %s", server.address))
 
-	var err error
-	var listener net.Listener
-	if listener, err = net.Listen("tcp", server.address); err != nil {
+	listener, err := net.Listen("tcp", server.address)
+	if err != nil {
 		log.Info().Msg(fmt.Sprintf("starting up - starting grpc server error: %s", err.Error()))
 		return err
 	}
 
-	if err = server.internal.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	err = server.internal.Serve(listener)
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Info().Msg(fmt.Sprintf("starting up - starting grpc server error: %s", err.Error()))
 		return err
 	}

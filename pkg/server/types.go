@@ -10,7 +10,6 @@ var (
 	_ Server = (*cronServer)(nil)
 	_ Server = (*grpcServer)(nil)
 	_ Server = (*httpServer)(nil)
-	_ Server = (*MockServer)(nil)
 )
 
 type Server interface {
