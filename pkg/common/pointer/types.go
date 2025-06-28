@@ -1,6 +1,8 @@
 package pointer
 
-import "github.com/guidomantilla/yarumo/pkg/constraints"
+import (
+	"github.com/guidomantilla/yarumo/pkg/common/constraints"
+)
 
 var (
 	_ IsPointerFn         = IsPointer

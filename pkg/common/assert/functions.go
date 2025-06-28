@@ -3,7 +3,7 @@ package assert
 import (
 	"github.com/rs/zerolog/log"
 
-	"github.com/guidomantilla/yarumo/pkg/utils"
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
 func NotEmpty(object any, message string) {

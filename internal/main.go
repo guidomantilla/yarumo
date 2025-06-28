@@ -5,13 +5,17 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
+	"github.com/spf13/viper"
 
-	"github.com/guidomantilla/yarumo/pkg/pointer"
-	"github.com/guidomantilla/yarumo/pkg/utils"
+	"github.com/guidomantilla/yarumo/pkg/common/pointer"
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
 func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+
+	viper.AutomaticEnv()
+	fmt.Println(viper.Get("LOCALSTACK_AUTH_TOKEN"))
 
 	_ = lo.Empty[int]()
 	s := utils.RandomString(100)

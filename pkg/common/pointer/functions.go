@@ -3,7 +3,7 @@ package pointer
 import (
 	"reflect"
 
-	"github.com/guidomantilla/yarumo/pkg/constraints"
+	"github.com/guidomantilla/yarumo/pkg/common/constraints"
 )
 
 func IsPointer(v any) bool {
