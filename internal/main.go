@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 
 	"github.com/guidomantilla/yarumo/pkg/pointer"
@@ -10,6 +11,8 @@ import (
 )
 
 func main() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+
 	_ = lo.Empty[int]()
 	s := utils.RandomString(100)
 	fmt.Println(s)
