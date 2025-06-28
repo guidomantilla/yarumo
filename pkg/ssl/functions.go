@@ -4,8 +4,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/guidomantilla/yarumo/pkg/common/assert"
 	"os"
+
+	"github.com/guidomantilla/yarumo/pkg/common/assert"
 )
 
 func TLS(serverName string, caCertificate string, clientCertificate string, clientKey string, insecureSkipVerify bool) (*tls.Config, error) {
