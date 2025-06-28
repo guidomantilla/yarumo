@@ -9,6 +9,11 @@ require (
 )
 
 require (
+	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc
+	github.com/devmiek/nanoid-go v0.0.0-20241216084707-e17e38258ffc
+	github.com/google/uuid v1.6.0
+	github.com/oklog/ulid/v2 v2.1.1
+	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/viper v1.20.1
 	golang.org/x/text v0.22.0
@@ -27,6 +32,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
