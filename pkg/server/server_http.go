@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/guidomantilla/yarumo/pkg/common/assert"
-	"github.com/rs/zerolog/log"
 	"net/http"
 
 	"github.com/qmdx00/lifecycle"
+	"github.com/rs/zerolog/log"
+
+	"github.com/guidomantilla/yarumo/pkg/common/assert"
 )
 
 type httpServer struct {

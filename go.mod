@@ -12,7 +12,6 @@ require (
 	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc
 	github.com/devmiek/nanoid-go v0.0.0-20241216084707-e17e38258ffc
 	github.com/google/uuid v1.6.0
-	github.com/guidomantilla/go-feather-lib v0.0.0-20241025221703-4877f23db717
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/qmdx00/lifecycle v1.1.1
 	github.com/rs/xid v1.6.0
@@ -33,7 +32,6 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect

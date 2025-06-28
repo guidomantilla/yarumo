@@ -2,10 +2,11 @@ package server
 
 import (
 	"context"
-	"github.com/guidomantilla/yarumo/pkg/common/assert"
-	"github.com/rs/zerolog/log"
 
 	"github.com/qmdx00/lifecycle"
+	"github.com/rs/zerolog/log"
+
+	"github.com/guidomantilla/yarumo/pkg/common/assert"
 )
 
 type cronServer struct {
