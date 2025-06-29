@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog"
-	"github.com/samber/lo"
 	"github.com/spf13/viper"
 
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
@@ -53,7 +52,6 @@ func main() {
 		} else {
 			fmt.Println("Debug mode is disabled")
 		}
-		_ = lo.Empty[int]()
 
 		return nil
 	})
