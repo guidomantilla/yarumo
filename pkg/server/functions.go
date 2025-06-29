@@ -29,13 +29,25 @@ func BuildGrpcServer(address string, server GrpcServer) (string, Server) {
 	return "grpc-server", NewGrpcServer(address, server)
 }
 
-func Run(name string, version string, fn func(ctx context.Context, application Application) error, opts ...clog.Option) {
+type Options struct {
+	LogOptions []clog.Option
+	EnvOptions []cenv.Option
+}
+
+func NewOptions(opts ...clog.Option) Options {
+	return Options{
+		LogOptions: opts,
+		EnvOptions: nil, // Default to nil, can be set later if needed
+	}
+}
+
+func Run(name string, version string, fn func(ctx context.Context, application Application) error) {
 	assert.NotEmpty(name, "server - error running: name is empty")
 	assert.NotEmpty(version, "server - error running: version is empty")
 	assert.NotNil(fn, "server - error running: function is nil")
 
 	cenv.Configure()
-	clog.Configure(name, version, opts...)
+	clog.Configure(name, version, clog.Chain().WithCaller(false).Build())
 
 	app := lifecycle.NewApp(
 		lifecycle.WithName(name), lifecycle.WithVersion(version),

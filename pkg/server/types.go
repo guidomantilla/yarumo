@@ -6,8 +6,6 @@ import (
 	"net/http"
 
 	"github.com/qmdx00/lifecycle"
-
-	"github.com/guidomantilla/yarumo/pkg/common/log"
 )
 
 var (
@@ -68,4 +66,4 @@ var (
 	_ RunFn = Run
 )
 
-type RunFn func(name string, version string, fn func(ctx context.Context, application Application) error, opts ...log.Option)
+type RunFn func(name string, version string, fn func(ctx context.Context, application Application) error)
