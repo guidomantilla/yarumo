@@ -66,4 +66,6 @@ var (
 	_ RunFn = Run
 )
 
-type RunFn func(name string, version string, fn func(ctx context.Context, application Application) error)
+type WireFn func(ctx context.Context, application Application) error
+
+type RunFn func(ctx context.Context, name string, version string, wireFn WireFn)
