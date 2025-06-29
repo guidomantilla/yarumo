@@ -6,6 +6,7 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/common/constraints"
 )
 
+// IsPointer checks if the value is a pointer type.
 func IsPointer(v any) bool {
 	if IsNil(v) {
 		return false
@@ -13,6 +14,7 @@ func IsPointer(v any) bool {
 	return reflect.TypeOf(v).Kind() == reflect.Ptr
 }
 
+// IsType checks if the value is of a specific type.
 func IsType(v any, typeName string) bool {
 	if IsNil(v) {
 		return false
