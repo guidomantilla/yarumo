@@ -31,24 +31,22 @@ type Config struct {
 
 func main() {
 
-	opts := boot.Chain().
-		WithConfig(func(wctx *boot.WireContext) any {
-			viper.AutomaticEnv()
+	withConfig := boot.WithConfig(func(wctx *boot.WireContext) any {
+		viper.AutomaticEnv()
 
-			config := Config{}
-			if viper.IsSet("DEBUG_MODE") {
-				config.DebugMode = viper.GetBool("DEBUG_MODE")
-			}
+		config := Config{}
+		if viper.IsSet("DEBUG_MODE") {
+			config.DebugMode = viper.GetBool("DEBUG_MODE")
+		}
 
-			clogOpts := clog.Chain().
-				WithCaller(config.DebugMode).
-				WithGlobalLevel(utils.Ternary(config.DebugMode, zerolog.DebugLevel, wctx.LogLevel)).
-				Build()
-			clog.Configure(wctx.AppName, wctx.AppVersion, clogOpts)
+		clogOpts := clog.Chain().
+			WithCaller(config.DebugMode).
+			WithGlobalLevel(utils.Ternary(config.DebugMode, zerolog.DebugLevel, wctx.LogLevel)).
+			Build()
+		clog.Configure(wctx.AppName, wctx.AppVersion, clogOpts)
 
-			return config
-		}).
-		Build()
+		return config
+	})
 
 	name, version := "yarumo-app", "1.0.0"
 	ctx := context.Background()
@@ -61,5 +59,5 @@ func main() {
 		}
 
 		return nil
-	}, opts)
+	}, withConfig)
 }
