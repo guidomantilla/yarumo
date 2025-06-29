@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"net"
 	"net/http"
 
@@ -59,13 +58,3 @@ type BuildCronServerFn func(cron CronServer) (string, Server)
 type BuildHttpServerFn func(server *http.Server) (string, Server)
 
 type BuildGrpcServerFn func(address string, server GrpcServer) (string, Server)
-
-//
-
-var (
-	_ RunFn = Run
-)
-
-type WireFn func(ctx context.Context, application Application) error
-
-type RunFn func(ctx context.Context, name string, version string, wireFn WireFn)

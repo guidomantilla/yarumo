@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/guidomantilla/yarumo/pkg/boot"
 
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
@@ -45,7 +46,7 @@ func main() {
 		Build()
 	clog.Configure(name, version, clogOpts)
 
-	server.Run(ctx, name, version, func(ctx context.Context, app server.Application) error {
+	boot.Run(ctx, name, version, func(ctx context.Context, app server.Application) error {
 
 		if conf.DebugMode {
 			fmt.Println("Debug mode is enabled")

@@ -16,6 +16,10 @@ type baseServer struct {
 	closeChannel chan struct{}
 }
 
+func BuildBaseServer() (string, Server) {
+	return "base-server", NewBaseServer()
+}
+
 func NewBaseServer() lifecycle.Server {
 	return &baseServer{
 		name:         "base-server",

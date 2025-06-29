@@ -1,31 +1,15 @@
-package server
+package boot
 
 import (
 	"context"
-	"net/http"
+	"github.com/guidomantilla/yarumo/pkg/server"
+	"github.com/rs/zerolog/log"
 	"syscall"
 
 	"github.com/qmdx00/lifecycle"
-	"github.com/rs/zerolog/log"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
 )
-
-func BuildBaseServer() (string, Server) {
-	return "base-server", NewBaseServer()
-}
-
-func BuildCronServer(cron CronServer) (string, Server) {
-	return "cron-server", NewCronServer(cron)
-}
-
-func BuildHttpServer(server *http.Server) (string, Server) {
-	return "http-server", NewHttpServer(server)
-}
-
-func BuildGrpcServer(address string, server GrpcServer) (string, Server) {
-	return "grpc-server", NewGrpcServer(address, server)
-}
 
 func Run(ctx context.Context, name string, version string, wireFn WireFn) {
 	assert.NotNil(ctx, "server - error running: ctx is nil")
@@ -38,7 +22,7 @@ func Run(ctx context.Context, name string, version string, wireFn WireFn) {
 		lifecycle.WithSignal(syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT, syscall.SIGKILL),
 	)
 
-	app.Attach(BuildBaseServer())
+	app.Attach(server.BuildBaseServer())
 
 	err := wireFn(ctx, app)
 	if err != nil {

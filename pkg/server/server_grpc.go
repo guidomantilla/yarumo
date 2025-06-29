@@ -20,6 +20,10 @@ type grpcServer struct {
 	internal GrpcServer
 }
 
+func BuildGrpcServer(address string, server GrpcServer) (string, Server) {
+	return "grpc-server", NewGrpcServer(address, server)
+}
+
 func NewGrpcServer(address string, server GrpcServer) lifecycle.Server {
 	assert.NotEmpty(address, fmt.Sprintf("%s - error starting up: address is nil", "grpc-server"))
 	assert.NotNil(server, fmt.Sprintf("%s - error starting up: server is nil", "grpc-server"))

@@ -18,6 +18,10 @@ type httpServer struct {
 	internal *http.Server
 }
 
+func BuildHttpServer(server *http.Server) (string, Server) {
+	return "http-server", NewHttpServer(server)
+}
+
 func NewHttpServer(server *http.Server) lifecycle.Server {
 	assert.NotNil(server, fmt.Sprintf("%s - error starting up: server is nil", "http-server"))
 

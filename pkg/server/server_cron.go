@@ -17,6 +17,10 @@ type cronServer struct {
 	closeChannel chan struct{}
 }
 
+func BuildCronServer(cron CronServer) (string, Server) {
+	return "cron-server", NewCronServer(cron)
+}
+
 func NewCronServer(cron CronServer) lifecycle.Server {
 	assert.NotNil(cron, fmt.Sprintf("%s - error starting up: cron is nil", "cron-server"))
 
