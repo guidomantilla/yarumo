@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
+	cenv "github.com/guidomantilla/yarumo/pkg/common/environment"
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 )
 
@@ -33,9 +34,8 @@ func Run(name string, version string, fn func(ctx context.Context, application A
 	assert.NotEmpty(version, "server - error running: version is empty")
 	assert.NotNil(fn, "server - error running: function is nil")
 
+	cenv.Configure()
 	clog.Configure(name, version, opts...)
-
-	//environment.Load()
 
 	app := lifecycle.NewApp(
 		lifecycle.WithName(name), lifecycle.WithVersion(version),
