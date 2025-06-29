@@ -65,7 +65,7 @@ func ToPtr[T any](x T) *T {
 
 // FromPtr returns the pointer value or empty.
 func FromPtr[T any](x *T) T {
-	if x == nil {
+	if IsNil(x) {
 		return Zero[T]()
 	}
 
@@ -86,7 +86,7 @@ func ToSlicePtr[T any](collection []T) []*T {
 // Returns a zero value in case of a nil pointer element.
 func FromSlicePtr[T any](collection []*T) []T {
 	return convert(collection, func(x *T, _ int) T {
-		if x == nil {
+		if IsNil(x) {
 			return Zero[T]()
 		}
 		return *x

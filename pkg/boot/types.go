@@ -7,9 +7,11 @@ import (
 )
 
 var (
-	_ RunFn = Run
+	_ RunFn[any] = Run
 )
 
-type WireFn func(ctx context.Context, application server.Application) error
+type ConfigFn func(wctx *WireContext) any
 
-type RunFn func(ctx context.Context, name string, version string, wireFn WireFn)
+type WireFn[T any] func(ctx context.Context, config T, application server.Application) error
+
+type RunFn[T any] func(ctx context.Context, name string, version string, wireFn WireFn[T], opts ...Option)

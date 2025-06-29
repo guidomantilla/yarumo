@@ -47,7 +47,7 @@ func NotNil(x any) bool {
 
 // Empty checks if a value is empty.
 func Empty(x any) bool {
-	if x == nil {
+	if Nil(x) {
 		return true
 	}
 
@@ -389,7 +389,7 @@ func MapBy[T, U constraints.Comparable](slice []T, fn ItemMapFn[T, U], keep Filt
 
 // Copy creates a copy of a slice.
 func Copy[T constraints.Comparable](slice []T) []T {
-	if slice == nil {
+	if Nil(slice) {
 		return nil
 	}
 
