@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/qmdx00/lifecycle"
 	"github.com/rs/zerolog/log"
@@ -11,29 +12,31 @@ import (
 
 type baseServer struct {
 	ctx          context.Context
+	name         string
 	closeChannel chan struct{}
 }
 
 func NewBaseServer() lifecycle.Server {
 	return &baseServer{
+		name:         "base-server",
 		closeChannel: make(chan struct{}),
 	}
 }
 
 func (server *baseServer) Run(ctx context.Context) error {
-	assert.NotNil(ctx, "base server - error starting up: context is nil")
+	assert.NotNil(ctx, fmt.Sprintf("%s - error starting up: context is nil", server.name))
 
 	server.ctx = ctx
-	log.Info().Msg("starting up - starting base server")
+	log.Info().Str("stage", "startup").Str("component", server.name).Msg("starting up")
 	<-server.closeChannel
 	return nil
 }
 
 func (server *baseServer) Stop(ctx context.Context) error {
-	assert.NotNil(ctx, "base server - error shutting down: context is nil")
+	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", server.name))
 
-	log.Info().Msg("shutting down - stopping base server")
+	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopping")
 	close(server.closeChannel)
-	log.Info().Msg("shutting down - default base stopped")
+	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopped")
 	return nil
 }

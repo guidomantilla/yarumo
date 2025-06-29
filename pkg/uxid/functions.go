@@ -20,35 +20,35 @@ const (
 type Type int
 
 func NewUUIDv4() string {
-	return NewId(UUIDv4)
+	return BuildId(UUIDv4)
 }
 
 func NewNANOID() string {
-	return NewId(NANOID)
+	return BuildId(NANOID)
 }
 
 func NewCUID2() string {
-	return NewId(CUID2)
+	return BuildId(CUID2)
 }
 
 func NewUUIDv7() string {
-	return NewId(UUIDv7)
+	return BuildId(UUIDv7)
 }
 
 func NewULID() string {
-	return NewId(ULID)
+	return BuildId(ULID)
 }
 
 func NewXId() string {
-	return NewId(XId)
+	return BuildId(XId)
 }
 
-// NewId generates a new unique id based on the type provided.
+// BuildId generates a new unique id based on the type provided.
 // If the type is not provided, it will default to ULID.
 // The following types are supported: UUIDv4, NANOID, CUID2, UUIDv7, ULID, XId.
 // Random-based types are UUIDv4, NANOID, CUID2.
 // Time-based types are UUIDv7, ULID, XId.
-func NewId(kind Type) string {
+func BuildId(kind Type) string {
 
 	switch kind {
 	case UUIDv4:

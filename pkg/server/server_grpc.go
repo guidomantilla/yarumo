@@ -15,45 +15,47 @@ import (
 
 type grpcServer struct {
 	ctx      context.Context
+	name     string
 	address  string
 	internal GrpcServer
 }
 
 func NewGrpcServer(address string, server GrpcServer) lifecycle.Server {
-	assert.NotEmpty(address, "starting up - error setting up grpc server: address is empty")
-	assert.NotNil(server, "starting up - error setting up grpc server: server is nil")
+	assert.NotEmpty(address, fmt.Sprintf("%s - error starting up: address is nil", "grpc-server"))
+	assert.NotNil(server, fmt.Sprintf("%s - error starting up: server is nil", "grpc-server"))
 
 	return &grpcServer{
+		name:     "grpc-server",
 		address:  address,
 		internal: server,
 	}
 }
 
 func (server *grpcServer) Run(ctx context.Context) error {
-	assert.NotNil(ctx, "grpc server - error starting up: context is nil")
+	assert.NotNil(ctx, fmt.Sprintf("%s - error starting up: context is nil", server.name))
 
 	server.ctx = ctx
-	log.Info().Msg(fmt.Sprintf("starting up - starting grpc server: %s", server.address))
+	log.Info().Str("stage", "startup").Str("component", server.name).Msg("starting up")
 
 	listener, err := net.Listen("tcp", server.address)
 	if err != nil {
-		log.Info().Msg(fmt.Sprintf("starting up - starting grpc server error: %s", err.Error()))
+		log.Error().Str("stage", "startup").Str("component", server.name).Err(err).Msg("failed to listen")
 		return err
 	}
 
 	err = server.internal.Serve(listener)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Info().Msg(fmt.Sprintf("starting up - starting grpc server error: %s", err.Error()))
+		log.Error().Str("stage", "startup").Str("component", server.name).Err(err).Msg("failed to serve")
 		return err
 	}
 	return nil
 }
 
 func (server *grpcServer) Stop(ctx context.Context) error {
-	assert.NotNil(ctx, "grpc server - error shutting down: context is nil")
+	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", server.name))
 
-	log.Info().Msg("shutting down - stopping grpc server")
+	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopping")
 	server.internal.GracefulStop()
-	log.Info().Msg("shutting down - grpc server stopped")
+	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopped")
 	return nil
 }

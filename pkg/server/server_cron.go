@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/qmdx00/lifecycle"
 	"github.com/rs/zerolog/log"
@@ -11,35 +12,37 @@ import (
 
 type cronServer struct {
 	ctx          context.Context
+	name         string
 	internal     CronServer
 	closeChannel chan struct{}
 }
 
 func NewCronServer(cron CronServer) lifecycle.Server {
-	assert.NotNil(cron, "starting up - error setting up cron server: cron is nil")
+	assert.NotNil(cron, fmt.Sprintf("%s - error starting up: cron is nil", "cron-server"))
 
 	return &cronServer{
+		name:         "cron-server",
 		internal:     cron,
 		closeChannel: make(chan struct{}),
 	}
 }
 
 func (server *cronServer) Run(ctx context.Context) error {
-	assert.NotNil(ctx, "cron server - error starting up: context is nil")
+	assert.NotNil(ctx, fmt.Sprintf("%s - error starting up: context is nil", server.name))
 
 	server.ctx = ctx
-	log.Info().Msg("starting up - starting cron server")
+	log.Info().Str("stage", "startup").Str("component", server.name).Msg("starting up")
 	server.internal.Start()
 	<-server.closeChannel
 	return nil
 }
 
 func (server *cronServer) Stop(ctx context.Context) error {
-	assert.NotNil(ctx, "cron server - error shutting down: context is nil")
+	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", server.name))
 
-	log.Info().Msg("shutting down - stopping cron server")
+	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopping")
 	close(server.closeChannel)
 	server.internal.Stop()
-	log.Info().Msg("shutting down - cron server stopped")
+	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopped")
 	return nil
 }
