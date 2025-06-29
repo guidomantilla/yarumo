@@ -2,9 +2,32 @@ package sql
 
 import (
 	"context"
-
 	"github.com/jmoiron/sqlx"
 )
+
+type TransactionCtxKey struct{}
+
+type TransactionHandlerFn func(ctx context.Context, tx *sqlx.Tx) error
+
+func HandleTransaction(ctx context.Context, driver string, url string, fn TransactionHandlerFn) error {
+
+	connection, err := sqlx.Open(driver, url)
+	if err != nil {
+		return err
+	}
+
+	tx, err := connection.Beginx()
+	if err != nil {
+		return err
+	}
+
+	err = fn(ctx, tx)
+	if err != nil {
+		return tx.Rollback()
+	}
+
+	return tx.Commit()
+}
 
 func Query(ctx context.Context, tx *sqlx.Tx, sql string, columns int, params ...any) ([]map[string]any, error) {
 	rows, err := tx.QueryContext(ctx, sql, params...)
