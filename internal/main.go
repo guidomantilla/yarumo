@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	clog "github.com/guidomantilla/yarumo/pkg/common/log"
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/pkg/boot"
+	clog "github.com/guidomantilla/yarumo/pkg/common/log"
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/server"
 )
 

@@ -8,7 +8,7 @@ import (
 
 // IsPointer checks if the value is a pointer type.
 func IsPointer(v any) bool {
-	if IsNil(v) {
+	if v == nil {
 		return false
 	}
 	return reflect.TypeOf(v).Kind() == reflect.Ptr
@@ -16,7 +16,7 @@ func IsPointer(v any) bool {
 
 // IsType checks if the value is of a specific type.
 func IsType(v any, typeName string) bool {
-	if IsNil(v) {
+	if v == nil {
 		return false
 	}
 	if IsPointer(v) {
@@ -65,7 +65,7 @@ func ToPtr[T any](x T) *T {
 
 // FromPtr returns the pointer value or empty.
 func FromPtr[T any](x *T) T {
-	if IsNil(x) {
+	if x == nil {
 		return Zero[T]()
 	}
 
@@ -86,7 +86,7 @@ func ToSlicePtr[T any](collection []T) []*T {
 // Returns a zero value in case of a nil pointer element.
 func FromSlicePtr[T any](collection []*T) []T {
 	return convert(collection, func(x *T, _ int) T {
-		if IsNil(x) {
+		if x == nil {
 			return Zero[T]()
 		}
 		return *x

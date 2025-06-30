@@ -2,6 +2,7 @@ package boot
 
 import (
 	"context"
+
 	"github.com/guidomantilla/yarumo/pkg/server"
 )
 

@@ -3,13 +3,14 @@ package boot
 import (
 	"context"
 	"fmt"
-	"github.com/go-playground/validator/v10"
-	clog "github.com/guidomantilla/yarumo/pkg/common/log"
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
+
+	validator "github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
+	clog "github.com/guidomantilla/yarumo/pkg/common/log"
+	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
 
 type WireContext struct {
