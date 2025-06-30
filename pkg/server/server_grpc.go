@@ -38,9 +38,9 @@ func NewGrpcServer(address string, server GrpcServer) lifecycle.Server {
 func (server *grpcServer) Run(ctx context.Context) error {
 	assert.NotNil(ctx, fmt.Sprintf("%s - error starting up: context is nil", server.name))
 
-	server.ctx = ctx
 	log.Info().Str("stage", "startup").Str("component", server.name).Msg("starting up")
 
+	server.ctx = ctx
 	listener, err := net.Listen("tcp", server.address)
 	if err != nil {
 		log.Error().Str("stage", "startup").Str("component", server.name).Err(err).Msg("failed to listen")
@@ -52,6 +52,7 @@ func (server *grpcServer) Run(ctx context.Context) error {
 		log.Error().Str("stage", "startup").Str("component", server.name).Err(err).Msg("failed to serve")
 		return err
 	}
+
 	return nil
 }
 
@@ -59,7 +60,8 @@ func (server *grpcServer) Stop(ctx context.Context) error {
 	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", server.name))
 
 	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopping")
-	server.internal.GracefulStop()
 	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopped")
+
+	server.internal.GracefulStop()
 	return nil
 }

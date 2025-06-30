@@ -30,8 +30,9 @@ func NewBaseServer() lifecycle.Server {
 func (server *baseServer) Run(ctx context.Context) error {
 	assert.NotNil(ctx, fmt.Sprintf("%s - error starting up: context is nil", server.name))
 
-	server.ctx = ctx
 	log.Info().Str("stage", "startup").Str("component", server.name).Msg("starting up")
+
+	server.ctx = ctx
 	<-server.closeChannel
 	return nil
 }
@@ -40,7 +41,8 @@ func (server *baseServer) Stop(ctx context.Context) error {
 	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", server.name))
 
 	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopping")
+	defer log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopped")
+
 	close(server.closeChannel)
-	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopped")
 	return nil
 }

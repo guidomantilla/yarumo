@@ -6,17 +6,20 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
 
 type Options struct {
-	Config ConfigFn
+	Logger    BeanFn
+	Config    BeanFn
+	Validator BeanFn
 }
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		Config: func(wctx *WireContext) any {
+		Logger: func(wctx *WireContext) {
+			wctx.Logger = clog.Configure(wctx.AppName, wctx.AppVersion)
+		},
+		Config: func(wctx *WireContext) {
 			log.Warn().Str("stage", "startup").Str("component", "configuration").Msg("config function not implemented. using default configuration")
 			viper.AutomaticEnv()
 			debugMode := utils.Ternary(viper.IsSet("DEBUG_MODE"),
@@ -25,8 +28,10 @@ func NewOptions(opts ...Option) *Options {
 				WithCaller(debugMode).
 				WithGlobalLevel(utils.Ternary(debugMode, zerolog.DebugLevel, wctx.LogLevel)).
 				Build()
-			clog.Configure(wctx.AppName, wctx.AppVersion, clogOpts)
-			return pointer.Zero[any]()
+			wctx.Logger = clog.Configure(wctx.AppName, wctx.AppVersion, clogOpts)
+		},
+		Validator: func(wctx *WireContext) {
+			log.Warn().Str("stage", "startup").Str("component", "validation").Msg("validator function not implemented. using default validator")
 		},
 	}
 
@@ -39,9 +44,30 @@ func NewOptions(opts ...Option) *Options {
 
 type Option func(opts *Options)
 
-func WithConfig(configFn ConfigFn) Option {
+// WithLogger allows setting a custom logger function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.Logger = <logger object>
+func WithLogger(loggerFn BeanFn) Option {
+	return func(opts *Options) {
+		opts.Logger = loggerFn
+	}
+}
+
+// WithConfig allows setting a custom config function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.Config = <config object>
+func WithConfig(configFn BeanFn) Option {
 	return func(opts *Options) {
 		opts.Config = configFn
+	}
+}
+
+// WithValidator allows setting a custom validator function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.Validator = <validator object>
+func WithValidator(validatorFn BeanFn) Option {
+	return func(opts *Options) {
+		opts.Validator = validatorFn
 	}
 }
 
@@ -65,7 +91,26 @@ func (chain *OptionsChain) Build() Option {
 	}
 }
 
-func (chain *OptionsChain) WithConfig(configFn ConfigFn) *OptionsChain {
+// WithLogger allows setting a custom logger function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.Logger = <config object>
+func (chain *OptionsChain) WithLogger(loggerFn BeanFn) *OptionsChain {
+	chain.chain = append(chain.chain, WithLogger(loggerFn))
+	return chain
+}
+
+// WithConfig allows setting a custom config function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.Config = <config object>
+func (chain *OptionsChain) WithConfig(configFn BeanFn) *OptionsChain {
 	chain.chain = append(chain.chain, WithConfig(configFn))
+	return chain
+}
+
+// WithValidator allows setting a custom validator function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.Validator = <validator object>
+func (chain *OptionsChain) WithValidator(validatorFn BeanFn) *OptionsChain {
+	chain.chain = append(chain.chain, WithValidator(validatorFn))
 	return chain
 }

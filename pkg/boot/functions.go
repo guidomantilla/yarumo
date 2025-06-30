@@ -8,8 +8,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/server"
 )
 
@@ -19,7 +17,8 @@ func Run[T any](ctx context.Context, name string, version string, wireFn WireFn[
 	assert.NotEmpty(version, "server - error running: version is empty")
 	assert.NotNil(wireFn, "server - error running: wireFn is nil")
 
-	wctx := NewWireContext(name, version, opts...)
+	wctx := NewWireContext[T](name, version, opts...)
+	wctx.Start(ctx)
 	defer wctx.Stop(ctx)
 
 	app := lifecycle.NewApp(
@@ -28,11 +27,7 @@ func Run[T any](ctx context.Context, name string, version string, wireFn WireFn[
 	)
 	app.Attach(server.BuildBaseServer())
 
-	config := pointer.Zero[T]()
-	if utils.NotNil(wctx.Config) {
-		config = (wctx.Config).(T)
-	}
-	err := wireFn(ctx, config, app)
+	err := wireFn(ctx, wctx, app)
 	if err != nil {
 		log.Fatal().Str("stage", "startup").Str("component", "application").Err(err).Msg("error wiring the application")
 	}

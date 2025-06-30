@@ -3,13 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-
+	clog "github.com/guidomantilla/yarumo/pkg/common/log"
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/pkg/boot"
-	clog "github.com/guidomantilla/yarumo/pkg/common/log"
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/server"
 )
 
@@ -31,27 +30,25 @@ type Config struct {
 
 func main() {
 
-	withConfig := boot.WithConfig(func(wctx *boot.WireContext) any {
+	withConfig := boot.WithConfig(func(wctx *boot.WireContext) {
 		viper.AutomaticEnv()
 
-		config := Config{
-			DebugMode: utils.Ternary(viper.IsSet("DEBUG_MODE"),
-				viper.GetBool("DEBUG_MODE"), false),
-		}
+		wctx.DebugMode = utils.Ternary(viper.IsSet("DEBUG_MODE"),
+			viper.GetBool("DEBUG_MODE"), false)
+		wctx.Config = Config{DebugMode: wctx.DebugMode}
+
 		clogOpts := clog.Chain().
-			WithCaller(config.DebugMode).
-			WithGlobalLevel(utils.Ternary(config.DebugMode, zerolog.DebugLevel, wctx.LogLevel)).
+			WithCaller(wctx.DebugMode).
+			WithGlobalLevel(utils.Ternary(wctx.DebugMode, zerolog.DebugLevel, wctx.LogLevel)).
 			Build()
-		clog.Configure(wctx.AppName, wctx.AppVersion, clogOpts)
-
-		return config
+		wctx.Logger = clog.Configure(wctx.AppName, wctx.AppVersion, clogOpts)
 	})
-
+	/**/
 	name, version := "yarumo-app", "1.0.0"
 	ctx := context.Background()
-	boot.Run[Config](ctx, name, version, func(ctx context.Context, config Config, app server.Application) error {
+	boot.Run[Config](ctx, name, version, func(ctx context.Context, wctx *boot.WireContext, app server.Application) error {
 
-		if config.DebugMode {
+		if wctx.DebugMode {
 			fmt.Println("Debug mode is enabled")
 		} else {
 			fmt.Println("Debug mode is disabled")

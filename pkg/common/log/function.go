@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Configure(name string, version string, opts ...Option) {
+func Configure(name string, version string, opts ...Option) zerolog.Logger {
 	options := NewOptions(opts...)
 	logger := zerolog.New(os.Stdout).With().
 		Str("name", name).Str("version", version).
@@ -18,4 +18,5 @@ func Configure(name string, version string, opts ...Option) {
 	}
 
 	log.Logger = logger.Logger()
+	return log.Logger
 }
