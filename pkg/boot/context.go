@@ -3,6 +3,7 @@ package boot
 import (
 	"context"
 	"fmt"
+	"github.com/guidomantilla/yarumo/pkg/common/events"
 
 	validator "github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
@@ -22,6 +23,7 @@ type WireContext struct {
 	Config     any
 	Logger     zerolog.Logger
 	Validator  *validator.Validate
+	EventBus   events.EventBus[]
 }
 
 func NewWireContext[T any](name string, version string, opts ...Option) *WireContext {

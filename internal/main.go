@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
@@ -30,7 +29,6 @@ type Config struct {
 }
 
 func main() {
-
 	withConfig := boot.WithConfig(func(wctx *boot.WireContext) {
 		viper.AutomaticEnv()
 
