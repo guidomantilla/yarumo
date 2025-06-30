@@ -1,7 +1,11 @@
 package boot
 
 import (
+	clog "github.com/guidomantilla/yarumo/pkg/common/log"
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
@@ -12,8 +16,15 @@ type Options struct {
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		Config: func(appCtx *WireContext) any {
-			log.Warn().Str("stage", "startup").Str("component", "configuration").Msg("config function not implemented")
+		Config: func(wctx *WireContext) any {
+			log.Warn().Str("stage", "startup").Str("component", "configuration").Msg("config function not implemented. using default configuration")
+			viper.AutomaticEnv()
+			debugMode := utils.Ternary(viper.IsSet("DEBUG_MODE"), viper.GetBool("DEBUG_MODE"), false)
+			clogOpts := clog.Chain().
+				WithCaller(debugMode).
+				WithGlobalLevel(utils.Ternary(debugMode, zerolog.DebugLevel, wctx.LogLevel)).
+				Build()
+			clog.Configure(wctx.AppName, wctx.AppVersion, clogOpts)
 			return pointer.Zero[any]()
 		},
 	}

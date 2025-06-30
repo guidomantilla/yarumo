@@ -3,7 +3,6 @@ package boot
 import (
 	"context"
 	"fmt"
-
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -14,27 +13,25 @@ type WireContext struct {
 	AppName    string
 	AppVersion string
 	DebugMode  bool
-	LogLevel   zerolog.Level
 	Config     any
+	LogLevel   zerolog.Level
 }
 
-func NewWireContext(appName string, version string, opts ...Option) *WireContext {
-	assert.NotEmpty(appName, fmt.Sprintf("%s - error creating: appName is empty", "application"))
+func NewWireContext(name string, version string, opts ...Option) *WireContext {
+	assert.NotEmpty(name, fmt.Sprintf("%s - error creating: appName is empty", "application"))
 	assert.NotEmpty(version, fmt.Sprintf("%s - error creating: appName is empty", "application"))
 
-	log.Info().Str("stage", "startup").Str("component", "application").Msg("starting up")
-
 	wctx := &WireContext{
-		AppName:    appName,
+		AppName:    name,
 		AppVersion: version,
 		DebugMode:  false,
 		LogLevel:   zerolog.InfoLevel,
 	}
 
 	options := NewOptions(opts...)
-
-	log.Info().Str("stage", "startup").Str("component", "application").Msg("setting up configuration")
 	wctx.Config = options.Config(wctx)
+	log.Info().Str("stage", "startup").Str("component", "application").Msg("starting up")
+	log.Info().Str("stage", "startup").Str("component", "application").Msg("setting up configuration")
 
 	return wctx
 }

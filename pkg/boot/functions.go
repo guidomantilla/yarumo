@@ -8,7 +8,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
-	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/server"
@@ -20,7 +19,6 @@ func Run[T any](ctx context.Context, name string, version string, wireFn WireFn[
 	assert.NotEmpty(version, "server - error running: version is empty")
 	assert.NotNil(wireFn, "server - error running: wireFn is nil")
 
-	clog.Configure(name, version)
 	wctx := NewWireContext(name, version, opts...)
 	defer wctx.Stop(ctx)
 
