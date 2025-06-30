@@ -34,11 +34,10 @@ func main() {
 	withConfig := boot.WithConfig(func(wctx *boot.WireContext) any {
 		viper.AutomaticEnv()
 
-		config := Config{}
-		if viper.IsSet("DEBUG_MODE") {
-			config.DebugMode = viper.GetBool("DEBUG_MODE")
+		config := Config{
+			DebugMode: utils.Ternary(viper.IsSet("DEBUG_MODE"),
+				viper.GetBool("DEBUG_MODE"), false),
 		}
-
 		clogOpts := clog.Chain().
 			WithCaller(config.DebugMode).
 			WithGlobalLevel(utils.Ternary(config.DebugMode, zerolog.DebugLevel, wctx.LogLevel)).

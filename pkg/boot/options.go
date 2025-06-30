@@ -19,7 +19,8 @@ func NewOptions(opts ...Option) *Options {
 		Config: func(wctx *WireContext) any {
 			log.Warn().Str("stage", "startup").Str("component", "configuration").Msg("config function not implemented. using default configuration")
 			viper.AutomaticEnv()
-			debugMode := utils.Ternary(viper.IsSet("DEBUG_MODE"), viper.GetBool("DEBUG_MODE"), false)
+			debugMode := utils.Ternary(viper.IsSet("DEBUG_MODE"),
+				viper.GetBool("DEBUG_MODE"), false)
 			clogOpts := clog.Chain().
 				WithCaller(debugMode).
 				WithGlobalLevel(utils.Ternary(debugMode, zerolog.DebugLevel, wctx.LogLevel)).
