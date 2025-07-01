@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
@@ -32,22 +33,22 @@ func main() {
 	withConfig := boot.WithConfig(func(wctx *boot.WireContext) {
 		viper.AutomaticEnv()
 
-		wctx.DebugMode = utils.Ternary(viper.IsSet("DEBUG_MODE"),
+		debugMode := utils.Ternary(viper.IsSet("DEBUG_MODE"),
 			viper.GetBool("DEBUG_MODE"), false)
-		wctx.Config = Config{DebugMode: wctx.DebugMode}
+		wctx.Config = Config{DebugMode: debugMode}
 
 		clogOpts := clog.Chain().
-			WithCaller(wctx.DebugMode).
-			WithGlobalLevel(utils.Ternary(wctx.DebugMode, zerolog.DebugLevel, wctx.LogLevel)).
+			WithCaller(debugMode).
+			WithGlobalLevel(utils.Ternary(debugMode, zerolog.DebugLevel, zerolog.InfoLevel)).
 			Build()
 		wctx.Logger = clog.Configure(wctx.AppName, wctx.AppVersion, clogOpts)
 	})
 	/**/
 	name, version := "yarumo-app", "1.0.0"
 	ctx := context.Background()
-	boot.Run[Config](ctx, name, version, func(ctx context.Context, wctx *boot.WireContext, app server.Application) error {
+	boot.Run[Config](ctx, name, version, func(ctx context.Context, config Config, wctx *boot.WireContext, app server.Application) error {
 
-		if wctx.DebugMode {
+		if config.DebugMode {
 			fmt.Println("Debug mode is enabled")
 		} else {
 			fmt.Println("Debug mode is disabled")

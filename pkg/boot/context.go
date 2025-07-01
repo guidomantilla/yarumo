@@ -3,7 +3,6 @@ package boot
 import (
 	"context"
 	"fmt"
-	"github.com/guidomantilla/yarumo/pkg/common/events"
 
 	validator "github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
@@ -18,12 +17,9 @@ type WireContext struct {
 	opts       []Option
 	AppName    string
 	AppVersion string
-	DebugMode  bool
-	LogLevel   zerolog.Level
 	Config     any
 	Logger     zerolog.Logger
 	Validator  *validator.Validate
-	EventBus   events.EventBus[]
 }
 
 func NewWireContext[T any](name string, version string, opts ...Option) *WireContext {
@@ -33,8 +29,6 @@ func NewWireContext[T any](name string, version string, opts ...Option) *WireCon
 		opts:       opts,
 		AppName:    name,
 		AppVersion: version,
-		DebugMode:  false,
-		LogLevel:   zerolog.InfoLevel,
 		Config:     pointer.Zero[T](),
 		Logger:     clog.Configure(name, version),
 		Validator:  validator.New(),

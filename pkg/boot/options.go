@@ -27,7 +27,7 @@ func NewOptions(opts ...Option) *Options {
 				viper.GetBool("DEBUG_MODE"), false)
 			clogOpts := clog.Chain().
 				WithCaller(debugMode).
-				WithGlobalLevel(utils.Ternary(debugMode, zerolog.DebugLevel, wctx.LogLevel)).
+				WithGlobalLevel(utils.Ternary(debugMode, zerolog.DebugLevel, zerolog.InfoLevel)).
 				Build()
 			wctx.Logger = clog.Configure(wctx.AppName, wctx.AppVersion, clogOpts)
 		},

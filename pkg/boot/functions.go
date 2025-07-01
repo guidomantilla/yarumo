@@ -27,7 +27,8 @@ func Run[T any](ctx context.Context, name string, version string, wireFn WireFn[
 	)
 	app.Attach(server.BuildBaseServer())
 
-	err := wireFn(ctx, wctx, app)
+	config := wctx.Config.(T)
+	err := wireFn(ctx, config, wctx, app)
 	if err != nil {
 		log.Fatal().Str("stage", "startup").Str("component", "application").Err(err).Msg("error wiring the application")
 	}
