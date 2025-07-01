@@ -2,30 +2,45 @@ package boot
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync/atomic"
 
 	validator "github.com/go-playground/validator/v10"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
-type WireContext struct {
-	opts       []Option
-	AppName    string
-	AppVersion string
-	Config     any
-	Logger     zerolog.Logger
-	Validator  *validator.Validate
+var singleton atomic.Value
+
+type WireContext[T any] struct {
+	Container
+	Config T
 }
 
-func NewWireContext[T any](name string, version string, opts ...Option) *WireContext {
+func Context[T any]() (*WireContext[T], error) {
+	value := singleton.Load()
+	if utils.Empty(value) {
+		return nil, errors.New("server - error getting context: context is nil")
+	}
+
+	if wctx, ok := value.(*WireContext[T]); ok {
+		return wctx, nil
+	}
+
+	return nil, errors.New("server - error getting context: context is not of type WireContext")
+}
+
+func NewWireContext[T any](name string, version string, opts ...Option) *WireContext[T] {
 	assert.NotEmpty(name, fmt.Sprintf("%s - error creating: appName is empty", "application"))
 	assert.NotEmpty(version, fmt.Sprintf("%s - error creating: appName is empty", "application"))
-	return &WireContext{
+
+	container := &Container{
 		opts:       opts,
 		AppName:    name,
 		AppVersion: version,
@@ -33,27 +48,31 @@ func NewWireContext[T any](name string, version string, opts ...Option) *WireCon
 		Logger:     clog.Configure(name, version),
 		Validator:  validator.New(),
 	}
-}
 
-func (wctx *WireContext) Start(ctx context.Context) {
-	assert.NotNil(ctx, fmt.Sprintf("%s -  error starting up: context is nil", "application"))
+	viper.AutomaticEnv()
+	options := NewOptions(container.opts...)
 
 	log.Info().Str("stage", "startup").Str("component", "application").Msg("starting")
 	defer log.Info().Str("stage", "startup").Str("component", "application").Msg("started")
 
-	options := NewOptions(wctx.opts...)
-	options.Logger(wctx)
+	options.Logger(container)
 	log.Info().Str("stage", "startup").Str("component", "application").Msg("logger set up")
 
-	options.Config(wctx)
+	options.Config(container)
 	log.Info().Str("stage", "startup").Str("component", "application").Msg("configuration set up")
 
-	options.Validator(wctx)
+	options.Validator(container)
 	log.Info().Str("stage", "startup").Str("component", "application").Msg("validator set up")
 
+	wctx := &WireContext[T]{
+		Container: *container,
+		Config:    pointer.Zero[T](),
+	}
+	singleton.Store(wctx)
+	return wctx
 }
 
-func (wctx *WireContext) Stop(ctx context.Context) {
+func (wctx *WireContext[T]) Stop(ctx context.Context) {
 	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", "application"))
 
 	log.Info().Str("stage", "shut down").Str("component", "application").Msg("stopping")

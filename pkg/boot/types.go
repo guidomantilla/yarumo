@@ -7,11 +7,14 @@ import (
 )
 
 var (
-	_ RunFn[any] = Run
+	_ BeanFn = Logger
+	_ BeanFn = Config
+	_ BeanFn = Validator
+	_ RunFn  = Run[any]
 )
 
-type BeanFn func(wctx *WireContext)
+type BeanFn func(container *Container)
 
-type WireFn[T any] func(ctx context.Context, config T, wctx *WireContext, application server.Application) error
+type WireFn func(ctx context.Context, application server.Application) error
 
-type RunFn[T any] func(ctx context.Context, name string, version string, wireFn WireFn[T], opts ...Option)
+type RunFn func(ctx context.Context, name string, version string, wireFn WireFn, opts ...Option)

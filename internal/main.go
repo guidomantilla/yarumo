@@ -30,25 +30,29 @@ type Config struct {
 }
 
 func main() {
-	withConfig := boot.WithConfig(func(wctx *boot.WireContext) {
+	withConfig := boot.WithConfig(func(container *boot.Container) {
 		viper.AutomaticEnv()
 
 		debugMode := utils.Ternary(viper.IsSet("DEBUG_MODE"),
 			viper.GetBool("DEBUG_MODE"), false)
-		wctx.Config = Config{DebugMode: debugMode}
+		container.Config = Config{DebugMode: debugMode}
 
 		clogOpts := clog.Chain().
 			WithCaller(debugMode).
 			WithGlobalLevel(utils.Ternary(debugMode, zerolog.DebugLevel, zerolog.InfoLevel)).
 			Build()
-		wctx.Logger = clog.Configure(wctx.AppName, wctx.AppVersion, clogOpts)
+		container.Logger = clog.Configure(container.AppName, container.AppVersion, clogOpts)
 	})
 	/**/
 	name, version := "yarumo-app", "1.0.0"
 	ctx := context.Background()
-	boot.Run[Config](ctx, name, version, func(ctx context.Context, config Config, wctx *boot.WireContext, app server.Application) error {
+	boot.Run[Config](ctx, name, version, func(ctx context.Context, app server.Application) error {
+		wctx, err := boot.Context[Config]()
+		if err != nil {
+			return fmt.Errorf("error getting context: %w", err)
+		}
 
-		if config.DebugMode {
+		if wctx.Config.DebugMode {
 			fmt.Println("Debug mode is enabled")
 		} else {
 			fmt.Println("Debug mode is disabled")

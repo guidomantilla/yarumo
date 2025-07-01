@@ -22,7 +22,7 @@ func (eb *eventBus[T]) Subscribe(_ context.Context, eventType EventType, subscri
 	eb.mutex.Lock()
 	defer eb.mutex.Unlock()
 
-	if utils.Nil(eb.subscribers[eventType]) {
+	if utils.Empty(eb.subscribers[eventType]) {
 		eb.subscribers[eventType] = make(map[string]Subscriber[T])
 	}
 
