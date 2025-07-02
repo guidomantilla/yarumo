@@ -1,16 +1,22 @@
 package boot
 
 type Options struct {
-	Logger    BeanFn
-	Config    BeanFn
-	Validator BeanFn
+	Logger            BeanFn
+	Config            BeanFn
+	Validator         BeanFn
+	PasswordEncoder   BeanFn
+	PasswordGenerator BeanFn
+	TokenGenerator    BeanFn
 }
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		Logger:    Logger,
-		Config:    Config,
-		Validator: Validator,
+		Logger:            Logger,
+		Config:            Config,
+		Validator:         Validator,
+		PasswordEncoder:   PasswordEncoder,
+		PasswordGenerator: PasswordGenerator,
+		TokenGenerator:    TokenGenerator,
 	}
 
 	for _, opt := range opts {
@@ -49,46 +55,29 @@ func WithValidator(validatorFn BeanFn) Option {
 	}
 }
 
+// WithPasswordEncoder allows setting a custom password encoder function into the WireContext (wctx *boot.WireContext).
 //
-
-type OptionsChain struct {
-	chain []Option
-}
-
-func Chain() *OptionsChain {
-	return &OptionsChain{
-		chain: make([]Option, 0),
-	}
-}
-
-func (chain *OptionsChain) Build() Option {
+// wctx.PasswordEncoder = <password encoder object>
+func WithPasswordEncoder(passwordEncoderFn BeanFn) Option {
 	return func(opts *Options) {
-		for _, option := range chain.chain {
-			option(opts)
-		}
+		opts.PasswordEncoder = passwordEncoderFn
 	}
 }
 
-// WithLogger allows setting a custom logger function into the WireContext (wctx *boot.WireContext).
+// WithPasswordGenerator allows setting a custom password generator function into the WireContext (wctx *boot.WireContext).
 //
-// wctx.Logger = <config object>
-func (chain *OptionsChain) WithLogger(loggerFn BeanFn) *OptionsChain {
-	chain.chain = append(chain.chain, WithLogger(loggerFn))
-	return chain
+// wctx.PasswordGenerator = <password generator object>
+func WithPasswordGenerator(passwordGeneratorFn BeanFn) Option {
+	return func(opts *Options) {
+		opts.PasswordGenerator = passwordGeneratorFn
+	}
 }
 
-// WithConfig allows setting a custom config function into the WireContext (wctx *boot.WireContext).
+// WithTokenGenerator allows setting a custom token generator function into the WireContext (wctx *boot.WireContext).
 //
-// wctx.Config = <config object>
-func (chain *OptionsChain) WithConfig(configFn BeanFn) *OptionsChain {
-	chain.chain = append(chain.chain, WithConfig(configFn))
-	return chain
-}
-
-// WithValidator allows setting a custom validator function into the WireContext (wctx *boot.WireContext).
-//
-// wctx.Validator = <validator object>
-func (chain *OptionsChain) WithValidator(validatorFn BeanFn) *OptionsChain {
-	chain.chain = append(chain.chain, WithValidator(validatorFn))
-	return chain
+// wctx.TokenGenerator = <token generator object>
+func WithTokenGenerator(tokenGeneratorFn BeanFn) Option {
+	return func(opts *Options) {
+		opts.TokenGenerator = tokenGeneratorFn
+	}
 }

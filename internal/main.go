@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/pkg/boot"
-	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
-	"github.com/guidomantilla/yarumo/pkg/server"
+	"github.com/guidomantilla/yarumo/pkg/servers"
 )
 
 type Config struct {
@@ -31,22 +29,14 @@ type Config struct {
 
 func main() {
 	withConfig := boot.WithConfig(func(container *boot.Container) {
-		viper.AutomaticEnv()
-
 		debugMode := utils.Ternary(viper.IsSet("DEBUG_MODE"),
 			viper.GetBool("DEBUG_MODE"), false)
 		container.Config = Config{DebugMode: debugMode}
-
-		clogOpts := clog.Chain().
-			WithCaller(debugMode).
-			WithGlobalLevel(utils.Ternary(debugMode, zerolog.DebugLevel, zerolog.InfoLevel)).
-			Build()
-		container.Logger = clog.Configure(container.AppName, container.AppVersion, clogOpts)
 	})
 	/**/
 	name, version := "yarumo-app", "1.0.0"
 	ctx := context.Background()
-	boot.Run[Config](ctx, name, version, func(ctx context.Context, app server.Application) error {
+	boot.Run[Config](ctx, name, version, func(ctx context.Context, app servers.Application) error {
 		wctx, err := boot.Context[Config]()
 		if err != nil {
 			return fmt.Errorf("error getting context: %w", err)

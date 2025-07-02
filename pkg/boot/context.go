@@ -18,25 +18,25 @@ import (
 
 var singleton atomic.Value
 
-type WireContext[T any] struct {
+type WireContext[C any] struct {
 	Container
-	Config T
+	Config C
 }
 
-func Context[T any]() (*WireContext[T], error) {
+func Context[C any]() (*WireContext[C], error) {
 	value := singleton.Load()
 	if utils.Empty(value) {
 		return nil, errors.New("server - error getting context: context is nil")
 	}
 
-	if wctx, ok := value.(*WireContext[T]); ok {
+	if wctx, ok := value.(*WireContext[C]); ok {
 		return wctx, nil
 	}
 
 	return nil, errors.New("server - error getting context: context is not of type WireContext")
 }
 
-func NewWireContext[T any](name string, version string, opts ...Option) *WireContext[T] {
+func NewWireContext[C any](name string, version string, opts ...Option) *WireContext[C] {
 	assert.NotEmpty(name, fmt.Sprintf("%s - error creating: appName is empty", "application"))
 	assert.NotEmpty(version, fmt.Sprintf("%s - error creating: appName is empty", "application"))
 
@@ -44,7 +44,7 @@ func NewWireContext[T any](name string, version string, opts ...Option) *WireCon
 		opts:       opts,
 		AppName:    name,
 		AppVersion: version,
-		Config:     pointer.Zero[T](),
+		Config:     pointer.Zero[C](),
 		Logger:     clog.Configure(name, version),
 		Validator:  validator.New(),
 	}
@@ -64,9 +64,18 @@ func NewWireContext[T any](name string, version string, opts ...Option) *WireCon
 	options.Validator(container)
 	log.Info().Str("stage", "startup").Str("component", "application").Msg("validator set up")
 
-	wctx := &WireContext[T]{
+	options.PasswordEncoder(container)
+	log.Info().Str("stage", "startup").Str("component", "application").Msg("password encoder set up")
+
+	options.PasswordGenerator(container)
+	log.Info().Str("stage", "startup").Str("component", "application").Msg("password generator set up")
+
+	options.TokenGenerator(container)
+	log.Info().Str("stage", "startup").Str("component", "application").Msg("token generator set up")
+
+	wctx := &WireContext[C]{
 		Container: *container,
-		Config:    pointer.Zero[T](),
+		Config:    container.Config.(C),
 	}
 	singleton.Store(wctx)
 	return wctx

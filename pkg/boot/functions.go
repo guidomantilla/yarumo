@@ -8,23 +8,23 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
-	"github.com/guidomantilla/yarumo/pkg/server"
+	"github.com/guidomantilla/yarumo/pkg/servers"
 )
 
-func Run[T any](ctx context.Context, name string, version string, wireFn WireFn, opts ...Option) {
+func Run[C any](ctx context.Context, name string, version string, wireFn WireFn, opts ...Option) {
 	assert.NotNil(ctx, "server - error running: ctx is nil")
 	assert.NotEmpty(name, "server - error running: name is empty")
 	assert.NotEmpty(version, "server - error running: version is empty")
 	assert.NotNil(wireFn, "server - error running: wireFn is nil")
 
-	wctx := NewWireContext[T](name, version, opts...)
+	wctx := NewWireContext[C](name, version, opts...)
 	defer wctx.Stop(ctx)
 
 	app := lifecycle.NewApp(
 		lifecycle.WithName(name), lifecycle.WithVersion(version),
 		lifecycle.WithSignal(syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT, syscall.SIGKILL),
 	)
-	app.Attach(server.BuildBaseServer())
+	app.Attach(servers.BuildBaseServer())
 
 	err := wireFn(ctx, app)
 	if err != nil {
