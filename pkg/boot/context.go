@@ -14,6 +14,8 @@ import (
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
+	"github.com/guidomantilla/yarumo/pkg/passwords"
+	"github.com/guidomantilla/yarumo/pkg/tokens"
 )
 
 var singleton atomic.Value
@@ -41,12 +43,15 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 	assert.NotEmpty(version, fmt.Sprintf("%s - error creating: appName is empty", "application"))
 
 	container := &Container{
-		opts:       opts,
-		AppName:    name,
-		AppVersion: version,
-		Config:     pointer.Zero[C](),
-		Logger:     clog.Configure(name, version),
-		Validator:  validator.New(),
+		opts:              opts,
+		AppName:           name,
+		AppVersion:        version,
+		Config:            pointer.Zero[C](),
+		Logger:            clog.Configure(name, version),
+		Validator:         validator.New(),
+		PasswordEncoder:   passwords.NewBcryptEncoder(),
+		PasswordGenerator: passwords.NewGenerator(),
+		TokenGenerator:    tokens.NewJwtGenerator(),
 	}
 
 	viper.AutomaticEnv()

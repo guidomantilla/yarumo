@@ -9,4 +9,4 @@ type Generator interface {
 	Validate(tokenString string) (Principal, error)
 }
 
-type Principal map[any]any
+type Principal map[string]any

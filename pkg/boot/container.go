@@ -1,6 +1,8 @@
 package boot
 
 import (
+	"time"
+
 	validator "github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -52,5 +54,23 @@ func PasswordGenerator(container *Container) {
 
 func TokenGenerator(container *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "token generator").Msg("token generator function not implemented. using jwt token generator")
-	container.TokenGenerator = tokens.NewJwtGenerator()
+
+	issuer := tokens.WithJwtIssuer(container.AppName)
+
+	signingKey := tokens.WithJwtSigningKey(
+		utils.Ternary(viper.IsSet("TOKEN_SIGNATURE_KEY"),
+			viper.GetString("TOKEN_SIGNATURE_KEY"), "SecretYouShouldHide"),
+	)
+
+	verifyingKey := tokens.WithJwtVerifyingKey(
+		utils.Ternary(viper.IsSet("TOKEN_VERIFICATION_KEY"),
+			viper.GetString("TOKEN_VERIFICATION_KEY"), "SecretYouShouldHide"),
+	)
+
+	timeout := tokens.WithJwtTimeout(
+		utils.Ternary(viper.IsSet("TOKEN_TIMEOUT"),
+			viper.GetDuration("TOKEN_TIMEOUT"), 24*time.Hour),
+	)
+
+	container.TokenGenerator = tokens.NewJwtGenerator(issuer, signingKey, verifyingKey, timeout)
 }

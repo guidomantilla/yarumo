@@ -13,7 +13,7 @@ var (
 	_ RunFn  = Run[any]
 )
 
-type BeanFn func(container *Container)
+type BeanFn func(concontainer *Container)
 
 type WireFn func(ctx context.Context, application servers.Application) error
 

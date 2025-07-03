@@ -6,12 +6,11 @@ import (
 	jwt "github.com/golang-jwt/jwt/v5"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
 
 type Claims struct {
 	jwt.RegisteredClaims
-	Principal
+	Principal Principal `json:"principal,omitempty"`
 }
 
 type jwtGenerator struct {
@@ -78,11 +77,16 @@ func (manager *jwtGenerator) Validate(tokenString string) (Principal, error) {
 		return nil, ErrTokenValidationFailed(ErrTokenInvalid)
 	}
 
-	_, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, ErrTokenValidationFailed(ErrTokenEmptyClaims)
 	}
 
-	principal := pointer.Zero[Principal]()
+	value, ok := claims["principal"]
+	if !ok {
+		return nil, ErrTokenValidationFailed(ErrTokenEmptyPrincipal)
+	}
+
+	principal := Principal(value.(map[string]interface{}))
 	return principal, nil
 }

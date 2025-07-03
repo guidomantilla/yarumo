@@ -6,9 +6,10 @@ import (
 )
 
 var (
-	ErrTokenFailedParsing = errors.New("token failed to parse")
-	ErrTokenInvalid       = errors.New("token is invalid")
-	ErrTokenEmptyClaims   = errors.New("token claims is empty")
+	ErrTokenFailedParsing  = errors.New("token failed to parse")
+	ErrTokenInvalid        = errors.New("token is invalid")
+	ErrTokenEmptyClaims    = errors.New("token claims is empty")
+	ErrTokenEmptyPrincipal = errors.New("token principal is empty")
 )
 
 func ErrTokenGenerationFailed(errs ...error) error {
