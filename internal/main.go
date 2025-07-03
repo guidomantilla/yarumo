@@ -22,12 +22,6 @@ type Config struct {
 	TokenSignatureKey    string `mapstructure:"TOKEN_SIGNATURE_KEY"`
 	TokenVerificationKey string `mapstructure:"TOKEN_VERIFICATION_KEY"`
 	TokenTimeout         string `mapstructure:"TOKEN_TIMEOUT"`
-	DatasourceDriver     string `mapstructure:"DATASOURCE_DRIVER"`
-	DatasourceUsername   string `mapstructure:"DATASOURCE_USERNAME"`
-	DatasourcePassword   string `mapstructure:"DATASOURCE_PASSWORD"`
-	DatasourceServer     string `mapstructure:"DATASOURCE_SERVER"`
-	DatasourceService    string `mapstructure:"DATASOURCE_SERVICE"`
-	DatasourceUrl        string `mapstructure:"DATASOURCE_URL"`
 }
 
 func main() {
@@ -63,6 +57,7 @@ func main() {
 		container.TokenGenerator = tokens.NewJwtGenerator(issuer, signingKey, verifyingKey, timeout)
 		config.TokenVerificationKey = viper.GetString("TOKEN_VERIFICATION_KEY")
 		config.TokenSignatureKey = viper.GetString("TOKEN_SIGNATURE_KEY")
+		config.TokenTimeout = viper.GetString("TOKEN_TIMEOUT")
 		container.Config = config
 	})
 
@@ -75,11 +70,7 @@ func main() {
 			return fmt.Errorf("error getting context: %w", err)
 		}
 
-		if wctx.Config.DebugMode {
-			fmt.Println("Debug mode is enabled")
-		} else {
-			fmt.Println("Debug mode is disabled")
-		}
+		fmt.Println("Configuration:", fmt.Sprintf("%+v", wctx.Config))
 
 		principal := tokens.Principal{
 			"username": "test-user",
@@ -97,6 +88,7 @@ func main() {
 			return err
 		}
 		fmt.Println("Validated principal:", principal)
+
 		return nil
 	}, withConfig, withTokenGenerator)
 }
