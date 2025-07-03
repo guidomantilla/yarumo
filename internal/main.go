@@ -45,6 +45,7 @@ func main() {
 		}
 
 		config := container.Config.(Config)
+
 		issuer := tokens.WithJwtIssuer(container.AppName)
 		signingKey := tokens.WithJwtSigningKey([]byte(viper.GetString("TOKEN_SIGNATURE_KEY")))
 		verifyingKey := tokens.WithJwtVerifyingKey([]byte(viper.GetString("TOKEN_VERIFICATION_KEY")))
@@ -54,10 +55,11 @@ func main() {
 				viper.GetDuration("TOKEN_TIMEOUT"), 15*time.Minute),
 		)
 
-		container.TokenGenerator = tokens.NewJwtGenerator(issuer, signingKey, verifyingKey, timeout)
 		config.TokenVerificationKey = viper.GetString("TOKEN_VERIFICATION_KEY")
 		config.TokenSignatureKey = viper.GetString("TOKEN_SIGNATURE_KEY")
 		config.TokenTimeout = viper.GetString("TOKEN_TIMEOUT")
+
+		container.TokenGenerator = tokens.NewJwtGenerator(issuer, signingKey, verifyingKey, timeout)
 		container.Config = config
 	})
 
