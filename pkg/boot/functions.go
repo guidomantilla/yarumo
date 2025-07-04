@@ -28,11 +28,11 @@ func Run[C any](ctx context.Context, name string, version string, wireFn WireFn,
 
 	err := wireFn(ctx, app)
 	if err != nil {
-		log.Fatal().Str("stage", "startup").Str("component", "application").Err(err).Msg("error wiring the application")
+		log.Fatal().Str("stage", "startup").Str("component", "context").Err(err).Msg("error wiring the application")
 	}
 
 	err = app.Run()
 	if err != nil {
-		log.Fatal().Str("stage", "startup").Str("component", "application").Err(err).Msg("error running the application")
+		log.Fatal().Str("stage", "startup").Str("component", "context").Err(err).Msg("error running the application")
 	}
 }

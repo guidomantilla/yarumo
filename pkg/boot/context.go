@@ -39,8 +39,8 @@ func Context[C any]() (*WireContext[C], error) {
 }
 
 func NewWireContext[C any](name string, version string, opts ...Option) *WireContext[C] {
-	assert.NotEmpty(name, fmt.Sprintf("%s - error creating: appName is empty", "application"))
-	assert.NotEmpty(version, fmt.Sprintf("%s - error creating: appName is empty", "application"))
+	assert.NotEmpty(name, fmt.Sprintf("%s - error creating: appName is empty", "context"))
+	assert.NotEmpty(version, fmt.Sprintf("%s - error creating: appName is empty", "context"))
 
 	container := &Container{
 		opts:              opts,
@@ -57,26 +57,26 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 	viper.AutomaticEnv()
 	options := NewOptions(container.opts...)
 
-	log.Info().Str("stage", "startup").Str("component", "application").Msg("starting")
-	defer log.Info().Str("stage", "startup").Str("component", "application").Msg("started")
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("starting")
+	defer log.Info().Str("stage", "startup").Str("component", "context").Msg("started")
 
 	options.Logger(container)
-	log.Info().Str("stage", "startup").Str("component", "application").Msg("logger set up")
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("logger set up")
 
 	options.Config(container)
-	log.Info().Str("stage", "startup").Str("component", "application").Msg("configuration set up")
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("configuration set up")
 
 	options.Validator(container)
-	log.Info().Str("stage", "startup").Str("component", "application").Msg("validator set up")
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("validator set up")
 
 	options.PasswordEncoder(container)
-	log.Info().Str("stage", "startup").Str("component", "application").Msg("password encoder set up")
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("password encoder set up")
 
 	options.PasswordGenerator(container)
-	log.Info().Str("stage", "startup").Str("component", "application").Msg("password generator set up")
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("password generator set up")
 
 	options.TokenGenerator(container)
-	log.Info().Str("stage", "startup").Str("component", "application").Msg("token generator set up")
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("token generator set up")
 
 	wctx := &WireContext[C]{
 		Container: *container,
@@ -87,8 +87,8 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 }
 
 func (wctx *WireContext[T]) Stop(ctx context.Context) {
-	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", "application"))
+	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", "context"))
 
-	log.Info().Str("stage", "shut down").Str("component", "application").Msg("stopping")
-	defer log.Info().Str("stage", "shut down").Str("component", "application").Msg("stopped")
+	log.Info().Str("stage", "shut down").Str("component", "context").Msg("stopping")
+	defer log.Info().Str("stage", "shut down").Str("component", "context").Msg("stopped")
 }
