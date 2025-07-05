@@ -92,6 +92,9 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 	options.Cipher(container)
 	log.Info().Str("stage", "startup").Str("component", "context").Msg("cipher set up")
 
+	options.HttpClient(container)
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("http client set up")
+
 	wctx := &WireContext[C]{
 		Container: *container,
 		Config:    container.Config.(C),

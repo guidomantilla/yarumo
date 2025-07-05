@@ -4,6 +4,7 @@ go 1.24
 
 require (
 	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc
+	github.com/avast/retry-go/v4 v4.6.1
 	github.com/devmiek/nanoid-go v0.0.0-20241216084707-e17e38258ffc
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/golang-jwt/jwt/v5 v5.2.2

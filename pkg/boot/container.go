@@ -1,6 +1,7 @@
 package boot
 
 import (
+	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	"time"
 
 	validator "github.com/go-playground/validator/v10"
@@ -29,6 +30,7 @@ type Container struct {
 	PasswordGenerator passwords.Generator
 	TokenGenerator    tokens.Generator
 	Cipher            cryptos.Cipher
+	HttpClient        comm.HTTPClient
 }
 
 func Hasher(container *Container) {
@@ -83,4 +85,16 @@ func TokenGenerator(container *Container) {
 func Cipher(container *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "cipher").Msg("cipher function not implemented. using default cipher")
 	container.Cipher = cryptos.NewAesCipher()
+}
+
+func HttpClient(container *Container) {
+	log.Warn().Str("stage", "startup").Str("component", "http client").Msg("http client function not implemented. using zero global timeout http client")
+
+	timeout := comm.WithTimeout(utils.Ternary(viper.IsSet("HTTP_CLIENT_TIMEOUT"),
+		viper.GetDuration("HTTP_CLIENT_TIMEOUT"), 0))
+
+	maxRetries := comm.WithMaxRetries(utils.Ternary(viper.IsSet("HTTP_CLIENT_MAX_RETRIES"),
+		uint(viper.GetInt("HTTP_CLIENT_MAX_RETRIES")), 3))
+
+	container.HttpClient = comm.NewHTTPClient(timeout, maxRetries)
 }

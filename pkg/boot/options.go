@@ -10,6 +10,7 @@ type Options struct {
 	PasswordGenerator BeanFn
 	TokenGenerator    BeanFn
 	Cipher            BeanFn
+	HttpClient        BeanFn
 }
 
 func NewOptions(opts ...Option) *Options {
@@ -23,6 +24,7 @@ func NewOptions(opts ...Option) *Options {
 		PasswordGenerator: PasswordGenerator,
 		TokenGenerator:    TokenGenerator,
 		Cipher:            Cipher,
+		HttpClient:        HttpClient,
 	}
 
 	for _, opt := range opts {
@@ -112,5 +114,14 @@ func WithTokenGenerator(tokenGeneratorFn BeanFn) Option {
 func WithCipher(cipherFn BeanFn) Option {
 	return func(opts *Options) {
 		opts.Cipher = cipherFn
+	}
+}
+
+// WithHttpClient allows setting a custom HTTP client function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.HttpClient = <http client object>
+func WithHttpClient(httpClientFn BeanFn) Option {
+	return func(opts *Options) {
+		opts.HttpClient = httpClientFn
 	}
 }
