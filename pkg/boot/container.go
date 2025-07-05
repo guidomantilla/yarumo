@@ -1,7 +1,6 @@
 package boot
 
 import (
-	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	"time"
 
 	validator "github.com/go-playground/validator/v10"
@@ -9,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
+	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/uids"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
@@ -94,7 +94,7 @@ func HttpClient(container *Container) {
 		viper.GetDuration("HTTP_CLIENT_TIMEOUT"), 0))
 
 	maxRetries := comm.WithMaxRetries(utils.Ternary(viper.IsSet("HTTP_CLIENT_MAX_RETRIES"),
-		uint(viper.GetInt("HTTP_CLIENT_MAX_RETRIES")), 3))
+		uint(viper.GetInt("HTTP_CLIENT_MAX_RETRIES")), 3)) //nolint:gosec
 
 	container.HttpClient = comm.NewHTTPClient(timeout, maxRetries)
 }
