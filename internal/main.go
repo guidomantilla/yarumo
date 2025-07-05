@@ -91,6 +91,20 @@ func main() {
 		}
 		fmt.Println("Validated principal:", principal)
 
+		encrypt, err := wctx.Cipher.Encrypt([]byte("encrypted-data"))
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Encrypted data:", string(encrypt))
+
+		decrypt, err := wctx.Cipher.Decrypt(encrypt)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Decrypted data:", string(decrypt))
+
 		return nil
 	}, withConfig, withTokenGenerator)
 }

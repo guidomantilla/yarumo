@@ -81,7 +81,7 @@ func Cipher(container *Container) {
 
 	key := cryptos.WithAesCipherKey(
 		utils.Ternary(viper.IsSet("CIPHER_KEY"),
-			viper.GetString("CIPHER_KEY"), "a-valid-string-secret-that-is-at-least-512-bits-long-which-is-very-long"),
+			viper.GetString("CIPHER_KEY"), "Wr5bLcLsM5gkI5UmIWZxGoSzO8cOXvNDSyLhbB6BEcs="),
 	)
 
 	container.Cipher = cryptos.NewAesCipher(key)

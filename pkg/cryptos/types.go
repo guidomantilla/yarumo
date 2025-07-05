@@ -1,9 +1,12 @@
 package cryptos
 
 var (
+	_ KeyFn    = Key
 	_ CipherFn = Encrypt
 	_ CipherFn = Decrypt
 )
+
+type KeyFn func(size int) (*string, error)
 
 type CipherFn func(key []byte, plaintext []byte) ([]byte, error)
 

@@ -1,12 +1,17 @@
 package cryptos
 
+import "encoding/base64"
+
 type AesCipherOptions struct {
 	key []byte
 }
 
 func NewAesCipherOptions(opts ...AesCipherOption) *AesCipherOptions {
 	options := &AesCipherOptions{
-		key: []byte("a-valid-string-secret-that-is-at-least-512-bits-long-which-is-very-long"),
+		key: func() []byte {
+			key, _ := Key(32)
+			return []byte(*key)
+		}(),
 	}
 
 	for _, opt := range opts {
@@ -18,8 +23,16 @@ func NewAesCipherOptions(opts ...AesCipherOption) *AesCipherOptions {
 
 type AesCipherOption func(opts *AesCipherOptions)
 
+func WithAesCipherKeySize32() AesCipherOption {
+	return func(opts *AesCipherOptions) {
+		key, _ := Key(32)
+		opts.key = []byte(*key)
+	}
+}
+
 func WithAesCipherKey(key string) AesCipherOption {
 	return func(opts *AesCipherOptions) {
-		opts.key = []byte(key)
+		b, _ := base64.StdEncoding.DecodeString(key)
+		opts.key = b
 	}
 }

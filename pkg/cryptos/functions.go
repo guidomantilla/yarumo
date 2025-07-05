@@ -4,9 +4,21 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"io"
+
+	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
+
+func Key(size int) (*string, error) {
+	key := make([]byte, size)
+	_, err := rand.Reader.Read(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate AES key: %w", err)
+	}
+	return pointer.ToPtr(base64.StdEncoding.EncodeToString(key)), nil
+}
 
 func Encrypt(key []byte, plaintext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
