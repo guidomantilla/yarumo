@@ -101,8 +101,8 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 		return lrt.Next.RoundTrip(req)
 	}
 
-	resp, err := retry.DoWithData(retryableCall, retry.Attempts(lrt.MaxRetries),
-		retry.OnRetry(func(n uint, err error) {
+	resp, err := retry.DoWithData(retryableCall, retry.Attempts(lrt.MaxRetries-1),
+		retry.OnRetry(func(_ uint, err error) {
 			log.Error().Str("method", req.Method).Stringer("url", req.URL).Str("requestBody", reqBodyPreview).Err(err).Msg("HTTP request failed")
 		}),
 	)
