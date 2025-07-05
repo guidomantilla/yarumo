@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/pkg/boot"
+	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
 	"github.com/guidomantilla/yarumo/pkg/security/tokens"
@@ -121,20 +121,12 @@ func main() {
 		timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
-		req, err := http.NewRequestWithContext(timeoutCtx, http.MethodGet, "https://fakerestapi.azurewebsites.net/api/v1/Activities", nil)
-		res, err := wctx.HttpClient.Do(req)
+		resMap, err := comm.RESTCall[any](timeoutCtx, http.MethodGet, "https://8f28c446-6960-481c-9ff6-2d9562f1f4c0.mock.pstmn.io", nil, http.Header{}, comm.WithHTTPClient(wctx.HttpClient))
 		if err != nil {
 			return fmt.Errorf("error making request: %w", err)
 		}
 
-		defer res.Body.Close()
-
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			return fmt.Errorf("error reading response body: %w", err)
-		}
-		fmt.Println("Response status:", res.Status)
-		fmt.Println("Response body:", string(body))
+		fmt.Println("Response map:", resMap)
 
 		return nil
 	}, withConfig, withTokenGenerator, withCipher)

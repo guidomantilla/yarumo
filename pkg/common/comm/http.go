@@ -8,8 +8,6 @@ import (
 
 	retry "github.com/avast/retry-go/v4"
 	"github.com/rs/zerolog/log"
-
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
 type httpClient struct {
@@ -42,7 +40,7 @@ func NewHTTPClient(opts ...HttpOption) HTTPClient {
 	return &httpClient{
 		Client: &http.Client{
 			Timeout: options.Timeout,
-			Transport: &LoggingRoundTripper{
+			Transport: &HttpLoggingRoundTripper{
 				MaxRetries: options.MaxRetries,
 				Next: &http.Transport{
 					TLSClientConfig:     options.TLSClientConfig,
@@ -68,27 +66,27 @@ func (c *httpClient) Do(req *http.Request) (*http.Response, error) {
 
 //
 
-type LoggingRoundTripper struct {
+type HttpLoggingRoundTripper struct {
 	MaxRetries uint
 	Next       http.RoundTripper
 }
 
-func NewLoggingRoundTripper(maxRetries uint, next http.RoundTripper) http.RoundTripper {
+func NewHttpLoggingRoundTripper(maxRetries uint, next http.RoundTripper) http.RoundTripper {
 	if next == nil {
 		next = http.DefaultTransport
 	}
-	return &LoggingRoundTripper{
+	return &HttpLoggingRoundTripper{
 		MaxRetries: maxRetries,
 		Next:       next,
 	}
 }
 
-func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+func (lrt *HttpLoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	start := time.Now()
 
 	var reqBodyPreview string
 	if req.Body != nil {
-		body, buffer, err := utils.ReadNopCloser(req.Body)
+		body, buffer, err := ToReadNopCloser(req.Body)
 		if err != nil {
 			log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg("error reading request body")
 			return nil, err
@@ -116,7 +114,7 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 
 	var respBodyPreview string
 	if resp.Body != nil {
-		body, buffer, err := utils.ReadNopCloser(resp.Body)
+		body, buffer, err := ToReadNopCloser(resp.Body)
 		if err != nil {
 			log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg("error reading response body")
 			return nil, err

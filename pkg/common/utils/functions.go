@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"bytes"
-	"io"
 	rand "math/rand/v2"
 	"reflect"
 	"regexp"
@@ -684,16 +682,4 @@ func OmitByValues[K constraints.Comparable, V constraints.Comparable](keyValues 
 		}
 	}
 	return r
-}
-
-// ReadNopCloser reads all data from the provided io.ReadCloser and returns a new io.ReadCloser that reads from a bytes.Reader.
-// The reader returned is a NopCloser, which means it does not close the underlying reader when closed.
-func ReadNopCloser(reader io.ReadCloser) (io.ReadCloser, []byte, error) {
-	buffer, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	readerNopCloser := io.NopCloser(bytes.NewReader(buffer))
-	return readerNopCloser, buffer, nil
 }
