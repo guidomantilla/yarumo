@@ -6,9 +6,19 @@ install: fetch-dependencies
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install go.uber.org/mock/mockgen@latest
 	go install github.com/vladopajic/go-test-coverage/v2@latest
+	go install github.com/kisielk/godepgraph@latest
 
 fetch-dependencies:
 	go mod download
+
+generate: graph
+	go generate ./internal/... ./pkg/... ./sdk/... ./tools/...
+
+graph:
+	godepgraph -s ./pkg/common | dot -Tpng -o ./docs/img/common.png
+	godepgraph -s ./pkg/messaging | dot -Tpng -o ./docs/img/messaging.png
+	godepgraph -s ./pkg/security | dot -Tpng -o ./docs/img/security.png
+	godepgraph -s ./pkg/servers | dot -Tpng -o ./docs/img/servers.png
 
 imports:
 	goimports-reviser -rm-unused -set-alias -format -recursive internal
@@ -36,7 +46,7 @@ coverage: test
 
 check: fetch-dependencies imports format vet lint coverage
 
-validate: check
+build: graph check
 
 ##
 

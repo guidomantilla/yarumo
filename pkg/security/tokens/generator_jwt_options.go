@@ -6,7 +6,7 @@ import (
 
 	jwt "github.com/golang-jwt/jwt/v5"
 
-	"github.com/guidomantilla/yarumo/pkg/cryptos"
+	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
 )
 
 type JwtGeneratorOptions struct {

@@ -60,7 +60,6 @@ func BuildId(kind Type) string {
 	case CUID2:
 		id := cuid2.CreateId()
 		return id
-
 	case UUIDv7:
 		id, _ := uuid.NewV7()
 		return id.String()

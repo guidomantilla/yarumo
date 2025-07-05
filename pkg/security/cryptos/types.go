@@ -2,8 +2,10 @@ package cryptos
 
 var (
 	_ KeyFn    = Key
-	_ CipherFn = Encrypt
-	_ CipherFn = Decrypt
+	_ CipherFn = AesEncrypt
+	_ CipherFn = AesDecrypt
+	_ CipherFn = ChaCha20Encrypt
+	_ CipherFn = ChaCha20Decrypt
 )
 
 type KeyFn func(size int) (*string, error)

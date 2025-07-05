@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 
+	"golang.org/x/crypto/chacha20poly1305"
+
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
 
@@ -20,7 +22,7 @@ func Key(size int) (*string, error) {
 	return pointer.ToPtr(base64.StdEncoding.EncodeToString(key)), nil
 }
 
-func Encrypt(key []byte, plaintext []byte) ([]byte, error) {
+func AesEncrypt(key []byte, plaintext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
@@ -41,7 +43,7 @@ func Encrypt(key []byte, plaintext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func Decrypt(key []byte, ciphertext []byte) ([]byte, error) {
+func AesDecrypt(key []byte, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
@@ -63,5 +65,40 @@ func Decrypt(key []byte, ciphertext []byte) ([]byte, error) {
 		return nil, fmt.Errorf("failed to decrypt message: %w", err)
 	}
 
+	return plaintext, nil
+}
+
+func ChaCha20Encrypt(key, plaintext []byte) ([]byte, error) {
+	aead, err := chacha20poly1305.New(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create chacha20poly1305 cipher: %w", err)
+	}
+
+	nonce := make([]byte, chacha20poly1305.NonceSize)
+	_, err = io.ReadFull(rand.Reader, nonce)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate nonce: %w", err)
+	}
+
+	ciphertext := aead.Seal(nonce, nonce, plaintext, nil)
+	return ciphertext, nil
+}
+
+func ChaCha20Decrypt(key, ciphertext []byte) ([]byte, error) {
+	aead, err := chacha20poly1305.New(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create chacha20poly1305 cipher: %w", err)
+	}
+
+	nonceSize := chacha20poly1305.NonceSize
+	if len(ciphertext) < nonceSize {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+
+	nonce, encrypted := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := aead.Open(nil, nonce, encrypted, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt message: %w", err)
+	}
 	return plaintext, nil
 }

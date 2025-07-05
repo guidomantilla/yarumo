@@ -10,9 +10,9 @@ import (
 
 	"github.com/guidomantilla/yarumo/pkg/boot"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
-	"github.com/guidomantilla/yarumo/pkg/cryptos"
+	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
+	"github.com/guidomantilla/yarumo/pkg/security/tokens"
 	"github.com/guidomantilla/yarumo/pkg/servers"
-	"github.com/guidomantilla/yarumo/pkg/tokens"
 )
 
 type Config struct {

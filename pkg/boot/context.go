@@ -14,9 +14,9 @@ import (
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
-	"github.com/guidomantilla/yarumo/pkg/cryptos"
-	"github.com/guidomantilla/yarumo/pkg/passwords"
-	"github.com/guidomantilla/yarumo/pkg/tokens"
+	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
+	"github.com/guidomantilla/yarumo/pkg/security/passwords"
+	"github.com/guidomantilla/yarumo/pkg/security/tokens"
 )
 
 var singleton atomic.Value
