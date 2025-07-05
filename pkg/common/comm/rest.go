@@ -2,49 +2,29 @@ package comm
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
 
-func MarshalRequest(body any) (io.Reader, error) {
-	if body == nil {
-		return nil, nil
-	}
-
-	data, err := json.Marshal(body)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling request body: %w", err)
-	}
-
-	return ToReader(data), nil
+type restClient struct {
+	url     string
+	http    HTTPClient
+	headers http.Header
 }
 
-func UnmarshalResponse[T any](body io.Reader) (T, error) {
-	if body == nil {
-		return pointer.Zero[T](), nil
-	}
-
-	var response T
-	err := json.NewDecoder(body).Decode(&response)
-	if err != nil && err != io.EOF {
-		return pointer.Zero[T](), fmt.Errorf("error unmarshalling response body: %w", err)
-	}
-	return response, nil
-}
-
-type RESTResponse[T any] struct {
-	Code   int            `json:"code,omitempty"`
-	Status string         `json:"status,omitempty"`
-	Data   T              `json:"data,omitempty"`
-	Error  map[string]any `json:"error,omitempty"`
-}
-
-func RESTCall[T any](ctx context.Context, method string, url string, body any, headers http.Header, opts ...RestOption) (*RESTResponse[T], error) {
+func NewRESTClient(url string, opts ...RestOption) RESTClient {
 	options := NewRestOptions(opts...)
+	return &restClient{
+		url:     url,
+		http:    options.http,
+		headers: options.headers,
+	}
+}
+
+func (rest *restClient) Call(ctx context.Context, method string, path string, body any) (*RESTResponse, error) {
+
+	url := fmt.Sprintf("%s%s", rest.url, path)
 
 	reader, err := MarshalRequest(body)
 	if err != nil {
@@ -56,10 +36,9 @@ func RESTCall[T any](ctx context.Context, method string, url string, body any, h
 		return nil, fmt.Errorf("error creating request object: %w", err)
 	}
 
-	req.Header = headers.Clone()
-	req.Header.Set("Content-Type", "application/json")
+	req.Header = rest.headers.Clone()
 
-	resp, err := options.http.Do(req)
+	resp, err := rest.http.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error calling %s %s: %w", method, url, err)
 	}
@@ -67,7 +46,7 @@ func RESTCall[T any](ctx context.Context, method string, url string, body any, h
 		_ = Body.Close()
 	}(resp.Body)
 
-	response := &RESTResponse[T]{
+	response := &RESTResponse{
 		Code:   resp.StatusCode,
 		Status: http.StatusText(resp.StatusCode),
 	}
@@ -81,10 +60,19 @@ func RESTCall[T any](ctx context.Context, method string, url string, body any, h
 		return response, nil
 	}
 
-	data, err := UnmarshalResponse[T](resp.Body)
+	data, err := UnmarshalResponse[any](resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling response body: %w", err)
 	}
 	response.Data = data
 	return response, nil
+}
+
+//
+
+type RESTResponse struct {
+	Code   int            `json:"code,omitempty"`
+	Status string         `json:"status,omitempty"`
+	Data   any            `json:"data,omitempty"`
+	Error  map[string]any `json:"error,omitempty"`
 }

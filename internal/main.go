@@ -121,12 +121,30 @@ func main() {
 		timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
-		resMap, err := comm.RESTCall[any](timeoutCtx, http.MethodGet, "https://8f28c446-6960-481c-9ff6-2d9562f1f4c0.mock.pstmn.io", nil, http.Header{}, comm.WithHTTPClient(wctx.HttpClient))
+		//"https://fakerestapi.azurewebsites.net/api/v1/Activities"
+		//"https://8f28c446-6960-481c-9ff6-2d9562f1f4c0.mock.pstmn.io"
+		rest := comm.NewRESTClient("https://fakerestapi.azurewebsites.net", comm.WithHTTPClient(wctx.HttpClient))
+		resp, err := rest.Call(timeoutCtx, http.MethodGet, "/api/v1/Activities", nil)
 		if err != nil {
 			return fmt.Errorf("error making request: %w", err)
 		}
 
-		fmt.Println("Response map:", resMap)
+		sliceMaps, err := comm.ToSliceOfMapsOfAny(resp.Data)
+		if err != nil {
+			return fmt.Errorf("error converting response data to map: %w", err)
+		}
+		fmt.Println(fmt.Sprintf("Response status: %+v", sliceMaps)) //nolint:gosimple
+
+		resp, err = rest.Call(timeoutCtx, http.MethodGet, "/api/v1/Activities/1", nil)
+		if err != nil {
+			return fmt.Errorf("error making request: %w", err)
+		}
+
+		maps, err := comm.ToMapOfAny(resp.Data)
+		if err != nil {
+			return fmt.Errorf("error converting response data to map: %w", err)
+		}
+		fmt.Println(fmt.Sprintf("Response status: %+v", maps)) //nolint:gosimple
 
 		return nil
 	}, withConfig, withTokenGenerator, withCipher)
