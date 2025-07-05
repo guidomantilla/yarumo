@@ -14,6 +14,7 @@ import (
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
+	"github.com/guidomantilla/yarumo/pkg/cryptos"
 	"github.com/guidomantilla/yarumo/pkg/passwords"
 	"github.com/guidomantilla/yarumo/pkg/tokens"
 )
@@ -43,7 +44,6 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 	assert.NotEmpty(version, fmt.Sprintf("%s - error creating: appName is empty", "context"))
 
 	container := &Container{
-		opts:              opts,
 		AppName:           name,
 		AppVersion:        version,
 		Config:            pointer.Zero[C](),
@@ -52,10 +52,11 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 		PasswordEncoder:   passwords.NewBcryptEncoder(),
 		PasswordGenerator: passwords.NewGenerator(),
 		TokenGenerator:    tokens.NewJwtGenerator(),
+		Cipher:            cryptos.NewAesCipher(),
 	}
 
 	viper.AutomaticEnv()
-	options := NewOptions(container.opts...)
+	options := NewOptions(opts...)
 
 	log.Info().Str("stage", "startup").Str("component", "context").Msg("starting")
 	defer log.Info().Str("stage", "startup").Str("component", "context").Msg("started")
@@ -77,6 +78,9 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 
 	options.TokenGenerator(container)
 	log.Info().Str("stage", "startup").Str("component", "context").Msg("token generator set up")
+
+	options.Cipher(container)
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("cipher set up")
 
 	wctx := &WireContext[C]{
 		Container: *container,

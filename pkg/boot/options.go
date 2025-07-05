@@ -7,6 +7,7 @@ type Options struct {
 	PasswordEncoder   BeanFn
 	PasswordGenerator BeanFn
 	TokenGenerator    BeanFn
+	Cipher            BeanFn
 }
 
 func NewOptions(opts ...Option) *Options {
@@ -17,6 +18,7 @@ func NewOptions(opts ...Option) *Options {
 		PasswordEncoder:   PasswordEncoder,
 		PasswordGenerator: PasswordGenerator,
 		TokenGenerator:    TokenGenerator,
+		Cipher:            Cipher,
 	}
 
 	for _, opt := range opts {
@@ -79,5 +81,14 @@ func WithPasswordGenerator(passwordGeneratorFn BeanFn) Option {
 func WithTokenGenerator(tokenGeneratorFn BeanFn) Option {
 	return func(opts *Options) {
 		opts.TokenGenerator = tokenGeneratorFn
+	}
+}
+
+// WithCipher allows setting a custom cipher function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.Cipher = <cipher object>
+func WithCipher(cipherFn BeanFn) Option {
+	return func(opts *Options) {
+		opts.Cipher = cipherFn
 	}
 }

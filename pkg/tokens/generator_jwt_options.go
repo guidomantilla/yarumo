@@ -18,8 +18,8 @@ func NewJwtGeneratorOptions(opts ...JwtGeneratorOption) *JwtGeneratorOptions {
 	options := &JwtGeneratorOptions{
 		issuer:        "",
 		timeout:       time.Hour * 24,
-		signingKey:    "some_long_signing_key",
-		verifyingKey:  "some_long_verifying_key",
+		signingKey:    "a-valid-string-secret-that-is-at-least-512-bits-long-which-is-very-long",
+		verifyingKey:  "a-valid-string-secret-that-is-at-least-512-bits-long-which-is-very-long",
 		signingMethod: jwt.SigningMethodHS512,
 	}
 

@@ -10,12 +10,12 @@ import (
 
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
+	"github.com/guidomantilla/yarumo/pkg/cryptos"
 	"github.com/guidomantilla/yarumo/pkg/passwords"
 	"github.com/guidomantilla/yarumo/pkg/tokens"
 )
 
 type Container struct {
-	opts              []Option
 	AppName           string
 	AppVersion        string
 	Config            any
@@ -24,6 +24,7 @@ type Container struct {
 	PasswordEncoder   passwords.Encoder
 	PasswordGenerator passwords.Generator
 	TokenGenerator    tokens.Generator
+	Cipher            cryptos.Cipher
 }
 
 func Logger(container *Container) {
@@ -59,12 +60,12 @@ func TokenGenerator(container *Container) {
 
 	signingKey := tokens.WithJwtSigningKey(
 		utils.Ternary(viper.IsSet("TOKEN_SIGNATURE_KEY"),
-			viper.GetString("TOKEN_SIGNATURE_KEY"), "SecretYouShouldHide"),
+			viper.GetString("TOKEN_SIGNATURE_KEY"), "a-valid-string-secret-that-is-at-least-512-bits-long-which-is-very-long"),
 	)
 
 	verifyingKey := tokens.WithJwtVerifyingKey(
 		utils.Ternary(viper.IsSet("TOKEN_VERIFICATION_KEY"),
-			viper.GetString("TOKEN_VERIFICATION_KEY"), "SecretYouShouldHide"),
+			viper.GetString("TOKEN_VERIFICATION_KEY"), "a-valid-string-secret-that-is-at-least-512-bits-long-which-is-very-long"),
 	)
 
 	timeout := tokens.WithJwtTimeout(
@@ -73,4 +74,15 @@ func TokenGenerator(container *Container) {
 	)
 
 	container.TokenGenerator = tokens.NewJwtGenerator(issuer, signingKey, verifyingKey, timeout)
+}
+
+func Cipher(container *Container) {
+	log.Warn().Str("stage", "startup").Str("component", "cipher").Msg("cipher function not implemented. using default cipher")
+
+	key := cryptos.WithAesCipherKey(
+		utils.Ternary(viper.IsSet("CIPHER_KEY"),
+			viper.GetString("CIPHER_KEY"), "a-valid-string-secret-that-is-at-least-512-bits-long-which-is-very-long"),
+	)
+
+	container.Cipher = cryptos.NewAesCipher(key)
 }
