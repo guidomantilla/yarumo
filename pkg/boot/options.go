@@ -1,6 +1,8 @@
 package boot
 
 type Options struct {
+	Hasher            BeanFn
+	UIDGen            BeanFn
 	Logger            BeanFn
 	Config            BeanFn
 	Validator         BeanFn
@@ -12,6 +14,8 @@ type Options struct {
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
+		Hasher:            Hasher,
+		UIDGen:            UIDGen,
 		Logger:            Logger,
 		Config:            Config,
 		Validator:         Validator,
@@ -29,6 +33,24 @@ func NewOptions(opts ...Option) *Options {
 }
 
 type Option func(opts *Options)
+
+// WithHasher allows setting a custom hasher function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.Hasher = <hasher object>
+func WithHasher(hasherFn BeanFn) Option {
+	return func(opts *Options) {
+		opts.Hasher = hasherFn
+	}
+}
+
+// WithUIDGen allows setting a custom UID generator function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.UIDGen = <uid generator object>
+func WithUIDGen(uidGenFn BeanFn) Option {
+	return func(opts *Options) {
+		opts.UIDGen = uidGenFn
+	}
+}
 
 // WithLogger allows setting a custom logger function into the WireContext (wctx *boot.WireContext).
 //

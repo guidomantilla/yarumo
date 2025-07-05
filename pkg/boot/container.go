@@ -9,8 +9,10 @@ import (
 	"github.com/spf13/viper"
 
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
+	"github.com/guidomantilla/yarumo/pkg/common/uids"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
+	"github.com/guidomantilla/yarumo/pkg/security/hashes"
 	"github.com/guidomantilla/yarumo/pkg/security/passwords"
 	"github.com/guidomantilla/yarumo/pkg/security/tokens"
 )
@@ -20,11 +22,23 @@ type Container struct {
 	AppVersion        string
 	Config            any
 	Logger            zerolog.Logger
+	Hasher            hashes.HashFn
+	UIDGen            uids.UIDFn
 	Validator         *validator.Validate
 	PasswordEncoder   passwords.Encoder
 	PasswordGenerator passwords.Generator
 	TokenGenerator    tokens.Generator
 	Cipher            cryptos.Cipher
+}
+
+func Hasher(container *Container) {
+	log.Warn().Str("stage", "startup").Str("component", "hasher").Msg("hasher function not implemented. using BLAKE2b-512 hasher")
+	container.Hasher = hashes.BLAKE2b_512
+}
+
+func UIDGen(container *Container) {
+	log.Warn().Str("stage", "startup").Str("component", "uid generator").Msg("uid generator function not implemented. using UUIDv7 uid generator")
+	container.UIDGen = uids.UUIDv7
 }
 
 func Logger(container *Container) {

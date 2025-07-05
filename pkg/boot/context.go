@@ -13,8 +13,10 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
+	"github.com/guidomantilla/yarumo/pkg/common/uids"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
+	"github.com/guidomantilla/yarumo/pkg/security/hashes"
 	"github.com/guidomantilla/yarumo/pkg/security/passwords"
 	"github.com/guidomantilla/yarumo/pkg/security/tokens"
 )
@@ -46,8 +48,10 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 	container := &Container{
 		AppName:           name,
 		AppVersion:        version,
-		Config:            pointer.Zero[C](),
+		Hasher:            hashes.BLAKE2b_512,
+		UIDGen:            uids.UUIDv7,
 		Logger:            clog.Configure(name, version),
+		Config:            pointer.Zero[C](),
 		Validator:         validator.New(),
 		PasswordEncoder:   passwords.NewBcryptEncoder(),
 		PasswordGenerator: passwords.NewGenerator(),
@@ -60,6 +64,12 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 
 	log.Info().Str("stage", "startup").Str("component", "context").Msg("starting")
 	defer log.Info().Str("stage", "startup").Str("component", "context").Msg("started")
+
+	options.Hasher(container)
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("hasher set up")
+
+	options.UIDGen(container)
+	log.Info().Str("stage", "startup").Str("component", "context").Msg("uid generator set up")
 
 	options.Logger(container)
 	log.Info().Str("stage", "startup").Str("component", "context").Msg("logger set up")
