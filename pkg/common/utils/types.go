@@ -105,15 +105,15 @@ type ToMapFn[T constraints.Comparable] func(slice []T) map[T]int
 
 type ToMapByFn[T constraints.Comparable] func(slice []T, keep FilterFn[T]) map[T]int
 
-type InFn[T constraints.Comparable] func(value T, slice []T) bool
+type InFn[T constraints.Comparable] func(value T, slice ...T) bool
 
-type NotInFn[T constraints.Comparable] func(value T, slice []T) bool
+type NotInFn[T constraints.Comparable] func(value T, slice ...T) bool
 
-type EveryFn[T constraints.Comparable] func(values []T, slice []T) bool
+type EveryFn[T constraints.Comparable] func(values []T, slice ...T) bool
 
-type SomeFn[T constraints.Comparable] func(values []T, slice []T) bool
+type SomeFn[T constraints.Comparable] func(values []T, slice ...T) bool
 
-type NoneFn[T constraints.Comparable] func(values []T, slice []T) bool
+type NoneFn[T constraints.Comparable] func(values []T, slice ...T) bool
 
 type UnionFn[T constraints.Comparable] func(slice1 []T, slice2 []T) []T
 

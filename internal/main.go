@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -115,6 +117,24 @@ func main() {
 		}
 
 		fmt.Println("Decrypted data:", string(decrypt))
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		req, err := http.NewRequestWithContext(timeoutCtx, http.MethodGet, "https://fakerestapi.azurewebsites.net/api/v1/Activities", nil)
+		res, err := wctx.HttpClient.Do(req)
+		if err != nil {
+			return fmt.Errorf("error making request: %w", err)
+		}
+
+		defer res.Body.Close()
+
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("error reading response body: %w", err)
+		}
+		fmt.Println("Response status:", res.Status)
+		fmt.Println("Response body:", string(body))
 
 		return nil
 	}, withConfig, withTokenGenerator, withCipher)

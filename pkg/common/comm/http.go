@@ -116,7 +116,7 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 
 	var respBodyPreview string
 	if resp.Body != nil {
-		body, buffer, err := utils.ReadNopCloser(req.Body)
+		body, buffer, err := utils.ReadNopCloser(resp.Body)
 		if err != nil {
 			log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg("error reading response body")
 			return nil, err

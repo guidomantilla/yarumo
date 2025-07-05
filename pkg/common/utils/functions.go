@@ -254,7 +254,7 @@ func ToMapBy[T constraints.Comparable](slice []T, keep FilterFn[T]) map[T]int {
 }
 
 // In checks if a value exists in a slice.
-func In[T constraints.Comparable](value T, slice []T) bool {
+func In[T constraints.Comparable](value T, slice ...T) bool {
 	if len(slice) == 0 {
 		return false
 	}
@@ -267,17 +267,17 @@ func In[T constraints.Comparable](value T, slice []T) bool {
 }
 
 // NotIn checks if a value does not exist in a slice.
-func NotIn[T constraints.Comparable](value T, slice []T) bool {
-	return !In(value, slice)
+func NotIn[T constraints.Comparable](value T, slice ...T) bool {
+	return !In(value, slice...)
 }
 
 // Every check if all the values exist in the slice.
-func Every[T constraints.Comparable](values []T, slice []T) bool {
+func Every[T constraints.Comparable](values []T, slice ...T) bool {
 	if len(slice) == 0 {
 		return false
 	}
 	for _, v := range values {
-		if NotIn(v, slice) {
+		if NotIn(v, slice...) {
 			return false
 		}
 	}
@@ -285,12 +285,12 @@ func Every[T constraints.Comparable](values []T, slice []T) bool {
 }
 
 // Some checks if any of the values exist in the slice.
-func Some[T constraints.Comparable](values []T, slice []T) bool {
+func Some[T constraints.Comparable](values []T, slice ...T) bool {
 	if len(slice) == 0 {
 		return false
 	}
 	for _, v := range values {
-		if In(v, slice) {
+		if In(v, slice...) {
 			return true
 		}
 	}
@@ -298,8 +298,8 @@ func Some[T constraints.Comparable](values []T, slice []T) bool {
 }
 
 // None checks if none of the values exist in the slice.
-func None[T constraints.Comparable](values []T, slice []T) bool {
-	return !Some(values, slice)
+func None[T constraints.Comparable](values []T, slice ...T) bool {
+	return !Some(values, slice...)
 }
 
 // Union returns a slice containing unique elements from both slices.
@@ -656,7 +656,7 @@ func PickByKeys[K constraints.Comparable, V any](keyValues map[K]V, keys []K) ma
 func PickByValues[K constraints.Comparable, V constraints.Comparable](keyValues map[K]V, values []V) map[K]V {
 	r := make(map[K]V)
 	for k := range keyValues {
-		if In(keyValues[k], values) {
+		if In(keyValues[k], values...) {
 			r[k] = keyValues[k]
 		}
 	}
@@ -679,7 +679,7 @@ func OmitByKeys[K constraints.Comparable, V any](keyValues map[K]V, keys []K) ma
 func OmitByValues[K constraints.Comparable, V constraints.Comparable](keyValues map[K]V, values []V) map[K]V {
 	r := make(map[K]V)
 	for k := range keyValues {
-		if NotIn(keyValues[k], values) {
+		if NotIn(keyValues[k], values...) {
 			r[k] = keyValues[k]
 		}
 	}
