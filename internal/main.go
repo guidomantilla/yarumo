@@ -16,13 +16,13 @@ import (
 )
 
 type Config struct {
-	DebugMode            bool   `mapstructure:"DEBUG_MODE"`
-	Host                 string `mapstructure:"HOST"`
-	HttpPort             string `mapstructure:"HTTP_PORT"`
-	GrpcPort             string `mapstructure:"GRPC_PORT"`
-	TokenSignatureKey    string `mapstructure:"TOKEN_SIGNATURE_KEY"`
-	TokenVerificationKey string `mapstructure:"TOKEN_VERIFICATION_KEY"`
-	TokenTimeout         string `mapstructure:"TOKEN_TIMEOUT"`
+	DebugMode    bool   `mapstructure:"DEBUG_MODE"`
+	Host         string `mapstructure:"HOST"`
+	HttpPort     string `mapstructure:"HTTP_PORT"`
+	GrpcPort     string `mapstructure:"GRPC_PORT"`
+	CipherKey    string `mapstructure:"CIPHER_KEY"`
+	TokenKey     string `mapstructure:"TOKEN_KEY"`
+	TokenTimeout string `mapstructure:"TOKEN_TIMEOUT"`
 }
 
 func main() {
@@ -37,27 +37,22 @@ func main() {
 	})
 
 	withTokenGenerator := boot.WithTokenGenerator(func(container *boot.Container) {
-		if !viper.IsSet("TOKEN_SIGNATURE_KEY") {
-			log.Fatal().Str("stage", "startup").Str("component", "token generator").Msg("TOKEN_SIGNATURE_KEY is not set in the configuration")
-		}
-
-		if !viper.IsSet("TOKEN_VERIFICATION_KEY") {
-			log.Fatal().Str("stage", "startup").Str("component", "token generator").Msg("TOKEN_VERIFICATION_KEY is not set in the configuration")
+		if !viper.IsSet("TOKEN_KEY") {
+			log.Fatal().Str("stage", "startup").Str("component", "token generator").Msg("TOKEN_KEY is not set in the configuration")
 		}
 
 		config := container.Config.(Config)
 
 		issuer := tokens.WithJwtIssuer(container.AppName)
-		signingKey := tokens.WithJwtSigningKey([]byte(viper.GetString("TOKEN_SIGNATURE_KEY")))
-		verifyingKey := tokens.WithJwtVerifyingKey([]byte(viper.GetString("TOKEN_VERIFICATION_KEY")))
+		signingKey := tokens.WithJwtSigningKey([]byte(viper.GetString("TOKEN_KEY")))
+		verifyingKey := tokens.WithJwtVerifyingKey([]byte(viper.GetString("TOKEN_KEY")))
 
 		timeout := tokens.WithJwtTimeout(
 			utils.Ternary(viper.IsSet("TOKEN_TIMEOUT"),
 				viper.GetDuration("TOKEN_TIMEOUT"), 15*time.Minute),
 		)
 
-		config.TokenVerificationKey = viper.GetString("TOKEN_VERIFICATION_KEY")
-		config.TokenSignatureKey = viper.GetString("TOKEN_SIGNATURE_KEY")
+		config.TokenKey = viper.GetString("TOKEN_KEY")
 		config.TokenTimeout = viper.GetString("TOKEN_TIMEOUT")
 
 		container.TokenGenerator = tokens.NewJwtGenerator(issuer, signingKey, verifyingKey, timeout)
@@ -72,6 +67,8 @@ func main() {
 		config := container.Config.(Config)
 
 		key := cryptos.WithAesCipherKey(viper.GetString("CIPHER_KEY"))
+
+		config.CipherKey = viper.GetString("CIPHER_KEY")
 
 		container.Cipher = cryptos.NewAesCipher(key)
 		container.Config = config

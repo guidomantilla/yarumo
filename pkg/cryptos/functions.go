@@ -15,7 +15,7 @@ func Key(size int) (*string, error) {
 	key := make([]byte, size)
 	_, err := rand.Reader.Read(key)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate AES key: %w", err)
+		return nil, fmt.Errorf("failed to generate key: %w", err)
 	}
 	return pointer.ToPtr(base64.StdEncoding.EncodeToString(key)), nil
 }
@@ -23,17 +23,18 @@ func Key(size int) (*string, error) {
 func Encrypt(key []byte, plaintext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
 	}
 
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create GCM cipher: %w", err)
 	}
 
 	nonce := make([]byte, aesGCM.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
+	_, err = io.ReadFull(rand.Reader, nonce)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate nonce: %w", err)
 	}
 
 	ciphertext := aesGCM.Seal(nonce, nonce, plaintext, nil)
@@ -43,12 +44,12 @@ func Encrypt(key []byte, plaintext []byte) ([]byte, error) {
 func Decrypt(key []byte, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
 	}
 
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create GCM cipher: %w", err)
 	}
 
 	nonceSize := aesGCM.NonceSize()
@@ -59,7 +60,7 @@ func Decrypt(key []byte, ciphertext []byte) ([]byte, error) {
 	nonce, encryptedMessage := ciphertext[:nonceSize], ciphertext[nonceSize:]
 	plaintext, err := aesGCM.Open(nil, nonce, encryptedMessage, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decrypt message: %w", err)
 	}
 
 	return plaintext, nil
