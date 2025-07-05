@@ -123,10 +123,15 @@ func main() {
 
 		//"https://fakerestapi.azurewebsites.net/api/v1/Activities"
 		//"https://8f28c446-6960-481c-9ff6-2d9562f1f4c0.mock.pstmn.io"
-		rest := comm.NewRESTClient("https://fakerestapi.azurewebsites.net", comm.WithHTTPClient(wctx.HttpClient))
-		resp, err := rest.Call(timeoutCtx, http.MethodGet, "/api/v1/Activities", nil)
+		rest := comm.NewRESTClient("https://8f28c446-6960-481c-9ff6-2d9562f1f4c0.mock.pstmn.io", comm.WithHTTPClient(wctx.HttpClient))
+		resp, err := rest.Call(timeoutCtx, http.MethodGet, "", nil)
 		if err != nil {
 			return fmt.Errorf("error making request: %w", err)
+		}
+
+		if resp.Code != http.StatusOK {
+			fmt.Println(fmt.Sprintf("Response err: %+v", resp)) //nolint:gosimple
+			return nil
 		}
 
 		sliceMaps, err := comm.ToSliceOfMapsOfAny(resp.Data)
