@@ -16,8 +16,8 @@ type Claims struct {
 type jwtGenerator struct {
 	issuer        string
 	timeout       time.Duration
-	signingKey    any
-	verifyingKey  any
+	signingKey    []byte
+	verifyingKey  []byte
 	signingMethod jwt.SigningMethod
 }
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/guidomantilla/yarumo/pkg/boot"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
+	"github.com/guidomantilla/yarumo/pkg/cryptos"
 	"github.com/guidomantilla/yarumo/pkg/servers"
 	"github.com/guidomantilla/yarumo/pkg/tokens"
 )
@@ -63,6 +64,19 @@ func main() {
 		container.Config = config
 	})
 
+	withCipher := boot.WithCipher(func(container *boot.Container) {
+		if !viper.IsSet("CIPHER_KEY") {
+			log.Fatal().Str("stage", "startup").Str("component", "cipher").Msg("CIPHER_KEY is not set in the configuration")
+		}
+
+		config := container.Config.(Config)
+
+		key := cryptos.WithAesCipherKey(viper.GetString("CIPHER_KEY"))
+
+		container.Cipher = cryptos.NewAesCipher(key)
+		container.Config = config
+	})
+
 	/**/
 	name, version := "yarumo-app", "1.0.0"
 	ctx := context.Background()
@@ -106,5 +120,5 @@ func main() {
 		fmt.Println("Decrypted data:", string(decrypt))
 
 		return nil
-	}, withConfig, withTokenGenerator)
+	}, withConfig, withTokenGenerator, withCipher)
 }

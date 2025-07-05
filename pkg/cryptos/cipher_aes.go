@@ -12,17 +12,9 @@ func NewAesCipher(opts ...AesCipherOption) Cipher {
 }
 
 func (c *aesCipher) Encrypt(plainText []byte) ([]byte, error) {
-	ciphertext, err := Encrypt(c.key, plainText)
-	if err != nil {
-		return nil, err
-	}
-	return ciphertext, nil
+	return Encrypt(c.key, plainText)
 }
 
 func (c *aesCipher) Decrypt(cipherText []byte) ([]byte, error) {
-	plaintext, err := Decrypt(c.key, cipherText)
-	if err != nil {
-		return nil, err
-	}
-	return plaintext, nil
+	return Decrypt(c.key, cipherText)
 }

@@ -1,25 +1,33 @@
 package tokens
 
 import (
+	"encoding/base64"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
+
+	"github.com/guidomantilla/yarumo/pkg/cryptos"
 )
 
 type JwtGeneratorOptions struct {
 	issuer        string
 	timeout       time.Duration
-	signingKey    any
-	verifyingKey  any
+	signingKey    []byte
+	verifyingKey  []byte
 	signingMethod jwt.SigningMethod
 }
 
 func NewJwtGeneratorOptions(opts ...JwtGeneratorOption) *JwtGeneratorOptions {
+	key := func() []byte {
+		key, _ := cryptos.Key(64)
+		b, _ := base64.StdEncoding.DecodeString(*key)
+		return b
+	}()
 	options := &JwtGeneratorOptions{
 		issuer:        "",
 		timeout:       time.Hour * 24,
-		signingKey:    "a-valid-string-secret-that-is-at-least-512-bits-long-which-is-very-long",
-		verifyingKey:  "a-valid-string-secret-that-is-at-least-512-bits-long-which-is-very-long",
+		signingKey:    key,
+		verifyingKey:  key,
 		signingMethod: jwt.SigningMethodHS512,
 	}
 
@@ -44,13 +52,13 @@ func WithJwtTimeout(timeout time.Duration) JwtGeneratorOption {
 	}
 }
 
-func WithJwtSigningKey(signingKey any) JwtGeneratorOption {
+func WithJwtSigningKey(signingKey []byte) JwtGeneratorOption {
 	return func(opts *JwtGeneratorOptions) {
 		opts.signingKey = signingKey
 	}
 }
 
-func WithJwtVerifyingKey(verifyingKey any) JwtGeneratorOption {
+func WithJwtVerifyingKey(verifyingKey []byte) JwtGeneratorOption {
 	return func(opts *JwtGeneratorOptions) {
 		opts.verifyingKey = verifyingKey
 	}
