@@ -31,7 +31,7 @@ var (
 	_ BeanFn = HttpClient
 )
 
-type BeanFn func(concontainer *Container)
+type BeanFn func(container *Container)
 
 //
 
