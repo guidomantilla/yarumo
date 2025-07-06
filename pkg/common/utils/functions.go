@@ -23,6 +23,16 @@ func Ternary[T any](condition bool, trueValue T, falseValue T) T {
 	return falseValue
 }
 
+// Coalesce returns the first non-empty value from the provided values.
+func Coalesce[T any](values ...T) T {
+	for _, value := range values {
+		if NotEmpty(value) {
+			return value
+		}
+	}
+	return pointer.Zero[T]()
+}
+
 //
 
 // Equal is a function that checks if two values are equal.

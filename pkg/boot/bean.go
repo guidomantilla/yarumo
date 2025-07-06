@@ -47,8 +47,9 @@ func UIDGen(container *Container) {
 
 func Logger(container *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "logger").Msg("logger function not implemented. using default logger")
-	debugMode := utils.Ternary(viper.IsSet("DEBUG_MODE"),
-		viper.GetBool("DEBUG_MODE"), false)
+
+	debugMode := utils.Coalesce(viper.GetBool("DEBUG_MODE"), false)
+
 	container.Logger = clog.Configure(container.AppName, container.AppVersion, clog.WithCaller(debugMode), clog.WithGlobalLevel(utils.Ternary(debugMode, zerolog.DebugLevel, zerolog.InfoLevel)))
 }
 
@@ -76,10 +77,7 @@ func TokenGenerator(container *Container) {
 
 	issuer := tokens.WithJwtIssuer(container.AppName)
 
-	timeout := tokens.WithJwtTimeout(
-		utils.Ternary(viper.IsSet("TOKEN_TIMEOUT"),
-			viper.GetDuration("TOKEN_TIMEOUT"), 24*time.Hour),
-	)
+	timeout := tokens.WithJwtTimeout(utils.Coalesce(viper.GetDuration("TOKEN_TIMEOUT"), 24*time.Hour))
 
 	container.TokenGenerator = tokens.NewJwtGenerator(issuer, timeout)
 }
@@ -92,13 +90,11 @@ func Cipher(container *Container) {
 func HttpClient(container *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "http client").Msg("http client function not implemented. using zero global timeout http client")
 
-	maxRetries := comm.WithHttpTransportMaxRetries(utils.Ternary(viper.IsSet("HTTP_CLIENT_MAX_RETRIES"),
-		uint(viper.GetInt("HTTP_CLIENT_MAX_RETRIES")), 3)) //nolint:gosec
+	maxRetries := comm.WithHttpTransportMaxRetries(utils.Coalesce(uint(viper.GetInt("HTTP_CLIENT_MAX_RETRIES")), 3)) //nolint:gosec
 
 	transport := comm.WithHttpClientTransport(comm.NewHttpTransport(maxRetries))
 
-	timeout := comm.WithHttpClientTimeout(utils.Ternary(viper.IsSet("HTTP_CLIENT_TIMEOUT"),
-		viper.GetDuration("HTTP_CLIENT_TIMEOUT"), 0))
+	timeout := comm.WithHttpClientTimeout(utils.Coalesce(viper.GetDuration("HTTP_CLIENT_TIMEOUT"), 0))
 
 	container.HttpClient = comm.NewHTTPClient(timeout, transport)
 }

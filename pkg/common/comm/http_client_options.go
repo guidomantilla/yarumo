@@ -1,6 +1,7 @@
 package comm
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
@@ -8,7 +9,7 @@ import (
 
 type HttpClientOptions struct {
 	Timeout   time.Duration
-	Transport *HttpTransport
+	Transport http.RoundTripper
 }
 
 func NewHttpClientOptions(opts ...HttpClientOption) *HttpClientOptions {
@@ -32,7 +33,7 @@ func WithHttpClientTimeout(timeout time.Duration) HttpClientOption {
 	}
 }
 
-func WithHttpClientTransport(transport *HttpTransport) HttpClientOption {
+func WithHttpClientTransport(transport http.RoundTripper) HttpClientOption {
 	return func(opts *HttpClientOptions) {
 		if utils.NotNil(transport) {
 			opts.Transport = transport

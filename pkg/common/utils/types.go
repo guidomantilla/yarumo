@@ -5,6 +5,7 @@ import (
 )
 
 var (
+	_ CoalesceFn[any]          = Coalesce
 	_ TernaryFn[any]           = Ternary
 	_ EqualFn                  = Equal
 	_ NotEqualFn               = NotEqual
@@ -58,6 +59,8 @@ var (
 	_ OmitByKeysFn[any, any]   = OmitByKeys
 	_ OmitByValuesFn[any, any] = OmitByValues
 )
+
+type CoalesceFn[T any] func(values ...T) T
 
 type TernaryFn[T any] func(condition bool, trueValue T, falseValue T) T
 

@@ -39,11 +39,10 @@ func NewWireContext[C any](name string, version string, opts ...WireContextOptio
 
 	viper.AutomaticEnv()
 	options := NewOptions(opts...)
+	container := NewContainer[C]()
 
 	log.Info().Str("stage", "startup").Str("component", "context").Msg("starting")
 	defer log.Info().Str("stage", "startup").Str("component", "context").Msg("started")
-
-	container := NewContainer[C]()
 
 	options.Hasher(container)
 	log.Info().Str("stage", "startup").Str("component", "context").Msg("hasher set up")

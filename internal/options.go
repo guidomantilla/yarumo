@@ -29,8 +29,7 @@ func Config() boot.BeanFn {
 	return func(container *boot.Container) {
 		config := container.Config.(core.Config)
 
-		debugMode := utils.Ternary(viper.IsSet("DEBUG_MODE"),
-			viper.GetBool("DEBUG_MODE"), false)
+		debugMode := utils.Coalesce(viper.GetBool("DEBUG_MODE"), false)
 		config.DebugMode = debugMode
 
 		container.Config = config
@@ -48,10 +47,7 @@ func TokenGenerator() boot.BeanFn {
 		issuer := tokens.WithJwtIssuer(container.AppName)
 		key := tokens.WithJwtKey([]byte(viper.GetString("TOKEN_KEY")))
 
-		timeout := tokens.WithJwtTimeout(
-			utils.Ternary(viper.IsSet("TOKEN_TIMEOUT"),
-				viper.GetDuration("TOKEN_TIMEOUT"), 15*time.Minute),
-		)
+		timeout := tokens.WithJwtTimeout(utils.Coalesce(viper.GetDuration("TOKEN_TIMEOUT"), 15*time.Minute))
 
 		config.TokenKey = viper.GetString("TOKEN_KEY")
 		config.TokenTimeout = viper.GetString("TOKEN_TIMEOUT")
