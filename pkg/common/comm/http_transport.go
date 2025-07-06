@@ -39,6 +39,9 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 		body, buffer, err := ToReadNopCloser(req.Body)
 		if err != nil {
 			log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg("error reading request body")
+			log.Trace().Str("method", req.Method).Stringer("url", req.URL).
+				Stringer("req-headers", HttpHeader(req.Header)).Str("req-body", reqBodyPreview).
+				Err(err).Msg("error reading request body")
 			return nil, err
 		}
 		reqBodyPreview = string(buffer)
@@ -49,30 +52,39 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 		return transport.Next.RoundTrip(req)
 	}
 
-	resp, err := retry.DoWithData(retryableCall, retry.Attempts(transport.MaxRetries-1),
+	res, err := retry.DoWithData(retryableCall, retry.Attempts(transport.MaxRetries-1),
 		retry.OnRetry(func(_ uint, err error) {
-			log.Error().Str("method", req.Method).Stringer("url", req.URL).Str("requestBody", reqBodyPreview).Err(err).Msg("HTTP request failed")
+			log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg("HTTP request failed")
 		}),
 	)
 
 	if err != nil {
-		log.Error().Str("method", req.Method).Stringer("url", req.URL).Str("requestBody", reqBodyPreview).Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
+		log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
+		log.Trace().Str("method", req.Method).Stringer("url", req.URL).Int("status", res.StatusCode).
+			Stringer("req-headers", HttpHeader(req.Header)).Str("req-body", reqBodyPreview).
+			Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
 		return nil, err
 	}
 
 	duration := time.Since(start)
 
-	var respBodyPreview string
-	if resp.Body != nil {
-		body, buffer, err := ToReadNopCloser(resp.Body)
+	var resBodyPreview string
+	if res.Body != nil {
+		body, buffer, err := ToReadNopCloser(res.Body)
 		if err != nil {
 			log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg("error reading response body")
+			log.Trace().Str("method", req.Method).Stringer("url", req.URL).Int("status", res.StatusCode).
+				Stringer("req-headers", HttpHeader(req.Header)).Str("req-body", reqBodyPreview).
+				Err(err).Msg("error reading response body")
 			return nil, err
 		}
-		respBodyPreview = string(buffer)
-		resp.Body = body
+		resBodyPreview = string(buffer)
+		res.Body = body
 	}
 
-	log.Info().Str("method", req.Method).Stringer("url", req.URL).Int("status", resp.StatusCode).Dur("duration", duration).Str("requestBody", reqBodyPreview).Str("responseBody", respBodyPreview).Msg("HTTP request completed")
-	return resp, nil
+	log.Trace().Str("method", req.Method).Stringer("url", req.URL).Int("status", res.StatusCode).Dur("duration", duration).
+		Stringer("req-headers", HttpHeader(req.Header)).Str("req-body", reqBodyPreview).
+		Stringer("res-headers", HttpHeader(res.Header)).Str("res-body", resBodyPreview).
+		Msg("HTTP request completed")
+	return res, nil
 }
