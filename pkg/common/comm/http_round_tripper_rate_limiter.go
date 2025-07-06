@@ -13,7 +13,8 @@ type HttpRateLimiterRoundTripper struct {
 
 func (tripper *HttpRateLimiterRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	newReq := req.Clone(req.Context())
-	if err := tripper.RateLimiter.Wait(newReq.Context()); err != nil {
+	err := tripper.RateLimiter.Wait(newReq.Context())
+	if err != nil {
 		return nil, err
 	}
 	return tripper.Next.RoundTrip(newReq)

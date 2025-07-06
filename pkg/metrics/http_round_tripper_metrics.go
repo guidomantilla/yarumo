@@ -1,11 +1,12 @@
 package metrics
 
 import (
-	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/guidomantilla/yarumo/pkg/common/comm"
 )
 
 type HttpMetricsRoundTripper struct {
