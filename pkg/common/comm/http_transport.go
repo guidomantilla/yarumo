@@ -40,9 +40,10 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 	if req.Body != nil {
 		body, buffer, err := ToReadNopCloser(req.Body)
 		if err != nil {
+			err = fmt.Errorf("error reading request body: %w", err)
 			logger.Error().Err(err).Msg("error reading request body")
 			logger.Trace().RawJSON("req-headers", reqHeaders).Err(err).Msg("error reading request body")
-			return nil, fmt.Errorf("error reading request body: %w", err)
+			return nil, err
 		}
 		reqBody = buffer
 		req.Body = body
@@ -59,11 +60,12 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 	)
 
 	if err != nil {
+		err = fmt.Errorf("HTTP request failed after %d retries: %w", transport.MaxRetries, err)
 		logger.Error().Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
 		logger.Trace().Int("status", res.StatusCode).
 			RawJSON("req-headers", reqHeaders).Func(AppendBody(req.Header, "req-body", reqBody)).
 			Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
-		return nil, fmt.Errorf("HTTP request failed after %d retries: %w", transport.MaxRetries, err)
+		return nil, err
 	}
 
 	resBody := []byte("{}")
@@ -71,12 +73,13 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 	if res.Body != nil {
 		body, buffer, err := ToReadNopCloser(res.Body)
 		if err != nil {
+			err = fmt.Errorf("error reading response body: %w", err)
 			logger.Error().Err(err).Msg("error reading response body")
 			logger.Trace().Int("status", res.StatusCode).
 				RawJSON("req-headers", reqHeaders).Func(AppendBody(req.Header, "req-body", reqBody)).
 				RawJSON("res-headers", resHeaders).Func(AppendBody(res.Header, "res-body", resBody)).
 				Err(err).Msg("error reading response body")
-			return nil, fmt.Errorf("error reading response body: %w", err)
+			return nil, err
 		}
 		resBody = buffer
 		res.Body = body

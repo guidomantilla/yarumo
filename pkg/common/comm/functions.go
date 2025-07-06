@@ -17,6 +17,12 @@ import (
 
 // Http
 
+type GetTokenFn func(req *http.Request) (*string, error)
+
+func NormalizePath(req *http.Request) string {
+	return req.URL.Path
+}
+
 func AppendBody(h http.Header, key string, body []byte) log.EventFn {
 	return func(e *zerolog.Event) {
 		if JsonPayload(h) {
