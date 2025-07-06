@@ -29,8 +29,8 @@ func Config() boot.BeanFn {
 	return func(container *boot.Container) {
 		config := container.Config.(core.Config)
 
-		debugMode := utils.Coalesce(viper.GetBool("DEBUG_MODE"), false)
-		config.DebugMode = debugMode
+		config.DebugMode = utils.Coalesce(viper.GetBool("DEBUG_MODE"), false)
+		config.LogLevel = container.Logger.GetLevel().String()
 
 		container.Config = config
 	}

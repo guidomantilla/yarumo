@@ -6,4 +6,6 @@ var (
 	_ ConfigureFn = Configure
 )
 
+type EventFn func(e *zerolog.Event)
+
 type ConfigureFn func(name string, version string, opts ...Option) zerolog.Logger

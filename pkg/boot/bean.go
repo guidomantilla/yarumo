@@ -41,7 +41,7 @@ func Hasher(container *Container) {
 }
 
 func UIDGen(container *Container) {
-	log.Warn().Str("stage", "startup").Str("component", "uid generator").Msg("uid generator function not implemented. using UUIDv7 uid generator")
+	log.Warn().Str("stage", "startup").Str("component", "uid-generator").Msg("uid generator function not implemented. using UUIDv7 uid generator")
 	container.UIDGen = uids.UUIDv7
 }
 
@@ -49,8 +49,16 @@ func Logger(container *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "logger").Msg("logger function not implemented. using default logger")
 
 	debugMode := utils.Coalesce(viper.GetBool("DEBUG_MODE"), false)
+	caller := clog.WithCaller(debugMode)
 
-	container.Logger = clog.Configure(container.AppName, container.AppVersion, clog.WithCaller(debugMode), clog.WithGlobalLevel(utils.Ternary(debugMode, zerolog.DebugLevel, zerolog.InfoLevel)))
+	logLevel, err := zerolog.ParseLevel(utils.Coalesce(viper.GetString("LOG_LEVEL"), "info"))
+	if err != nil {
+		logLevel = zerolog.InfoLevel
+		log.Warn().Str("stage", "startup").Str("component", "logger").Err(err).Msg("error parsing log level, using default 'info' level")
+	}
+	globalLevel := clog.WithGlobalLevel(logLevel)
+
+	container.Logger = clog.Configure(container.AppName, container.AppVersion, caller, globalLevel)
 }
 
 func Config(_ *Container) {
@@ -63,17 +71,17 @@ func Validator(container *Container) {
 }
 
 func PasswordEncoder(container *Container) {
-	log.Warn().Str("stage", "startup").Str("component", "password encoder").Msg("password encoder function not implemented. using bcrypt password encoder")
+	log.Warn().Str("stage", "startup").Str("component", "password-encoder").Msg("password encoder function not implemented. using bcrypt password encoder")
 	container.PasswordEncoder = passwords.NewBcryptEncoder()
 }
 
 func PasswordGenerator(container *Container) {
-	log.Warn().Str("stage", "startup").Str("component", "password generator").Msg("password generator function not implemented. using default password generator")
+	log.Warn().Str("stage", "startup").Str("component", "password-generator").Msg("password generator function not implemented. using default password generator")
 	container.PasswordGenerator = passwords.NewGenerator()
 }
 
 func TokenGenerator(container *Container) {
-	log.Warn().Str("stage", "startup").Str("component", "token generator").Msg("token generator function not implemented. using jwt token generator")
+	log.Warn().Str("stage", "startup").Str("component", "token-generator").Msg("token generator function not implemented. using jwt token generator")
 
 	issuer := tokens.WithJwtIssuer(container.AppName)
 
@@ -88,7 +96,7 @@ func Cipher(container *Container) {
 }
 
 func HttpClient(container *Container) {
-	log.Warn().Str("stage", "startup").Str("component", "http client").Msg("http client function not implemented. using zero global timeout http client")
+	log.Warn().Str("stage", "startup").Str("component", "http-client").Msg("http client function not implemented. using zero global timeout http client")
 
 	maxRetries := comm.WithHttpTransportMaxRetries(utils.Coalesce(uint(viper.GetInt("HTTP_CLIENT_MAX_RETRIES")), 3)) //nolint:gosec
 

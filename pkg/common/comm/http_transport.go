@@ -32,19 +32,19 @@ func NewHttpTransport(opts ...HttpTransportOption) *HttpTransport {
 }
 
 func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	logger := log.With().Str("stage", "runtime").Str("component", "http-transport").Str("method", req.Method).Stringer("url", req.URL).Logger()
 	start := time.Now()
 
-	var reqBodyPreview string
+	reqBody := []byte("{}")
+	reqHeaders := MustJsonMarshalSanitized(req.Header)
 	if req.Body != nil {
 		body, buffer, err := ToReadNopCloser(req.Body)
 		if err != nil {
-			log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg("error reading request body")
-			log.Trace().Str("method", req.Method).Stringer("url", req.URL).
-				Stringer("req-headers", HttpHeader(req.Header)).Str("req-body", reqBodyPreview).
-				Err(err).Msg("error reading request body")
-			return nil, err
+			logger.Error().Err(err).Msg("error reading request body")
+			logger.Trace().RawJSON("req-headers", reqHeaders).Err(err).Msg("error reading request body")
+			return nil, fmt.Errorf("error reading request body: %w", err)
 		}
-		reqBodyPreview = string(buffer)
+		reqBody = buffer
 		req.Body = body
 	}
 
@@ -54,37 +54,38 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 
 	res, err := retry.DoWithData(retryableCall, retry.Attempts(transport.MaxRetries-1),
 		retry.OnRetry(func(_ uint, err error) {
-			log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg("HTTP request failed")
+			logger.Error().Err(err).Msg("HTTP request failed")
 		}),
 	)
 
 	if err != nil {
-		log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
-		log.Trace().Str("method", req.Method).Stringer("url", req.URL).Int("status", res.StatusCode).
-			Stringer("req-headers", HttpHeader(req.Header)).Str("req-body", reqBodyPreview).
+		logger.Error().Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
+		logger.Trace().Int("status", res.StatusCode).
+			RawJSON("req-headers", reqHeaders).Func(AppendBody(req.Header, "req-body", reqBody)).
 			Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
-		return nil, err
+		return nil, fmt.Errorf("HTTP request failed after %d retries: %w", transport.MaxRetries, err)
 	}
 
-	duration := time.Since(start)
-
-	var resBodyPreview string
+	resBody := []byte("{}")
+	resHeaders := MustJsonMarshalSanitized(res.Header)
 	if res.Body != nil {
 		body, buffer, err := ToReadNopCloser(res.Body)
 		if err != nil {
-			log.Error().Str("method", req.Method).Stringer("url", req.URL).Err(err).Msg("error reading response body")
-			log.Trace().Str("method", req.Method).Stringer("url", req.URL).Int("status", res.StatusCode).
-				Stringer("req-headers", HttpHeader(req.Header)).Str("req-body", reqBodyPreview).
+			logger.Error().Err(err).Msg("error reading response body")
+			logger.Trace().Int("status", res.StatusCode).
+				RawJSON("req-headers", reqHeaders).Func(AppendBody(req.Header, "req-body", reqBody)).
+				RawJSON("res-headers", resHeaders).Func(AppendBody(res.Header, "res-body", resBody)).
 				Err(err).Msg("error reading response body")
-			return nil, err
+			return nil, fmt.Errorf("error reading response body: %w", err)
 		}
-		resBodyPreview = string(buffer)
+		resBody = buffer
 		res.Body = body
 	}
 
-	log.Trace().Str("method", req.Method).Stringer("url", req.URL).Int("status", res.StatusCode).Dur("duration", duration).
-		Stringer("req-headers", HttpHeader(req.Header)).Str("req-body", reqBodyPreview).
-		Stringer("res-headers", HttpHeader(res.Header)).Str("res-body", resBodyPreview).
+	duration := time.Since(start)
+	logger.Trace().Int("status", res.StatusCode).Dur("duration", duration).
+		RawJSON("req-headers", reqHeaders).Func(AppendBody(req.Header, "req-body", reqBody)).
+		RawJSON("res-headers", resHeaders).Func(AppendBody(res.Header, "res-body", resBody)).
 		Msg("HTTP request completed")
 	return res, nil
 }

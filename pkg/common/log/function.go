@@ -11,7 +11,7 @@ import (
 
 func Configure(name string, version string, opts ...Option) zerolog.Logger {
 	options := NewOptions(opts...)
-	logger := zerolog.New(os.Stdout).With()
+	logger := zerolog.New(os.Stderr).With()
 
 	if utils.NotEmpty(name) {
 		logger = logger.Str("name", name)
