@@ -2,6 +2,8 @@ package boot
 
 import (
 	validator "github.com/go-playground/validator/v10"
+	"github.com/rs/zerolog"
+
 	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 	"github.com/guidomantilla/yarumo/pkg/common/uids"
@@ -9,7 +11,6 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/security/hashes"
 	"github.com/guidomantilla/yarumo/pkg/security/passwords"
 	"github.com/guidomantilla/yarumo/pkg/security/tokens"
-	"github.com/rs/zerolog"
 )
 
 type Container struct {

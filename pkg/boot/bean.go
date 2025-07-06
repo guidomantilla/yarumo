@@ -1,7 +1,13 @@
 package boot
 
 import (
-	"github.com/go-playground/validator/v10"
+	"time"
+
+	validator "github.com/go-playground/validator/v10"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
+
 	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/uids"
@@ -10,10 +16,6 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/security/hashes"
 	"github.com/guidomantilla/yarumo/pkg/security/passwords"
 	"github.com/guidomantilla/yarumo/pkg/security/tokens"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
-	"time"
 )
 
 var (

@@ -1,11 +1,12 @@
 package log
 
 import (
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"os"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
 func Configure(name string, version string, opts ...Option) zerolog.Logger {
