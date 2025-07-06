@@ -17,8 +17,10 @@ generate: graph
 graph:
 	godepgraph -s ./pkg/common | dot -Tpng -o ./docs/img/common.png
 	godepgraph -s ./pkg/messaging | dot -Tpng -o ./docs/img/messaging.png
+	godepgraph -s ./pkg/metrics | dot -Tpng -o ./docs/img/metrics.png
 	godepgraph -s ./pkg/security | dot -Tpng -o ./docs/img/security.png
 	godepgraph -s ./pkg/servers | dot -Tpng -o ./docs/img/servers.png
+	godepgraph -s ./pkg/tracing | dot -Tpng -o ./docs/img/tracing.png
 
 imports:
 	goimports-reviser -rm-unused -set-alias -format -recursive internal
