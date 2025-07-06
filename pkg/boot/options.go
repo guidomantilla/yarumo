@@ -45,7 +45,9 @@ type Option func(opts *Options)
 // wctx.Hasher = <hasher object>
 func WithHasher(hasherFn BeanFn) Option {
 	return func(opts *Options) {
-		opts.Hasher = hasherFn
+		if utils.NotNil(hasherFn) {
+			opts.Hasher = hasherFn
+		}
 	}
 }
 
@@ -54,7 +56,9 @@ func WithHasher(hasherFn BeanFn) Option {
 // wctx.UIDGen = <uid generator object>
 func WithUIDGen(uidGenFn BeanFn) Option {
 	return func(opts *Options) {
-		opts.UIDGen = uidGenFn
+		if utils.NotNil(uidGenFn) {
+			opts.UIDGen = uidGenFn
+		}
 	}
 }
 
@@ -63,7 +67,9 @@ func WithUIDGen(uidGenFn BeanFn) Option {
 // wctx.Logger = <logger object>
 func WithLogger(loggerFn BeanFn) Option {
 	return func(opts *Options) {
-		opts.Logger = loggerFn
+		if utils.NotNil(loggerFn) {
+			opts.Logger = loggerFn
+		}
 	}
 }
 
@@ -72,7 +78,9 @@ func WithLogger(loggerFn BeanFn) Option {
 // wctx.Config = <config object>
 func WithConfig(configFn BeanFn) Option {
 	return func(opts *Options) {
-		opts.Config = configFn
+		if utils.NotNil(configFn) {
+			opts.Config = configFn
+		}
 	}
 }
 
@@ -81,7 +89,9 @@ func WithConfig(configFn BeanFn) Option {
 // wctx.Validator = <validator object>
 func WithValidator(validatorFn BeanFn) Option {
 	return func(opts *Options) {
-		opts.Validator = validatorFn
+		if utils.NotNil(validatorFn) {
+			opts.Validator = validatorFn
+		}
 	}
 }
 
@@ -90,7 +100,9 @@ func WithValidator(validatorFn BeanFn) Option {
 // wctx.PasswordEncoder = <password encoder object>
 func WithPasswordEncoder(passwordEncoderFn BeanFn) Option {
 	return func(opts *Options) {
-		opts.PasswordEncoder = passwordEncoderFn
+		if utils.NotNil(passwordEncoderFn) {
+			opts.PasswordEncoder = passwordEncoderFn
+		}
 	}
 }
 
@@ -99,7 +111,9 @@ func WithPasswordEncoder(passwordEncoderFn BeanFn) Option {
 // wctx.PasswordGenerator = <password generator object>
 func WithPasswordGenerator(passwordGeneratorFn BeanFn) Option {
 	return func(opts *Options) {
-		opts.PasswordGenerator = passwordGeneratorFn
+		if utils.NotNil(passwordGeneratorFn) {
+			opts.PasswordGenerator = passwordGeneratorFn
+		}
 	}
 }
 
@@ -108,7 +122,9 @@ func WithPasswordGenerator(passwordGeneratorFn BeanFn) Option {
 // wctx.TokenGenerator = <token generator object>
 func WithTokenGenerator(tokenGeneratorFn BeanFn) Option {
 	return func(opts *Options) {
-		opts.TokenGenerator = tokenGeneratorFn
+		if utils.NotNil(tokenGeneratorFn) {
+			opts.TokenGenerator = tokenGeneratorFn
+		}
 	}
 }
 
@@ -117,7 +133,9 @@ func WithTokenGenerator(tokenGeneratorFn BeanFn) Option {
 // wctx.Cipher = <cipher object>
 func WithCipher(cipherFn BeanFn) Option {
 	return func(opts *Options) {
-		opts.Cipher = cipherFn
+		if utils.NotNil(cipherFn) {
+			opts.Cipher = cipherFn
+		}
 	}
 }
 
@@ -126,18 +144,18 @@ func WithCipher(cipherFn BeanFn) Option {
 // wctx.HttpClient = <http client object>
 func WithHttpClient(httpClientFn BeanFn) Option {
 	return func(opts *Options) {
-		opts.HttpClient = httpClientFn
+		if utils.NotNil(httpClientFn) {
+			opts.HttpClient = httpClientFn
+		}
 	}
 }
 
-// WithMore allows adding more custom functions into the WireContext (wctx *boot.WireContext).
+// With allows adding more custom functions into the WireContext (wctx *boot.WireContext).
 // These functions will be executed after the main functions defined in the Options struct.
-func WithMore(moreFns ...BeanFn) Option {
+func With(withFn BeanFn) Option {
 	return func(opts *Options) {
-		for _, moreFn := range moreFns {
-			if utils.NotEmpty(moreFn) {
-				opts.More = append(opts.More, moreFn)
-			}
+		if utils.NotNil(withFn) {
+			opts.More = append(opts.More, withFn)
 		}
 	}
 }

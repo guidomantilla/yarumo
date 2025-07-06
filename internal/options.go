@@ -20,8 +20,8 @@ func GetOptions() []boot.Option {
 		boot.WithConfig(Config()),
 		boot.WithTokenGenerator(TokenGenerator()),
 		boot.WithCipher(Cipher()),
-		boot.WithMore(RestClientToMockEndpoint()),
-		boot.WithMore(RestClientToFakeRestApiEndpoint()),
+		boot.With(RestClientToMockEndpoint()),
+		boot.With(RestClientToFakeRestApiEndpoint()),
 	}
 }
 
@@ -46,8 +46,7 @@ func TokenGenerator() boot.BeanFn {
 		config := container.Config.(core.Config)
 
 		issuer := tokens.WithJwtIssuer(container.AppName)
-		signingKey := tokens.WithJwtSigningKey([]byte(viper.GetString("TOKEN_KEY")))
-		verifyingKey := tokens.WithJwtVerifyingKey([]byte(viper.GetString("TOKEN_KEY")))
+		key := tokens.WithJwtKey([]byte(viper.GetString("TOKEN_KEY")))
 
 		timeout := tokens.WithJwtTimeout(
 			utils.Ternary(viper.IsSet("TOKEN_TIMEOUT"),
@@ -57,7 +56,7 @@ func TokenGenerator() boot.BeanFn {
 		config.TokenKey = viper.GetString("TOKEN_KEY")
 		config.TokenTimeout = viper.GetString("TOKEN_TIMEOUT")
 
-		container.TokenGenerator = tokens.NewJwtGenerator(issuer, signingKey, verifyingKey, timeout)
+		container.TokenGenerator = tokens.NewJwtGenerator(issuer, key, timeout)
 		container.Config = config
 	}
 }

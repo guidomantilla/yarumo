@@ -1,6 +1,16 @@
 package passwords
 
-import "crypto/sha512"
+import (
+	"crypto/sha512"
+
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
+)
+
+const (
+	Pbkdf2Iterations = 600_000
+	Pbkdf2SaltLength = 32
+	Pbkdf2KeyLength  = 64
+)
 
 type Pbkdf2EncoderOptions struct {
 	iterations int
@@ -11,9 +21,9 @@ type Pbkdf2EncoderOptions struct {
 
 func NewPbkdf2EncoderOptions(opts ...Pbkdf2EncoderOption) *Pbkdf2EncoderOptions {
 	options := &Pbkdf2EncoderOptions{
-		iterations: 600_000,
-		saltLength: 32,
-		keyLength:  64,
+		iterations: Pbkdf2Iterations,
+		saltLength: Pbkdf2SaltLength,
+		keyLength:  Pbkdf2KeyLength,
 		hashFunc:   sha512.New,
 	}
 
@@ -28,24 +38,32 @@ type Pbkdf2EncoderOption func(opts *Pbkdf2EncoderOptions)
 
 func WithPbkdf2Iterations(iterations int) Pbkdf2EncoderOption {
 	return func(opts *Pbkdf2EncoderOptions) {
-		opts.iterations = iterations
+		if iterations > Pbkdf2Iterations {
+			opts.iterations = iterations
+		}
 	}
 }
 
 func WithPbkdf2SaltLength(saltLength int) Pbkdf2EncoderOption {
 	return func(opts *Pbkdf2EncoderOptions) {
-		opts.saltLength = saltLength
+		if saltLength > Pbkdf2SaltLength {
+			opts.saltLength = saltLength
+		}
 	}
 }
 
 func WithPbkdf2KeyLength(keyLength int) Pbkdf2EncoderOption {
 	return func(opts *Pbkdf2EncoderOptions) {
-		opts.keyLength = keyLength
+		if keyLength > Pbkdf2KeyLength {
+			opts.keyLength = keyLength
+		}
 	}
 }
 
 func WithHashFunc(hashFunc HashFunc) Pbkdf2EncoderOption {
 	return func(opts *Pbkdf2EncoderOptions) {
-		opts.hashFunc = hashFunc
+		if utils.NotNil(hashFunc) {
+			opts.hashFunc = hashFunc
+		}
 	}
 }

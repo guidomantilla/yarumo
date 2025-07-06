@@ -24,7 +24,10 @@ type Option func(opts *Options)
 
 func WithCharset(charset string) Option {
 	return func(opts *Options) {
-		opts.Charset = charset
+		if NotEmpty(charset) {
+			opts.Charset = charset
+		}
+
 	}
 }
 

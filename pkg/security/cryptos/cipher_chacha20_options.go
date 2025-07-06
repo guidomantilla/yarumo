@@ -1,6 +1,10 @@
 package cryptos
 
-import "encoding/base64"
+import (
+	"encoding/base64"
+
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
+)
 
 type ChaCha20CipherOptions struct {
 	key []byte
@@ -33,7 +37,9 @@ func WithChaCha20CipherKeySize32() ChaCha20CipherOption {
 
 func WithChaCha20CipherKey(key string) ChaCha20CipherOption {
 	return func(opts *ChaCha20CipherOptions) {
-		b, _ := base64.StdEncoding.DecodeString(key)
-		opts.key = b
+		if utils.NotEmpty(key) {
+			b, _ := base64.StdEncoding.DecodeString(key)
+			opts.key = b
+		}
 	}
 }

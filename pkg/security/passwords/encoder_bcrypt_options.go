@@ -22,6 +22,8 @@ type BcryptEncoderOption func(opts *BcryptEncoderOptions)
 
 func WithBcryptCost(cost int) BcryptEncoderOption {
 	return func(opts *BcryptEncoderOptions) {
-		opts.cost = cost
+		if cost >= bcrypt.DefaultCost && cost <= bcrypt.MaxCost {
+			opts.cost = cost
+		}
 	}
 }

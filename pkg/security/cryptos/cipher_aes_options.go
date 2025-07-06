@@ -1,6 +1,10 @@
 package cryptos
 
-import "encoding/base64"
+import (
+	"encoding/base64"
+
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
+)
 
 type AesCipherOptions struct {
 	key []byte
@@ -33,7 +37,9 @@ func WithAesCipherKeySize32() AesCipherOption {
 
 func WithAesCipherKey(key string) AesCipherOption {
 	return func(opts *AesCipherOptions) {
-		b, _ := base64.StdEncoding.DecodeString(key)
-		opts.key = b
+		if utils.NotEmpty(key) {
+			b, _ := base64.StdEncoding.DecodeString(key)
+			opts.key = b
+		}
 	}
 }

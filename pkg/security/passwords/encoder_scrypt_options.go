@@ -1,5 +1,13 @@
 package passwords
 
+const (
+	ScryptN          = 32768
+	ScryptR          = 8
+	ScryptP          = 1
+	ScryptSaltLength = 16
+	ScryptKeyLength  = 32
+)
+
 type ScryptEncoderOptions struct {
 	N          int
 	r          int
@@ -10,11 +18,11 @@ type ScryptEncoderOptions struct {
 
 func NewScryptEncoderOptions(opts ...ScryptEncoderOption) *ScryptEncoderOptions {
 	options := &ScryptEncoderOptions{
-		N:          32768,
-		r:          8,
-		p:          1,
-		saltLength: 16,
-		keyLength:  32,
+		N:          ScryptN,
+		r:          ScryptR,
+		p:          ScryptP,
+		saltLength: ScryptSaltLength,
+		keyLength:  ScryptKeyLength,
 	}
 
 	for _, opt := range opts {
@@ -28,30 +36,40 @@ type ScryptEncoderOption func(opts *ScryptEncoderOptions)
 
 func WithScryptN(N int) ScryptEncoderOption {
 	return func(opts *ScryptEncoderOptions) {
-		opts.N = N
+		if N > ScryptN {
+			opts.N = N
+		}
 	}
 }
 
 func WithScryptR(r int) ScryptEncoderOption {
 	return func(opts *ScryptEncoderOptions) {
-		opts.r = r
+		if r > ScryptR {
+			opts.r = r
+		}
 	}
 }
 
 func WithScryptP(p int) ScryptEncoderOption {
 	return func(opts *ScryptEncoderOptions) {
-		opts.p = p
+		if p > ScryptP {
+			opts.p = p
+		}
 	}
 }
 
 func WithScryptSaltLength(saltLength int) ScryptEncoderOption {
 	return func(opts *ScryptEncoderOptions) {
-		opts.saltLength = saltLength
+		if saltLength > ScryptSaltLength {
+			opts.saltLength = saltLength
+		}
 	}
 }
 
 func WithScryptKeyLength(keyLength int) ScryptEncoderOption {
 	return func(opts *ScryptEncoderOptions) {
-		opts.keyLength = keyLength
+		if keyLength > ScryptKeyLength {
+			opts.keyLength = keyLength
+		}
 	}
 }

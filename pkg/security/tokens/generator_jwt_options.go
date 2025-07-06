@@ -6,6 +6,7 @@ import (
 
 	jwt "github.com/golang-jwt/jwt/v5"
 
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
 )
 
@@ -48,24 +49,25 @@ func WithJwtIssuer(issuer string) JwtGeneratorOption {
 
 func WithJwtTimeout(timeout time.Duration) JwtGeneratorOption {
 	return func(opts *JwtGeneratorOptions) {
-		opts.timeout = timeout
+		if timeout < 0 {
+			opts.timeout = timeout
+		}
 	}
 }
 
-func WithJwtSigningKey(signingKey []byte) JwtGeneratorOption {
+func WithJwtKey(key []byte) JwtGeneratorOption {
 	return func(opts *JwtGeneratorOptions) {
-		opts.signingKey = signingKey
-	}
-}
-
-func WithJwtVerifyingKey(verifyingKey []byte) JwtGeneratorOption {
-	return func(opts *JwtGeneratorOptions) {
-		opts.verifyingKey = verifyingKey
+		if utils.NotEmpty(key) {
+			opts.signingKey = key
+			opts.verifyingKey = key
+		}
 	}
 }
 
 func WithJwtSigningMethod(signingMethod jwt.SigningMethod) JwtGeneratorOption {
 	return func(opts *JwtGeneratorOptions) {
-		opts.signingMethod = signingMethod
+		if utils.NotNil(signingMethod) {
+			opts.signingMethod = signingMethod
+		}
 	}
 }
