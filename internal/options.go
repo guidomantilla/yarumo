@@ -14,9 +14,9 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/security/tokens"
 )
 
-func GetOptions() []boot.Option {
+func GetOptions() []boot.WireContextOption {
 	//return [][]boot.Option{}
-	return []boot.Option{
+	return []boot.WireContextOption{
 		boot.WithConfig(Config()),
 		boot.WithTokenGenerator(TokenGenerator()),
 		boot.WithCipher(Cipher()),

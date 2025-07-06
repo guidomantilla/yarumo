@@ -6,20 +6,11 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	validator "github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
-	"github.com/guidomantilla/yarumo/pkg/common/comm"
-	clog "github.com/guidomantilla/yarumo/pkg/common/log"
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
-	"github.com/guidomantilla/yarumo/pkg/common/uids"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
-	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
-	"github.com/guidomantilla/yarumo/pkg/security/hashes"
-	"github.com/guidomantilla/yarumo/pkg/security/passwords"
-	"github.com/guidomantilla/yarumo/pkg/security/tokens"
 )
 
 var singleton atomic.Value
@@ -42,31 +33,17 @@ func Context[C any]() (*WireContext[C], error) {
 	return nil, errors.New("server - error getting context: context is not of type WireContext")
 }
 
-func NewWireContext[C any](name string, version string, opts ...Option) *WireContext[C] {
+func NewWireContext[C any](name string, version string, opts ...WireContextOption) *WireContext[C] {
 	assert.NotEmpty(name, fmt.Sprintf("%s - error creating: appName is empty", "context"))
 	assert.NotEmpty(version, fmt.Sprintf("%s - error creating: appName is empty", "context"))
-
-	container := &Container{
-		AppName:           name,
-		AppVersion:        version,
-		Hasher:            hashes.BLAKE2b_512,
-		UIDGen:            uids.UUIDv7,
-		Logger:            clog.Configure(name, version),
-		Config:            pointer.Zero[C](),
-		Validator:         validator.New(),
-		PasswordEncoder:   passwords.NewBcryptEncoder(),
-		PasswordGenerator: passwords.NewGenerator(),
-		TokenGenerator:    tokens.NewJwtGenerator(),
-		Cipher:            cryptos.NewAesCipher(),
-		HttpClient:        comm.NewHTTPClient(),
-		more:              make(map[string]any),
-	}
 
 	viper.AutomaticEnv()
 	options := NewOptions(opts...)
 
 	log.Info().Str("stage", "startup").Str("component", "context").Msg("starting")
 	defer log.Info().Str("stage", "startup").Str("component", "context").Msg("started")
+
+	container := NewContainer[C]()
 
 	options.Hasher(container)
 	log.Info().Str("stage", "startup").Str("component", "context").Msg("hasher set up")

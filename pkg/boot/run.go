@@ -11,7 +11,17 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/servers"
 )
 
-func Run[C any](ctx context.Context, name string, version string, wireFn WireFn, opts ...Option) {
+var (
+	_ RunFn = Run[any]
+)
+
+type WireFn func(ctx context.Context, application servers.Application) error
+
+type RunFn func(ctx context.Context, name string, version string, wireFn WireFn, opts ...WireContextOption)
+
+//
+
+func Run[C any](ctx context.Context, name string, version string, wireFn WireFn, opts ...WireContextOption) {
 	assert.NotNil(ctx, "server - error running: ctx is nil")
 	assert.NotEmpty(name, "server - error running: name is empty")
 	assert.NotEmpty(version, "server - error running: version is empty")
