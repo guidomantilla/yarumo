@@ -92,11 +92,13 @@ func Cipher(container *Container) {
 func HttpClient(container *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "http client").Msg("http client function not implemented. using zero global timeout http client")
 
-	timeout := comm.WithTimeout(utils.Ternary(viper.IsSet("HTTP_CLIENT_TIMEOUT"),
-		viper.GetDuration("HTTP_CLIENT_TIMEOUT"), 0))
-
-	maxRetries := comm.WithMaxRetries(utils.Ternary(viper.IsSet("HTTP_CLIENT_MAX_RETRIES"),
+	maxRetries := comm.WithHttpTransportMaxRetries(utils.Ternary(viper.IsSet("HTTP_CLIENT_MAX_RETRIES"),
 		uint(viper.GetInt("HTTP_CLIENT_MAX_RETRIES")), 3)) //nolint:gosec
 
-	container.HttpClient = comm.NewHTTPClient(timeout, maxRetries)
+	transport := comm.WithHttpClientTransport(comm.NewHttpTransport(maxRetries))
+
+	timeout := comm.WithHttpClientTimeout(utils.Ternary(viper.IsSet("HTTP_CLIENT_TIMEOUT"),
+		viper.GetDuration("HTTP_CLIENT_TIMEOUT"), 0))
+
+	container.HttpClient = comm.NewHTTPClient(timeout, transport)
 }

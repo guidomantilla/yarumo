@@ -1,21 +1,20 @@
 package comm
 
 import (
-	"crypto/tls"
 	"time"
+
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
-type HttpOptions struct {
-	Timeout         time.Duration
-	MaxRetries      uint
-	TLSClientConfig *tls.Config
+type HttpClientOptions struct {
+	Timeout   time.Duration
+	Transport *HttpTransport
 }
 
-func NewHttpOptions(opts ...HttpOption) *HttpOptions {
-	options := &HttpOptions{
-		Timeout:         0,
-		MaxRetries:      3,
-		TLSClientConfig: nil,
+func NewHttpClientOptions(opts ...HttpClientOption) *HttpClientOptions {
+	options := &HttpClientOptions{
+		Timeout:   0,
+		Transport: NewHttpTransport(),
 	}
 
 	for _, opt := range opts {
@@ -25,22 +24,18 @@ func NewHttpOptions(opts ...HttpOption) *HttpOptions {
 	return options
 }
 
-type HttpOption func(opts *HttpOptions)
+type HttpClientOption func(opts *HttpClientOptions)
 
-func WithTimeout(timeout time.Duration) HttpOption {
-	return func(opts *HttpOptions) {
+func WithHttpClientTimeout(timeout time.Duration) HttpClientOption {
+	return func(opts *HttpClientOptions) {
 		opts.Timeout = timeout
 	}
 }
 
-func WithMaxRetries(maxRetries uint) HttpOption {
-	return func(opts *HttpOptions) {
-		opts.MaxRetries = maxRetries
-	}
-}
-
-func WithTLSClientConfig(tlsConfig *tls.Config) HttpOption {
-	return func(opts *HttpOptions) {
-		opts.TLSClientConfig = tlsConfig
+func WithHttpClientTransport(transport *HttpTransport) HttpClientOption {
+	return func(opts *HttpClientOptions) {
+		if utils.NotNil(transport) {
+			opts.Transport = transport
+		}
 	}
 }

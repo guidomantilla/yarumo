@@ -8,7 +8,7 @@ import (
 var (
 	_ HTTPClient        = (*httpClient)(nil)
 	_ HTTPClient        = (*http.Client)(nil)
-	_ http.RoundTripper = (*HttpLoggingRoundTripper)(nil)
+	_ http.RoundTripper = (*HttpTransport)(nil)
 	_ RESTClient        = (*restClient)(nil)
 )
 
