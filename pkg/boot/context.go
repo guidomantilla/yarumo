@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
+	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 	"github.com/guidomantilla/yarumo/pkg/common/uids"
@@ -57,6 +58,8 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 		PasswordGenerator: passwords.NewGenerator(),
 		TokenGenerator:    tokens.NewJwtGenerator(),
 		Cipher:            cryptos.NewAesCipher(),
+		HttpClient:        comm.NewHTTPClient(),
+		more:              make(map[string]any),
 	}
 
 	viper.AutomaticEnv()
@@ -94,6 +97,12 @@ func NewWireContext[C any](name string, version string, opts ...Option) *WireCon
 
 	options.HttpClient(container)
 	log.Info().Str("stage", "startup").Str("component", "context").Msg("http client set up")
+
+	for _, beanFn := range options.More {
+		if !utils.Empty(beanFn) {
+			beanFn(container)
+		}
+	}
 
 	wctx := &WireContext[C]{
 		Container: *container,

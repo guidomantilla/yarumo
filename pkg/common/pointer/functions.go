@@ -11,7 +11,7 @@ func IsPointer(v any) bool {
 	if v == nil {
 		return false
 	}
-	return reflect.TypeOf(v).Kind() == reflect.Ptr
+	return reflect.ValueOf(v).Kind() == reflect.Ptr
 }
 
 // IsType checks if the value is of a specific type.
@@ -102,4 +102,45 @@ func convert[T any, R any](collection []T, iteratee func(item T, index int) R) [
 	}
 
 	return result
+}
+
+// IsChan checks if the value is a channel
+func IsChan(x any) bool {
+	if x == nil {
+		return false
+	}
+
+	val := reflect.ValueOf(x)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	return val.Kind() == reflect.Chan
+}
+
+// IsSlice checks if the value is a slice or an array
+func IsSlice(x any) bool {
+	if x == nil {
+		return false
+	}
+
+	val := reflect.ValueOf(x)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	return val.Kind() == reflect.Slice || val.Kind() == reflect.Array
+}
+
+// IsMap checks if the value is a map
+func IsMap(x any) bool {
+	if x == nil {
+		return false
+	}
+	val := reflect.ValueOf(x)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	return val.Kind() == reflect.Map
 }

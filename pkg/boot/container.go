@@ -31,6 +31,7 @@ type Container struct {
 	TokenGenerator    tokens.Generator
 	Cipher            cryptos.Cipher
 	HttpClient        comm.HTTPClient
+	more              map[string]any
 }
 
 func Hasher(container *Container) {

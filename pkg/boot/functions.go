@@ -1,38 +1,21 @@
 package boot
 
-import (
-	"context"
-	"syscall"
+import "github.com/guidomantilla/yarumo/pkg/common/pointer"
 
-	"github.com/qmdx00/lifecycle"
-	"github.com/rs/zerolog/log"
+func Add(container *Container, key string, value any) {
+	container.more[key] = value
+}
 
-	"github.com/guidomantilla/yarumo/pkg/common/assert"
-	"github.com/guidomantilla/yarumo/pkg/servers"
-)
-
-func Run[C any](ctx context.Context, name string, version string, wireFn WireFn, opts ...Option) {
-	assert.NotNil(ctx, "server - error running: ctx is nil")
-	assert.NotEmpty(name, "server - error running: name is empty")
-	assert.NotEmpty(version, "server - error running: version is empty")
-	assert.NotNil(wireFn, "server - error running: wireFn is nil")
-
-	wctx := NewWireContext[C](name, version, opts...)
-	defer wctx.Stop(ctx)
-
-	app := lifecycle.NewApp(
-		lifecycle.WithName(name), lifecycle.WithVersion(version),
-		lifecycle.WithSignal(syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT, syscall.SIGKILL),
-	)
-	app.Attach(servers.BuildBaseServer())
-
-	err := wireFn(ctx, app)
-	if err != nil {
-		log.Fatal().Str("stage", "startup").Str("component", "context").Err(err).Msg("error wiring the application")
+func Get[T any](container *Container, key string) T {
+	value, exists := container.more[key]
+	if !exists {
+		return pointer.Zero[T]()
 	}
 
-	err = app.Run()
-	if err != nil {
-		log.Fatal().Str("stage", "startup").Str("component", "context").Err(err).Msg("error running the application")
+	typedValue, ok := value.(T)
+	if !ok {
+		return pointer.Zero[T]()
 	}
+
+	return typedValue
 }

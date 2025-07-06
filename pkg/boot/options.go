@@ -1,5 +1,7 @@
 package boot
 
+import "github.com/guidomantilla/yarumo/pkg/common/utils"
+
 type Options struct {
 	Hasher            BeanFn
 	UIDGen            BeanFn
@@ -11,6 +13,7 @@ type Options struct {
 	TokenGenerator    BeanFn
 	Cipher            BeanFn
 	HttpClient        BeanFn
+	More              []BeanFn
 }
 
 func NewOptions(opts ...Option) *Options {
@@ -25,6 +28,7 @@ func NewOptions(opts ...Option) *Options {
 		TokenGenerator:    TokenGenerator,
 		Cipher:            Cipher,
 		HttpClient:        HttpClient,
+		More:              make([]BeanFn, 0),
 	}
 
 	for _, opt := range opts {
@@ -123,5 +127,17 @@ func WithCipher(cipherFn BeanFn) Option {
 func WithHttpClient(httpClientFn BeanFn) Option {
 	return func(opts *Options) {
 		opts.HttpClient = httpClientFn
+	}
+}
+
+// WithMore allows adding more custom functions into the WireContext (wctx *boot.WireContext).
+// These functions will be executed after the main functions defined in the Options struct.
+func WithMore(moreFns ...BeanFn) Option {
+	return func(opts *Options) {
+		for _, moreFn := range moreFns {
+			if utils.NotEmpty(moreFn) {
+				opts.More = append(opts.More, moreFn)
+			}
+		}
 	}
 }
