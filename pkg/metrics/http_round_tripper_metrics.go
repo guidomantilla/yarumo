@@ -1,6 +1,7 @@
-package comm
+package metrics
 
 import (
+	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	"net/http"
 	"time"
 
@@ -60,7 +61,7 @@ func (tripper *HttpMetricsRoundTripper) RoundTrip(req *http.Request) (*http.Resp
 	labels := prometheus.Labels{
 		"method": req.Method,
 		"host":   req.URL.Host,
-		"path":   NormalizePath(req),
+		"path":   comm.NormalizePath(req),
 		"status": status,
 	}
 
