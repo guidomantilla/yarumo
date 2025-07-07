@@ -1,10 +1,10 @@
 package comm
 
 import (
+	resilience2 "github.com/guidomantilla/yarumo/pkg/resilience"
 	"net/http"
 	"time"
 
-	"github.com/guidomantilla/yarumo/pkg/common/resilience"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
@@ -16,7 +16,7 @@ type HttpClientOptions struct {
 func NewHttpClientOptions(opts ...HttpClientOption) *HttpClientOptions {
 	options := &HttpClientOptions{
 		timeout:   0,
-		transport: NewHttpTransport(resilience.NewRateLimiterRegistry(), resilience.NewCircuitBreakerRegistry()),
+		transport: NewHttpTransport(resilience2.NewRateLimiterRegistry(), resilience2.NewCircuitBreakerRegistry()),
 	}
 
 	for _, opt := range opts {

@@ -2,11 +2,11 @@ package boot
 
 import (
 	validator "github.com/go-playground/validator/v10"
+	resilience2 "github.com/guidomantilla/yarumo/pkg/resilience"
 	"github.com/rs/zerolog"
 
 	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
-	"github.com/guidomantilla/yarumo/pkg/common/resilience"
 	"github.com/guidomantilla/yarumo/pkg/common/uids"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
 	"github.com/guidomantilla/yarumo/pkg/security/hashes"
@@ -27,8 +27,8 @@ type Container struct {
 	PasswordManager        passwords.Manager
 	TokenGenerator         tokens.Generator
 	Cipher                 cryptos.Cipher
-	RateLimiterRegistry    *resilience.RateLimiterRegistry
-	CircuitBreakerRegistry *resilience.CircuitBreakerRegistry
+	RateLimiterRegistry    *resilience2.RateLimiterRegistry
+	CircuitBreakerRegistry *resilience2.CircuitBreakerRegistry
 	HttpClient             comm.HTTPClient
 	more                   map[string]any
 }
