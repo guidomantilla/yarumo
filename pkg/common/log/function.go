@@ -20,7 +20,7 @@ func Configure(name string, version string, opts ...Option) zerolog.Logger {
 		logger = logger.Str("version", version)
 	}
 
-	if options.Caller {
+	if options.caller {
 		logger = logger.Caller()
 	}
 

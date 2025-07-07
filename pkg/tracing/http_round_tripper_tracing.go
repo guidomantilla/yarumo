@@ -12,21 +12,21 @@ import (
 )
 
 type HttpTracingRoundTripper struct {
-	Tracer trace.Tracer
-	Next   http.RoundTripper
+	tracer trace.Tracer
+	next   http.RoundTripper
 }
 
 func (tripper *HttpTracingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx := req.Context()
 
-	ctx, span := tripper.Tracer.Start(ctx, fmt.Sprintf("%s %s", req.Method, req.URL), trace.WithSpanKind(trace.SpanKindClient))
+	ctx, span := tripper.tracer.Start(ctx, fmt.Sprintf("%s %s", req.Method, req.URL), trace.WithSpanKind(trace.SpanKindClient))
 	defer span.End()
 
 	newReq := req.Clone(req.Context())
 	otel.GetTextMapPropagator().Inject(ctx, propagationHeaderCarrier(newReq.Header))
 
 	start := time.Now()
-	resp, err := tripper.Next.RoundTrip(req)
+	resp, err := tripper.next.RoundTrip(req)
 	duration := time.Since(start)
 
 	span.SetAttributes(

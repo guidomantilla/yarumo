@@ -90,13 +90,13 @@ func NotEmpty(x any) bool {
 func RandomString(length int, opts ...Option) string {
 
 	options := NewOptions(opts...)
-	if length <= 0 || len(options.Charset) == 0 {
+	if length <= 0 || len(options.charset) == 0 {
 		return ""
 	}
 
 	b := make([]byte, length)
 	for i := range b {
-		b[i] = options.Charset[rand.IntN(len(options.Charset))] //nolint:gosec
+		b[i] = options.charset[rand.IntN(len(options.charset))] //nolint:gosec
 	}
 	return string(b)
 }
@@ -151,7 +151,7 @@ func ChunkString(str string, size int) []string {
 // Capitalize converts the first character of string to upper case and the remaining to lower case.
 func Capitalize(str string, opts ...Option) string {
 	options := NewOptions(opts...)
-	return cases.Title(options.Lang).String(str)
+	return cases.Title(options.lang).String(str)
 }
 
 var (

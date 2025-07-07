@@ -9,12 +9,12 @@ import (
 )
 
 type Options struct {
-	Caller bool
+	caller bool
 }
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		Caller: false,
+		caller: false,
 	}
 
 	for _, opt := range opts {
@@ -30,7 +30,7 @@ type Option func(options *Options)
 
 func WithCaller(enabled bool) Option {
 	return func(options *Options) {
-		options.Caller = enabled
+		options.caller = enabled
 	}
 }
 

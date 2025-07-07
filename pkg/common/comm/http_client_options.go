@@ -9,14 +9,14 @@ import (
 )
 
 type HttpClientOptions struct {
-	Timeout   time.Duration
-	Transport http.RoundTripper
+	timeout   time.Duration
+	transport http.RoundTripper
 }
 
 func NewHttpClientOptions(opts ...HttpClientOption) *HttpClientOptions {
 	options := &HttpClientOptions{
-		Timeout:   0,
-		Transport: NewHttpTransport(resilience.NewRateLimiterRegistry(), resilience.NewCircuitBreakerRegistry()),
+		timeout:   0,
+		transport: NewHttpTransport(resilience.NewRateLimiterRegistry(), resilience.NewCircuitBreakerRegistry()),
 	}
 
 	for _, opt := range opts {
@@ -30,14 +30,14 @@ type HttpClientOption func(opts *HttpClientOptions)
 
 func WithHttpClientTimeout(timeout time.Duration) HttpClientOption {
 	return func(opts *HttpClientOptions) {
-		opts.Timeout = timeout
+		opts.timeout = timeout
 	}
 }
 
 func WithHttpClientTransport(transport *HttpTransport) HttpClientOption {
 	return func(opts *HttpClientOptions) {
 		if utils.NotNil(transport) {
-			opts.Transport = transport
+			opts.transport = transport
 		}
 	}
 }

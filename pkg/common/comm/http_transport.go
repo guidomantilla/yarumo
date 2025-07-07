@@ -15,10 +15,10 @@ import (
 )
 
 type HttpTransport struct {
-	MaxRetries             uint
-	RateLimiterRegistry    *resilience.RateLimiterRegistry
-	CircuitBreakerRegistry *resilience.CircuitBreakerRegistry
-	Next                   http.RoundTripper
+	maxRetries             uint
+	rateLimiterRegistry    *resilience.RateLimiterRegistry
+	circuitBreakerRegistry *resilience.CircuitBreakerRegistry
+	next                   http.RoundTripper
 }
 
 func NewHttpTransport(rateLimiterRegistry *resilience.RateLimiterRegistry, circuitBreakerRegistry *resilience.CircuitBreakerRegistry, opts ...HttpTransportOption) *HttpTransport {
@@ -26,18 +26,18 @@ func NewHttpTransport(rateLimiterRegistry *resilience.RateLimiterRegistry, circu
 	assert.NotEmpty(circuitBreakerRegistry, fmt.Sprintf("%s - error creating: circuitBreakerRegistry is empty", "http-transport"))
 	options := NewHttpTransportOptions(opts...)
 	return &HttpTransport{
-		MaxRetries:             options.MaxRetries,
-		RateLimiterRegistry:    rateLimiterRegistry,
-		CircuitBreakerRegistry: circuitBreakerRegistry,
-		Next: &http.Transport{
-			TLSClientConfig:       options.TLSClientConfig,
-			MaxIdleConns:          options.MaxIdleConns,
-			MaxIdleConnsPerHost:   options.MaxIdleConnsPerHost,
-			IdleConnTimeout:       options.IdleConnTimeout,
-			DialContext:           options.DialContext,
-			TLSHandshakeTimeout:   options.TLSHandshakeTimeout,
-			ResponseHeaderTimeout: options.ResponseHeaderTimeout,
-			ExpectContinueTimeout: options.ExpectContinueTimeout,
+		maxRetries:             options.maxRetries,
+		rateLimiterRegistry:    rateLimiterRegistry,
+		circuitBreakerRegistry: circuitBreakerRegistry,
+		next: &http.Transport{
+			TLSClientConfig:       options.tlsClientConfig,
+			MaxIdleConns:          options.maxIdleConns,
+			MaxIdleConnsPerHost:   options.maxIdleConnsPerHost,
+			IdleConnTimeout:       options.idleConnTimeout,
+			DialContext:           options.dialContext,
+			TLSHandshakeTimeout:   options.tlsHandshakeTimeout,
+			ResponseHeaderTimeout: options.responseHeaderTimeout,
+			ExpectContinueTimeout: options.expectContinueTimeout,
 		},
 	}
 }
@@ -46,15 +46,15 @@ func (transport *HttpTransport) Do(req *http.Request) (*http.Response, error) {
 	logger := log.With().Str("stage", "runtime").Str("component", "http-transport").Str("method", req.Method).Stringer("url", req.URL).Logger()
 
 	retryableCall := func() (*http.Response, error) {
-		limiter := transport.RateLimiterRegistry.Get(fmt.Sprintf("http-transport-rate-limiter-%s", req.URL.Host))
+		limiter := transport.rateLimiterRegistry.Get(fmt.Sprintf("http-transport-rate-limiter-%s", req.URL.Host))
 		err := limiter.Wait(req.Context())
 		if err != nil {
 			return nil, fmt.Errorf("rate limit exceeded: %w", err)
 		}
 
-		breaker := transport.CircuitBreakerRegistry.Get(fmt.Sprintf("http-transport-circuit-breaker-%s", req.URL.Host))
+		breaker := transport.circuitBreakerRegistry.Get(fmt.Sprintf("http-transport-circuit-breaker-%s", req.URL.Host))
 		res, err := breaker.Execute(func() (any, error) {
-			return transport.Next.RoundTrip(req)
+			return transport.next.RoundTrip(req)
 		})
 		if err != nil {
 			return nil, fmt.Errorf("circuit breaker open or request failed: %w", err)
@@ -68,7 +68,7 @@ func (transport *HttpTransport) Do(req *http.Request) (*http.Response, error) {
 		return httpRes, nil
 	}
 
-	return retry.DoWithData(retryableCall, retry.Attempts(transport.MaxRetries-1),
+	return retry.DoWithData(retryableCall, retry.Attempts(transport.maxRetries-1),
 		retry.RetryIf(func(err error) bool {
 			return !errors.Is(err, gobreaker.ErrOpenState)
 		}),
@@ -97,11 +97,11 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 
 	res, err := transport.Do(req)
 	if err != nil {
-		err = fmt.Errorf("HTTP request failed after %d retries: %w", transport.MaxRetries, err)
-		logger.Error().Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
+		err = fmt.Errorf("HTTP request failed after %d retries: %w", transport.maxRetries, err)
+		logger.Error().Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.maxRetries))
 		logger.Trace().Int("status", res.StatusCode).
 			RawJSON("req-headers", reqHeaders).Func(AppendBody(req.Header, "req-body", reqBody)).
-			Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
+			Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.maxRetries))
 		return nil, err
 	}
 

@@ -20,31 +20,31 @@ const (
 )
 
 type HttpTransportOptions struct {
-	MaxRetries            uint
-	TLSClientConfig       *tls.Config
-	MaxIdleConns          int
-	MaxIdleConnsPerHost   int
-	IdleConnTimeout       time.Duration
-	DialContext           func(ctx context.Context, network string, addr string) (net.Conn, error)
-	TLSHandshakeTimeout   time.Duration
-	ResponseHeaderTimeout time.Duration
-	ExpectContinueTimeout time.Duration
+	maxRetries            uint
+	tlsClientConfig       *tls.Config
+	maxIdleConns          int
+	maxIdleConnsPerHost   int
+	idleConnTimeout       time.Duration
+	dialContext           func(ctx context.Context, network string, addr string) (net.Conn, error)
+	tlsHandshakeTimeout   time.Duration
+	responseHeaderTimeout time.Duration
+	expectContinueTimeout time.Duration
 }
 
 func NewHttpTransportOptions(opts ...HttpTransportOption) *HttpTransportOptions {
 	options := &HttpTransportOptions{
-		MaxRetries:          HttpTransportMaxRetries,
-		TLSClientConfig:     nil,
-		MaxIdleConns:        HttpTransportMaxIdleConns,
-		MaxIdleConnsPerHost: HttpTransportMaxIdleConnsPerHost,
-		IdleConnTimeout:     HttpTransportIdleConnTimeout,
-		DialContext: (&net.Dialer{
+		maxRetries:          HttpTransportMaxRetries,
+		tlsClientConfig:     nil,
+		maxIdleConns:        HttpTransportMaxIdleConns,
+		maxIdleConnsPerHost: HttpTransportMaxIdleConnsPerHost,
+		idleConnTimeout:     HttpTransportIdleConnTimeout,
+		dialContext: (&net.Dialer{
 			Timeout:   HttpTransportDialTimeout,
 			KeepAlive: HttpTransportKeepAlive,
 		}).DialContext,
-		TLSHandshakeTimeout:   HttpTransportTLSHandshakeTimeout,
-		ResponseHeaderTimeout: HttpTransportResponseHeaderTimeout,
-		ExpectContinueTimeout: HttpTransportExpectContinueTimeout,
+		tlsHandshakeTimeout:   HttpTransportTLSHandshakeTimeout,
+		responseHeaderTimeout: HttpTransportResponseHeaderTimeout,
+		expectContinueTimeout: HttpTransportExpectContinueTimeout,
 	}
 
 	for _, opt := range opts {
@@ -59,38 +59,38 @@ type HttpTransportOption func(opts *HttpTransportOptions)
 func WithHttpTransportMaxRetries(maxRetries uint) HttpTransportOption {
 	return func(opts *HttpTransportOptions) {
 		if maxRetries > 0 {
-			opts.MaxRetries = maxRetries
+			opts.maxRetries = maxRetries
 		}
 	}
 }
 
 func WithHttpTransportTLSClientConfig(tlsConfig *tls.Config) HttpTransportOption {
 	return func(opts *HttpTransportOptions) {
-		opts.TLSClientConfig = tlsConfig
+		opts.tlsClientConfig = tlsConfig
 	}
 }
 
 func WithHttpTransportMaxIdleConns(maxIdleConns int) HttpTransportOption {
 	return func(opts *HttpTransportOptions) {
-		opts.MaxIdleConns = maxIdleConns
+		opts.maxIdleConns = maxIdleConns
 	}
 }
 
 func WithHttpTransportMaxIdleConnsPerHost(maxIdleConnsPerHost int) HttpTransportOption {
 	return func(opts *HttpTransportOptions) {
-		opts.MaxIdleConnsPerHost = maxIdleConnsPerHost
+		opts.maxIdleConnsPerHost = maxIdleConnsPerHost
 	}
 }
 
 func WithHttpTransportIdleConnTimeout(idleConnTimeout time.Duration) HttpTransportOption {
 	return func(opts *HttpTransportOptions) {
-		opts.IdleConnTimeout = idleConnTimeout
+		opts.idleConnTimeout = idleConnTimeout
 	}
 }
 
 func WithHttpTransportDialContext(timeout time.Duration, keepAlive time.Duration) HttpTransportOption {
 	return func(opts *HttpTransportOptions) {
-		opts.DialContext = (&net.Dialer{
+		opts.dialContext = (&net.Dialer{
 			Timeout:   timeout,
 			KeepAlive: keepAlive,
 		}).DialContext
@@ -99,18 +99,18 @@ func WithHttpTransportDialContext(timeout time.Duration, keepAlive time.Duration
 
 func WithHttpTransportTLSHandshakeTimeout(tlsHandshakeTimeout time.Duration) HttpTransportOption {
 	return func(opts *HttpTransportOptions) {
-		opts.TLSHandshakeTimeout = tlsHandshakeTimeout
+		opts.tlsHandshakeTimeout = tlsHandshakeTimeout
 	}
 }
 
 func WithHttpTransportResponseHeaderTimeout(responseHeaderTimeout time.Duration) HttpTransportOption {
 	return func(opts *HttpTransportOptions) {
-		opts.ResponseHeaderTimeout = responseHeaderTimeout
+		opts.responseHeaderTimeout = responseHeaderTimeout
 	}
 }
 
 func WithHttpTransportExpectContinueTimeout(expectContinueTimeout time.Duration) HttpTransportOption {
 	return func(opts *HttpTransportOptions) {
-		opts.ExpectContinueTimeout = expectContinueTimeout
+		opts.expectContinueTimeout = expectContinueTimeout
 	}
 }

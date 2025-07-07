@@ -7,20 +7,20 @@ import (
 )
 
 type HttpHeadersRoundTripper struct {
-	Headers   http.Header
-	Overwrite bool
-	Next      http.RoundTripper
+	headers   http.Header
+	overwrite bool
+	next      http.RoundTripper
 }
 
 func (tripper *HttpHeadersRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	newReq := req.Clone(req.Context())
-	for key, values := range tripper.Headers {
-		if tripper.Overwrite || utils.Empty(newReq.Header.Get(key)) {
+	for key, values := range tripper.headers {
+		if tripper.overwrite || utils.Empty(newReq.Header.Get(key)) {
 			for _, value := range values {
 				newReq.Header.Set(key, value)
 			}
 		}
 	}
 
-	return tripper.Next.RoundTrip(newReq)
+	return tripper.next.RoundTrip(newReq)
 }

@@ -5,7 +5,7 @@ import (
 )
 
 type scryptEncoder struct {
-	N          int
+	n          int
 	r          int
 	p          int
 	saltLength int
@@ -15,7 +15,7 @@ type scryptEncoder struct {
 func NewScryptEncoder(opts ...ScryptEncoderOption) Encoder {
 	options := NewScryptEncoderOptions(opts...)
 	return &scryptEncoder{
-		N:          options.N,
+		n:          options.n,
 		r:          options.r,
 		p:          options.p,
 		saltLength: options.saltLength,
@@ -35,7 +35,7 @@ func (encoder *scryptEncoder) Encode(rawPassword string) (*string, error) {
 		return nil, err
 	}
 
-	value, err := ScryptEncode(rawPassword, salt, encoder.N, encoder.r, encoder.p, encoder.keyLength)
+	value, err := ScryptEncode(rawPassword, salt, encoder.n, encoder.r, encoder.p, encoder.keyLength)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (encoder *scryptEncoder) UpgradeEncoding(encodedPassword string) (*bool, er
 	}
 
 	upgradeNeeded := true
-	if encoder.N > *(N) {
+	if encoder.n > *(N) {
 		return &upgradeNeeded, nil
 	}
 

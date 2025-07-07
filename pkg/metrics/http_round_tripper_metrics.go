@@ -10,9 +10,9 @@ import (
 )
 
 type HttpMetricsRoundTripper struct {
-	RequestCounter  *prometheus.CounterVec
-	RequestDuration *prometheus.HistogramVec
-	Next            http.RoundTripper
+	requestCounter  *prometheus.CounterVec
+	requestDuration *prometheus.HistogramVec
+	next            http.RoundTripper
 }
 
 func NewMetricsRoundTripper(namespace string, next http.RoundTripper) http.RoundTripper {
@@ -43,15 +43,15 @@ func NewMetricsRoundTripper(namespace string, next http.RoundTripper) http.Round
 	prometheus.MustRegister(requestCounter, requestDuration)
 
 	return &HttpMetricsRoundTripper{
-		Next:            next,
-		RequestCounter:  requestCounter,
-		RequestDuration: requestDuration,
+		next:            next,
+		requestCounter:  requestCounter,
+		requestDuration: requestDuration,
 	}
 }
 
 func (tripper *HttpMetricsRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	start := time.Now()
-	resp, err := tripper.Next.RoundTrip(req)
+	resp, err := tripper.next.RoundTrip(req)
 	duration := time.Since(start).Seconds()
 
 	status := "error"
@@ -66,8 +66,8 @@ func (tripper *HttpMetricsRoundTripper) RoundTrip(req *http.Request) (*http.Resp
 		"status": status,
 	}
 
-	tripper.RequestCounter.With(labels).Inc()
-	tripper.RequestDuration.With(labels).Observe(duration)
+	tripper.requestCounter.With(labels).Inc()
+	tripper.requestDuration.With(labels).Observe(duration)
 
 	return resp, err
 }

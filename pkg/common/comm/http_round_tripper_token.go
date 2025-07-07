@@ -8,24 +8,24 @@ import (
 )
 
 type HttpTokenRoundTripper struct {
-	Token      string
-	HeaderName string     // e.g. "Authorization"
-	Scheme     string     // e.g. "Bearer", or "" if raw token
-	GetToken   GetTokenFn // Function to get the token dynamically
-	Next       http.RoundTripper
+	token      string     //nolint:unused
+	headerName string     // e.g. "Authorization"
+	scheme     string     // e.g. "Bearer", or "" if raw token
+	getToken   GetTokenFn // Function to get the token dynamically
+	next       http.RoundTripper
 }
 
 func (tripper *HttpTokenRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	newReq := req.Clone(req.Context())
-	token, err := tripper.GetToken(newReq)
+	token, err := tripper.getToken(newReq)
 	if err != nil {
 		return nil, err
 	}
 
-	newReq.Header.Set(tripper.HeaderName, *token)
-	if utils.NotEmpty(tripper.Scheme) {
-		newReq.Header.Set(tripper.HeaderName, fmt.Sprintf("%s %s", tripper.Scheme, *token))
+	newReq.Header.Set(tripper.headerName, *token)
+	if utils.NotEmpty(tripper.scheme) {
+		newReq.Header.Set(tripper.headerName, fmt.Sprintf("%s %s", tripper.scheme, *token))
 	}
 
-	return tripper.Next.RoundTrip(newReq)
+	return tripper.next.RoundTrip(newReq)
 }

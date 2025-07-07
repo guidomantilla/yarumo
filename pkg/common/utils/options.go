@@ -3,14 +3,14 @@ package utils
 import "golang.org/x/text/language"
 
 type Options struct {
-	Charset string
-	Lang    language.Tag
+	charset string
+	lang    language.Tag
 }
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		Charset: AllCharset,
-		Lang:    language.English,
+		charset: AllCharset,
+		lang:    language.English,
 	}
 
 	for _, opt := range opts {
@@ -25,7 +25,7 @@ type Option func(opts *Options)
 func WithCharset(charset string) Option {
 	return func(opts *Options) {
 		if NotEmpty(charset) {
-			opts.Charset = charset
+			opts.charset = charset
 		}
 
 	}
@@ -33,6 +33,6 @@ func WithCharset(charset string) Option {
 
 func WithLanguage(lang language.Tag) Option {
 	return func(opts *Options) {
-		opts.Lang = lang
+		opts.lang = lang
 	}
 }

@@ -9,7 +9,7 @@ const (
 )
 
 type ScryptEncoderOptions struct {
-	N          int
+	n          int
 	r          int
 	p          int
 	saltLength int
@@ -18,7 +18,7 @@ type ScryptEncoderOptions struct {
 
 func NewScryptEncoderOptions(opts ...ScryptEncoderOption) *ScryptEncoderOptions {
 	options := &ScryptEncoderOptions{
-		N:          ScryptN,
+		n:          ScryptN,
 		r:          ScryptR,
 		p:          ScryptP,
 		saltLength: ScryptSaltLength,
@@ -37,7 +37,7 @@ type ScryptEncoderOption func(opts *ScryptEncoderOptions)
 func WithScryptN(N int) ScryptEncoderOption {
 	return func(opts *ScryptEncoderOptions) {
 		if N > ScryptN {
-			opts.N = N
+			opts.n = N
 		}
 	}
 }

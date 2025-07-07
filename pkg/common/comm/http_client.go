@@ -33,8 +33,8 @@ func NewHTTPClient(opts ...HttpClientOption) HTTPClient {
 	options := NewHttpClientOptions(opts...)
 	return &httpClient{
 		Client: http.Client{
-			Timeout:   options.Timeout,
-			Transport: options.Transport,
+			Timeout:   options.timeout,
+			Transport: options.transport,
 		},
 	}
 }

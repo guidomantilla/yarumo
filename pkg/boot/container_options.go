@@ -16,45 +16,45 @@ import (
 )
 
 type ContainerOptions struct {
-	AppName                string
-	AppVersion             string
-	Config                 any
-	Logger                 zerolog.Logger
-	Hasher                 hashes.HashFn
-	UIDGen                 uids.UIDFn
-	Validator              *validator.Validate
-	PasswordEncoder        passwords.Encoder
-	PasswordGenerator      passwords.Generator
-	PasswordManager        passwords.Manager
-	TokenGenerator         tokens.Generator
-	Cipher                 cryptos.Cipher
-	RateLimiterRegistry    *resilience.RateLimiterRegistry
-	CircuitBreakerRegistry *resilience.CircuitBreakerRegistry
-	HttpClient             comm.HTTPClient
+	appName                string
+	appVersion             string
+	config                 any
+	logger                 zerolog.Logger
+	hasher                 hashes.HashFn
+	uidGen                 uids.UIDFn
+	validator              *validator.Validate
+	passwordEncoder        passwords.Encoder
+	passwordGenerator      passwords.Generator
+	passwordManager        passwords.Manager
+	tokenGenerator         tokens.Generator
+	cipher                 cryptos.Cipher
+	rateLimiterRegistry    *resilience.RateLimiterRegistry
+	circuitBreakerRegistry *resilience.CircuitBreakerRegistry
+	httpClient             comm.HTTPClient
 	more                   map[string]any
 }
 
 func NewContainerOptions[C any](name string, version string, opts ...ContainerOption) *ContainerOptions {
 	options := &ContainerOptions{
-		AppName:                name,
-		AppVersion:             version,
-		Hasher:                 hashes.BLAKE2b_512,
-		UIDGen:                 uids.UUIDv7,
-		Logger:                 clog.Configure(name, version),
-		Config:                 pointer.Zero[C](),
-		Validator:              validator.New(),
-		PasswordEncoder:        passwords.NewBcryptEncoder(),
-		PasswordGenerator:      passwords.NewGenerator(),
-		PasswordManager:        nil,
-		TokenGenerator:         tokens.NewJwtGenerator(tokens.WithJwtIssuer(name)),
-		Cipher:                 cryptos.NewAesCipher(),
-		RateLimiterRegistry:    resilience.NewRateLimiterRegistry(),
-		CircuitBreakerRegistry: resilience.NewCircuitBreakerRegistry(),
-		HttpClient:             comm.NewHTTPClient(),
+		appName:                name,
+		appVersion:             version,
+		hasher:                 hashes.BLAKE2b_512,
+		uidGen:                 uids.UUIDv7,
+		logger:                 clog.Configure(name, version),
+		config:                 pointer.Zero[C](),
+		validator:              validator.New(),
+		passwordEncoder:        passwords.NewBcryptEncoder(),
+		passwordGenerator:      passwords.NewGenerator(),
+		passwordManager:        nil,
+		tokenGenerator:         tokens.NewJwtGenerator(tokens.WithJwtIssuer(name)),
+		cipher:                 cryptos.NewAesCipher(),
+		rateLimiterRegistry:    resilience.NewRateLimiterRegistry(),
+		circuitBreakerRegistry: resilience.NewCircuitBreakerRegistry(),
+		httpClient:             comm.NewHTTPClient(),
 		more:                   make(map[string]any),
 	}
 
-	options.PasswordManager = passwords.NewManager(options.PasswordEncoder, options.PasswordGenerator)
+	options.passwordManager = passwords.NewManager(options.passwordEncoder, options.passwordGenerator)
 
 	for _, opt := range opts {
 		opt(options)
