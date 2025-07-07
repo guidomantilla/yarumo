@@ -6,7 +6,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/guidomantilla/yarumo/pkg/common/comm"
+	"github.com/guidomantilla/yarumo/pkg/comm"
 )
 
 type HttpMetricsRoundTripper struct {

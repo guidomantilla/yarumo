@@ -3,7 +3,6 @@ package comm
 import (
 	"errors"
 	"fmt"
-	resilience2 "github.com/guidomantilla/yarumo/pkg/resilience"
 	"net/http"
 	"time"
 
@@ -12,16 +11,17 @@ import (
 	"github.com/sony/gobreaker"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
+	resilience "github.com/guidomantilla/yarumo/pkg/resilience"
 )
 
 type HttpTransport struct {
 	maxRetries             uint
-	rateLimiterRegistry    *resilience2.RateLimiterRegistry
-	circuitBreakerRegistry *resilience2.CircuitBreakerRegistry
+	rateLimiterRegistry    *resilience.RateLimiterRegistry
+	circuitBreakerRegistry *resilience.CircuitBreakerRegistry
 	next                   http.RoundTripper
 }
 
-func NewHttpTransport(rateLimiterRegistry *resilience2.RateLimiterRegistry, circuitBreakerRegistry *resilience2.CircuitBreakerRegistry, opts ...HttpTransportOption) *HttpTransport {
+func NewHttpTransport(rateLimiterRegistry *resilience.RateLimiterRegistry, circuitBreakerRegistry *resilience.CircuitBreakerRegistry, opts ...HttpTransportOption) *HttpTransport {
 	assert.NotEmpty(rateLimiterRegistry, fmt.Sprintf("%s - error creating: rateLimiterRegistry is empty", "http-transport"))
 	assert.NotEmpty(circuitBreakerRegistry, fmt.Sprintf("%s - error creating: circuitBreakerRegistry is empty", "http-transport"))
 	options := NewHttpTransportOptions(opts...)

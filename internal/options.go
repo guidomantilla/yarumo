@@ -8,7 +8,7 @@ import (
 
 	"github.com/guidomantilla/yarumo/internal/core"
 	"github.com/guidomantilla/yarumo/pkg/boot"
-	"github.com/guidomantilla/yarumo/pkg/common/comm"
+	comm "github.com/guidomantilla/yarumo/pkg/comm"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
 	"github.com/guidomantilla/yarumo/pkg/security/tokens"
