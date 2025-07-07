@@ -26,6 +26,10 @@ func NewScryptEncoder(opts ...ScryptEncoderOption) Encoder {
 
 func (encoder *scryptEncoder) Encode(rawPassword string) (*string, error) {
 
+	if rawPassword == "" {
+		return nil, ErrRawPasswordIsEmpty
+	}
+
 	salt, err := GenerateSalt(encoder.saltLength)
 	if err != nil {
 		return nil, err
@@ -45,6 +49,10 @@ func (encoder *scryptEncoder) Matches(encodedPassword string, rawPassword string
 
 	if rawPassword == "" {
 		return nil, ErrRawPasswordIsEmpty
+	}
+
+	if encodedPassword == "" {
+		return nil, ErrEncodedPasswordIsEmpty
 	}
 
 	if !strings.HasPrefix(encodedPassword, ScryptPrefixKey) {

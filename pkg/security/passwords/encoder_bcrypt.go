@@ -17,12 +17,12 @@ func NewBcryptEncoder(opts ...BcryptEncoderOption) Encoder {
 
 func (encoder *bcryptEncoder) Encode(rawPassword string) (*string, error) {
 
-	if encoder.cost < bcrypt.MinCost || encoder.cost > bcrypt.MaxCost {
-		return nil, ErrBcryptCostNotAllowed
-	}
-
 	if rawPassword == "" {
 		return nil, ErrRawPasswordIsEmpty
+	}
+
+	if encoder.cost < bcrypt.MinCost || encoder.cost > bcrypt.MaxCost {
+		return nil, ErrBcryptCostNotAllowed
 	}
 
 	bytes, err := bcrypt.GenerateFromPassword([]byte(rawPassword), encoder.cost)

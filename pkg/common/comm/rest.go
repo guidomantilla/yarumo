@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/guidomantilla/yarumo/pkg/common/assert"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
@@ -18,6 +19,7 @@ type restClient struct {
 }
 
 func NewRESTClient(url string, opts ...RestOption) RESTClient {
+	assert.NotEmpty(url, fmt.Sprintf("%s - error creating: url is empty", "rest-client"))
 	options := NewRestOptions(opts...)
 	return &restClient{
 		url:              url,

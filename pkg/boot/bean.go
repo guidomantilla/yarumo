@@ -1,21 +1,13 @@
 package boot
 
 import (
-	"time"
-
-	validator "github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
-	"github.com/guidomantilla/yarumo/pkg/common/comm"
 	clog "github.com/guidomantilla/yarumo/pkg/common/log"
-	"github.com/guidomantilla/yarumo/pkg/common/uids"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
-	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
-	"github.com/guidomantilla/yarumo/pkg/security/hashes"
 	"github.com/guidomantilla/yarumo/pkg/security/passwords"
-	"github.com/guidomantilla/yarumo/pkg/security/tokens"
 )
 
 var (
@@ -26,8 +18,11 @@ var (
 	_ BeanFn = Validator
 	_ BeanFn = PasswordEncoder
 	_ BeanFn = PasswordGenerator
+	_ BeanFn = PasswordManager
 	_ BeanFn = TokenGenerator
 	_ BeanFn = Cipher
+	_ BeanFn = RateLimiterRegistry
+	_ BeanFn = BreakerRegistry
 	_ BeanFn = HttpClient
 )
 
@@ -35,14 +30,12 @@ type BeanFn func(container *Container)
 
 //
 
-func Hasher(container *Container) {
+func Hasher(_ *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "hasher").Msg("hasher function not implemented. using BLAKE2b-512 hasher")
-	container.Hasher = hashes.BLAKE2b_512
 }
 
-func UIDGen(container *Container) {
+func UIDGen(_ *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "uid-generator").Msg("uid generator function not implemented. using UUIDv7 uid generator")
-	container.UIDGen = uids.UUIDv7
 }
 
 func Logger(container *Container) {
@@ -65,44 +58,39 @@ func Config(_ *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "configuration").Msg("config function not implemented. using default configuration")
 }
 
-func Validator(container *Container) {
+func Validator(_ *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "validation").Msg("validator function not implemented. using default validator")
-	container.Validator = validator.New()
 }
 
-func PasswordEncoder(container *Container) {
+func PasswordEncoder(_ *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "password-encoder").Msg("password encoder function not implemented. using bcrypt password encoder")
-	container.PasswordEncoder = passwords.NewBcryptEncoder()
 }
 
-func PasswordGenerator(container *Container) {
+func PasswordGenerator(_ *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "password-generator").Msg("password generator function not implemented. using default password generator")
-	container.PasswordGenerator = passwords.NewGenerator()
 }
 
-func TokenGenerator(container *Container) {
+func PasswordManager(container *Container) {
+	log.Warn().Str("stage", "startup").Str("component", "password-manager").Msg("password manager function not implemented. using default password manager")
+	container.PasswordManager = passwords.NewManager(container.PasswordEncoder, container.PasswordGenerator)
+}
+
+func TokenGenerator(_ *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "token-generator").Msg("token generator function not implemented. using jwt token generator")
-
-	issuer := tokens.WithJwtIssuer(container.AppName)
-
-	timeout := tokens.WithJwtTimeout(utils.Coalesce(viper.GetDuration("TOKEN_TIMEOUT"), 24*time.Hour))
-
-	container.TokenGenerator = tokens.NewJwtGenerator(issuer, timeout)
 }
 
-func Cipher(container *Container) {
+func Cipher(_ *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "cipher").Msg("cipher function not implemented. using default cipher")
-	container.Cipher = cryptos.NewAesCipher()
 }
 
-func HttpClient(container *Container) {
+func RateLimiterRegistry(_ *Container) {
+	log.Warn().Str("stage", "startup").Str("component", "rate-limiter-registry").Msg("rate limiter registry function not implemented. using default rate limiter registry")
+}
+
+func BreakerRegistry(_ *Container) {
+	log.Warn().Str("stage", "startup").Str("component", "circuit-breaker-registry").Msg("circuit breaker registry function not implemented. using default circuit breaker registry")
+}
+
+func HttpClient(_ *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "http-client").Msg("http client function not implemented. using zero global timeout http client")
-
-	maxRetries := comm.WithHttpTransportMaxRetries(utils.Coalesce(uint(viper.GetInt("HTTP_CLIENT_MAX_RETRIES")), 3)) //nolint:gosec
-
-	transport := comm.WithHttpClientTransport(comm.NewHttpTransport(maxRetries))
-
-	timeout := comm.WithHttpClientTimeout(utils.Coalesce(viper.GetDuration("HTTP_CLIENT_TIMEOUT"), 0))
-
-	container.HttpClient = comm.NewHTTPClient(timeout, transport)
 }

@@ -3,32 +3,38 @@ package boot
 import "github.com/guidomantilla/yarumo/pkg/common/utils"
 
 type WireContextOptions struct {
-	Hasher            BeanFn
-	UIDGen            BeanFn
-	Logger            BeanFn
-	Config            BeanFn
-	Validator         BeanFn
-	PasswordEncoder   BeanFn
-	PasswordGenerator BeanFn
-	TokenGenerator    BeanFn
-	Cipher            BeanFn
-	HttpClient        BeanFn
-	More              []BeanFn
+	Hasher                 BeanFn
+	UIDGen                 BeanFn
+	Logger                 BeanFn
+	Config                 BeanFn
+	Validator              BeanFn
+	PasswordEncoder        BeanFn
+	PasswordGenerator      BeanFn
+	PasswordManager        BeanFn
+	TokenGenerator         BeanFn
+	Cipher                 BeanFn
+	RateLimiterRegistry    BeanFn
+	CircuitBreakerRegistry BeanFn
+	HttpClient             BeanFn
+	More                   []BeanFn
 }
 
 func NewOptions(opts ...WireContextOption) *WireContextOptions {
 	options := &WireContextOptions{
-		Hasher:            Hasher,
-		UIDGen:            UIDGen,
-		Logger:            Logger,
-		Config:            Config,
-		Validator:         Validator,
-		PasswordEncoder:   PasswordEncoder,
-		PasswordGenerator: PasswordGenerator,
-		TokenGenerator:    TokenGenerator,
-		Cipher:            Cipher,
-		HttpClient:        HttpClient,
-		More:              make([]BeanFn, 0),
+		Hasher:                 Hasher,
+		UIDGen:                 UIDGen,
+		Logger:                 Logger,
+		Config:                 Config,
+		Validator:              Validator,
+		PasswordEncoder:        PasswordEncoder,
+		PasswordGenerator:      PasswordGenerator,
+		PasswordManager:        PasswordManager,
+		TokenGenerator:         TokenGenerator,
+		Cipher:                 Cipher,
+		RateLimiterRegistry:    RateLimiterRegistry,
+		CircuitBreakerRegistry: BreakerRegistry,
+		HttpClient:             HttpClient,
+		More:                   make([]BeanFn, 0),
 	}
 
 	for _, opt := range opts {
@@ -117,6 +123,18 @@ func WithPasswordGenerator(passwordGeneratorFn BeanFn) WireContextOption {
 	}
 }
 
+// WithPasswordManager allows setting a custom password manager function into the WireContext (wctx *boot.WireContext).
+// This function is a combination of password encoder and password generator.
+//
+// wctx.PasswordManager = <password manager object>
+func WithPasswordManager(passwordManagerFn BeanFn) WireContextOption {
+	return func(opts *WireContextOptions) {
+		if utils.NotNil(passwordManagerFn) {
+			opts.PasswordManager = passwordManagerFn
+		}
+	}
+}
+
 // WithTokenGenerator allows setting a custom token generator function into the WireContext (wctx *boot.WireContext).
 //
 // wctx.TokenGenerator = <token generator object>
@@ -135,6 +153,28 @@ func WithCipher(cipherFn BeanFn) WireContextOption {
 	return func(opts *WireContextOptions) {
 		if utils.NotNil(cipherFn) {
 			opts.Cipher = cipherFn
+		}
+	}
+}
+
+// WithRateLimiterRegistry allows setting a custom rate limiter registry function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.RateLimiterRegistry = <rate limiter registry object>
+func WithRateLimiterRegistry(rateLimiterRegistryFn BeanFn) WireContextOption {
+	return func(opts *WireContextOptions) {
+		if utils.NotNil(rateLimiterRegistryFn) {
+			opts.RateLimiterRegistry = rateLimiterRegistryFn
+		}
+	}
+}
+
+// WithCircuitBreakerRegistry allows setting a custom circuit breaker registry function into the WireContext (wctx *boot.WireContext).
+//
+// wctx.WithCircuitBreakerRegistry = <circuit breaker registry object>
+func WithCircuitBreakerRegistry(circuitBreakerRegistryFn BeanFn) WireContextOption {
+	return func(opts *WireContextOptions) {
+		if utils.NotNil(circuitBreakerRegistryFn) {
+			opts.CircuitBreakerRegistry = circuitBreakerRegistryFn
 		}
 	}
 }

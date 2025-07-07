@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/guidomantilla/yarumo/pkg/common/resilience"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
@@ -15,7 +16,7 @@ type HttpClientOptions struct {
 func NewHttpClientOptions(opts ...HttpClientOption) *HttpClientOptions {
 	options := &HttpClientOptions{
 		Timeout:   0,
-		Transport: NewHttpTransport(),
+		Transport: NewHttpTransport(resilience.NewRateLimiterRegistry(), resilience.NewCircuitBreakerRegistry()),
 	}
 
 	for _, opt := range opts {
@@ -33,7 +34,7 @@ func WithHttpClientTimeout(timeout time.Duration) HttpClientOption {
 	}
 }
 
-func WithHttpClientTransport(transport http.RoundTripper) HttpClientOption {
+func WithHttpClientTransport(transport *HttpTransport) HttpClientOption {
 	return func(opts *HttpClientOptions) {
 		if utils.NotNil(transport) {
 			opts.Transport = transport

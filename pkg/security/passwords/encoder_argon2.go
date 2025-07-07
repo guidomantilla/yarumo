@@ -25,14 +25,18 @@ func NewArgon2Encoder(opts ...Argon2EncoderOption) Encoder {
 	}
 }
 
-func (encoder *argon2Encoder) Encode(raw string) (*string, error) {
+func (encoder *argon2Encoder) Encode(rawPassword string) (*string, error) {
+
+	if rawPassword == "" {
+		return nil, ErrRawPasswordIsEmpty
+	}
 
 	salt, err := GenerateSalt(encoder.saltLength)
 	if err != nil {
 		return nil, err
 	}
 
-	value, err := Argon2Encode(raw, salt, encoder.iterations, encoder.memory, encoder.threads, encoder.keyLength)
+	value, err := Argon2Encode(rawPassword, salt, encoder.iterations, encoder.memory, encoder.threads, encoder.keyLength)
 	if err != nil {
 		return nil, err
 	}
@@ -42,42 +46,46 @@ func (encoder *argon2Encoder) Encode(raw string) (*string, error) {
 	return &encoded, nil
 }
 
-func (encoder *argon2Encoder) Matches(encoded string, raw string) (*bool, error) {
+func (encoder *argon2Encoder) Matches(encodedPassword string, rawPassword string) (*bool, error) {
 
-	if raw == "" {
+	if rawPassword == "" {
 		return nil, ErrRawPasswordIsEmpty
 	}
 
-	if !strings.HasPrefix(encoded, Argon2PrefixKey) {
+	if encodedPassword == "" {
+		return nil, ErrEncodedPasswordIsEmpty
+	}
+
+	if !strings.HasPrefix(encodedPassword, Argon2PrefixKey) {
 		return nil, ErrEncodedPasswordNotAllowed
 	}
 
-	_, _, iterations, memory, threads, salt, key, err := Argon2Decode(encoded)
+	_, _, iterations, memory, threads, salt, key, err := Argon2Decode(encodedPassword)
 	if err != nil {
 		return nil, err
 	}
 
-	newEncoded, err := Argon2Encode(raw, salt, *iterations, *memory, *threads, len(key))
+	newEncoded, err := Argon2Encode(rawPassword, salt, *iterations, *memory, *threads, len(key))
 	if err != nil {
 		return nil, err
 	}
 
-	encoded = strings.Replace(encoded, Argon2PrefixKey, "", 1)
-	matched := encoded == *(newEncoded)
+	encodedPassword = strings.Replace(encodedPassword, Argon2PrefixKey, "", 1)
+	matched := encodedPassword == *(newEncoded)
 	return &matched, nil
 }
 
-func (encoder *argon2Encoder) UpgradeEncoding(encoded string) (*bool, error) {
+func (encoder *argon2Encoder) UpgradeEncoding(encodedPassword string) (*bool, error) {
 
-	if encoded == "" {
+	if encodedPassword == "" {
 		return nil, ErrRawPasswordIsEmpty
 	}
 
-	if !strings.HasPrefix(encoded, Argon2PrefixKey) {
+	if !strings.HasPrefix(encodedPassword, Argon2PrefixKey) {
 		return nil, ErrEncodedPasswordNotAllowed
 	}
 
-	_, version, iterations, memory, threads, salt, key, err := Argon2Decode(encoded)
+	_, version, iterations, memory, threads, salt, key, err := Argon2Decode(encodedPassword)
 	if err != nil {
 		return nil, err
 	}

@@ -34,6 +34,10 @@ func NewPbkdf2Encoder(opts ...Pbkdf2EncoderOption) Encoder {
 
 func (encoder *pbkdf2Encoder) Encode(rawPassword string) (*string, error) {
 
+	if rawPassword == "" {
+		return nil, ErrRawPasswordIsEmpty
+	}
+
 	salt, err := GenerateSalt(encoder.saltLength)
 	if err != nil {
 		return nil, err
@@ -53,6 +57,10 @@ func (encoder *pbkdf2Encoder) Matches(encodedPassword string, rawPassword string
 
 	if rawPassword == "" {
 		return nil, ErrRawPasswordIsEmpty
+	}
+
+	if encodedPassword == "" {
+		return nil, ErrEncodedPasswordIsEmpty
 	}
 
 	if !strings.HasPrefix(encodedPassword, Pbkdf2PrefixKey) {

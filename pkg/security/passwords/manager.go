@@ -1,6 +1,8 @@
 package passwords
 
 import (
+	"fmt"
+
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
 )
 
@@ -10,8 +12,8 @@ type manager struct {
 }
 
 func NewManager(encoder Encoder, generator Generator) Manager {
-	assert.NotNil(encoder, "starting up - error setting up manager: encoder is nil")
-	assert.NotNil(generator, "starting up - error setting up manager: generator is nil")
+	assert.NotNil(encoder, fmt.Sprintf("%s - error creating: encoder is nil", "rest-client"))
+	assert.NotNil(generator, fmt.Sprintf("%s - error creating: generator is nil", "rest-client"))
 
 	return &manager{
 		encoder:   encoder,

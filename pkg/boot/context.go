@@ -40,7 +40,7 @@ func NewWireContext[C any](name string, version string, opts ...WireContextOptio
 
 	viper.AutomaticEnv()
 	options := NewOptions(opts...)
-	container := NewContainer[C]()
+	container := NewContainer[C](name, version)
 
 	logger.Info().Msg("starting")
 	defer logger.Info().Msg("started")
@@ -66,11 +66,20 @@ func NewWireContext[C any](name string, version string, opts ...WireContextOptio
 	options.PasswordGenerator(container)
 	logger.Info().Msg("password generator set up")
 
+	options.PasswordManager(container)
+	logger.Info().Msg("password manager set up")
+
 	options.TokenGenerator(container)
 	logger.Info().Msg("token generator set up")
 
 	options.Cipher(container)
 	logger.Info().Msg("cipher set up")
+
+	options.RateLimiterRegistry(container)
+	logger.Info().Msg("rate limiter registry set up")
+
+	options.CircuitBreakerRegistry(container)
+	logger.Info().Msg("circuit breaker registry set up")
 
 	options.HttpClient(container)
 	logger.Info().Msg("http client set up")

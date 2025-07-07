@@ -1,23 +1,34 @@
 package comm
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	retry "github.com/avast/retry-go/v4"
 	"github.com/rs/zerolog/log"
+	"github.com/sony/gobreaker"
+
+	"github.com/guidomantilla/yarumo/pkg/common/assert"
+	"github.com/guidomantilla/yarumo/pkg/common/resilience"
 )
 
 type HttpTransport struct {
-	MaxRetries uint
-	Next       http.RoundTripper
+	MaxRetries             uint
+	RateLimiterRegistry    *resilience.RateLimiterRegistry
+	CircuitBreakerRegistry *resilience.CircuitBreakerRegistry
+	Next                   http.RoundTripper
 }
 
-func NewHttpTransport(opts ...HttpTransportOption) *HttpTransport {
+func NewHttpTransport(rateLimiterRegistry *resilience.RateLimiterRegistry, circuitBreakerRegistry *resilience.CircuitBreakerRegistry, opts ...HttpTransportOption) *HttpTransport {
+	assert.NotEmpty(rateLimiterRegistry, fmt.Sprintf("%s - error creating: rateLimiterRegistry is empty", "http-transport"))
+	assert.NotEmpty(circuitBreakerRegistry, fmt.Sprintf("%s - error creating: circuitBreakerRegistry is empty", "http-transport"))
 	options := NewHttpTransportOptions(opts...)
 	return &HttpTransport{
-		MaxRetries: options.MaxRetries,
+		MaxRetries:             options.MaxRetries,
+		RateLimiterRegistry:    rateLimiterRegistry,
+		CircuitBreakerRegistry: circuitBreakerRegistry,
 		Next: &http.Transport{
 			TLSClientConfig:       options.TLSClientConfig,
 			MaxIdleConns:          options.MaxIdleConns,
@@ -50,10 +61,32 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 	}
 
 	retryableCall := func() (*http.Response, error) {
-		return transport.Next.RoundTrip(req)
+		limiter := transport.RateLimiterRegistry.Get(fmt.Sprintf("http-transport-rate-limiter-%s", req.URL.Host))
+		err := limiter.Wait(req.Context())
+		if err != nil {
+			return nil, fmt.Errorf("rate limit exceeded: %w", err)
+		}
+
+		breaker := transport.CircuitBreakerRegistry.Get(fmt.Sprintf("http-transport-circuit-breaker-%s", req.URL.Host))
+		res, err := breaker.Execute(func() (any, error) {
+			return transport.Next.RoundTrip(req)
+		})
+		if err != nil {
+			return nil, fmt.Errorf("circuit breaker open or request failed: %w", err)
+		}
+
+		httpRes, ok := res.(*http.Response)
+		if !ok || httpRes == nil {
+			return nil, fmt.Errorf("unexpected result from breaker: %T", res)
+		}
+
+		return httpRes, nil
 	}
 
 	res, err := retry.DoWithData(retryableCall, retry.Attempts(transport.MaxRetries-1),
+		retry.RetryIf(func(err error) bool {
+			return !errors.Is(err, gobreaker.ErrOpenState)
+		}),
 		retry.OnRetry(func(_ uint, err error) {
 			logger.Error().Err(err).Msg("HTTP request failed")
 		}),
