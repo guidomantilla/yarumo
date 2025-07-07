@@ -42,23 +42,8 @@ func NewHttpTransport(rateLimiterRegistry *resilience.RateLimiterRegistry, circu
 	}
 }
 
-func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+func (transport *HttpTransport) Do(req *http.Request) (*http.Response, error) {
 	logger := log.With().Str("stage", "runtime").Str("component", "http-transport").Str("method", req.Method).Stringer("url", req.URL).Logger()
-	start := time.Now()
-
-	reqBody := []byte("{}")
-	reqHeaders := MustJsonMarshalSanitized(req.Header)
-	if req.Body != nil {
-		body, buffer, err := ToReadNopCloser(req.Body)
-		if err != nil {
-			err = fmt.Errorf("error reading request body: %w", err)
-			logger.Error().Err(err).Msg("error reading request body")
-			logger.Trace().RawJSON("req-headers", reqHeaders).Err(err).Msg("error reading request body")
-			return nil, err
-		}
-		reqBody = buffer
-		req.Body = body
-	}
 
 	retryableCall := func() (*http.Response, error) {
 		limiter := transport.RateLimiterRegistry.Get(fmt.Sprintf("http-transport-rate-limiter-%s", req.URL.Host))
@@ -83,7 +68,7 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 		return httpRes, nil
 	}
 
-	res, err := retry.DoWithData(retryableCall, retry.Attempts(transport.MaxRetries-1),
+	return retry.DoWithData(retryableCall, retry.Attempts(transport.MaxRetries-1),
 		retry.RetryIf(func(err error) bool {
 			return !errors.Is(err, gobreaker.ErrOpenState)
 		}),
@@ -91,7 +76,26 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 			logger.Error().Err(err).Msg("HTTP request failed")
 		}),
 	)
+}
 
+func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	logger := log.With().Str("stage", "runtime").Str("component", "http-transport").Str("method", req.Method).Stringer("url", req.URL).Logger()
+	start := time.Now()
+
+	reqHeaders, reqBody := MustJsonMarshalSanitized(req.Header), []byte("{}")
+	if req.Body != nil {
+		body, buffer, err := ToReadNopCloser(req.Body)
+		if err != nil {
+			err = fmt.Errorf("error reading request body: %w", err)
+			logger.Error().Err(err).Msg("error reading request body")
+			logger.Trace().RawJSON("req-headers", reqHeaders).Err(err).Msg("error reading request body")
+			return nil, err
+		}
+		reqBody = buffer
+		req.Body = body
+	}
+
+	res, err := transport.Do(req)
 	if err != nil {
 		err = fmt.Errorf("HTTP request failed after %d retries: %w", transport.MaxRetries, err)
 		logger.Error().Err(err).Msg(fmt.Sprintf("HTTP request failed after %d retries", transport.MaxRetries))
@@ -101,8 +105,7 @@ func (transport *HttpTransport) RoundTrip(req *http.Request) (*http.Response, er
 		return nil, err
 	}
 
-	resBody := []byte("{}")
-	resHeaders := MustJsonMarshalSanitized(res.Header)
+	resHeaders, resBody := MustJsonMarshalSanitized(res.Header), []byte("{}")
 	if res.Body != nil {
 		body, buffer, err := ToReadNopCloser(res.Body)
 		if err != nil {
