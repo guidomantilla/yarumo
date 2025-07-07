@@ -36,23 +36,23 @@ func Context[C any]() (*WireContext[C], error) {
 func NewWireContext[C any](name string, version string, opts ...WireContextOption) *WireContext[C] {
 	assert.NotEmpty(name, fmt.Sprintf("%s - error creating: appName is empty", "context"))
 	assert.NotEmpty(version, fmt.Sprintf("%s - error creating: appName is empty", "context"))
-	logger := log.With().Str("stage", "startup").Str("component", "context").Logger()
 
 	viper.AutomaticEnv()
 	options := NewOptions(opts...)
 	container := NewContainer[C](name, version)
+	logger := log.With().Str("stage", "startup").Str("component", "context").Logger()
 
 	logger.Info().Msg("starting")
 	defer logger.Info().Msg("started")
+
+	options.Logger(container)
+	logger.Info().Msg("logger set up")
 
 	options.Hasher(container)
 	logger.Info().Msg("hasher set up")
 
 	options.UIDGen(container)
 	logger.Info().Msg("uid generator set up")
-
-	options.Logger(container)
-	logger.Info().Msg("logger set up")
 
 	options.Config(container)
 	logger.Info().Msg("configuration set up")

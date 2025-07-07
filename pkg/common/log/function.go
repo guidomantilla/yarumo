@@ -1,17 +1,23 @@
 package log
 
 import (
-	"os"
-
+	"fmt"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"net"
 
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
 func Configure(name string, version string, opts ...Option) zerolog.Logger {
+
+	conn, err := net.Dial("tcp", "localhost:5044")
+	if err != nil {
+		fmt.Println("Error connecting to the server:", err)
+	}
+
 	options := NewOptions(opts...)
-	logger := zerolog.New(os.Stderr).With()
+	logger := zerolog.New(conn).With()
 
 	if utils.NotEmpty(name) {
 		logger = logger.Str("name", name)

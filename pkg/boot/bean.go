@@ -30,14 +30,6 @@ type BeanFn func(container *Container)
 
 //
 
-func Hasher(_ *Container) {
-	log.Warn().Str("stage", "startup").Str("component", "hasher").Msg("hasher function not implemented. using BLAKE2b-512 hasher")
-}
-
-func UIDGen(_ *Container) {
-	log.Warn().Str("stage", "startup").Str("component", "uid-generator").Msg("uid generator function not implemented. using UUIDv7 uid generator")
-}
-
 func Logger(container *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "logger").Msg("logger function not implemented. using default logger")
 
@@ -52,6 +44,14 @@ func Logger(container *Container) {
 	globalLevel := clog.WithGlobalLevel(logLevel)
 
 	container.Logger = clog.Configure(container.AppName, container.AppVersion, caller, globalLevel)
+}
+
+func Hasher(_ *Container) {
+	log.Warn().Str("stage", "startup").Str("component", "hasher").Msg("hasher function not implemented. using BLAKE2b-512 hasher")
+}
+
+func UIDGen(_ *Container) {
+	log.Warn().Str("stage", "startup").Str("component", "uid-generator").Msg("uid generator function not implemented. using UUIDv7 uid generator")
 }
 
 func Config(_ *Container) {
