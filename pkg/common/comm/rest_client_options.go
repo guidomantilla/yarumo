@@ -2,15 +2,15 @@ package comm
 
 import "net/http"
 
-type RestOptions struct {
+type RestClientOptions struct {
 	http             HTTPClient
 	headers          http.Header
 	statusCodeErrors []int
 	statusCodeOK     []int
 }
 
-func NewRestOptions(opts ...RestOption) *RestOptions {
-	options := &RestOptions{
+func NewRestClientOptions(opts ...RestClientOption) *RestClientOptions {
+	options := &RestClientOptions{
 		http: http.DefaultClient,
 		headers: http.Header{
 			"Content-Type": []string{"application/json"},
@@ -30,28 +30,28 @@ func NewRestOptions(opts ...RestOption) *RestOptions {
 	return options
 }
 
-type RestOption func(opts *RestOptions)
+type RestClientOption func(opts *RestClientOptions)
 
-func WithHTTPClient(client HTTPClient) RestOption {
-	return func(opts *RestOptions) {
+func WithHTTPClient(client HTTPClient) RestClientOption {
+	return func(opts *RestClientOptions) {
 		opts.http = client
 	}
 }
 
-func WithHeaders(headers http.Header) RestOption {
-	return func(opts *RestOptions) {
+func WithHeaders(headers http.Header) RestClientOption {
+	return func(opts *RestClientOptions) {
 		opts.headers = headers
 	}
 }
 
-func WithStatusCodeErrors(codes []int) RestOption {
-	return func(opts *RestOptions) {
+func WithStatusCodeErrors(codes []int) RestClientOption {
+	return func(opts *RestClientOptions) {
 		opts.statusCodeErrors = codes
 	}
 }
 
-func WithStatusCodeOK(codes []int) RestOption {
-	return func(opts *RestOptions) {
+func WithStatusCodeOK(codes []int) RestClientOption {
+	return func(opts *RestClientOptions) {
 		opts.statusCodeOK = codes
 	}
 }

@@ -18,9 +18,9 @@ type restClient struct {
 	statusCodeOK     []int
 }
 
-func NewRESTClient(url string, opts ...RestOption) RESTClient {
+func NewRESTClient(url string, opts ...RestClientOption) RESTClient {
 	assert.NotEmpty(url, fmt.Sprintf("%s - error creating: url is empty", "rest-client"))
-	options := NewRestOptions(opts...)
+	options := NewRestClientOptions(opts...)
 	return &restClient{
 		url:              url,
 		http:             options.http,
