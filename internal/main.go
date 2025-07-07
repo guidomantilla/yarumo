@@ -29,7 +29,7 @@ func main() {
 		defer cancel()
 
 		rest := comm.NewRESTClient("https://fakerestapi.azurewebsites.net", comm.WithHTTPClient(wctx.HttpClient))
-		resp, err := rest.Call(timeoutCtx, http.MethodGet, "/api/v1/Activities", nil)
+		resp, err := rest.Call(timeoutCtx, http.MethodGet, "/api/v1/Activities/1", nil)
 		if err != nil {
 			return fmt.Errorf("error making request: %w", err)
 		}
