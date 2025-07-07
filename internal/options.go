@@ -30,7 +30,7 @@ func Config() boot.BeanFn {
 		config := container.Config.(core.Config)
 
 		config.DebugMode = utils.Coalesce(viper.GetBool("DEBUG_MODE"), false)
-		config.LogLevel = container.Logger.GetLevel().String()
+		//config.LogLevel = container.Logger.GetLevel().String()
 
 		container.Config = config
 	}

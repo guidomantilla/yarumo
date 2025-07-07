@@ -1,24 +1,28 @@
 package log
 
 import (
-	"fmt"
+	"io"
+	"net"
+	"os"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"net"
+	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
-func Configure(name string, version string, opts ...Option) zerolog.Logger {
+func Configure(name string, version string) zerolog.Logger {
 
-	conn, err := net.Dial("tcp", "localhost:5044")
-	if err != nil {
-		fmt.Println("Error connecting to the server:", err)
+	writers := []io.Writer{os.Stderr}
+	if viper.IsSet("LOGSTASH_ADDRESS") {
+		conn, err := net.Dial("tcp", viper.GetString("LOGSTASH_ADDRESS"))
+		if err == nil {
+			writers = append(writers, conn)
+		}
 	}
 
-	options := NewOptions(opts...)
-	logger := zerolog.New(conn).With()
-
+	logger := zerolog.New(zerolog.MultiLevelWriter(writers...)).With()
 	if utils.NotEmpty(name) {
 		logger = logger.Str("name", name)
 	}
@@ -26,9 +30,29 @@ func Configure(name string, version string, opts ...Option) zerolog.Logger {
 		logger = logger.Str("version", version)
 	}
 
-	if options.caller {
+	debugMode := utils.Coalesce(viper.GetBool("DEBUG_MODE"), false)
+	if debugMode {
 		logger = logger.Caller()
 	}
+
+	level, err := zerolog.ParseLevel(utils.Coalesce(viper.GetString("LOG_LEVEL"), "info"))
+	if err != nil {
+		level = zerolog.InfoLevel
+	}
+	if level >= zerolog.TraceLevel && level < zerolog.Disabled {
+		zerolog.SetGlobalLevel(level)
+	}
+
+	// zerolog.DisableSampling(false)
+	// zerolog.TimestampFieldName = name
+	// zerolog.LevelFieldName = name
+	// zerolog.MessageFieldName = name
+	// zerolog.ErrorFieldName = name
+	// zerolog.TimeFieldFormat = format
+	// zerolog.DurationFieldUnit = unit
+	// zerolog.DurationFieldInteger = integer
+	// zerolog.ErrorHandler = handler
+	// zerolog.FloatingPointPrecision = precision
 
 	log.Logger = logger.Timestamp().Logger()
 	return log.Logger

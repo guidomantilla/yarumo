@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/pkg/common/assert"
+	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
@@ -38,15 +39,15 @@ func NewWireContext[C any](name string, version string, opts ...WireContextOptio
 	assert.NotEmpty(version, fmt.Sprintf("%s - error creating: appName is empty", "context"))
 
 	viper.AutomaticEnv()
+	clog.Configure(name, version)
+
+	logger := log.With().Str("stage", "startup").Str("component", "context").Logger()
+
 	options := NewOptions(opts...)
 	container := NewContainer[C](name, version)
-	logger := log.With().Str("stage", "startup").Str("component", "context").Logger()
 
 	logger.Info().Msg("starting")
 	defer logger.Info().Msg("started")
-
-	options.Logger(container)
-	logger.Info().Msg("logger set up")
 
 	options.Hasher(container)
 	logger.Info().Msg("hasher set up")

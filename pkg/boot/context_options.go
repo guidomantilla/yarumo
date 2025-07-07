@@ -5,7 +5,6 @@ import "github.com/guidomantilla/yarumo/pkg/common/utils"
 type WireContextOptions struct {
 	Hasher                 BeanFn
 	UIDGen                 BeanFn
-	Logger                 BeanFn
 	Config                 BeanFn
 	Validator              BeanFn
 	PasswordEncoder        BeanFn
@@ -23,7 +22,6 @@ func NewOptions(opts ...WireContextOption) *WireContextOptions {
 	options := &WireContextOptions{
 		Hasher:                 Hasher,
 		UIDGen:                 UIDGen,
-		Logger:                 Logger,
 		Config:                 Config,
 		Validator:              Validator,
 		PasswordEncoder:        PasswordEncoder,
@@ -64,17 +62,6 @@ func WithUIDGen(uidGenFn BeanFn) WireContextOption {
 	return func(opts *WireContextOptions) {
 		if utils.NotNil(uidGenFn) {
 			opts.UIDGen = uidGenFn
-		}
-	}
-}
-
-// WithLogger allows setting a custom logger function into the WireContext (wctx *boot.WireContext).
-//
-// wctx.Logger = <logger object>
-func WithLogger(loggerFn BeanFn) WireContextOption {
-	return func(opts *WireContextOptions) {
-		if utils.NotNil(loggerFn) {
-			opts.Logger = loggerFn
 		}
 	}
 }

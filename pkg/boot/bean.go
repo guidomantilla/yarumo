@@ -1,19 +1,14 @@
 package boot
 
 import (
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 
-	clog "github.com/guidomantilla/yarumo/pkg/common/log"
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/security/passwords"
 )
 
 var (
 	_ BeanFn = Hasher
 	_ BeanFn = UIDGen
-	_ BeanFn = Logger
 	_ BeanFn = Config
 	_ BeanFn = Validator
 	_ BeanFn = PasswordEncoder
@@ -29,22 +24,6 @@ var (
 type BeanFn func(container *Container)
 
 //
-
-func Logger(container *Container) {
-	log.Warn().Str("stage", "startup").Str("component", "logger").Msg("logger function not implemented. using default logger")
-
-	debugMode := utils.Coalesce(viper.GetBool("DEBUG_MODE"), false)
-	caller := clog.WithCaller(debugMode)
-
-	logLevel, err := zerolog.ParseLevel(utils.Coalesce(viper.GetString("LOG_LEVEL"), "info"))
-	if err != nil {
-		logLevel = zerolog.InfoLevel
-		log.Warn().Str("stage", "startup").Str("component", "logger").Err(err).Msg("error parsing log level, using default 'info' level")
-	}
-	globalLevel := clog.WithGlobalLevel(logLevel)
-
-	container.Logger = clog.Configure(container.AppName, container.AppVersion, caller, globalLevel)
-}
 
 func Hasher(_ *Container) {
 	log.Warn().Str("stage", "startup").Str("component", "hasher").Msg("hasher function not implemented. using BLAKE2b-512 hasher")

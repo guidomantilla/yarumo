@@ -2,10 +2,8 @@ package boot
 
 import (
 	validator "github.com/go-playground/validator/v10"
-	"github.com/rs/zerolog"
 
 	comm "github.com/guidomantilla/yarumo/pkg/comm"
-	clog "github.com/guidomantilla/yarumo/pkg/common/log"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 	"github.com/guidomantilla/yarumo/pkg/common/uids"
 	resilience "github.com/guidomantilla/yarumo/pkg/resilience"
@@ -19,7 +17,6 @@ type ContainerOptions struct {
 	appName                string
 	appVersion             string
 	config                 any
-	logger                 zerolog.Logger
 	hasher                 hashes.HashFn
 	uidGen                 uids.UIDFn
 	validator              *validator.Validate
@@ -40,7 +37,6 @@ func NewContainerOptions[C any](name string, version string, opts ...ContainerOp
 		appVersion:             version,
 		hasher:                 hashes.BLAKE2b_512,
 		uidGen:                 uids.UUIDv7,
-		logger:                 clog.Configure(name, version),
 		config:                 pointer.Zero[C](),
 		validator:              validator.New(),
 		passwordEncoder:        passwords.NewBcryptEncoder(),

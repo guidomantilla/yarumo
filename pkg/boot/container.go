@@ -1,8 +1,9 @@
 package boot
 
 import (
+	"io"
+
 	validator "github.com/go-playground/validator/v10"
-	"github.com/rs/zerolog"
 
 	"github.com/guidomantilla/yarumo/pkg/comm"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
@@ -17,8 +18,8 @@ import (
 type Container struct {
 	AppName                string
 	AppVersion             string
+	LoggerWriters          []io.Writer
 	Config                 any
-	Logger                 zerolog.Logger
 	Hasher                 hashes.HashFn
 	UIDGen                 uids.UIDFn
 	Validator              *validator.Validate
@@ -39,7 +40,6 @@ func NewContainer[C any](name string, version string, opts ...ContainerOption) *
 		AppName:                options.appName,
 		AppVersion:             options.appVersion,
 		Config:                 options.config,
-		Logger:                 options.logger,
 		Hasher:                 options.hasher,
 		UIDGen:                 options.uidGen,
 		Validator:              options.validator,

@@ -8,4 +8,4 @@ var (
 
 type EventFn func(e *zerolog.Event)
 
-type ConfigureFn func(name string, version string, opts ...Option) zerolog.Logger
+type ConfigureFn func(name string, version string) zerolog.Logger
