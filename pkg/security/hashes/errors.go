@@ -10,6 +10,10 @@ const (
 	HashNotFound = "hash_function_not_found"
 )
 
+var (
+	_ error = (*HashError)(nil)
+)
+
 type HashError struct {
 	cerrs.TypedError
 }

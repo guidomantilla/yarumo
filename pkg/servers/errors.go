@@ -11,6 +11,10 @@ const (
 	ServerStopType  = "stop"
 )
 
+var (
+	_ error = (*ServerError)(nil)
+)
+
 type ServerError struct {
 	cerrs.TypedError
 }

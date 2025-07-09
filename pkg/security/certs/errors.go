@@ -13,6 +13,10 @@ const (
 	CertificateClientTLSType = "client certificate"
 )
 
+var (
+	_ error = (*CertificateError)(nil)
+)
+
 type CertificateError struct {
 	cerrs.TypedError
 }

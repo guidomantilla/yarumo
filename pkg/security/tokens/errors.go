@@ -12,6 +12,10 @@ const (
 	TokenValidationType = "validation"
 )
 
+var (
+	_ error = (*TokenError)(nil)
+)
+
 type TokenError struct {
 	cerrs.TypedError
 }

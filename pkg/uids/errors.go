@@ -10,6 +10,10 @@ const (
 	UIDNotFound = "uid_function_not_found"
 )
 
+var (
+	_ error = (*UIDError)(nil)
+)
+
 type UIDError struct {
 	cerrs.TypedError
 }
