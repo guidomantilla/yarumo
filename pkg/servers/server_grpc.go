@@ -44,13 +44,13 @@ func (server *grpcServer) Run(ctx context.Context) error {
 	listener, err := net.Listen("tcp", server.address)
 	if err != nil {
 		log.Error().Str("stage", "startup").Str("component", server.name).Err(err).Msg("failed to listen")
-		return err
+		return ErrServerFailedToStart(server.name, err)
 	}
 
 	err = server.internal.Serve(listener)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Error().Str("stage", "startup").Str("component", server.name).Err(err).Msg("failed to serve")
-		return err
+		return ErrServerFailedToStart(server.name, err)
 	}
 
 	return nil

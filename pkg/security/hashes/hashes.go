@@ -1,7 +1,5 @@
 package hashes
 
-import "fmt"
-
 const (
 	Sha256      = "SHA256"
 	Sha3_256    = "SHA3_256"
@@ -23,6 +21,6 @@ func GetByName(name string) (HashFn, error) {
 	case Blake2b_512:
 		return BLAKE2b_512, nil
 	default:
-		return nil, fmt.Errorf("hash function %s not found", name)
+		return nil, ErrHashFunctionNotFound(name)
 	}
 }

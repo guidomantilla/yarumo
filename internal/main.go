@@ -3,13 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"time"
 
 	"github.com/guidomantilla/yarumo/internal/core"
 	"github.com/guidomantilla/yarumo/pkg/boot"
-	comm "github.com/guidomantilla/yarumo/pkg/comm"
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 	"github.com/guidomantilla/yarumo/pkg/servers"
 )
 
@@ -25,7 +21,12 @@ func main() {
 
 		fmt.Println("Configuration:", fmt.Sprintf("%+v", wctx.Config))
 
-		timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		return nil
+	}, options...)
+}
+
+/*
+	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
 		rest := comm.NewRESTClient("https://fakerestapi.azurewebsites.net", comm.WithHTTPClient(wctx.HttpClient))
@@ -48,43 +49,4 @@ func main() {
 			}
 			fmt.Println(fmt.Sprintf("Response status: %+v", maps)) //nolint:gosimple
 		}
-
-		return nil
-	}, options...)
-}
-
-/*
-	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	mockRestClient := boot.Get[comm.RESTClient](&wctx.Container, "MockRestClient")
-	resp, err := mockRestClient.Call(timeoutCtx, http.MethodGet, "", nil)
-	if err != nil {
-		return fmt.Errorf("error making request: %w", err)
-	}
-
-	if resp.Code != http.StatusOK {
-		fmt.Println(fmt.Sprintf("Response err: %+v", resp)) //nolint:gosimple
-	}
-
-	rest := comm.NewRESTClient("https://fakerestapi.azurewebsites.net", comm.WithHTTPClient(wctx.HttpClient))
-	resp, err = rest.Call(timeoutCtx, http.MethodGet, "/api/v1/Activities", nil)
-	if err != nil {
-		return fmt.Errorf("error making request: %w", err)
-	}
-
-	if pointer.IsSlice(resp.Data) {
-		sliceMaps, err := comm.ToSliceOfMapsOfAny(resp.Data)
-		if err != nil {
-			return fmt.Errorf("error converting response data to map: %w", err)
-		}
-		fmt.Println(fmt.Sprintf("Response status: %+v", sliceMaps)) //nolint:gosimple
-	}
-	if pointer.IsMap(resp.Data) {
-		maps, err := comm.ToMapOfAny(resp.Data)
-		if err != nil {
-			return fmt.Errorf("error converting response data to map: %w", err)
-		}
-		fmt.Println(fmt.Sprintf("Response status: %+v", maps)) //nolint:gosimple
-	}
 */

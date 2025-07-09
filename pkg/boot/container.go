@@ -7,12 +7,12 @@ import (
 
 	"github.com/guidomantilla/yarumo/pkg/comm"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
-	"github.com/guidomantilla/yarumo/pkg/common/uids"
 	resilience "github.com/guidomantilla/yarumo/pkg/resilience"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
 	"github.com/guidomantilla/yarumo/pkg/security/hashes"
 	"github.com/guidomantilla/yarumo/pkg/security/passwords"
 	"github.com/guidomantilla/yarumo/pkg/security/tokens"
+	"github.com/guidomantilla/yarumo/pkg/uids"
 )
 
 type Container struct {

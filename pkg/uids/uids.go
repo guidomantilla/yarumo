@@ -1,7 +1,5 @@
 package uids
 
-import "fmt"
-
 const (
 	UuidV4 = "UUIDv4"
 	NanoID = "NANOID"
@@ -26,6 +24,6 @@ func GetByName(name string) (UIDFn, error) {
 	case XId:
 		return XID, nil
 	default:
-		return nil, fmt.Errorf("UID function %s not found", name)
+		return nil, ErrUIDFunctionNotFound(name)
 	}
 }

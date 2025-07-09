@@ -1,11 +1,12 @@
 package tokens
 
 import (
+	"errors"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
 
-	"github.com/guidomantilla/yarumo/pkg/common/assert"
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
 type Claims struct {
@@ -33,7 +34,12 @@ func NewJwtGenerator(opts ...JwtGeneratorOption) Generator {
 }
 
 func (manager *jwtGenerator) Generate(subject string, principal Principal) (*string, error) {
-	assert.NotNil(principal, "token generator - error generating token: principal is nil")
+	if utils.Empty(subject) {
+		return nil, ErrTokenGeneration(errors.New("subject cannot be empty"))
+	}
+	if utils.Nil(principal) {
+		return nil, ErrTokenGeneration(errors.New("principal cannot be nil"))
+	}
 
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -50,14 +56,16 @@ func (manager *jwtGenerator) Generate(subject string, principal Principal) (*str
 
 	tokenString, err := token.SignedString(manager.signingKey)
 	if err != nil {
-		return nil, ErrTokenGenerationFailed(err)
+		return nil, ErrTokenGeneration(err)
 	}
 
 	return &tokenString, nil
 }
 
 func (manager *jwtGenerator) Validate(tokenString string) (Principal, error) {
-	assert.NotEmpty(tokenString, "token manager - error validating token: token is empty")
+	if utils.Empty(tokenString) {
+		return nil, ErrTokenValidation(errors.New("token string cannot be empty"))
+	}
 
 	getKeyFunc := func(token *jwt.Token) (any, error) {
 		return manager.verifyingKey, nil
@@ -70,21 +78,21 @@ func (manager *jwtGenerator) Validate(tokenString string) (Principal, error) {
 
 	token, err := jwt.Parse(tokenString, getKeyFunc, parserOptions...)
 	if err != nil {
-		return nil, ErrTokenValidationFailed(ErrTokenFailedParsing, err)
+		return nil, ErrTokenValidation(ErrTokenFailedParsing, err)
 	}
 
 	if !token.Valid {
-		return nil, ErrTokenValidationFailed(ErrTokenInvalid)
+		return nil, ErrTokenValidation(ErrTokenInvalid)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, ErrTokenValidationFailed(ErrTokenEmptyClaims)
+		return nil, ErrTokenValidation(ErrTokenEmptyClaims)
 	}
 
 	value, ok := claims["principal"]
 	if !ok {
-		return nil, ErrTokenValidationFailed(ErrTokenEmptyPrincipal)
+		return nil, ErrTokenValidation(ErrTokenEmptyPrincipal)
 	}
 
 	principal := Principal(value.(map[string]interface{}))

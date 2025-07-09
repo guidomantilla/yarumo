@@ -1,33 +1,31 @@
-package ssl
+package certs
 
 import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"os"
+
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
 func Tls(serverName string, caCertificate string, clientCertificate string, clientKey string, insecureSkipVerify bool) (*tls.Config, error) {
-
-	if serverName == "" {
-		return nil, fmt.Errorf("ssl - error setting up tls: serverName is empty")
+	if utils.Empty(serverName) {
+		return nil, ErrCertificateTLS(fmt.Errorf("serverName cannot be empty"))
 	}
-
-	if caCertificate == "" {
-		return nil, fmt.Errorf("ssl - error setting up tls: caCertificate is empty")
+	if utils.Empty(caCertificate) {
+		return nil, ErrCertificateTLS(fmt.Errorf("caCertificate is empty"))
 	}
-
-	if clientCertificate == "" {
-		return nil, fmt.Errorf("ssl - error setting up tls: clientCertificate is empty")
+	if utils.Empty(clientCertificate) {
+		return nil, ErrCertificateTLS(fmt.Errorf("clientCertificate is empty"))
 	}
-
-	if clientKey == "" {
-		return nil, fmt.Errorf("ssl - error setting up tls: clientKey is empty")
+	if utils.Empty(clientKey) {
+		return nil, ErrCertificateTLS(fmt.Errorf("clientKey is empty"))
 	}
 
 	caCert, err := os.ReadFile(caCertificate)
 	if err != nil {
-		return nil, fmt.Errorf("ca certificate: %s", err.Error())
+		return nil, ErrCertificateCaTLS(err)
 	}
 
 	caCertPool := x509.NewCertPool()
@@ -35,7 +33,7 @@ func Tls(serverName string, caCertificate string, clientCertificate string, clie
 
 	cert, err := tls.LoadX509KeyPair(clientCertificate, clientKey)
 	if err != nil {
-		return nil, fmt.Errorf("client certificate: %s", err.Error())
+		return nil, ErrCertificateClientTLS(err)
 	}
 
 	tlsConfig := &tls.Config{
