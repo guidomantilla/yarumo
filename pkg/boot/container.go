@@ -1,11 +1,13 @@
 package boot
 
 import (
+	"fmt"
 	"io"
 
 	validator "github.com/go-playground/validator/v10"
 
 	"github.com/guidomantilla/yarumo/pkg/comm"
+	"github.com/guidomantilla/yarumo/pkg/common/assert"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 	resilience "github.com/guidomantilla/yarumo/pkg/resilience"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
@@ -35,6 +37,8 @@ type Container struct {
 }
 
 func NewContainer[C any](name string, version string, opts ...ContainerOption) *Container {
+	assert.NotEmpty(name, fmt.Sprintf("%s - error starting up: name is nil", "container"))
+	assert.NotEmpty(version, fmt.Sprintf("%s - error starting up: version is nil", "container"))
 	options := NewContainerOptions[C](name, version, opts...)
 	return &Container{
 		AppName:                options.appName,

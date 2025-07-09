@@ -23,7 +23,6 @@ func BuildCronServer(cron CronServer) (string, Server) {
 
 func NewCronServer(cron CronServer) lifecycle.Server {
 	assert.NotNil(cron, fmt.Sprintf("%s - error starting up: cron is nil", "cron-server"))
-
 	return &cronServer{
 		name:         "cron-server",
 		internal:     cron,

@@ -24,7 +24,6 @@ func BuildHttpServer(server *http.Server) (string, Server) {
 
 func NewHttpServer(server *http.Server) lifecycle.Server {
 	assert.NotNil(server, fmt.Sprintf("%s - error starting up: server is nil", "http-server"))
-
 	return &httpServer{
 		name:     "http-server",
 		internal: server,

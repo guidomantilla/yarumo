@@ -27,7 +27,6 @@ func BuildGrpcServer(address string, server GrpcServer) (string, Server) {
 func NewGrpcServer(address string, server GrpcServer) lifecycle.Server {
 	assert.NotEmpty(address, fmt.Sprintf("%s - error starting up: address is nil", "grpc-server"))
 	assert.NotNil(server, fmt.Sprintf("%s - error starting up: server is nil", "grpc-server"))
-
 	return &grpcServer{
 		name:     "grpc-server",
 		address:  address,
