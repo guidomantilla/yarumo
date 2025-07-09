@@ -2,7 +2,6 @@ package errs
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -10,14 +9,14 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/common/utils"
 )
 
-// As
+// As returns the error as a specific type T if it can be casted, otherwise returns a zero value of T and false.
 func As[T error](err error) (T, bool) {
 	target := pointer.Zero[T]()
 	ok := errors.As(err, &target)
 	return target, ok
 }
 
-// Match
+// Match checks if the error matches a specific type T or any of the provided values.
 func Match[T error](err error, values ...error) bool {
 	var target T
 	if errors.As(err, &target) {
@@ -33,24 +32,7 @@ func Match[T error](err error, values ...error) bool {
 	return false
 }
 
-// ------ //
-
-type TypedError struct {
-	Type string
-	Err  error
-}
-
-func (e *TypedError) Error() string {
-	return fmt.Sprintf("%s error: %s", e.Type, e.Err)
-}
-
-func (e *TypedError) Unwrap() error {
-	return e.Err
-}
-
-// ------ //
-
-// Unwrap
+// Unwrap returns a slice of errors by recursively unwrapping the provided error.
 func Unwrap(err error) []error {
 	seen := map[error]struct{}{}
 	var out []error
@@ -80,7 +62,7 @@ func Unwrap(err error) []error {
 	return out
 }
 
-// ErrorMessages
+// ErrorMessages returns a slice of error messages from the provided error by unwrapping it.
 func ErrorMessages(err error) []string {
 	var msgs []string
 	for _, e := range Unwrap(err) {
@@ -89,7 +71,7 @@ func ErrorMessages(err error) []string {
 	return msgs
 }
 
-// HasErrorMessage
+// HasErrorMessage checks if any of the unwrapped errors contain the specified substring in their error message.
 func HasErrorMessage(err error, substr string) bool {
 	for _, e := range Unwrap(err) {
 		if strings.Contains(e.Error(), substr) {
@@ -101,12 +83,7 @@ func HasErrorMessage(err error, substr string) bool {
 
 //
 
-type ErrorInfo struct {
-	Type    string `json:"type,omitempty"`
-	Message string `json:"message"`
-}
-
-// AsErrorInfo
+// AsErrorInfo converts an error into a slice of ErrorInfo, which contains the type and message of each unwrapped error.
 func AsErrorInfo(err error) []ErrorInfo {
 	var result []ErrorInfo
 
