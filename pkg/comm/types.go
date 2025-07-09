@@ -17,5 +17,5 @@ type HTTPClient interface {
 }
 
 type RESTClient interface {
-	Call(ctx context.Context, method string, path string, body any) (*RESTResponse, error)
+	Call(ctx context.Context, method string, path string, body any) (*RESTClientResponse, error)
 }

@@ -30,7 +30,7 @@ func NewRESTClient(url string, opts ...RestClientOption) RESTClient {
 	}
 }
 
-func (rest *restClient) Call(ctx context.Context, method string, path string, body any) (*RESTResponse, error) {
+func (rest *restClient) Call(ctx context.Context, method string, path string, body any) (*RESTClientResponse, error) {
 
 	url := fmt.Sprintf("%s%s", rest.url, path)
 
@@ -54,7 +54,7 @@ func (rest *restClient) Call(ctx context.Context, method string, path string, bo
 		_ = Body.Close()
 	}(resp.Body)
 
-	response := &RESTResponse{
+	response := &RESTClientResponse{
 		Code:   resp.StatusCode,
 		Status: http.StatusText(resp.StatusCode),
 	}
@@ -69,7 +69,6 @@ func (rest *restClient) Call(ctx context.Context, method string, path string, bo
 	}
 
 	if utils.In(resp.StatusCode, rest.statusCodeOK...) {
-
 		data, err := UnmarshalResponse[any](resp.Body)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshalling response body: %w", err)
@@ -83,7 +82,7 @@ func (rest *restClient) Call(ctx context.Context, method string, path string, bo
 
 //
 
-type RESTResponse struct {
+type RESTClientResponse struct {
 	Code   int            `json:"code,omitempty"`
 	Status string         `json:"status,omitempty"`
 	Data   any            `json:"data,omitempty"`
