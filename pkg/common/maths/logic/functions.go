@@ -53,12 +53,11 @@ func CompileProposition[T any](formula propositions.Formula, preds Predicates[T]
 	case propositions.TrueF:
 		return predicates.True[T]()
 	case propositions.Var:
-		name := string(x)
 		p, ok := preds[x]
 		if ok {
 			return p
 		}
-		panic(fmt.Sprintf("propositions.Var '%s' not found", name))
+		panic(fmt.Sprintf("propositions.Var '%s' not found", string(x)))
 	default:
 		panic(fmt.Sprintf("unsupported proposition type: %T", x))
 	}
