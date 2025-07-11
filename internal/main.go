@@ -27,32 +27,36 @@ func main() {
 		fmt.Println()
 		fmt.Println()
 
-		xxx()
-		yyy()
-
-		f, _ := rules.ParseFormula("isAdult THEN isActive")
-		fmt.Println("Parsed Formula:", fmt.Sprintf("%+v", f))
-
-		f, _ = rules.ParseFormula("has2FA IFF isAdmin")
-		fmt.Println("Parsed Formula:", fmt.Sprintf("%+v", f))
-
-		f1, _ := rules.ParseFormula("isAdmin THEN has2FA")
-		f2, _ := rules.ParseFormula("NOT(has2FA) THEN NOT(isAdmin)")
-		fmt.Println(propositions.Equivalent(f1, f2)) //
-
-		exp := "(NOT isAdult AND isColombian) OR (isAdmin THEN (has2FA AND isActive)) IFF (TRUE OR (FALSE AND hasEmail))"
-		f3, err := rules.ParseFormula(exp)
-		fmt.Println(fmt.Sprintf("Parsed Formula: %+v, Error: %+v", f3, err)) //nolint:gosimple
-
-		exp = "((NOT isAdmin OR isActive) AND (hasEmail AND (isColombian IFF isAdult))) THEN ((termsAccepted OR has2FA) AND NOT FALSE)"
-		f4, err := rules.ParseFormula(exp)
-		fmt.Println(fmt.Sprintf("Parsed Formula: %+v, Error: %+v", f4, err)) //nolint:gosimple
+		//xxx()
+		//yyy()
+		zzz()
+		//parser()
 
 		return nil
 	}, options...)
 }
 
-func xxx() {
+func parser() { //nolint:unused
+	f, _ := rules.ParseFormula("isAdult THEN isActive")
+	fmt.Println("Parsed Formula:", fmt.Sprintf("%+v", f))
+
+	f, _ = rules.ParseFormula("has2FA IFF isAdmin")
+	fmt.Println("Parsed Formula:", fmt.Sprintf("%+v", f))
+
+	f1, _ := rules.ParseFormula("isAdmin THEN has2FA")
+	f2, _ := rules.ParseFormula("NOT(has2FA) THEN NOT(isAdmin)")
+	fmt.Println(propositions.Equivalent(f1, f2)) //
+
+	exp := "(NOT isAdult AND isColombian) OR (isAdmin THEN (has2FA AND isActive)) IFF (TRUE OR (FALSE AND hasEmail))"
+	f3, err := rules.ParseFormula(exp)
+	fmt.Println(fmt.Sprintf("Parsed Formula: %+v, Error: %+v", f3, err)) //nolint:gosimple
+
+	exp = "((NOT isAdmin OR isActive) AND (hasEmail AND (isColombian IFF isAdult))) THEN ((termsAccepted OR has2FA) AND NOT FALSE)"
+	f4, err := rules.ParseFormula(exp)
+	fmt.Println(fmt.Sprintf("Parsed Formula: %+v, Error: %+v", f4, err)) //nolint:gosimple
+}
+
+func xxx() { //nolint:unused
 
 	formula := UserRules[0].Formula
 	for key, row := range propositions.Analyze(formula) {
@@ -62,8 +66,7 @@ func xxx() {
 	fmt.Println()
 }
 
-func yyy() {
-
+func yyy() { //nolint:unused
 	formula, predicate, _ := rules.Unwrap(UserRules)
 	fmt.Println("Combined Formula:", fmt.Sprintf("%+v", formula))
 	fmt.Println("Combined Predicate Result:", predicate(User)) // false
@@ -82,6 +85,9 @@ func yyy() {
 
 	fmt.Println()
 	fmt.Println()
+}
+
+func zzz() {
 
 	results, _ := rules.EvaluateRules(&User, Predicates, UserRules)
 	for _, row := range results {

@@ -2,6 +2,7 @@ package rules
 
 import (
 	"fmt"
+
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
