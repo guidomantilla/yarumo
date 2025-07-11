@@ -95,7 +95,7 @@ func (b Bag[T]) Size() int {
 	return size
 }
 
-func (b Bag[T]) Filter(pred func(T) bool) Bag[T] {
+func (b Bag[T]) Filter(pred Predicate[T]) Bag[T] {
 	out := make(Bag[T])
 	for item, count := range b {
 		if pred(item) {

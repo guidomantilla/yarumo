@@ -61,7 +61,7 @@ func (s Set[T]) Size() int {
 	return len(s)
 }
 
-func (s Set[T]) Filter(pred func(T) bool) Set[T] {
+func (s Set[T]) Filter(pred Predicate[T]) Set[T] {
 	out := make(Set[T])
 	for k := range s {
 		if pred(k) {

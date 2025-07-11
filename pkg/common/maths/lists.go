@@ -27,7 +27,7 @@ func (l List[T]) Size() int {
 	return len(l)
 }
 
-func (l List[T]) Filter(pred func(T) bool) List[T] {
+func (l List[T]) Filter(pred Predicate[T]) List[T] {
 	out := make(List[T], 0)
 	for _, v := range l {
 		if pred(v) {

@@ -1,5 +1,7 @@
 package bags
 
+import "github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
+
 // Bag is a multiset of elements of type T, storing element counts
 // For example: {a: 2, b: 1, c: 3} represents multiset {a, a, b, c, c, c}
 type Bag[T comparable] map[T]int
@@ -124,4 +126,14 @@ func ToSlice[T comparable](b Bag[T]) []T {
 		}
 	}
 	return result
+}
+
+func Filter[T comparable](b Bag[T], pred predicates.Predicate[T]) Bag[T] {
+	out := make(Bag[T])
+	for item, count := range b {
+		if pred(item) {
+			out[item] = count
+		}
+	}
+	return out
 }
