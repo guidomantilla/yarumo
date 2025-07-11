@@ -1,4 +1,4 @@
-package propositional
+package propositions
 
 type IffF struct {
 	L, R Formula

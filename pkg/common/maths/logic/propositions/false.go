@@ -1,6 +1,10 @@
-package propositional
+package propositions
 
 type FalseF struct {
+}
+
+func F() Formula {
+	return FalseF{}
 }
 
 func (FalseF) String() string {

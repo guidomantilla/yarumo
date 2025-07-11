@@ -1,4 +1,4 @@
-package propositional
+package propositions
 
 type AndF struct {
 	L, R Formula

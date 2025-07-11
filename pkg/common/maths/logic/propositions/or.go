@@ -1,4 +1,4 @@
-package propositional
+package propositions
 
 type OrF struct {
 	L, R Formula

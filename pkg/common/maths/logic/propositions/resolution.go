@@ -1,4 +1,4 @@
-package propositional
+package propositions
 
 import (
 	"fmt"

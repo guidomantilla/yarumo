@@ -1,25 +1,9 @@
-package propositional
+package propositions
 
 import (
 	"fmt"
 	"sort"
 )
-
-func T() Formula {
-	return TrueF{}
-}
-
-func F() Formula {
-	return FalseF{}
-}
-
-func Group(f Formula) Formula {
-	return GroupF{Inner: f}
-}
-
-func V(name string) Formula {
-	return Var(name)
-}
 
 func TruthTable(f Formula) []map[string]bool {
 	vars := f.Vars()

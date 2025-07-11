@@ -1,4 +1,4 @@
-package propositional
+package propositions
 
 type NotF struct {
 	F Formula

@@ -1,6 +1,10 @@
-package propositional
+package propositions
 
 type Var string
+
+func V(name string) Formula {
+	return Var(name)
+}
 
 func (v Var) String() string {
 	return string(v)

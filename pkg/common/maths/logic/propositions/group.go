@@ -1,7 +1,11 @@
-package propositional
+package propositions
 
 type GroupF struct {
 	Inner Formula
+}
+
+func Group(f Formula) Formula {
+	return GroupF{Inner: f}
 }
 
 func (g GroupF) String() string {

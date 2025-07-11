@@ -1,6 +1,10 @@
-package propositional
+package propositions
 
 type TrueF struct {
+}
+
+func T() Formula {
+	return TrueF{}
 }
 
 func (TrueF) String() string {

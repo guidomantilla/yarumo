@@ -1,4 +1,4 @@
-package propositional
+package propositions
 
 type ImplF struct {
 	L, R Formula

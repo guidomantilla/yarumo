@@ -1,4 +1,4 @@
-package propositional
+package propositions
 
 type Formula interface {
 	String() string
