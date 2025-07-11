@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
-	"github.com/guidomantilla/yarumo/pkg/rules"
 
 	"github.com/guidomantilla/yarumo/internal/core"
 	"github.com/guidomantilla/yarumo/pkg/boot"
+	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
+	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
+	"github.com/guidomantilla/yarumo/pkg/rules"
 	"github.com/guidomantilla/yarumo/pkg/servers"
 )
 
@@ -26,17 +26,18 @@ func main() {
 		fmt.Println()
 		fmt.Println()
 
-		//xxx()
+		xxx()
 		yyy()
 
 		return nil
 	}, options...)
 }
+
 func xxx() {
 
 	formula := UserRules[0].Formula
 	for key, row := range propositions.Analyze(formula) {
-		fmt.Println(fmt.Sprintf("%s: %+v", key, row))
+		fmt.Println(fmt.Sprintf("%s: %+v", key, row)) //nolint:gosimple
 	}
 	fmt.Println()
 	fmt.Println()
@@ -60,8 +61,8 @@ func yyy() {
 	fmt.Println()
 	fmt.Println()
 
-	results := rules.EvaluateRules(Predicates, UserRules, User)
-	rules.PrintRuleEvaluation(results)
+	results := rules.EvaluateRules(Predicates, UserRules, &User)
+	fmt.Println(results)
 }
 
 /*

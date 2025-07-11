@@ -11,7 +11,7 @@ type Result[T any] struct {
 	Formula    propositions.Formula
 	Predicates Predicates[T]
 	Value      T
-	Trace      []Trace[T]
+	Traces     []Trace[T]
 	Result     bool
 }
 
@@ -32,7 +32,7 @@ func EvaluateProposition[T any](formula propositions.Formula, preds Predicates[T
 		Formula:    formula,
 		Predicates: tracedPredicates,
 		Value:      *value,
-		Trace:      *traces,
+		Traces:     *traces,
 		Result:     result,
 	}
 }

@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"fmt"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
@@ -13,42 +12,26 @@ type Rule[T any] struct {
 	Predicate predicates.Predicate[T]
 }
 
-type RuleResult[T any] struct {
+type Result[T any] struct {
 	Rule      Rule[T]
 	Input     T
 	Violated  bool
 	Satisfied bool
+	Traces    []logic.Trace[T]
 }
 
-func EvaluateRules[T any](preds logic.Predicates[T], rules []Rule[T], input T) []RuleResult[T] {
-
-	traces := make([]logic.Trace[T], 0)
-	var results []RuleResult[T]
+// EvaluateRules evaluates a set of rules against a given input using the provided predicates.
+func EvaluateRules[T any](preds logic.Predicates[T], rules []Rule[T], input *T) []Result[T] {
+	results := make([]Result[T], 0)
 	for _, r := range rules {
-		result := logic.EvaluateProposition(r.Formula, preds, &input)
-		results = append(results, RuleResult[T]{
+		result := logic.EvaluateProposition(r.Formula, preds, input)
+		results = append(results, Result[T]{
 			Rule:      r,
-			Input:     input,
+			Input:     *input,
 			Violated:  !result.Result,
 			Satisfied: result.Result,
+			Traces:    result.Traces,
 		})
 	}
-
-	for _, tr := range traces {
-		fmt.Printf("Predicate %s => %v\n", tr.Name, tr.Value)
-	}
-
 	return results
-}
-
-func PrintRuleEvaluation[T any](results []RuleResult[T]) {
-	for _, r := range results {
-		status := ""
-		if r.Satisfied {
-			status = "SATISFIED"
-		} else if r.Violated {
-			status = "VIOLATED"
-		}
-		fmt.Printf("%s %+v => %s\n", r.Rule.Formula, r.Rule.Label, status)
-	}
 }
