@@ -91,13 +91,13 @@ func zzz() {
 
 	results, _ := rules.EvaluateRules(&User, Predicates, UserRules)
 	for _, row := range results {
+		fmt.Println(fmt.Sprintf("Rule: %s, Input: %+v, Violated: %t, Satisfied: %t Conclusion: %+v", row.Rule.Label, row.Input, row.Violated, row.Satisfied, row.Consequence)) //nolint:gosimple
 		for _, fact := range row.Facts {
 			fmt.Println(fmt.Sprintf("%s: %+v", fact.Variable, fact.Value)) //nolint:gosimple
 		}
 		fmt.Println()
 		fmt.Println()
 
-		fmt.Println(fmt.Sprintf("Rule: %s, Input: %+v, Violated: %t, Satisfied: %t Conclusion: %+v", row.Rule.Label, row.Input, row.Violated, row.Satisfied, row.Consequence)) //nolint:gosimple
 	}
 }
 
