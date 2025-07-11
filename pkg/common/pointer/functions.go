@@ -104,6 +104,20 @@ func convert[T any, R any](collection []T, iteratee func(item T, index int) R) [
 	return result
 }
 
+// IsStruct checks if the value is a struct
+func IsStruct(x any) bool {
+	if x == nil {
+		return false
+	}
+
+	val := reflect.ValueOf(x)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	return val.Kind() == reflect.Struct
+}
+
 // IsChan checks if the value is a channel
 func IsChan(x any) bool {
 	if x == nil {

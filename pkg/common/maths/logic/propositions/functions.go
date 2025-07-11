@@ -40,7 +40,30 @@ func Analyze(f Formula) map[string]any {
 	rows["satisfiable"] = IsSatisfiable(f)
 	rows["contradiction"] = IsContradiction(f)
 	rows["truth_table"] = TruthTable(f)
+	rows["tautology"] = IsTautology(f)
+	rows["fail_cases"] = FailCases(f)
 	return rows
+}
+
+func IsTautology(f Formula) bool {
+	tt := TruthTable(f)
+	for _, row := range tt {
+		if !row["result"] {
+			return false
+		}
+	}
+	return true
+}
+
+func FailCases(f Formula) []map[string]bool {
+	tt := TruthTable(f)
+	var failCases []map[string]bool
+	for _, row := range tt {
+		if !row["result"] {
+			failCases = append(failCases, row)
+		}
+	}
+	return failCases
 }
 
 //

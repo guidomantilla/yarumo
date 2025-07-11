@@ -8,6 +8,7 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/boot"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
+	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/rules"
 	"github.com/guidomantilla/yarumo/pkg/servers"
 )
@@ -45,23 +46,23 @@ func xxx() {
 
 func yyy() {
 
-	formula, predicate := UserRules[0].Formula, UserRules[0].Predicate
-	for _, rule := range UserRules[1:] {
-		formula, predicate = formula.And(rule.Formula), predicate.And(rule.Predicate)
-	}
+	formula, predicate, _ := rules.Unwrap(UserRules)
 	fmt.Println("Combined Formula:", fmt.Sprintf("%+v", formula))
 	fmt.Println("Combined Predicate Result:", predicate(User)) // false
 
 	fmt.Println()
 	fmt.Println()
 
-	result := logic.EvaluateProposition(formula, Predicates, &User)
+	result, _ := logic.EvaluateProposition(&User, formula, Predicates)
 	fmt.Println(result)
 
+	users := utils.FilterBy([]UserType{User}, utils.FilterFn[UserType](predicate))
+	fmt.Println(users)
+
 	fmt.Println()
 	fmt.Println()
 
-	results := rules.EvaluateRules(Predicates, UserRules, &User)
+	results, _ := rules.EvaluateRules(&User, Predicates, UserRules)
 	fmt.Println(results)
 }
 

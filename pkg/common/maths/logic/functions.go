@@ -5,6 +5,7 @@ import (
 
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
+	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
 
 type Result[T any] struct {
@@ -24,7 +25,10 @@ type Trace[T any] struct {
 type Predicates[T any] map[propositions.Var]predicates.Predicate[T]
 
 // EvaluateProposition translates a proposition formula into a predicate function using the provided predicates.
-func EvaluateProposition[T any](formula propositions.Formula, preds Predicates[T], value *T) *Result[T] {
+func EvaluateProposition[T any](value *T, formula propositions.Formula, preds Predicates[T]) (*Result[T], error) {
+	if !pointer.IsStruct(value) {
+		return nil, fmt.Errorf("value must be a pointer to a struct, got %T", value)
+	}
 	tracedPredicates, traces := tracePredicates(preds)
 	eval := compileProposition[T](formula, tracedPredicates)
 	result := eval(*value)
@@ -34,7 +38,7 @@ func EvaluateProposition[T any](formula propositions.Formula, preds Predicates[T
 		Value:      *value,
 		Traces:     *traces,
 		Result:     result,
-	}
+	}, nil
 }
 
 func tracePredicates[T any](predicates Predicates[T]) (Predicates[T], *[]Trace[T]) {
