@@ -1,7 +1,6 @@
 package propositions
 
 import (
-	"fmt"
 	"sort"
 )
 
@@ -32,6 +31,16 @@ func Equivalent(a, b Formula) bool {
 		}
 	}
 	return true
+}
+
+func Analyze(f Formula) map[string]any {
+	rows := make(map[string]any)
+	rows["vars"] = f.Vars()
+	rows["formula"] = f.String()
+	rows["satisfiable"] = IsSatisfiable(f)
+	rows["contradiction"] = IsContradiction(f)
+	rows["truth_table"] = TruthTable(f)
+	return rows
 }
 
 //
@@ -145,19 +154,5 @@ func ToDNF(f Formula) Formula {
 		}
 	default:
 		return x
-	}
-}
-
-//
-
-func PrintTruthTable(f Formula) {
-	vars := f.Vars()
-	table := TruthTable(f)
-	fmt.Println(append(vars, "result"))
-	for _, row := range table {
-		for _, v := range vars {
-			fmt.Printf("%v\t", row[v])
-		}
-		fmt.Printf("%v\n", row["result"])
 	}
 }
