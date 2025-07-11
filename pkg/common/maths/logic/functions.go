@@ -12,14 +12,14 @@ type Result[T any] struct {
 	Formula    propositions.Formula
 	Predicates Predicates[T]
 	Value      T
-	Traces     []Trace[T]
+	Facts      []Fact[T]
 	Result     bool
 }
 
-type Trace[T any] struct {
-	Name  string
-	Func  predicates.Predicate[T]
-	Value bool
+type Fact[T any] struct {
+	Variable propositions.Var
+	Value    bool
+	Func     predicates.Predicate[T]
 }
 
 type Predicates[T any] map[propositions.Var]predicates.Predicate[T]
@@ -29,31 +29,30 @@ func EvaluateProposition[T any](value *T, formula propositions.Formula, preds Pr
 	if !pointer.IsStruct(value) {
 		return nil, fmt.Errorf("value must be a pointer to a struct, got %T", value)
 	}
-	tracedPredicates, traces := tracePredicates(preds)
-	eval := compileProposition[T](formula, tracedPredicates)
+	checkedPredicates, facts := checkPredicates(preds)
+	eval := compileProposition[T](formula, checkedPredicates)
 	result := eval(*value)
 	return &Result[T]{
 		Formula:    formula,
-		Predicates: tracedPredicates,
+		Predicates: checkedPredicates,
 		Value:      *value,
-		Traces:     *traces,
+		Facts:      *facts,
 		Result:     result,
 	}, nil
 }
 
-func tracePredicates[T any](predicates Predicates[T]) (Predicates[T], *[]Trace[T]) {
-	var traces = make([]Trace[T], 0)
+func checkPredicates[T any](predicates Predicates[T]) (Predicates[T], *[]Fact[T]) {
+	var facts = make([]Fact[T], 0)
 	wrapped := make(Predicates[T])
 	for variable, pred := range predicates {
-		name := string(variable) // para cierre
 		wrapped[variable] = func(t T) bool {
 			val := pred(t)
-			traces = append(traces, Trace[T]{Name: name, Func: pred, Value: val})
+			facts = append(facts, Fact[T]{Variable: variable, Value: val, Func: pred})
 			return val
 		}
 	}
 
-	return wrapped, &traces
+	return wrapped, &facts
 }
 
 func compileProposition[T any](formula propositions.Formula, preds Predicates[T]) predicates.Predicate[T] {

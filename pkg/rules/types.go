@@ -7,15 +7,17 @@ import (
 )
 
 type Rule[T any] struct {
-	Label     string
-	Formula   propositions.Formula
-	Predicate predicates.Predicate[T]
+	Label       string
+	Formula     propositions.Formula
+	Predicate   predicates.Predicate[T]
+	Consequence propositions.Var
 }
 
 type Result[T any] struct {
-	Rule      Rule[T]
-	Input     T
-	Violated  bool
-	Satisfied bool
-	Traces    []logic.Trace[T]
+	Rule        Rule[T]
+	Input       T
+	Violated    bool
+	Satisfied   bool
+	Facts       []logic.Fact[T]
+	Consequence *logic.Fact[T]
 }
