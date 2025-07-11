@@ -1,5 +1,7 @@
 package maths
 
+import "github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
+
 type List[T comparable] []T
 
 func NewList[T comparable](elements ...T) List[T] {
@@ -27,7 +29,7 @@ func (l List[T]) Size() int {
 	return len(l)
 }
 
-func (l List[T]) Filter(pred Predicate[T]) List[T] {
+func (l List[T]) Filter(pred predicates.Predicate[T]) List[T] {
 	out := make(List[T], 0)
 	for _, v := range l {
 		if pred(v) {

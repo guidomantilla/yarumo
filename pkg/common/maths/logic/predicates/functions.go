@@ -1,7 +1,5 @@
 package predicates
 
-type Predicate[T any] func(T) bool
-
 // And returns a predicate that is the logical AND of two predicates
 func And[T any](p1, p2 Predicate[T]) Predicate[T] {
 	return func(t T) bool {

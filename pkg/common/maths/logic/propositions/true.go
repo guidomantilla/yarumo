@@ -42,3 +42,15 @@ func (t TrueF) Contrapositive(f Formula) Formula {
 func (t TrueF) Iff(f Formula) Formula {
 	return IffF{L: t, R: f}
 }
+
+func (f TrueF) ToNNF() Formula {
+	return ToNNF(f)
+}
+
+func (f TrueF) ToCNF() Formula {
+	return ToCNF(f)
+}
+
+func (f TrueF) ToDNF() Formula {
+	return ToDNF(f)
+}

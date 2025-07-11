@@ -1,5 +1,7 @@
 package maths
 
+import "github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
+
 // Set is a generic set implemented as a map with empty struct values
 // This gives O(1) lookup and set semantics
 type Set[T comparable] map[T]struct{}
@@ -61,7 +63,7 @@ func (s Set[T]) Size() int {
 	return len(s)
 }
 
-func (s Set[T]) Filter(pred Predicate[T]) Set[T] {
+func (s Set[T]) Filter(pred predicates.Predicate[T]) Set[T] {
 	out := make(Set[T])
 	for k := range s {
 		if pred(k) {

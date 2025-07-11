@@ -1,34 +1,26 @@
-package maths
+package predicates
 
 // Predicate is a function that evaluates a value of type T and returns true or false
 type Predicate[T any] func(T) bool
 
 // And returns a predicate that is the logical AND of two predicates
 func (p Predicate[T]) And(other Predicate[T]) Predicate[T] {
-	return func(t T) bool {
-		return p(t) && other(t)
-	}
+	return And(p, other)
 }
 
 // Or returns a predicate that is the logical OR of two predicates
 func (p Predicate[T]) Or(other Predicate[T]) Predicate[T] {
-	return func(t T) bool {
-		return p(t) || other(t)
-	}
+	return Or(p, other)
 }
 
 // Not returns a predicate that is the logical NOT of the input predicate
 func (p Predicate[T]) Not() Predicate[T] {
-	return func(t T) bool {
-		return !p(t)
-	}
+	return Not(p)
 }
 
 // Implies returns a predicate that is logically equivalent to P ⇒ Q ≡ ¬P ∨ Q
 func (p Predicate[T]) Implies(q Predicate[T]) Predicate[T] {
-	return func(t T) bool {
-		return !p(t) || q(t)
-	}
+	return Implies(p, q)
 }
 
 // Contrapositive returns a predicate that is logically equivalent to P ⇒ Q ≡ ¬Q ⇒ ¬P

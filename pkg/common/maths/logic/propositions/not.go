@@ -5,7 +5,7 @@ type NotF struct {
 }
 
 func (f NotF) String() string {
-	return "¬" + f.F.String()
+	return "!" + f.F.String()
 }
 
 func (f NotF) Eval(env map[string]bool) bool {
@@ -38,4 +38,16 @@ func (f NotF) Contrapositive(g Formula) Formula {
 
 func (f NotF) Iff(g Formula) Formula {
 	return IffF{L: f, R: g}
+}
+
+func (f NotF) ToNNF() Formula {
+	return ToNNF(f)
+}
+
+func (f NotF) ToCNF() Formula {
+	return ToCNF(f)
+}
+
+func (f NotF) ToDNF() Formula {
+	return ToDNF(f)
 }

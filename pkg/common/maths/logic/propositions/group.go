@@ -43,3 +43,15 @@ func (g GroupF) Contrapositive(f Formula) Formula {
 func (g GroupF) Iff(f Formula) Formula {
 	return IffF{L: g, R: f}
 }
+
+func (f GroupF) ToNNF() Formula {
+	return ToNNF(f)
+}
+
+func (f GroupF) ToCNF() Formula {
+	return ToCNF(f)
+}
+
+func (f GroupF) ToDNF() Formula {
+	return ToDNF(f)
+}

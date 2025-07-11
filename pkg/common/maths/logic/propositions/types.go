@@ -11,4 +11,8 @@ type Formula interface {
 	Implies(Formula) Formula
 	Contrapositive(Formula) Formula
 	Iff(Formula) Formula
+
+	ToNNF() Formula
+	ToCNF() Formula
+	ToDNF() Formula
 }

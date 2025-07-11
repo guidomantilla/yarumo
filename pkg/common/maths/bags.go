@@ -1,5 +1,7 @@
 package maths
 
+import "github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
+
 type Bag[T comparable] map[T]int
 
 func New[T comparable](items ...T) Bag[T] {
@@ -95,7 +97,7 @@ func (b Bag[T]) Size() int {
 	return size
 }
 
-func (b Bag[T]) Filter(pred Predicate[T]) Bag[T] {
+func (b Bag[T]) Filter(pred predicates.Predicate[T]) Bag[T] {
 	out := make(Bag[T])
 	for item, count := range b {
 		if pred(item) {
