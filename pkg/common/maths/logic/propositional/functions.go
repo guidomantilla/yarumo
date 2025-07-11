@@ -1,72 +1,24 @@
 package propositional
 
-type Formula interface {
-	String() string
-	Eval(env map[string]bool) bool
-	Vars() []string
+import (
+	"fmt"
+	"sort"
+)
+
+func T() Formula {
+	return TrueF{}
 }
 
-type Var string
+func F() Formula {
+	return FalseF{}
+}
 
-type NotF struct{ F Formula }
+func Group(f Formula) Formula {
+	return GroupF{Inner: f}
+}
 
-type AndF struct{ L, R Formula }
-
-type OrF struct{ L, R Formula }
-
-type ImplF struct{ L, R Formula }
-
-type IffF struct{ L, R Formula }
-
-func (v Var) String() string { return string(v) }
-
-func (v Var) Eval(env map[string]bool) bool { return env[string(v)] }
-
-func (v Var) Vars() []string { return []string{string(v)} }
-
-func (f NotF) String() string { return "¬" + f.F.String() }
-
-func (f NotF) Eval(env map[string]bool) bool { return !f.F.Eval(env) }
-
-func (f NotF) Vars() []string { return f.F.Vars() }
-
-func (f AndF) String() string { return "(" + f.L.String() + " ∧ " + f.R.String() + ")" }
-
-func (f AndF) Eval(env map[string]bool) bool { return f.L.Eval(env) && f.R.Eval(env) }
-
-func (f AndF) Vars() []string { return union(f.L.Vars(), f.R.Vars()) }
-
-func (f OrF) String() string { return "(" + f.L.String() + " ∨ " + f.R.String() + ")" }
-
-func (f OrF) Eval(env map[string]bool) bool { return f.L.Eval(env) || f.R.Eval(env) }
-
-func (f OrF) Vars() []string { return union(f.L.Vars(), f.R.Vars()) }
-
-func (f ImplF) String() string { return "(" + f.L.String() + " ⇒ " + f.R.String() + ")" }
-
-func (f ImplF) Eval(env map[string]bool) bool { return !f.L.Eval(env) || f.R.Eval(env) }
-
-func (f ImplF) Vars() []string { return union(f.L.Vars(), f.R.Vars()) }
-
-func (f IffF) String() string { return "(" + f.L.String() + " ⇔ " + f.R.String() + ")" }
-
-func (f IffF) Eval(env map[string]bool) bool { return f.L.Eval(env) == f.R.Eval(env) }
-
-func (f IffF) Vars() []string { return union(f.L.Vars(), f.R.Vars()) }
-
-func union(a, b []string) []string {
-	set := make(map[string]struct{})
-	for _, x := range a {
-		set[x] = struct{}{}
-	}
-	for _, x := range b {
-		set[x] = struct{}{}
-	}
-	var out []string
-	for x := range set {
-		out = append(out, x)
-	}
-	return out
+func V(name string) Formula {
+	return Var(name)
 }
 
 func TruthTable(f Formula) []map[string]bool {
@@ -96,4 +48,132 @@ func Equivalent(a, b Formula) bool {
 		}
 	}
 	return true
+}
+
+//
+
+func union(a, b []string) []string {
+	set := make(map[string]struct{})
+	for _, x := range a {
+		set[x] = struct{}{}
+	}
+	for _, x := range b {
+		set[x] = struct{}{}
+	}
+	var out []string
+	for x := range set {
+		out = append(out, x)
+	}
+	sort.Strings(out)
+	return out
+}
+
+//
+
+func ToNNF(f Formula) Formula {
+	switch x := f.(type) {
+	case NotF:
+		switch inner := x.F.(type) {
+		case AndF:
+			return OrF{L: ToNNF(NotF{F: inner.L}), R: ToNNF(NotF{F: inner.R})}
+		case OrF:
+			return AndF{L: ToNNF(NotF{F: inner.L}), R: ToNNF(NotF{F: inner.R})}
+		case NotF:
+			return ToNNF(inner.F)
+		case ImplF:
+			return AndF{L: ToNNF(inner.L), R: ToNNF(NotF{F: inner.R})}
+		case IffF:
+			return OrF{
+				L: AndF{L: ToNNF(inner.L), R: ToNNF(NotF{F: inner.R})},
+				R: AndF{L: ToNNF(NotF{F: inner.L}), R: ToNNF(inner.R)},
+			}
+		default:
+			return NotF{F: ToNNF(inner)}
+		}
+	case AndF:
+		return AndF{L: ToNNF(x.L), R: ToNNF(x.R)}
+	case OrF:
+		return OrF{L: ToNNF(x.L), R: ToNNF(x.R)}
+	case ImplF:
+		return OrF{L: ToNNF(NotF{F: x.L}), R: ToNNF(x.R)}
+	case IffF:
+		return AndF{
+			L: OrF{L: ToNNF(NotF{F: x.L}), R: ToNNF(x.R)},
+			R: OrF{L: ToNNF(NotF{F: x.R}), R: ToNNF(x.L)},
+		}
+	case GroupF:
+		return ToNNF(x.Inner)
+	default:
+		return x
+	}
+}
+
+func ToCNF(f Formula) Formula {
+	f = ToNNF(f)
+	switch x := f.(type) {
+	case AndF:
+		return AndF{L: ToCNF(x.L), R: ToCNF(x.R)}
+	case OrF:
+		// distribución
+		l, lok := x.L.(AndF)
+		r, rok := x.R.(AndF)
+		switch {
+		case lok:
+			return AndF{
+				L: ToCNF(OrF{L: l.L, R: x.R}),
+				R: ToCNF(OrF{L: l.R, R: x.R}),
+			}
+		case rok:
+			return AndF{
+				L: ToCNF(OrF{L: x.L, R: r.L}),
+				R: ToCNF(OrF{L: x.L, R: r.R}),
+			}
+		default:
+			return OrF{L: ToCNF(x.L), R: ToCNF(x.R)}
+		}
+	default:
+		return x
+	}
+}
+
+func ToDNF(f Formula) Formula {
+	f = ToNNF(f)
+	switch x := f.(type) {
+	case OrF:
+		return OrF{L: ToDNF(x.L), R: ToDNF(x.R)}
+	case AndF:
+		// distribución
+		l, lok := x.L.(OrF)
+		r, rok := x.R.(OrF)
+		switch {
+		case lok:
+			return OrF{
+				L: ToDNF(AndF{L: l.L, R: x.R}),
+				R: ToDNF(AndF{L: l.R, R: x.R}),
+			}
+		case rok:
+			return OrF{
+				L: ToDNF(AndF{L: x.L, R: r.L}),
+				R: ToDNF(AndF{L: x.L, R: r.R}),
+			}
+		default:
+			return AndF{L: ToDNF(x.L), R: ToDNF(x.R)}
+		}
+	default:
+		return x
+	}
+}
+
+//
+
+func PrintTruthTable(f Formula) {
+	vars := f.Vars()
+	table := TruthTable(f)
+	fmt.Println(append(vars, "result"))
+	for _, row := range table {
+		for _, v := range vars {
+			fmt.Printf("%v\t", row[v])
+		}
+		fmt.Printf("%v\n", row["result"])
+	}
 }

@@ -81,10 +81,8 @@ func main() {
 		A := propositional.Var("A")
 		B := propositional.Var("B")
 
-		left := propositional.NotF{F: propositional.AndF{L: A, R: B}}
-		right := propositional.OrF{L: propositional.NotF{F: A}, R: propositional.NotF{F: B}}
-
-		formula := propositional.ImplF{L: left, R: right}
+		// (¬(A ∧ B) ⇒ (¬A ∨ ¬B))
+		formula := A.And(B).Not().Implies(A.Not().Or(B.Not()))
 
 		env := map[string]bool{"A": true, "B": false}
 		result := formula.Eval(env)
@@ -101,11 +99,54 @@ func main() {
 
 		fmt.Println()
 		// A ⇒ B ≡ ¬A ∨ B
-		formula1 := propositional.ImplF{L: A, R: B}
-		formula2 := propositional.OrF{L: propositional.NotF{F: A}, R: B}
+		formula1 := A.Implies(B)
+		formula2 := A.Not().Or(B)
 
 		equiv := propositional.Equivalent(formula1, formula2)
 		fmt.Printf("¿%s ≡ %s? %v\n", formula1.String(), formula2.String(), equiv)
+
+		fmt.Println()
+		formula = A.Implies(B).Not() // ¬(A ⇒ B)
+		fmt.Println("Original:", formula.String())
+
+		nnf := propositional.ToNNF(formula)
+		fmt.Println("NNF:     ", nnf.String())
+		propositional.PrintTruthTable(nnf)
+
+		cnf := propositional.ToCNF(formula)
+		fmt.Println("CNF:     ", cnf.String())
+		propositional.PrintTruthTable(cnf)
+
+		fmt.Println()
+		fmt.Println()
+
+		C := propositional.V("C")
+
+		formula = A.Implies(B.Or(C)) // A ⇒ (B ∨ C)
+		fmt.Println("Original:", formula.String())
+
+		cnf = propositional.ToCNF(formula)
+		fmt.Println("CNF:     ", cnf.String())
+
+		propositional.PrintTruthTable(cnf)
+
+		fmt.Println()
+		fmt.Println()
+
+		fmt.Println()
+		fmt.Println()
+
+		formula = propositional.V("P").Implies(propositional.V("Q")).And(propositional.V("P")).And(propositional.V("Q").Not())
+		fmt.Println("Formula:", formula.String())
+		propositional.ResolutionTrace(formula)
+
+		fmt.Println()
+		fmt.Println()
+
+		formula = propositional.V("A").Implies(propositional.V("B")).And(propositional.V("A")).And(propositional.V("B").Not())
+		fmt.Println("Formula:", formula.String())
+		fmt.Println("¿Contradictoria?", propositional.IsContradiction(formula)) // true
+		fmt.Println("¿Satisfactible?", propositional.IsSatisfiable(formula))    // false
 
 		return nil
 	}, options...)
