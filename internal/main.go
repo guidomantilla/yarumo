@@ -30,6 +30,24 @@ func main() {
 		xxx()
 		yyy()
 
+		f, _ := rules.ParseFormula("isAdult THEN isActive")
+		fmt.Println("Parsed Formula:", fmt.Sprintf("%+v", f))
+
+		f, _ = rules.ParseFormula("has2FA IFF isAdmin")
+		fmt.Println("Parsed Formula:", fmt.Sprintf("%+v", f))
+
+		f1, _ := rules.ParseFormula("isAdmin THEN has2FA")
+		f2, _ := rules.ParseFormula("NOT(has2FA) THEN NOT(isAdmin)")
+		fmt.Println(propositions.Equivalent(f1, f2)) //
+
+		exp := "(NOT isAdult AND isColombian) OR (isAdmin THEN (has2FA AND isActive)) IFF (TRUE OR (FALSE AND hasEmail))"
+		f3, err := rules.ParseFormula(exp)
+		fmt.Println(fmt.Sprintf("Parsed Formula: %+v, Error: %+v", f3, err)) //nolint:gosimple
+
+		exp = "((NOT isAdmin OR isActive) AND (hasEmail AND (isColombian IFF isAdult))) THEN ((termsAccepted OR has2FA) AND NOT FALSE)"
+		f4, err := rules.ParseFormula(exp)
+		fmt.Println(fmt.Sprintf("Parsed Formula: %+v, Error: %+v", f4, err)) //nolint:gosimple
+
 		return nil
 	}, options...)
 }
