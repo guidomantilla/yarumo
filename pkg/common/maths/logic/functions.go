@@ -7,7 +7,13 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
 )
 
-type Traces[T any] *[]Trace[T]
+type Result[T any] struct {
+	Formula    propositions.Formula
+	Predicates Predicates[T]
+	Value      T
+	Trace      []Trace[T]
+	Result     bool
+}
 
 type Trace[T any] struct {
 	Name  string
@@ -17,10 +23,23 @@ type Trace[T any] struct {
 
 type Predicates[T any] map[propositions.Var]predicates.Predicate[T]
 
-func NewPredicates[T any](predicates Predicates[T]) (Predicates[T], Traces[T]) {
-	traces := make([]Trace[T], 0)
-	wrapped := make(Predicates[T])
+// EvaluateProposition translates a proposition formula into a predicate function using the provided predicates.
+func EvaluateProposition[T any](formula propositions.Formula, preds Predicates[T], value *T) *Result[T] {
+	tracedPredicates, traces := tracePredicates(preds)
+	eval := compileProposition[T](formula, tracedPredicates)
+	result := eval(*value)
+	return &Result[T]{
+		Formula:    formula,
+		Predicates: tracedPredicates,
+		Value:      *value,
+		Trace:      *traces,
+		Result:     result,
+	}
+}
 
+func tracePredicates[T any](predicates Predicates[T]) (Predicates[T], *[]Trace[T]) {
+	var traces = make([]Trace[T], 0)
+	wrapped := make(Predicates[T])
 	for variable, pred := range predicates {
 		name := string(variable) // para cierre
 		wrapped[variable] = func(t T) bool {
@@ -33,23 +52,22 @@ func NewPredicates[T any](predicates Predicates[T]) (Predicates[T], Traces[T]) {
 	return wrapped, &traces
 }
 
-// CompileProposition translates a proposition formula into a predicate function using the provided predicates.
-func CompileProposition[T any](formula propositions.Formula, preds Predicates[T]) predicates.Predicate[T] {
+func compileProposition[T any](formula propositions.Formula, preds Predicates[T]) predicates.Predicate[T] {
 	switch x := formula.(type) {
 	case propositions.AndF:
-		return predicates.And(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
+		return predicates.And(compileProposition[T](x.L, preds), compileProposition[T](x.R, preds))
 	case propositions.FalseF:
 		return predicates.False[T]()
 	case propositions.GroupF:
-		return CompileProposition[T](x.Inner, preds)
+		return compileProposition[T](x.Inner, preds)
 	case propositions.IffF:
-		return predicates.Iff(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
+		return predicates.Iff(compileProposition[T](x.L, preds), compileProposition[T](x.R, preds))
 	case propositions.ImplF:
-		return predicates.Implies(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
+		return predicates.Implies(compileProposition[T](x.L, preds), compileProposition[T](x.R, preds))
 	case propositions.NotF:
-		return predicates.Not(CompileProposition[T](x.F, preds))
+		return predicates.Not(compileProposition[T](x.F, preds))
 	case propositions.OrF:
-		return predicates.Or(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
+		return predicates.Or(compileProposition[T](x.L, preds), compileProposition[T](x.R, preds))
 	case propositions.TrueF:
 		return predicates.True[T]()
 	case propositions.Var:

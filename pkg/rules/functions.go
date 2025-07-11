@@ -3,7 +3,6 @@ package rules
 import (
 	"fmt"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
-
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
 )
@@ -23,24 +22,22 @@ type RuleResult[T any] struct {
 
 func EvaluateRules[T any](preds logic.Predicates[T], rules []Rule[T], input T) []RuleResult[T] {
 
-	predicatesWithTraces, traces := logic.NewPredicates(preds)
-
+	traces := make([]logic.Trace[T], 0)
 	var results []RuleResult[T]
 	for _, r := range rules {
-		eval := logic.CompileProposition(r.Formula, predicatesWithTraces)
-		result := eval(input)
+		result := logic.EvaluateProposition(r.Formula, preds, &input)
 		results = append(results, RuleResult[T]{
 			Rule:      r,
 			Input:     input,
-			Violated:  !result,
-			Satisfied: result,
+			Violated:  !result.Result,
+			Satisfied: result.Result,
 		})
 	}
 
-	for _, tr := range *traces {
+	for _, tr := range traces {
 		fmt.Printf("Predicate %s => %v\n", tr.Name, tr.Value)
 	}
-	
+
 	return results
 }
 

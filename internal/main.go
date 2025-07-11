@@ -26,7 +26,8 @@ func main() {
 		fmt.Println()
 		fmt.Println()
 
-		xxx()
+		//xxx()
+		yyy()
 
 		return nil
 	}, options...)
@@ -53,8 +54,8 @@ func yyy() {
 	fmt.Println()
 	fmt.Println()
 
-	eval := logic.CompileProposition(formula, Predicates)
-	fmt.Println(eval(User)) // true
+	result := logic.EvaluateProposition(formula, Predicates, &User)
+	fmt.Println(result)
 
 	fmt.Println()
 	fmt.Println()
