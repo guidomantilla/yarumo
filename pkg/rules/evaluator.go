@@ -13,10 +13,10 @@ func EvaluateRules[T any](value *T, preds logic.Predicates[T], rules []Rule[T]) 
 		return nil, fmt.Errorf("value must be a pointer to a struct, got %T", value)
 	}
 	results := make([]Result[T], 0)
-	for _, r := range rules {
-		result, _ := logic.EvaluateProposition(value, r.Formula, preds)
+	for _, rule := range rules {
+		result, _ := logic.EvaluateProposition(value, rule.Formula, preds)
 		results = append(results, Result[T]{
-			Rule:      r,
+			Rule:      rule,
 			Input:     *value,
 			Violated:  !result.Result,
 			Satisfied: result.Result,
