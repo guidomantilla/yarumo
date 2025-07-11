@@ -46,16 +46,15 @@ func main() {
 		termsAccepted := propositions.Var("TermsAccepted")
 		admin := propositions.Var("Admin")
 
-		predicatex, traces := logic.NewPredicates(
-			map[propositions.Var]predicates.Predicate[User]{
-				adult:         func(u User) bool { return u.Age >= 18 },
-				active:        func(u User) bool { return u.Active },
-				colombian:     func(u User) bool { return u.Country == "CO" },
-				emailValid:    func(u User) bool { return u.Email != "" },
-				has2FA:        func(u User) bool { return u.Has2FA },
-				termsAccepted: func(u User) bool { return u.TermsAccepted },
-				admin:         func(u User) bool { return u.IsAdmin },
-			})
+		predicatex := map[propositions.Var]predicates.Predicate[User]{
+			adult:         func(u User) bool { return u.Age >= 18 },
+			active:        func(u User) bool { return u.Active },
+			colombian:     func(u User) bool { return u.Country == "CO" },
+			emailValid:    func(u User) bool { return u.Email != "" },
+			has2FA:        func(u User) bool { return u.Has2FA },
+			termsAccepted: func(u User) bool { return u.TermsAccepted },
+			admin:         func(u User) bool { return u.IsAdmin },
+		}
 
 		userRules := []rules.Rule[User]{
 			{
@@ -103,9 +102,6 @@ func main() {
 
 		eval := logic.CompileProposition(formula, predicatex)
 		fmt.Println(eval(user)) // true
-		for _, tr := range *traces {
-			fmt.Printf("Predicate %s => %v\n", tr.Name, tr.Value)
-		}
 
 		fmt.Println()
 		fmt.Println()
@@ -143,7 +139,7 @@ func main() {
 			},
 		}
 
-		results := rules.EvaluateRules(userRules, user)
+		results := rules.EvaluateRules(predicatex, userRules, user)
 		rules.PrintRuleEvaluation(results)
 
 		return nil

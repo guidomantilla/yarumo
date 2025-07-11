@@ -36,28 +36,29 @@ func NewPredicates[T any](predicates Predicates[T]) (Predicates[T], Traces[T]) {
 // CompileProposition translates a proposition formula into a predicate function using the provided predicates.
 func CompileProposition[T any](formula propositions.Formula, preds Predicates[T]) predicates.Predicate[T] {
 	switch x := formula.(type) {
+	case propositions.AndF:
+		return predicates.And(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
+	case propositions.FalseF:
+		return predicates.False[T]()
+	case propositions.GroupF:
+		return CompileProposition[T](x.Inner, preds)
+	case propositions.IffF:
+		return predicates.Iff(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
+	case propositions.ImplF:
+		return predicates.Implies(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
+	case propositions.NotF:
+		return predicates.Not(CompileProposition[T](x.F, preds))
+	case propositions.OrF:
+		return predicates.Or(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
+	case propositions.TrueF:
+		return predicates.True[T]()
 	case propositions.Var:
 		name := string(x)
-		if p, ok := preds[x]; ok {
+		p, ok := preds[x]
+		if ok {
 			return p
 		}
 		panic(fmt.Sprintf("propositions.Var '%s' not found", name))
-	case propositions.NotF:
-		return predicates.Not(CompileProposition[T](x.F, preds))
-	case propositions.AndF:
-		return predicates.And(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
-	case propositions.OrF:
-		return predicates.Or(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
-	case propositions.ImplF:
-		return predicates.Implies(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
-	case propositions.IffF:
-		return predicates.Iff(CompileProposition[T](x.L, preds), CompileProposition[T](x.R, preds))
-	case propositions.GroupF:
-		return CompileProposition[T](x.Inner, preds)
-	case propositions.TrueF:
-		return predicates.True[T]()
-	case propositions.FalseF:
-		return predicates.False[T]()
 	default:
 		panic(fmt.Sprintf("unsupported proposition type: %T", x))
 	}
