@@ -27,8 +27,8 @@ func main() {
 		fmt.Println()
 
 		//xxx()
-		//yyy()
-		zzz()
+		yyy()
+		//zzz()
 		//parser()
 
 		return nil
@@ -57,12 +57,6 @@ func parser() { //nolint:unused
 
 func xxx() { //nolint:unused
 
-	fmt.Println()
-	fmt.Println()
-}
-
-func yyy() { //nolint:unused
-
 	result, err := Predicates.Evaluate(UserRules[0].Formula, &User)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Error evaluating proposition: %v", err)) //nolint:gosimple
@@ -78,7 +72,23 @@ func yyy() { //nolint:unused
 	fmt.Println(string(pretty))
 	fmt.Println()
 	fmt.Println()
+}
 
+func yyy() { //nolint:unused
+	evaluator := rules.NewEvaluator(Predicates, UserRules)
+
+	result, err := evaluator.Evaluate(&User)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Error evaluating rules: %v", err)) //nolint:gosimple
+		return
+	}
+	pretty, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		fmt.Println("Error al formatear JSON:", err)
+		return
+	}
+
+	fmt.Println(string(pretty))
 }
 
 func zzz() { //nolint:unused

@@ -5,7 +5,8 @@ import (
 )
 
 type EvalNode struct {
-	Expr  string     `json:"expr"`
+	Label string     `json:"label,omitempty"`
+	Expr  string     `json:"expr,omitempty"`
 	Value *bool      `json:"value,omitempty"`
 	Nodes []EvalNode `json:"nodes,omitempty"`
 	f     propositions.Formula

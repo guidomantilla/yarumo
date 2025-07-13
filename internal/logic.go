@@ -19,7 +19,7 @@ type UserType struct {
 
 var (
 	User          = UserType{Name: "Ana", Age: 22, Active: true, Email: "", Country: "CO", IsAdmin: true, Has2FA: false, TermsAccepted: false}
-	UserInferable = UserType{Name: "Ana", Age: 22, Active: true, Email: "hey", Country: "CO", IsAdmin: true, Has2FA: true, TermsAccepted: true}
+	UserInferable = UserType{Name: "Ana", Age: 17, Active: true, Email: "hey", Country: "CO", IsAdmin: true, Has2FA: true, TermsAccepted: true}
 	Adult         = propositions.Var("Adult")
 	Active        = propositions.Var("Active")
 	Colombian     = propositions.Var("Colombian")
@@ -40,47 +40,41 @@ var (
 	}
 	UserRules = []rules.Rule[UserType]{
 		{
-			Label:     "R1 - Colombian adults must be active",
-			Formula:   Colombian.And(Adult).Implies(Active),
-			Predicate: Predicates[Colombian].And(Predicates[Adult].Implies(Predicates[Active])),
+			Label:   "R1 - Colombian adults must be active",
+			Formula: Colombian.And(Adult).Implies(Active),
 		},
 		{
-			Label:     "R2 - All users must accept terms to be active",
-			Formula:   Admin.Implies(TermsAccepted),
-			Predicate: Predicates[Admin].Implies(Predicates[TermsAccepted]),
+			Label:   "R2 - All users must accept terms to be active",
+			Formula: Admin.Implies(TermsAccepted),
 		},
 		{
-			Label:     "R3 - Admins must have 2FA",
-			Formula:   Admin.Implies(Has2FA),
-			Predicate: Predicates[Admin].Implies(Predicates[Has2FA]),
+			Label:   "R3 - Admins must have 2FA",
+			Formula: Admin.Implies(Has2FA),
 		},
 		{
-			Label:     "R4 - All users must have email",
-			Formula:   Active.Implies(EmailValid),
-			Predicate: Predicates[Active].Implies(Predicates[EmailValid]),
+			Label:   "R4 - All users must have email",
+			Formula: Active.Implies(EmailValid),
 		},
 	}
 	UserInferableRules = []rules.Rule[UserType]{
 		{
 			Label:       "R1 - Colombian adults will be active",
-			Formula:     Colombian.And(Adult).Implies(Active),
-			Predicate:   Predicates[Colombian].And(Predicates[Adult]),
+			Formula:     Colombian.And(Adult),
 			Consequence: &Active,
 		},
 		{
-			Label:     "R2 - All active users must accept terms to be active",
-			Formula:   Admin.Implies(TermsAccepted),
-			Predicate: Predicates[Active].And(Predicates[Admin]).Implies(Predicates[TermsAccepted]),
+			Label:       "R2 - All active admins must accept terms to be active",
+			Formula:     Active.And(Admin.Implies(TermsAccepted)),
+			Consequence: &TermsAccepted,
 		},
 		{
-			Label:     "R3 - All active admins must have 2FA",
-			Formula:   Admin.Implies(Has2FA),
-			Predicate: Predicates[Active].And(Predicates[Admin]).Implies(Predicates[Has2FA]),
+			Label:       "R3 - All active admins must have 2FA",
+			Formula:     Active.And(Admin.Implies(Has2FA)),
+			Consequence: &Has2FA,
 		},
 		{
-			Label:       "R4 - All active users must have email",
-			Formula:     Active.Implies(EmailValid),
-			Predicate:   Predicates[Active].Implies(Predicates[EmailValid]),
+			Label:       "R4 - All active users must have email, then they can login",
+			Formula:     Active.And(EmailValid.Implies(CanLogin)),
 			Consequence: &CanLogin,
 		},
 	}
