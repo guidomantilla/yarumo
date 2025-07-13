@@ -1,14 +1,12 @@
-package rules
+package propositions
 
 import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
 )
 
-func ParseFormula(input string) (propositions.Formula, error) {
+func ParseFormula(input string) (Formula, error) {
 	tokens, err := tokenize(input)
 	if err != nil {
 		return nil, err
@@ -139,11 +137,11 @@ func (p *parser) peek() token {
 	return p.tokens[p.pos]
 }
 
-func (p *parser) parse() (propositions.Formula, error) {
+func (p *parser) parse() (Formula, error) {
 	return p.parseIff() // IFF > THEN > OR > AND > NOT
 }
 
-func (p *parser) parseIff() (propositions.Formula, error) {
+func (p *parser) parseIff() (Formula, error) {
 	left, err := p.parseImpl()
 	if err != nil {
 		return nil, err
@@ -154,12 +152,12 @@ func (p *parser) parseIff() (propositions.Formula, error) {
 		if err != nil {
 			return nil, err
 		}
-		left = propositions.IffF{L: left, R: right}
+		left = IffF{L: left, R: right}
 	}
 	return left, nil
 }
 
-func (p *parser) parseImpl() (propositions.Formula, error) {
+func (p *parser) parseImpl() (Formula, error) {
 	left, err := p.parseOr()
 	if err != nil {
 		return nil, err
@@ -170,12 +168,12 @@ func (p *parser) parseImpl() (propositions.Formula, error) {
 		if err != nil {
 			return nil, err
 		}
-		left = propositions.ImplF{L: left, R: right}
+		left = ImplF{L: left, R: right}
 	}
 	return left, nil
 }
 
-func (p *parser) parseOr() (propositions.Formula, error) {
+func (p *parser) parseOr() (Formula, error) {
 	left, err := p.parseAnd()
 	if err != nil {
 		return nil, err
@@ -186,12 +184,12 @@ func (p *parser) parseOr() (propositions.Formula, error) {
 		if err != nil {
 			return nil, err
 		}
-		left = propositions.OrF{L: left, R: right}
+		left = OrF{L: left, R: right}
 	}
 	return left, nil
 }
 
-func (p *parser) parseAnd() (propositions.Formula, error) {
+func (p *parser) parseAnd() (Formula, error) {
 	left, err := p.parseUnary()
 	if err != nil {
 		return nil, err
@@ -202,12 +200,12 @@ func (p *parser) parseAnd() (propositions.Formula, error) {
 		if err != nil {
 			return nil, err
 		}
-		left = propositions.AndF{L: left, R: right}
+		left = AndF{L: left, R: right}
 	}
 	return left, nil
 }
 
-func (p *parser) parseUnary() (propositions.Formula, error) {
+func (p *parser) parseUnary() (Formula, error) {
 	tok := p.peek()
 	switch tok.typ {
 	case tokNot:
@@ -216,7 +214,7 @@ func (p *parser) parseUnary() (propositions.Formula, error) {
 		if err != nil {
 			return nil, err
 		}
-		return propositions.NotF{F: sub}, nil
+		return NotF{F: sub}, nil
 	case tokLParen:
 		p.next()
 		sub, err := p.parseIff()
@@ -230,13 +228,13 @@ func (p *parser) parseUnary() (propositions.Formula, error) {
 		return sub, nil
 	case tokVar:
 		p.next()
-		return propositions.Var(tok.val), nil
+		return Var(tok.val), nil
 	case tokTrue:
 		p.next()
-		return propositions.TrueF{}, nil
+		return TrueF{}, nil
 	case tokFalse:
 		p.next()
-		return propositions.FalseF{}, nil
+		return FalseF{}, nil
 	default:
 		return nil, fmt.Errorf("unexpected token: %+v", tok)
 	}

@@ -27,8 +27,8 @@ func main() {
 		fmt.Println()
 
 		//xxx()
-		yyy()
-		//zzz()
+		//yyy()
+		zzz()
 		//parser()
 
 		return nil
@@ -36,22 +36,22 @@ func main() {
 }
 
 func parser() { //nolint:unused
-	f, _ := rules.ParseFormula("isAdult THEN isActive")
+	f, _ := propositions.ParseFormula("isAdult THEN isActive")
 	fmt.Println("Parsed Formula:", fmt.Sprintf("%+v", f))
 
-	f, _ = rules.ParseFormula("has2FA IFF isAdmin")
+	f, _ = propositions.ParseFormula("has2FA IFF isAdmin")
 	fmt.Println("Parsed Formula:", fmt.Sprintf("%+v", f))
 
-	f1, _ := rules.ParseFormula("isAdmin THEN has2FA")
-	f2, _ := rules.ParseFormula("NOT(has2FA) THEN NOT(isAdmin)")
+	f1, _ := propositions.ParseFormula("isAdmin THEN has2FA")
+	f2, _ := propositions.ParseFormula("NOT(has2FA) THEN NOT(isAdmin)")
 	fmt.Println(propositions.Equivalent(f1, f2)) //
 
 	exp := "(NOT isAdult AND isColombian) OR (isAdmin THEN (has2FA AND isActive)) IFF (TRUE OR (FALSE AND hasEmail))"
-	f3, err := rules.ParseFormula(exp)
+	f3, err := propositions.ParseFormula(exp)
 	fmt.Println(fmt.Sprintf("Parsed Formula: %+v, Error: %+v", f3, err)) //nolint:gosimple
 
 	exp = "((NOT isAdmin OR isActive) AND (hasEmail AND (isColombian IFF isAdult))) THEN ((termsAccepted OR has2FA) AND NOT FALSE)"
-	f4, err := rules.ParseFormula(exp)
+	f4, err := propositions.ParseFormula(exp)
 	fmt.Println(fmt.Sprintf("Parsed Formula: %+v, Error: %+v", f4, err)) //nolint:gosimple
 }
 
@@ -63,7 +63,7 @@ func xxx() { //nolint:unused
 
 func yyy() { //nolint:unused
 
-	result, err := Predicates.Evaluate(UserRules[0].Formula, User)
+	result, err := Predicates.Evaluate(UserRules[0].Formula, &User)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Error evaluating proposition: %v", err)) //nolint:gosimple
 		return
@@ -83,17 +83,20 @@ func yyy() { //nolint:unused
 
 func zzz() { //nolint:unused
 
-	results, _ := rules.EvaluateRules(&User, Predicates, UserRules)
-	for _, result := range results {
-		fmt.Println(fmt.Sprintf("Formula: %+v", result.Rule.Formula)) //nolint:gosimple
-		fmt.Println(fmt.Sprintf("Input: %+v", result.Input))          //nolint:gosimple
-		fmt.Println(fmt.Sprintf("Satisfied: %t", result.Satisfied))   //nolint:gosimple
-		fmt.Println(fmt.Sprintf("Violated: %t", result.Violated))     //nolint:gosimple
-		fmt.Println(fmt.Sprintf("Explanation: %+v", result.EvalTree)) //nolint:gosimple
-		fmt.Println()
-		fmt.Println()
+	evaluator := rules.NewEvaluator(Predicates, UserInferableRules)
 
+	result, err := evaluator.Evaluate(&User)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Error evaluating rules: %v", err)) //nolint:gosimple
+		return
 	}
+	pretty, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		fmt.Println("Error al formatear JSON:", err)
+		return
+	}
+
+	fmt.Println(string(pretty))
 }
 
 /*

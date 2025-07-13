@@ -42,25 +42,45 @@ var (
 			Label:     "R1 - Colombian adults must be active",
 			Formula:   Colombian.And(Adult).Implies(Active),
 			Predicate: Predicates[Colombian].And(Predicates[Adult].Implies(Predicates[Active])),
-			//Consequence: CanLogin,
 		},
 		{
 			Label:     "R2 - All users must accept terms to be active",
 			Formula:   Admin.Implies(TermsAccepted),
 			Predicate: Predicates[Admin].Implies(Predicates[TermsAccepted]),
-			//Consequence: CanLogin,
 		},
 		{
 			Label:     "R3 - Admins must have 2FA",
 			Formula:   Admin.Implies(Has2FA),
 			Predicate: Predicates[Admin].Implies(Predicates[Has2FA]),
-			//Consequence: CanLogin,
 		},
 		{
 			Label:     "R4 - All users must have email",
 			Formula:   Active.Implies(EmailValid),
 			Predicate: Predicates[Active].Implies(Predicates[EmailValid]),
-			//Consequence: CanLogin,
+		},
+	}
+	UserInferableRules = []rules.Rule[UserType]{
+		{
+			Label:       "R1 - Colombian adults will be active",
+			Formula:     Colombian.And(Adult).Implies(Active),
+			Predicate:   Predicates[Colombian].And(Predicates[Adult]),
+			Consequence: &Active,
+		},
+		{
+			Label:     "R2 - All active users must accept terms to be active",
+			Formula:   Admin.Implies(TermsAccepted),
+			Predicate: Predicates[Active].And(Predicates[Admin]).Implies(Predicates[TermsAccepted]),
+		},
+		{
+			Label:     "R3 - All active admins must have 2FA",
+			Formula:   Admin.Implies(Has2FA),
+			Predicate: Predicates[Active].And(Predicates[Admin]).Implies(Predicates[Has2FA]),
+		},
+		{
+			Label:       "R4 - All active users must have email",
+			Formula:     Active.Implies(EmailValid),
+			Predicate:   Predicates[Active].Implies(Predicates[EmailValid]),
+			Consequence: &CanLogin,
 		},
 	}
 )

@@ -9,9 +9,9 @@ func TruthTable(f Formula) []Fact {
 	n := len(vars)
 	rows := make([]Fact, 0)
 	for i := 0; i < 1<<n; i++ {
-		row := make(map[string]bool)
+		row := make(Fact)
 		for j, v := range vars {
-			row[v] = (i>>j)&1 == 1
+			row[Var(v)] = (i>>j)&1 == 1
 		}
 		row["result"] = f.Eval(row)
 		rows = append(rows, row)

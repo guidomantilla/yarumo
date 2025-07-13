@@ -15,7 +15,7 @@ func (v Var) String() string {
 
 // Eval evaluates the Var against a set of facts, returning true if the fact corresponding to the variable's name is true.
 func (v Var) Eval(facts Fact) bool {
-	return facts[string(v)]
+	return facts[v]
 }
 
 // Vars returns a slice containing the name of the variable, as it is the only variable in this formula.

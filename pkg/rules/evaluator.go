@@ -2,116 +2,64 @@ package rules
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
+	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
 
-// EvaluateRules evaluates a set of rules against a given input using the provided predicates.
-func EvaluateRules[T any](value *T, registry logic.PredicatesRegistry[T], rules []Rule[T]) ([]Result[T], error) {
-	if !pointer.IsStruct(value) {
-		return nil, fmt.Errorf("value must be a pointer to a struct, got %T", value)
+type Evaluator[T any] struct {
+	mu       sync.Mutex
+	registry logic.PredicatesRegistry[T]
+	rules    []Rule[T]
+}
+
+func NewEvaluator[T any](registry logic.PredicatesRegistry[T], rules []Rule[T]) *Evaluator[T] {
+	return &Evaluator[T]{
+		registry: registry,
+		rules:    rules,
 	}
-	results := make([]Result[T], 0)
-	for _, rule := range rules {
-		_, err := registry.Evaluate(rule.Formula, *value)
+}
+
+// Evaluate evaluates a set of rules against a given input using the provided predicates.
+func (e *Evaluator[T]) Evaluate(input *T) (*logic.EvalNode, error) {
+	if !pointer.IsStruct(input) {
+		return nil, fmt.Errorf("input must be a pointer to a struct, got %T", input)
+	}
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	result := &logic.EvalNode{
+		Expr:  "rules set evaluation",
+		Value: false,
+		Nodes: make([]logic.EvalNode, 0),
+	}
+
+	for _, rule := range e.rules {
+		tree, err := e.registry.Evaluate(rule.Formula, input)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating rule '%s': %w", rule.Label, err)
 		}
-		/*
-				registry[rule.Consequence] = predicates.False[T]()
-				if result.Result {
-					registry[rule.Consequence] = predicates.True[T]()
-				}
+		result.Value = result.Value && tree.Value
+		result.Nodes = append(result.Nodes, *tree)
 
-				consequence := &logic.Fact[T]{
-					Variable: rule.Consequence,
-					Value:    result.Result,
-					Func:     registry[rule.Consequence],
-				}
+		if rule.Consequence == nil {
+			continue
+		}
 
-			result.Facts = append(result.Facts, *consequence)
-		*/
-		evalTree := BuildEvalTree[T](rule.Formula, *value, registry)
-		results = append(results, Result[T]{
-			Rule:  rule,
-			Input: *value,
-			//Violated:  !result.Result,
-			//Satisfied: result.Result,
-			//Facts:     result.Facts,
-			//Consequence: consequence,
-			EvalTree: *evalTree,
-		})
+		derived := result.Facts()
+		if derived[*rule.Consequence] {
+			continue
+		}
+
+		predicate := predicates.False[T]()
+		if tree.Value {
+			predicate = predicates.True[T]()
+		}
+		e.registry[*rule.Consequence] = predicate
 	}
-	return results, nil
-}
 
-func BuildEvalTree[T any](f propositions.Formula, input T, registry logic.PredicatesRegistry[T]) *EvalNode {
-	switch x := f.(type) {
-	case propositions.Var:
-		val := registry[x](input)
-		return &EvalNode{Expr: x.String(), Value: val}
-
-	case propositions.TrueF:
-		return &EvalNode{Expr: x.String(), Value: true}
-
-	case propositions.FalseF:
-		return &EvalNode{Expr: x.String(), Value: false}
-
-	case propositions.NotF:
-		child := BuildEvalTree[T](x.F, input, registry)
-		return &EvalNode{
-			Expr:     x.String(),
-			Value:    !child.Value,
-			Children: []EvalNode{*child},
-		}
-
-	case propositions.AndF:
-		left := BuildEvalTree[T](x.L, input, registry)
-		right := BuildEvalTree[T](x.R, input, registry)
-		return &EvalNode{
-			Expr:     x.String(),
-			Value:    left.Value && right.Value,
-			Children: []EvalNode{*left, *right},
-		}
-
-	case propositions.OrF:
-		left := BuildEvalTree[T](x.L, input, registry)
-		right := BuildEvalTree[T](x.R, input, registry)
-		return &EvalNode{
-			Expr:     x.String(),
-			Value:    left.Value || right.Value,
-			Children: []EvalNode{*left, *right},
-		}
-
-	case propositions.ImplF:
-		left := BuildEvalTree[T](x.L, input, registry)
-		right := BuildEvalTree[T](x.R, input, registry)
-		return &EvalNode{
-			Expr:     x.String(),
-			Value:    !left.Value || right.Value,
-			Children: []EvalNode{*left, *right},
-		}
-
-	case propositions.IffF:
-		left := BuildEvalTree[T](x.L, input, registry)
-		right := BuildEvalTree[T](x.R, input, registry)
-		return &EvalNode{
-			Expr:     x.String(),
-			Value:    left.Value == right.Value,
-			Children: []EvalNode{*left, *right},
-		}
-
-	case propositions.GroupF:
-		child := BuildEvalTree[T](x.Inner, input, registry)
-		return &EvalNode{
-			Expr:     x.String(),
-			Value:    child.Value,
-			Children: []EvalNode{*child},
-		}
-
-	default:
-		return &EvalNode{Expr: "UNKNOWN", Value: false}
-	}
+	return result, nil
 }

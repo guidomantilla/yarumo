@@ -1,6 +1,6 @@
 package propositions
 
-type Fact map[string]bool
+type Fact map[Var]bool
 
 type Formula interface {
 	String() string

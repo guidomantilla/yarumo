@@ -6,24 +6,8 @@ import (
 )
 
 type Rule[T any] struct {
-	Label     string
-	Formula   propositions.Formula
-	Predicate predicates.Predicate[T]
-	//Consequence propositions.Var
-}
-
-type Result[T any] struct {
-	Rule      Rule[T]
-	Input     T
-	Violated  bool
-	Satisfied bool
-	Facts     propositions.Fact
-	//Consequence *logic.Fact[T]
-	EvalTree EvalNode
-}
-
-type EvalNode struct {
-	Expr     string
-	Value    bool
-	Children []EvalNode
+	Label       string
+	Formula     propositions.Formula
+	Predicate   predicates.Predicate[T]
+	Consequence *propositions.Var
 }

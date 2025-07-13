@@ -5,29 +5,43 @@ import (
 )
 
 type EvalNode struct {
-	Expr          string              `json:"expr"`
-	Value         bool                `json:"value"`
-	Vars          []string            `json:"vars"`
-	Satisfied     bool                `json:"satisfied"`
-	Contradiction bool                `json:"contradiction"`
-	Tautology     bool                `json:"tautology"`
-	TruthTable    []propositions.Fact `json:"truth_table"`
-	FailCases     []propositions.Fact `json:"fail_cases"`
-	Nodes         []EvalNode          `json:"nodes"`
+	Expr  string     `json:"expr"`
+	Value bool       `json:"value"`
+	Nodes []EvalNode `json:"nodes,omitempty"`
+	f     propositions.Formula
 }
 
-func NewEvalNode(x propositions.Formula, value bool, child ...EvalNode) *EvalNode {
+func NewEvalNode(f propositions.Formula, value bool, child ...EvalNode) *EvalNode {
 	return &EvalNode{
-		Expr:          x.String(),
-		Value:         value,
-		Nodes:         child,
-		Vars:          x.Vars(),
-		TruthTable:    propositions.TruthTable(x),
-		Satisfied:     propositions.IsSatisfiable(x),
-		Contradiction: propositions.IsContradiction(x),
-		Tautology:     propositions.IsTautology(x),
-		FailCases:     propositions.FailCases(x),
+		f:     f,
+		Expr:  f.String(),
+		Value: value,
+		Nodes: child,
 	}
+}
+
+func (x EvalNode) Vars() []string {
+	return x.f.Vars()
+}
+
+func (x EvalNode) Satisfied() bool {
+	return propositions.IsSatisfiable(x.f)
+}
+
+func (x EvalNode) Contradiction() bool {
+	return propositions.IsContradiction(x.f)
+}
+
+func (x EvalNode) Tautology() bool {
+	return propositions.IsTautology(x.f)
+}
+
+func (x EvalNode) TruthTable() []propositions.Fact {
+	return propositions.TruthTable(x.f)
+}
+
+func (x EvalNode) FailCases() []propositions.Fact {
+	return propositions.FailCases(x.f)
 }
 
 func (x EvalNode) Facts() propositions.Fact {
@@ -39,7 +53,7 @@ func (x EvalNode) Facts() propositions.Fact {
 func (x EvalNode) collectFacts(facts propositions.Fact) {
 
 	if len(x.Nodes) == 0 {
-		facts[x.Expr] = x.Value
+		facts[propositions.Var(x.Expr)] = x.Value
 		return
 	}
 

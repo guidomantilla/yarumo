@@ -102,8 +102,8 @@ func (registry PredicatesRegistry[T]) Compile(formula propositions.Formula) (pre
 }
 
 // Evaluate evaluates a proposition formula against an input of type T using the predicate registry.
-func (registry PredicatesRegistry[T]) Evaluate(f propositions.Formula, input T) (*EvalNode, error) {
-	if !pointer.IsStruct(&input) {
+func (registry PredicatesRegistry[T]) Evaluate(f propositions.Formula, input *T) (*EvalNode, error) {
+	if !pointer.IsStruct(input) {
 		return nil, fmt.Errorf("input must be a pointer to a struct, got %T", input)
 	}
 	registry.sanitize()
@@ -114,7 +114,7 @@ func (registry PredicatesRegistry[T]) Evaluate(f propositions.Formula, input T) 
 		if !ok {
 			return nil, fmt.Errorf("missing predicate for variable '%s'", x)
 		}
-		return NewEvalNode(x, predicate(input)), nil
+		return NewEvalNode(x, predicate(*input)), nil
 
 	case propositions.TrueF:
 		return NewEvalNode(x, true), nil
@@ -138,17 +138,7 @@ func (registry PredicatesRegistry[T]) Evaluate(f propositions.Formula, input T) 
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating AND right formula: %w", err)
 		}
-		return &EvalNode{
-			Expr:          x.String(),
-			Value:         left.Value && right.Value,
-			Nodes:         []EvalNode{*left, *right},
-			Vars:          x.Vars(),
-			TruthTable:    propositions.TruthTable(x),
-			Satisfied:     propositions.IsSatisfiable(x),
-			Contradiction: propositions.IsContradiction(x),
-			Tautology:     propositions.IsTautology(x),
-			FailCases:     propositions.FailCases(x),
-		}, nil
+		return NewEvalNode(x, left.Value && right.Value, *left, *right), nil
 
 	case propositions.OrF:
 		left, err := registry.Evaluate(x.L, input)
