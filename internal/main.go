@@ -8,6 +8,7 @@ import (
 	"github.com/guidomantilla/yarumo/internal/core"
 	"github.com/guidomantilla/yarumo/pkg/boot"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
+	"github.com/guidomantilla/yarumo/pkg/common/maths/sets"
 	"github.com/guidomantilla/yarumo/pkg/rules"
 	"github.com/guidomantilla/yarumo/pkg/servers"
 )
@@ -26,6 +27,7 @@ func main() {
 		fmt.Println()
 		fmt.Println()
 
+		sets.NewU(sets.New(1))
 		//xxx()
 		yyy()
 		//zzz()
