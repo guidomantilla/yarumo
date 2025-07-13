@@ -12,8 +12,8 @@ func (g GroupF) String() string {
 	return "(" + g.Inner.String() + ")"
 }
 
-func (g GroupF) Eval(env map[string]bool) bool {
-	return g.Inner.Eval(env)
+func (g GroupF) Eval(facts Fact) bool {
+	return g.Inner.Eval(facts)
 }
 
 func (g GroupF) Vars() []string {

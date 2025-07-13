@@ -8,8 +8,8 @@ func (f ImplF) String() string {
 	return "(" + f.L.String() + " ⇒ " + f.R.String() + ")"
 }
 
-func (f ImplF) Eval(env map[string]bool) bool {
-	return !f.L.Eval(env) || f.R.Eval(env)
+func (f ImplF) Eval(facts Fact) bool {
+	return !f.L.Eval(facts) || f.R.Eval(facts)
 }
 
 func (f ImplF) Vars() []string {

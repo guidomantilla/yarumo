@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/guidomantilla/yarumo/internal/core"
 	"github.com/guidomantilla/yarumo/pkg/boot"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/rules"
 	"github.com/guidomantilla/yarumo/pkg/servers"
 )
@@ -28,8 +27,8 @@ func main() {
 		fmt.Println()
 
 		//xxx()
-		//yyy()
-		zzz()
+		yyy()
+		//zzz()
 		//parser()
 
 		return nil
@@ -58,43 +57,39 @@ func parser() { //nolint:unused
 
 func xxx() { //nolint:unused
 
-	formula := UserRules[0].Formula
-	for key, row := range propositions.Analyze(formula) {
-		fmt.Println(fmt.Sprintf("%s: %+v", key, row)) //nolint:gosimple
-	}
 	fmt.Println()
 	fmt.Println()
 }
 
 func yyy() { //nolint:unused
-	formula, predicate, _ := rules.Unwrap(UserRules)
-	fmt.Println("Combined Formula:", fmt.Sprintf("%+v", formula))
-	fmt.Println("Combined Predicate Result:", predicate(User)) // false
 
-	fmt.Println()
-	fmt.Println()
-
-	result, _ := logic.EvaluateProposition(&User, formula, Predicates)
-	fmt.Println(result)
-	for _, row := range result.Facts {
-		fmt.Println(fmt.Sprintf("%s: %+v", row.Variable, row.Value)) //nolint:gosimple
+	result, err := Predicates.Evaluate(UserRules[0].Formula, User)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Error evaluating proposition: %v", err)) //nolint:gosimple
+		return
 	}
 
-	users := utils.FilterBy([]UserType{User}, utils.FilterFn[UserType](predicate))
-	fmt.Println(users)
+	pretty, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		fmt.Println("Error al formatear JSON:", err)
+		return
+	}
 
+	fmt.Println(string(pretty))
 	fmt.Println()
 	fmt.Println()
+
 }
 
-func zzz() {
+func zzz() { //nolint:unused
 
 	results, _ := rules.EvaluateRules(&User, Predicates, UserRules)
-	for _, row := range results {
-		fmt.Println(fmt.Sprintf("Rule: %s, Input: %+v, Violated: %t, Satisfied: %t Conclusion: %+v", row.Rule.Label, row.Input, row.Violated, row.Satisfied, row.Consequence)) //nolint:gosimple
-		for _, fact := range row.Facts {
-			fmt.Println(fmt.Sprintf("%s: %+v", fact.Variable, fact.Value)) //nolint:gosimple
-		}
+	for _, result := range results {
+		fmt.Println(fmt.Sprintf("Formula: %+v", result.Rule.Formula)) //nolint:gosimple
+		fmt.Println(fmt.Sprintf("Input: %+v", result.Input))          //nolint:gosimple
+		fmt.Println(fmt.Sprintf("Satisfied: %t", result.Satisfied))   //nolint:gosimple
+		fmt.Println(fmt.Sprintf("Violated: %t", result.Violated))     //nolint:gosimple
+		fmt.Println(fmt.Sprintf("Explanation: %+v", result.EvalTree)) //nolint:gosimple
 		fmt.Println()
 		fmt.Println()
 

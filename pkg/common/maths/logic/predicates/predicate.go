@@ -1,5 +1,7 @@
 package predicates
 
+type Registry[K ~string, T any] map[K]Predicate[T]
+
 // Predicate is a function that evaluates a value of type T and returns true or false
 type Predicate[T any] func(T) bool
 

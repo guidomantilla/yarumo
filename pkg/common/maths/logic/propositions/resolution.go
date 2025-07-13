@@ -82,7 +82,7 @@ func removeDuplicates(c clause) clause {
 	return out
 }
 
-func Resolution(f Formula) bool {
+func resolution(f Formula) bool {
 	clauses := toClauses(ToCNF(f))
 	seen := make(map[string]struct{})
 
@@ -119,15 +119,7 @@ func clauseKey(c clause) string {
 	return s
 }
 
-func IsSatisfiable(f Formula) bool {
-	return Resolution(f)
-}
-
-func IsContradiction(f Formula) bool {
-	return !Resolution(f)
-}
-
-func ResolutionTrace(f Formula) bool {
+func resolutionTrace(f Formula) bool { //nolint:unused
 	clauses := toClauses(ToCNF(f))
 	seen := make(map[string]struct{})
 	step := 1
@@ -166,7 +158,7 @@ func ResolutionTrace(f Formula) bool {
 	}
 }
 
-func clauseString(c clause) string {
+func clauseString(c clause) string { //nolint:unused
 	parts := make([]string, len(c))
 	for i, l := range c {
 		parts[i] = l.String()

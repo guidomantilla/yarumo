@@ -11,7 +11,7 @@ func (FalseF) String() string {
 	return "F"
 }
 
-func (FalseF) Eval(_ map[string]bool) bool {
+func (FalseF) Eval(_ Fact) bool {
 	return false
 }
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
+	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
 	"github.com/guidomantilla/yarumo/pkg/rules"
 )
@@ -27,7 +27,7 @@ var (
 	TermsAccepted = propositions.Var("TermsAccepted")
 	Admin         = propositions.Var("Admin")
 	CanLogin      = propositions.Var("CanLogin")
-	Predicates    = map[propositions.Var]predicates.Predicate[UserType]{
+	Predicates    = logic.PredicatesRegistry[UserType]{
 		Adult:         func(u UserType) bool { return u.Age >= 18 },
 		Active:        func(u UserType) bool { return u.Active },
 		Colombian:     func(u UserType) bool { return u.Country == "CO" },
@@ -39,28 +39,28 @@ var (
 	}
 	UserRules = []rules.Rule[UserType]{
 		{
-			Label:       "R1 - Colombian adults must be active",
-			Formula:     Colombian.And(Adult).Implies(Active),
-			Predicate:   Predicates[Colombian].And(Predicates[Adult].Implies(Predicates[Active])),
-			Consequence: CanLogin,
+			Label:     "R1 - Colombian adults must be active",
+			Formula:   Colombian.And(Adult).Implies(Active),
+			Predicate: Predicates[Colombian].And(Predicates[Adult].Implies(Predicates[Active])),
+			//Consequence: CanLogin,
 		},
 		{
-			Label:       "R2 - All users must accept terms to be active",
-			Formula:     Admin.Implies(TermsAccepted),
-			Predicate:   Predicates[Admin].Implies(Predicates[TermsAccepted]),
-			Consequence: CanLogin,
+			Label:     "R2 - All users must accept terms to be active",
+			Formula:   Admin.Implies(TermsAccepted),
+			Predicate: Predicates[Admin].Implies(Predicates[TermsAccepted]),
+			//Consequence: CanLogin,
 		},
 		{
-			Label:       "R3 - Admins must have 2FA",
-			Formula:     Admin.Implies(Has2FA),
-			Predicate:   Predicates[Admin].Implies(Predicates[Has2FA]),
-			Consequence: CanLogin,
+			Label:     "R3 - Admins must have 2FA",
+			Formula:   Admin.Implies(Has2FA),
+			Predicate: Predicates[Admin].Implies(Predicates[Has2FA]),
+			//Consequence: CanLogin,
 		},
 		{
-			Label:       "R4 - All users must have email",
-			Formula:     Active.Implies(EmailValid),
-			Predicate:   Predicates[Active].Implies(Predicates[EmailValid]),
-			Consequence: CanLogin,
+			Label:     "R4 - All users must have email",
+			Formula:   Active.Implies(EmailValid),
+			Predicate: Predicates[Active].Implies(Predicates[EmailValid]),
+			//Consequence: CanLogin,
 		},
 	}
 )

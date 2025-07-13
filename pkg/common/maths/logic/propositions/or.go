@@ -8,8 +8,8 @@ func (f OrF) String() string {
 	return "(" + f.L.String() + " ∨ " + f.R.String() + ")"
 }
 
-func (f OrF) Eval(env map[string]bool) bool {
-	return f.L.Eval(env) || f.R.Eval(env)
+func (f OrF) Eval(facts Fact) bool {
+	return f.L.Eval(facts) || f.R.Eval(facts)
 }
 
 func (f OrF) Vars() []string {

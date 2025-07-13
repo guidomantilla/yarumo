@@ -8,8 +8,8 @@ func (f NotF) String() string {
 	return "!" + f.F.String()
 }
 
-func (f NotF) Eval(env map[string]bool) bool {
-	return !f.F.Eval(env)
+func (f NotF) Eval(facts Fact) bool {
+	return !f.F.Eval(facts)
 }
 
 func (f NotF) Vars() []string {

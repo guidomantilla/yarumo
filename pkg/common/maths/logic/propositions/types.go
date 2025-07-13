@@ -1,8 +1,10 @@
 package propositions
 
+type Fact map[string]bool
+
 type Formula interface {
 	String() string
-	Eval(env map[string]bool) bool
+	Eval(facts Fact) bool
 	Vars() []string
 
 	And(Formula) Formula

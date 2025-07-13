@@ -8,10 +8,10 @@ func T() Formula {
 }
 
 func (TrueF) String() string {
-	return "V"
+	return "T"
 }
 
-func (TrueF) Eval(_ map[string]bool) bool {
+func (TrueF) Eval(_ Fact) bool {
 	return true
 }
 

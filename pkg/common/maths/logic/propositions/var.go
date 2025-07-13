@@ -10,8 +10,8 @@ func (v Var) String() string {
 	return string(v)
 }
 
-func (v Var) Eval(env map[string]bool) bool {
-	return env[string(v)]
+func (v Var) Eval(facts Fact) bool {
+	return facts[string(v)]
 }
 
 func (v Var) Vars() []string {

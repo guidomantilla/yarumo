@@ -4,10 +4,10 @@ import (
 	"sort"
 )
 
-func TruthTable(f Formula) []map[string]bool {
+func TruthTable(f Formula) []Fact {
 	vars := f.Vars()
 	n := len(vars)
-	var rows []map[string]bool
+	rows := make([]Fact, 0)
 	for i := 0; i < 1<<n; i++ {
 		row := make(map[string]bool)
 		for j, v := range vars {
@@ -33,16 +33,12 @@ func Equivalent(a, b Formula) bool {
 	return true
 }
 
-func Analyze(f Formula) map[string]any {
-	rows := make(map[string]any)
-	rows["vars"] = f.Vars()
-	rows["formula"] = f.String()
-	rows["satisfiable"] = IsSatisfiable(f)
-	rows["contradiction"] = IsContradiction(f)
-	rows["truth_table"] = TruthTable(f)
-	rows["tautology"] = IsTautology(f)
-	rows["fail_cases"] = FailCases(f)
-	return rows
+func IsSatisfiable(f Formula) bool {
+	return resolution(f)
+}
+
+func IsContradiction(f Formula) bool {
+	return !resolution(f)
 }
 
 func IsTautology(f Formula) bool {
@@ -55,9 +51,9 @@ func IsTautology(f Formula) bool {
 	return true
 }
 
-func FailCases(f Formula) []map[string]bool {
+func FailCases(f Formula) []Fact {
+	failCases := make([]Fact, 0)
 	tt := TruthTable(f)
-	var failCases []map[string]bool
 	for _, row := range tt {
 		if !row["result"] {
 			failCases = append(failCases, row)
