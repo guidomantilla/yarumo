@@ -1,11 +1,6 @@
 package sets
 
-import (
-	"fmt"
-
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
-)
-
+/*
 // Equivalence represents an equivalence relation on a set of type T.
 type Equivalence[T comparable] struct {
 	relation  *Relation[T, T]
@@ -49,3 +44,4 @@ func (e *Equivalence[T]) ClassOf(x T) (Set[T], bool) {
 	}
 	return pointer.Zero[Set[T]](), false
 }
+*/

@@ -73,6 +73,7 @@ func (r *Relation[A, B]) Image(a A) Set[B] {
 	return image
 }
 
+/*
 type RelationOn[T comparable] = Relation[T, T]
 
 func NewRelationOn[T comparable]() *RelationOn[T] {
@@ -128,3 +129,4 @@ func (r *RelationOn[T]) IsTransitive() bool {
 func (r *Relation[T, T]) IsEquivalenceRelation() bool {
 	return r.IsReflexive() && r.IsSymmetric() && r.IsTransitive()
 }
+*/

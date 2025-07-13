@@ -1,7 +1,6 @@
 package sets
 
-import "fmt"
-
+/*
 // PartitionFromRelation generates a partition of the domain of the relation R into equivalence classes.
 func PartitionFromRelation[T comparable](r *Relation[T, T]) ([]Set[T], error) {
 	if !r.IsEquivalenceRelation() {
@@ -46,3 +45,4 @@ func RelationFromPartition[T comparable](partition []Set[T]) *Relation[T, T] {
 
 	return rel
 }
+*/

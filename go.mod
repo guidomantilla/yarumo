@@ -1,15 +1,19 @@
 module github.com/guidomantilla/yarumo
 
-go 1.24
+go 1.24.2
+
+toolchain go1.24.3
 
 require (
 	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc
 	github.com/avast/retry-go/v4 v4.6.1
 	github.com/devmiek/nanoid-go v0.0.0-20241216084707-e17e38258ffc
+	github.com/emirpasic/gods v1.18.1
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
+	github.com/hmdsefi/gograph v0.5.0
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.22.0
