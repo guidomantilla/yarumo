@@ -19,6 +19,7 @@ type UserType struct {
 
 var (
 	User          = UserType{Name: "Ana", Age: 22, Active: true, Email: "", Country: "CO", IsAdmin: true, Has2FA: false, TermsAccepted: false}
+	UserInferable = UserType{Name: "Ana", Age: 22, Active: true, Email: "hey", Country: "CO", IsAdmin: true, Has2FA: true, TermsAccepted: true}
 	Adult         = propositions.Var("Adult")
 	Active        = propositions.Var("Active")
 	Colombian     = propositions.Var("Colombian")

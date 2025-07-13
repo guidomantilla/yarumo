@@ -127,7 +127,7 @@ func (registry PredicatesRegistry[T]) Evaluate(f propositions.Formula, input *T)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating NOT formula: %w", err)
 		}
-		return NewEvalNode(x, !child.Value, *child), nil
+		return NewEvalNode(x, !*child.Value, *child), nil
 
 	case propositions.AndF:
 		left, err := registry.Evaluate(x.L, input)
@@ -138,7 +138,7 @@ func (registry PredicatesRegistry[T]) Evaluate(f propositions.Formula, input *T)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating AND right formula: %w", err)
 		}
-		return NewEvalNode(x, left.Value && right.Value, *left, *right), nil
+		return NewEvalNode(x, *left.Value && *right.Value, *left, *right), nil
 
 	case propositions.OrF:
 		left, err := registry.Evaluate(x.L, input)
@@ -149,7 +149,7 @@ func (registry PredicatesRegistry[T]) Evaluate(f propositions.Formula, input *T)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating OR right formula: %w", err)
 		}
-		return NewEvalNode(x, left.Value || right.Value, *left, *right), nil
+		return NewEvalNode(x, *left.Value || *right.Value, *left, *right), nil
 
 	case propositions.ImplF:
 		left, err := registry.Evaluate(x.L, input)
@@ -160,7 +160,7 @@ func (registry PredicatesRegistry[T]) Evaluate(f propositions.Formula, input *T)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating IMPL right formula: %w", err)
 		}
-		return NewEvalNode(x, !left.Value || right.Value, *left, *right), nil
+		return NewEvalNode(x, !*left.Value || *right.Value, *left, *right), nil
 
 	case propositions.IffF:
 		left, err := registry.Evaluate(x.L, input)
@@ -178,7 +178,7 @@ func (registry PredicatesRegistry[T]) Evaluate(f propositions.Formula, input *T)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating GROUP formula: %w", err)
 		}
-		return NewEvalNode(x, child.Value, *child), nil
+		return NewEvalNode(x, *child.Value, *child), nil
 
 	default:
 		return nil, fmt.Errorf("unknown formula type: %T", x)

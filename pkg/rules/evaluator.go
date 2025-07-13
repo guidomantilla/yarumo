@@ -33,8 +33,13 @@ func (e *Evaluator[T]) Evaluate(input *T) (*logic.EvalNode, error) {
 
 	result := &logic.EvalNode{
 		Expr:  "rules set evaluation",
-		Value: false,
-		Nodes: make([]logic.EvalNode, 0),
+		Value: pointer.ToPtr(true),
+		Nodes: []logic.EvalNode{
+			{
+				Expr:  "consequences",
+				Nodes: make([]logic.EvalNode, 0),
+			},
+		},
 	}
 
 	for _, rule := range e.rules {
@@ -42,7 +47,7 @@ func (e *Evaluator[T]) Evaluate(input *T) (*logic.EvalNode, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating rule '%s': %w", rule.Label, err)
 		}
-		result.Value = result.Value && tree.Value
+		result.Value = pointer.ToPtr(*result.Value && *tree.Value)
 		result.Nodes = append(result.Nodes, *tree)
 
 		if rule.Consequence == nil {
@@ -55,10 +60,13 @@ func (e *Evaluator[T]) Evaluate(input *T) (*logic.EvalNode, error) {
 		}
 
 		predicate := predicates.False[T]()
-		if tree.Value {
+		if *tree.Value {
 			predicate = predicates.True[T]()
 		}
 		e.registry[*rule.Consequence] = predicate
+
+		fact := logic.NewEvalNode(rule.Consequence, *result.Value)
+		result.Nodes[0].Nodes = append(result.Nodes[0].Nodes, *fact)
 	}
 
 	return result, nil

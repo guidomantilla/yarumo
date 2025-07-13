@@ -85,7 +85,7 @@ func zzz() { //nolint:unused
 
 	evaluator := rules.NewEvaluator(Predicates, UserInferableRules)
 
-	result, err := evaluator.Evaluate(&User)
+	result, err := evaluator.Evaluate(&UserInferable)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Error evaluating rules: %v", err)) //nolint:gosimple
 		return

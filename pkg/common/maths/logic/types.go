@@ -6,7 +6,7 @@ import (
 
 type EvalNode struct {
 	Expr  string     `json:"expr"`
-	Value bool       `json:"value"`
+	Value *bool      `json:"value,omitempty"`
 	Nodes []EvalNode `json:"nodes,omitempty"`
 	f     propositions.Formula
 }
@@ -15,7 +15,7 @@ func NewEvalNode(f propositions.Formula, value bool, child ...EvalNode) *EvalNod
 	return &EvalNode{
 		f:     f,
 		Expr:  f.String(),
-		Value: value,
+		Value: &value,
 		Nodes: child,
 	}
 }
@@ -52,8 +52,8 @@ func (x EvalNode) Facts() propositions.Fact {
 
 func (x EvalNode) collectFacts(facts propositions.Fact) {
 
-	if len(x.Nodes) == 0 {
-		facts[propositions.Var(x.Expr)] = x.Value
+	if len(x.Nodes) == 0 && x.Value != nil {
+		facts[propositions.Var(x.Expr)] = *x.Value
 		return
 	}
 
