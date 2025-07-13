@@ -1,11 +1,15 @@
 package propositions
 
+import "fmt"
+
+// ImplF represents a logical implication (⇒) between two formulas.
 type ImplF struct {
 	L, R Formula
 }
 
+// Impl creates a new ImplF formula that represents the implication of L to R.
 func (f ImplF) String() string {
-	return "(" + f.L.String() + " ⇒ " + f.R.String() + ")"
+	return fmt.Sprintf("(%s ⇒ %s)", f.L.String(), f.R.String())
 }
 
 func (f ImplF) Eval(facts Fact) bool {
