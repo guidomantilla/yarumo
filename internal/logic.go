@@ -78,4 +78,20 @@ var (
 			Consequence: &CanLogin,
 		},
 	}
+
+	DecisionTable = rules.DecisionTable{
+		Inputs:  []string{"age >= 65", "income < 20000"},
+		Outputs: []string{"segment"},
+		Rules: []rules.DecisionRow{
+			{Conditions: []bool{true, true}, Actions: []string{"senior-low-income"}},
+			{Conditions: []bool{true, false}, Actions: []string{"senior"}},
+			{Conditions: []bool{false, true}, Actions: []string{"adult-low-income"}},
+			{Conditions: []bool{false, false}, Actions: []string{"adult"}},
+		},
+	}
+
+	DecisionTableFacts = map[string]interface{}{
+		"age":    67.0,
+		"income": 18000.0,
+	}
 )

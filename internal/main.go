@@ -33,6 +33,9 @@ func main() {
 		//zzz()
 		//parser()
 
+		result, _ := rules.EvaluateTable(DecisionTable, DecisionTableFacts)
+		fmt.Println("Resultado:", result)
+
 		return nil
 	}, options...)
 }
