@@ -80,7 +80,7 @@ func xxx() { //nolint:unused
 }
 
 func yyy() { //nolint:unused
-	evaluator := rules.NewEvaluator(Predicates, UserRules)
+	evaluator := rules.NewRuleSet(Predicates, UserRules)
 
 	result, err := evaluator.Evaluate(&User)
 	if err != nil {
@@ -98,7 +98,7 @@ func yyy() { //nolint:unused
 
 func zzz() { //nolint:unused
 
-	evaluator := rules.NewEvaluator(Predicates, UserInferableRules)
+	evaluator := rules.NewRuleSet(Predicates, UserInferableRules)
 
 	result, err := evaluator.Evaluate(&UserInferable)
 	if err != nil {

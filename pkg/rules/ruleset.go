@@ -9,21 +9,21 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
 
-type Evaluator[T any] struct {
+type RuleSet[T any] struct {
 	mu       sync.Mutex
 	registry logic.PredicatesRegistry[T]
 	rules    []Rule[T]
 }
 
-func NewEvaluator[T any](registry logic.PredicatesRegistry[T], rules []Rule[T]) *Evaluator[T] {
-	return &Evaluator[T]{
+func NewRuleSet[T any](registry logic.PredicatesRegistry[T], rules []Rule[T]) *RuleSet[T] {
+	return &RuleSet[T]{
 		registry: registry,
 		rules:    rules,
 	}
 }
 
 // Evaluate evaluates a set of rules against a given input using the provided predicates.
-func (e *Evaluator[T]) Evaluate(input *T) (*logic.EvalNode, error) {
+func (e *RuleSet[T]) Evaluate(input *T) (*logic.EvalNode, error) {
 	if !pointer.IsStruct(input) {
 		return nil, fmt.Errorf("input must be a pointer to a struct, got %T", input)
 	}
@@ -62,6 +62,8 @@ func (e *Evaluator[T]) Evaluate(input *T) (*logic.EvalNode, error) {
 			result.Nodes[0].Nodes = append(result.Nodes[0].Nodes, *fact)
 		}
 		result.Nodes = append(result.Nodes, *tree)
+
+		rule.tree = tree
 	}
 
 	return result, nil
