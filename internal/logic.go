@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
-	"github.com/guidomantilla/yarumo/pkg/rules"
 )
 
 type UserType struct {
@@ -38,7 +37,7 @@ var (
 		Admin:         func(u UserType) bool { return u.IsAdmin },
 		CanLogin:      func(u UserType) bool { return false },
 	}
-	UserRules = []rules.Rule[UserType]{
+	UserRules = []logic.Rule[UserType]{
 		{
 			Label:   "R1 - Colombian adults must be active",
 			Formula: Colombian.And(Adult).Implies(Active),
@@ -56,7 +55,7 @@ var (
 			Formula: Active.Implies(EmailValid),
 		},
 	}
-	UserInferableRules = []rules.Rule[UserType]{
+	UserInferableRules = []logic.Rule[UserType]{
 		{
 			Label:       "R1 - Colombian adults will be active",
 			Formula:     Colombian.And(Adult),
@@ -77,21 +76,5 @@ var (
 			Formula:     Active.And(EmailValid.Implies(CanLogin)),
 			Consequence: &CanLogin,
 		},
-	}
-
-	DecisionTable = rules.DecisionTable{
-		Inputs:  []string{"age >= 65", "income < 20000"},
-		Outputs: []string{"segment"},
-		Rules: []rules.DecisionRow{
-			{Conditions: []bool{true, true}, Actions: []string{"senior-low-income"}},
-			{Conditions: []bool{true, false}, Actions: []string{"senior"}},
-			{Conditions: []bool{false, true}, Actions: []string{"adult-low-income"}},
-			{Conditions: []bool{false, false}, Actions: []string{"adult"}},
-		},
-	}
-
-	DecisionTableFacts = map[string]interface{}{
-		"age":    67.0,
-		"income": 18000.0,
 	}
 )

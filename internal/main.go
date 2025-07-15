@@ -7,9 +7,8 @@ import (
 
 	"github.com/guidomantilla/yarumo/internal/core"
 	"github.com/guidomantilla/yarumo/pkg/boot"
+	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/sets"
-	"github.com/guidomantilla/yarumo/pkg/rules"
 	"github.com/guidomantilla/yarumo/pkg/servers"
 )
 
@@ -27,14 +26,10 @@ func main() {
 		fmt.Println()
 		fmt.Println()
 
-		sets.NewU(sets.New(1))
 		//xxx()
-		yyy()
+		//yyy()
 		//zzz()
 		//parser()
-
-		result, _ := rules.EvaluateTable(DecisionTable, DecisionTableFacts)
-		fmt.Println("Resultado:", result)
 
 		return nil
 	}, options...)
@@ -80,7 +75,7 @@ func xxx() { //nolint:unused
 }
 
 func yyy() { //nolint:unused
-	evaluator := rules.NewRuleSet(Predicates, UserRules)
+	evaluator := logic.NewRuleSet(Predicates, UserRules)
 
 	result, err := evaluator.Evaluate(&User)
 	if err != nil {
@@ -98,7 +93,7 @@ func yyy() { //nolint:unused
 
 func zzz() { //nolint:unused
 
-	evaluator := rules.NewRuleSet(Predicates, UserInferableRules)
+	evaluator := logic.NewRuleSet(Predicates, UserInferableRules)
 
 	result, err := evaluator.Evaluate(&UserInferable)
 	if err != nil {

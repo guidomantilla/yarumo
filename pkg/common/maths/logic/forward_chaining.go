@@ -1,21 +1,28 @@
-package rules
+package logic
 
 import (
 	"fmt"
 	"sync"
 
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
+	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
 	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 )
 
+type Rule[T any] struct {
+	Label       string
+	Formula     propositions.Formula
+	Consequence *propositions.Var
+	tree        *EvalNode
+}
+
 type RuleSet[T any] struct {
 	mu       sync.Mutex
-	registry logic.PredicatesRegistry[T]
+	registry PredicatesRegistry[T]
 	rules    []Rule[T]
 }
 
-func NewRuleSet[T any](registry logic.PredicatesRegistry[T], rules []Rule[T]) *RuleSet[T] {
+func NewRuleSet[T any](registry PredicatesRegistry[T], rules []Rule[T]) *RuleSet[T] {
 	return &RuleSet[T]{
 		registry: registry,
 		rules:    rules,
@@ -23,7 +30,7 @@ func NewRuleSet[T any](registry logic.PredicatesRegistry[T], rules []Rule[T]) *R
 }
 
 // Evaluate evaluates a set of rules against a given input using the provided predicates.
-func (e *RuleSet[T]) Evaluate(input *T) (*logic.EvalNode, error) {
+func (e *RuleSet[T]) Evaluate(input *T) (*EvalNode, error) {
 	if !pointer.IsStruct(input) {
 		return nil, fmt.Errorf("input must be a pointer to a struct, got %T", input)
 	}
@@ -31,13 +38,13 @@ func (e *RuleSet[T]) Evaluate(input *T) (*logic.EvalNode, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	result := &logic.EvalNode{
+	result := &EvalNode{
 		Label: "rules set evaluation",
 		Value: pointer.ToPtr(true),
-		Nodes: []logic.EvalNode{
+		Nodes: []EvalNode{
 			{
 				Expr:  "consequences",
-				Nodes: make([]logic.EvalNode, 0),
+				Nodes: make([]EvalNode, 0),
 			},
 		},
 	}
@@ -57,7 +64,7 @@ func (e *RuleSet[T]) Evaluate(input *T) (*logic.EvalNode, error) {
 			}
 			e.registry[*rule.Consequence] = predicate
 
-			fact := logic.NewEvalNode(rule.Consequence, *result.Value)
+			fact := NewEvalNode(rule.Consequence, *result.Value)
 			tree.Nodes = append(tree.Nodes, *fact)
 			result.Nodes[0].Nodes = append(result.Nodes[0].Nodes, *fact)
 		}
