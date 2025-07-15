@@ -5,44 +5,44 @@ import (
 )
 
 type EvalNode struct {
-	Label string     `json:"label,omitempty"`
-	Expr  string     `json:"expr,omitempty"`
-	Value *bool      `json:"value,omitempty"`
-	Nodes []EvalNode `json:"nodes,omitempty"`
-	f     propositions.Formula
+	Label   string     `json:"label,omitempty"`
+	Expr    string     `json:"expr,omitempty"`
+	Value   *bool      `json:"value,omitempty"`
+	Nodes   []EvalNode `json:"nodes,omitempty"`
+	formula propositions.Formula
 }
 
-func NewEvalNode(f propositions.Formula, value bool, child ...EvalNode) *EvalNode {
+func NewEvalNode(formula propositions.Formula, value bool, child ...EvalNode) *EvalNode {
 	return &EvalNode{
-		f:     f,
-		Expr:  f.String(),
-		Value: &value,
-		Nodes: child,
+		formula: formula,
+		Expr:    formula.String(),
+		Value:   &value,
+		Nodes:   child,
 	}
 }
 
 func (x EvalNode) Vars() []string {
-	return x.f.Vars()
+	return x.formula.Vars()
 }
 
 func (x EvalNode) Satisfied() bool {
-	return propositions.IsSatisfiable(x.f)
+	return propositions.IsSatisfiable(x.formula)
 }
 
 func (x EvalNode) Contradiction() bool {
-	return propositions.IsContradiction(x.f)
+	return propositions.IsContradiction(x.formula)
 }
 
 func (x EvalNode) Tautology() bool {
-	return propositions.IsTautology(x.f)
+	return propositions.IsTautology(x.formula)
 }
 
 func (x EvalNode) TruthTable() []propositions.Fact {
-	return propositions.TruthTable(x.f)
+	return propositions.TruthTable(x.formula)
 }
 
 func (x EvalNode) FailCases() []propositions.Fact {
-	return propositions.FailCases(x.f)
+	return propositions.FailCases(x.formula)
 }
 
 func (x EvalNode) Facts() propositions.Fact {
