@@ -135,6 +135,15 @@ Tareas detalladas:
 - [x] Tests cruzados: para nVars ≤ 8, comparar truth table vs SAT (resultados idénticos) — ver examples/sat_policy_test.go.
 - [x] Benchmarks: familias sintéticas para medir umbral K.
 
+Benchmarks y escalamiento:
+- Ubicación: pkg/common/maths/logic2/examples/benchmarks_test.go
+- Cómo ejecutar: `go test -bench=. -benchmem ./pkg/common/maths/logic2/examples`
+- Qué observar (criterio de “escalamiento razonable”):
+  - Para nVars > K, el camino SAT debe superar claramente a truth-table en tiempo (la tabla crece 2^n).
+  - En familias 3-CNF con m≈4n, DPLL debe escalar sub-exponencialmente en la práctica para n moderados (p. ej., n≤200 en máquina local) sin agotar memoria.
+  - Documentar números de referencia locales (tiempo/op y bytes/op) y, si es necesario, ajustar SATThreshold.
+- Próximo paso: capturar resultados en README o un doc de benchmarks y marcar el criterio como cumplido.
+
 Entregables:
 - [x] Paquete sat con CNF+DPLL.
 - [x] props.IsSatisfiable delega según política con umbral K y hook de registro para SAT.
@@ -142,44 +151,45 @@ Entregables:
 
 Criterios de aceptación:
 - [x] Suite cruzada pasa al 100% en nVars pequeños (tests agregados).
-- [ ] Benchmarks muestran escalamiento razonable (pendiente).
+- [ ] Benchmarks muestran escalamiento razonable (pendiente; ver sección "Benchmarks y escalamiento").
 
 
-## Fase 3 — Motor de reglas (MVP simple) (3–4 días)
+## Fase 3 — Motor de reglas (MVP simple) (3–4 días) — COMPLETADO
 Objetivo: Hechos booleanos, reglas proposicionales con consecuencia literal, ejecución a punto fijo y explicación mínima.
 
 Tareas detalladas:
 1) Datos y API
-- type FactBase map[propositions.Var]bool
-  - Get(v) (bool, bool); Set(v, val); Retract(v); Merge(other).
-- type Rule struct { ID string; When propositions.Formula; Then propositions.Var }
-- type Engine struct { Facts FactBase; Rules []Rule }
-- Métodos:
-  - Assert(v propositions.Var), Retract(v propositions.Var)
-  - FireOnce() (fired []string) // evalúa reglas y dispara una pasada
-  - RunToFixpoint(maxIters int) (fired []string)
-  - Query(goal propositions.Formula) (ok bool, why *Explain)
+- [x] type FactBase map[propositions.Var]bool
+  - [x] Get(v) (bool, bool); Set(v, val); Retract(v); Merge(other).
+- [x] type Rule struct { ID string; When propositions.Formula; Then propositions.Var }
+- [x] type Engine struct { Facts FactBase; Rules []Rule }
+- [x] Métodos:
+  - [x] Assert(v propositions.Var), Retract(v propositions.Var)
+  - [x] FireOnce() (fired []string) // evalúa reglas y dispara una pasada
+  - [x] RunToFixpoint(maxIters int) (fired []string)
+  - [x] Query(goal propositions.Formula) (ok bool, why *Explain)
 
 2) Evaluación
-- Al evaluar When se consulta FactBase primero: si aparece Var en hechos, usar ese valor; si no, utilizar valor “libre” (se interpreta como variable no asignada → debe venir desde Facts; si no está, Eval usa false por defecto o se exige que todas las variables del When estén en Facts; decidir: MVP usará false por defecto y se documenta). Simplificar: para Query/When, Eval usa únicamente Facts.
-- Disparo: si When evalúa true, Then se fija a true en Facts.
+- [x] Al evaluar When se consulta FactBase primero (Eval usa únicamente Facts; variables no presentes se asumen false en el MVP).
+- [x] Disparo: si When evalúa true, Then se fija a true en Facts (sólo si no estaba ya true) y se registra el ID.
 
 3) Explain mínimo
-- type Explain struct { ID string; Expr string; Value bool; Why string; Kids []*Explain }
-- Construir árbol durante Query: para hojas Var, Why="fact: A=true" o "fact: A=false"; para operadores, mensajes simples p.ej. "A & B es falso porque B=false".
+- [x] type Explain struct { ID string; Expr string; Value bool; Why string; Kids []*Explain }
+- [x] Construir árbol durante Query con mensajes simples (p. ej., "left false", "both true", etc.).
+- [x] PrettyExplain(*Explain) para impresión legible (mínimo; mejoras en Fase 4).
 
 4) Ciclos y límites
-- maxIters en RunToFixpoint evita loops; documentar determinismo (orden de Rules).
+- [x] maxIters en RunToFixpoint evita loops; determinismo por orden de Rules.
 
 5) Ejemplos
-- 3–5 reglas sobre vars A..F; Assert algunos hechos; RunToFixpoint; Query y PrettyExplain.
+- [x] 3–5 reglas sobre vars A..F; Assert hechos; RunToFixpoint; Query y PrettyExplain (examples/engine_test.go).
 
 Entregables:
-- Paquete engine con API estable.
-- Ejemplos end‑to‑end en examples.
+- [x] Paquete engine con API estable.
+- [x] Ejemplos end‑to‑end en examples.
 
 Criterios de aceptación:
-- RunToFixpoint converge dentro de maxIters; Explain es legible y consistente.
+- [x] RunToFixpoint converge dentro de maxIters; Explain es legible y consistente.
 
 
 ## Fase 4 — DX y serialización (2–3 días, opcional)

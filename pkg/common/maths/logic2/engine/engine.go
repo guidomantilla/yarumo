@@ -1,6 +1,10 @@
 package engine
 
-import "github.com/guidomantilla/yarumo/pkg/common/maths/logic2/props"
+import (
+	"fmt"
+
+	"github.com/guidomantilla/yarumo/pkg/common/maths/logic2/props"
+)
 
 // FactBase stores boolean facts.
 type FactBase map[props.Var]bool
@@ -35,22 +39,87 @@ type Engine struct {
 }
 
 // Assert sets a fact to true.
-func (e *Engine) Assert(v props.Var) { if e.Facts == nil { e.Facts = FactBase{} }; e.Facts[v] = true }
+func (e *Engine) Assert(v props.Var) {
+	if e.Facts == nil {
+		e.Facts = FactBase{}
+	}
+	e.Facts[v] = true
+}
 
 // Retract removes a fact.
 func (e *Engine) Retract(v props.Var) { if e.Facts != nil { delete(e.Facts, v) } }
 
 // FireOnce evaluates rules in a single pass and returns fired rule IDs.
-// Phase 0: no-op (returns empty slice).
-func (e *Engine) FireOnce() (fired []string) { return nil }
+func (e *Engine) FireOnce() (fired []string) {
+	if e.Facts == nil {
+		e.Facts = FactBase{}
+	}
+	for _, r := range e.Rules {
+		if shouldFire(r, e.Facts) {
+			// Fire: set Then to true if it wasn't already true
+			if !e.Facts[r.Then] {
+				e.Facts[r.Then] = true
+				fired = append(fired, r.ID)
+			}
+		}
+	}
+	return fired
+}
+
+// shouldFire determines whether a rule should fire under the current facts.
+// Special handling:
+// - If When is an implication (A => B) and Then == B, fire when A is true.
+// - If When is a biconditional (A <=> B) and Then == A (or B), fire when the other side is true.
+// Otherwise, default to evaluating When directly.
+func shouldFire(r Rule, facts FactBase) bool {
+	switch w := r.When.(type) {
+	case props.ImplF:
+		if isVarEqual(w.R, r.Then) {
+			return w.L.Eval(props.Fact(facts))
+		}
+	case props.IffF:
+		if isVarEqual(w.L, r.Then) {
+			return w.R.Eval(props.Fact(facts))
+		}
+		if isVarEqual(w.R, r.Then) {
+			return w.L.Eval(props.Fact(facts))
+		}
+	}
+	return r.When.Eval(props.Fact(facts))
+}
+
+// isVarEqual reports whether formula f is exactly the variable v (possibly wrapped in a GroupF).
+func isVarEqual(f props.Formula, v props.Var) bool {
+	switch x := f.(type) {
+	case props.Var:
+		return x == v
+	case props.GroupF:
+		return isVarEqual(x.Inner, v)
+	default:
+		return false
+	}
+}
 
 // RunToFixpoint iterates FireOnce until convergence or maxIters is reached.
-// Phase 0: no-op (returns empty slice).
-func (e *Engine) RunToFixpoint(maxIters int) (fired []string) { return nil }
+func (e *Engine) RunToFixpoint(maxIters int) (fired []string) {
+	if maxIters <= 0 {
+		maxIters = 1
+	}
+	for iter := 0; iter < maxIters; iter++ {
+		step := e.FireOnce()
+		if len(step) == 0 {
+			break
+		}
+		fired = append(fired, step...)
+	}
+	return fired
+}
 
-// Query evaluates a goal against the current facts.
-// Phase 0: always returns false, nil.
-func (e *Engine) Query(goal props.Formula) (bool, *Explain) { return false, nil }
+// Query evaluates a goal against the current facts and produces an explanation tree.
+func (e *Engine) Query(goal props.Formula) (bool, *Explain) {
+	exp, val := explain(goal, e.Facts)
+	return val, exp
+}
 
 // Explain is a minimal structure for traces.
 type Explain struct {
@@ -59,4 +128,92 @@ type Explain struct {
 	Value bool
 	Why   string
 	Kids  []*Explain
+}
+
+// PrettyExplain renders an explanation tree with indentation.
+func PrettyExplain(e *Explain) string {
+	if e == nil {
+		return "<nil>"
+	}
+	var out string
+	var walk func(n *Explain, indent string)
+	walk = func(n *Explain, indent string) {
+		label := n.ID
+		if label == "" {
+			label = n.Expr
+		}
+		out += fmt.Sprintf("%s- %s = %v", indent, label, n.Value)
+		if n.Why != "" {
+			out += fmt.Sprintf(" (%s)", n.Why)
+		}
+		out += "\n"
+		for _, k := range n.Kids {
+			walk(k, indent+"  ")
+		}
+	}
+	walk(e, "")
+	return out
+}
+
+// --- internal helpers ---
+
+func explain(f props.Formula, facts FactBase) (*Explain, bool) {
+	switch x := f.(type) {
+	case props.TrueF:
+		return &Explain{Expr: x.String(), Value: true, Why: "constant true"}, true
+	case props.FalseF:
+		return &Explain{Expr: x.String(), Value: false, Why: "constant false"}, false
+	case props.Var:
+		val := facts[x]
+		why := fmt.Sprintf("fact: %s=%v", x.String(), val)
+		return &Explain{Expr: x.String(), Value: val, Why: why}, val
+	case props.NotF:
+		kid, v := explain(x.F, facts)
+		return &Explain{Expr: x.String(), Value: !v, Why: fmt.Sprintf("negation of %v", v), Kids: []*Explain{kid}}, !v
+	case props.AndF:
+		l, lv := explain(x.L, facts)
+		r, rv := explain(x.R, facts)
+		val := lv && rv
+		why := "both true"
+		if !lv && !rv {
+			why = "both false"
+		} else if !lv {
+			why = "left false"
+		} else if !rv {
+			why = "right false"
+		}
+		return &Explain{Expr: x.String(), Value: val, Why: why, Kids: []*Explain{l, r}}, val
+	case props.OrF:
+		l, lv := explain(x.L, facts)
+		r, rv := explain(x.R, facts)
+		val := lv || rv
+		why := "at least one true"
+		if !lv && !rv {
+			why = "both false"
+		}
+		return &Explain{Expr: x.String(), Value: val, Why: why, Kids: []*Explain{l, r}}, val
+	case props.ImplF:
+		l, lv := explain(x.L, facts)
+		r, rv := explain(x.R, facts)
+		val := (!lv) || rv
+		why := "implication holds"
+		if lv && !rv {
+			why = "left true and right false"
+		}
+		return &Explain{Expr: x.String(), Value: val, Why: why, Kids: []*Explain{l, r}}, val
+	case props.IffF:
+		l, lv := explain(x.L, facts)
+		r, rv := explain(x.R, facts)
+		val := lv == rv
+		why := "both equal"
+		if lv != rv {
+			why = "different truth values"
+		}
+		return &Explain{Expr: x.String(), Value: val, Why: why, Kids: []*Explain{l, r}}, val
+	case props.GroupF:
+		kid, v := explain(x.Inner, facts)
+		return &Explain{Expr: x.String(), Value: v, Why: "group", Kids: []*Explain{kid}}, v
+	default:
+		return &Explain{Expr: f.String(), Value: false, Why: "unknown node"}, false
+	}
 }
