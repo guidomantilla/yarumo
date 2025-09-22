@@ -54,7 +54,7 @@ Estado actual (hecho en repo):
 - [x] Utilidades: TruthTable, Equivalent, FailCases, IsSatisfiable/IsContradiction/IsTautology (vía truth-table/resolución provisional).
 - [x] Parser mínimo en package parser con precedencias (!, &, |, =>, <=>) y MustParse. Pretty-print básico vía String() de los nodos.
 - [x] Ejemplos y pruebas tipo Test*: ejemplos de parse/eval, simplificación, equivalencias, tablas de verdad, round‑trip del parser.
-- [ ] Tests de propiedades formales (De Morgan, doble negación, idempotencia) con aserciones explícitas (pendiente, hoy cubierto parcialmente vía ejemplos).
+- [x] Tests de propiedades formales (De Morgan, doble negación, idempotencia, absorción, identidad, dominación, complemento, conmutatividad, asociatividad y distributividad) con aserciones explícitas.
 
 Tareas detalladas:
 1) AST y semántica
@@ -96,7 +96,7 @@ Tareas detalladas:
 
 5) Tests y ejemplos
 - [x] Round‑trip: parse → String → parse (TestParserRoundTrip).
-- [ ] Propiedades: De Morgan, doble negación, idempotencia, absorción (añadir asserts dedicados).
+- [x] Propiedades: De Morgan, doble negación, idempotencia, absorción, identidad, dominación, complemento, conmutatividad, asociatividad y distributividad (asserts dedicados en examples/properties_test.go).
 - [x] Tablas de verdad y casos de fallo (ejemplos).
 - [x] Equivalencias clásicas: A=>B ≡ !A|B; A<=>B ≡ (A&B)|(!A&!B).
 
@@ -106,7 +106,7 @@ Entregables:
 
 Criterios de aceptación:
 - [x] Parser round‑trip en casos canónicos.
-- [ ] Leyes básicas validadas con tests de propiedades (pendiente a reforzar, aunque cubierto en ejemplos).
+- [x] Leyes básicas validadas con tests de propiedades (ver examples/properties_test.go).
 
 
 ## Fase 2 — SAT y política de decisión (2–3 días)

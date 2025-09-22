@@ -8,6 +8,22 @@ import (
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic2/props"
 )
 
+// --- helpers ---
+
+func mustEq(t *testing.T, a, b props.Formula) {
+	t.Helper()
+	if !props.Equivalent(a, b) {
+		t.Fatalf("expected equivalent formulas, got:\n  a: %s\n  b: %s", a.String(), b.String())
+	}
+}
+
+func mustNeq(t *testing.T, a, b props.Formula) {
+	t.Helper()
+	if props.Equivalent(a, b) {
+		t.Fatalf("expected non-equivalent formulas, but they are equivalent:\n  a: %s\n  b: %s", a.String(), b.String())
+	}
+}
+
 // TestExampleParseAndEval shows how to parse a formula and evaluate it against a set of facts.
 func TestExampleParseAndEval(t *testing.T) {
 	f := parser.MustParse("(A & B) => C")
@@ -149,4 +165,213 @@ func TestParserRoundTrip(t *testing.T) {
 	p2 := f2.String()
 	fmt.Println("p1:", p1)
 	fmt.Println("p2:", p2)
+}
+
+// --- Double negation ---
+
+// TestDoubleNegation checks that double negation is equivalent to the original formula.
+func TestDoubleNegation(t *testing.T) {
+	A := parser.MustParse("A")
+	notnotA := parser.MustParse("!!A")
+	mustEq(t, A, notnotA)
+}
+
+// --- De Morgan laws ---
+
+// TestDeMorgan1 checks that De Morgan laws are equivalent to the original formula.
+func TestDeMorgan1(t *testing.T) { // !(A & B) == !A | !B
+	left := parser.MustParse("!(A & B)")
+	right := parser.MustParse("(!A | !B)")
+	mustEq(t, left, right)
+}
+
+// TestDeMorgan2 checks that De Morgan laws are equivalent to the original formula.
+func TestDeMorgan2(t *testing.T) { // !(A | B) == !A & !B
+	left := parser.MustParse("!(A | B)")
+	right := parser.MustParse("(!A & !B)")
+	mustEq(t, left, right)
+}
+
+// --- Idempotence ---
+
+// TestIdempotenceAnd checks that idempotence is equivalent to the original formula.
+func TestIdempotenceAnd(t *testing.T) {
+	left := parser.MustParse("A & A")
+	right := parser.MustParse("A")
+	mustEq(t, left, right)
+}
+
+// TestIdempotenceOr checks that idempotence is equivalent to the original formula.
+func TestIdempotenceOr(t *testing.T) {
+	left := parser.MustParse("A | A")
+	right := parser.MustParse("A")
+	mustEq(t, left, right)
+}
+
+// --- Absorption ---
+
+// TestAbsorption1 checks that absorption is equivalent to the original formula.
+func TestAbsorption1(t *testing.T) { // A | (A & B) == A
+	left := parser.MustParse("A | (A & B)")
+	right := parser.MustParse("A")
+	mustEq(t, left, right)
+}
+
+// TestAbsorption2 checks that absorption is equivalent to the original formula.
+func TestAbsorption2(t *testing.T) { // A & (A | B) == A
+	left := parser.MustParse("A & (A | B)")
+	right := parser.MustParse("A")
+	mustEq(t, left, right)
+}
+
+// --- Identity and Domination (Neutral and Annihilator) ---
+
+// TestIdentityAnd checks that identity and domination are equivalent to the original formula.
+func TestIdentityAnd(t *testing.T) { // A & ⊤ == A
+	left := parser.MustParse("A & (B | !B)") // (B | !B) is ⊤
+	right := parser.MustParse("A")
+	mustEq(t, left, right)
+}
+
+// TestIdentityOr checks that identity and domination are equivalent to the original formula.
+func TestIdentityOr(t *testing.T) { // A | ⊥ == A
+	left := parser.MustParse("A | (B & !B)") // (B & !B) is ⊥
+	right := parser.MustParse("A")
+	mustEq(t, left, right)
+}
+
+// TestDominationAnd checks that identity and domination are equivalent to the original formula.
+func TestDominationAnd(t *testing.T) { // A & ⊥ == ⊥
+	left := parser.MustParse("A & (B & !B)")
+	right := parser.MustParse("(B & !B)")
+	mustEq(t, left, right)
+}
+
+// TestDominationOr checks that identity and domination are equivalent to the original formula.
+func TestDominationOr(t *testing.T) { // A | ⊤ == ⊤
+	left := parser.MustParse("A | (B | !B)")
+	right := parser.MustParse("(B | !B)")
+	mustEq(t, left, right)
+}
+
+// --- Complement laws ---
+
+// TestComplementAnd checks that complement laws are equivalent to the original formula.
+func TestComplementAnd(t *testing.T) { // A & !A == ⊥
+	left := parser.MustParse("A & !A")
+	// Build ⊥ via contradiction: (B & !B)
+	right := parser.MustParse("(B & !B)")
+	mustEq(t, left, right)
+}
+
+// TestComplementOr checks that complement laws are equivalent to the original formula.
+func TestComplementOr(t *testing.T) { // A | !A == ⊤
+	left := parser.MustParse("A | !A")
+	// Build ⊤ via tautology: (B | !B)
+	right := parser.MustParse("(B | !B)")
+	mustEq(t, left, right)
+}
+
+// --- Commutativity ---
+
+// TestCommutativityAnd checks that commutativity is equivalent to the original formula.
+func TestCommutativityAnd(t *testing.T) {
+	left := parser.MustParse("A & B")
+	right := parser.MustParse("B & A")
+	mustEq(t, left, right)
+}
+
+// TestCommutativityOr checks that commutativity is equivalent to the original formula.
+func TestCommutativityOr(t *testing.T) {
+	left := parser.MustParse("A | B")
+	right := parser.MustParse("B | A")
+	mustEq(t, left, right)
+}
+
+// --- Associativity ---
+
+// TestAssociativityAnd checks that associativity is equivalent to the original formula.
+func TestAssociativityAnd(t *testing.T) {
+	left := parser.MustParse("(A & (B & C))")
+	right := parser.MustParse("((A & B) & C)")
+	mustEq(t, left, right)
+}
+
+// TestAssociativityOr checks that associativity is equivalent to the original formula.
+func TestAssociativityOr(t *testing.T) {
+	left := parser.MustParse("(A | (B | C))")
+	right := parser.MustParse("((A | B) | C)")
+	mustEq(t, left, right)
+}
+
+// --- Distributivity ---
+
+func TestDistributivityAndOverOr(t *testing.T) { // A & (B | C) == (A & B) | (A & C)
+	left := parser.MustParse("A & (B | C)")
+	right := parser.MustParse("(A & B) | (A & C)")
+	mustEq(t, left, right)
+}
+
+// TestDistributivityOrOverAnd checks that distributivity is equivalent to the original formula.
+func TestDistributivityOrOverAnd(t *testing.T) { // A | (B & C) == (A | B) & (A | C)
+	left := parser.MustParse("A | (B & C)")
+	right := parser.MustParse("(A | B) & (A | C)")
+	mustEq(t, left, right)
+}
+
+// --- Implication and IFF equivalences ---
+
+// TestImplicationEquivalence checks that implication and IFF equivalences are equivalent to the original formula.
+func TestImplicationEquivalence(t *testing.T) { // (A => B) == (!A | B)
+	left := parser.MustParse("A => B")
+	right := parser.MustParse("!A | B")
+	mustEq(t, left, right)
+}
+
+// TestIffEquivalence checks that implication and IFF equivalences are equivalent to the original formula.
+func TestIffEquivalence(t *testing.T) { // (A <=> B) == (A & B) | (!A & !B)
+	left := parser.MustParse("A <=> B")
+	right := parser.MustParse("(A & B) | (!A & !B)")
+	mustEq(t, left, right)
+}
+
+// --- Simplification expectations (explicit) ---
+
+// TestSimplifyAbsorptionExplicit checks that absorption is reduced.
+func TestSimplifyAbsorptionExplicit(t *testing.T) {
+	in := parser.MustParse("A & (A | B)")
+	out := props.Simplify(in)
+	want := parser.MustParse("A")
+	mustEq(t, out, want)
+}
+
+// TestSimplifyComplementExplicit checks that complements are absorbed.
+func TestSimplifyComplementExplicit(t *testing.T) {
+	in := parser.MustParse("(B & !B) | (A & (A | C))")
+	out := props.Simplify(in)
+	want := parser.MustParse("(B & !B) | A") // absorption reduces A&(A|C) to A
+	mustEq(t, out, want)
+}
+
+// --- Normal forms preserve equivalence ---
+
+// TestToNNF_PreservesEquivalence checks that NNF preserves equivalence.
+func TestToNNF_PreservesEquivalence(t *testing.T) {
+	f := parser.MustParse("!(A & (B | !C)) <=> ((!A) | (!B & C))")
+	nnf := props.ToNNF(f)
+	mustEq(t, f, nnf)
+}
+
+// TestToCNF_PreservesEquivalence checks that CNF preserves equivalence.
+func TestToCNF_PreservesEquivalence(t *testing.T) {
+	f := parser.MustParse("(A => B) <=> (!C | D)")
+	cnf := props.ToCNF(f)
+	mustEq(t, f, cnf)
+}
+
+// TestToDNF_PreservesEquivalence checks that DNF preserves equivalence.
+func TestToDNF_PreservesEquivalence(t *testing.T) {
+	f := parser.MustParse("(A & (B | C)) | (!A & (D <=> E))")
+	dnf := props.ToDNF(f)
+	mustEq(t, f, dnf)
 }
