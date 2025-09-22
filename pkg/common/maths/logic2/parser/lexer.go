@@ -3,11 +3,12 @@ package parser
 import (
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 type lexer struct {
 	s string
-	i int
+	i int // byte index into s (UTF-8 safe)
 	strict bool
 }
 
@@ -15,7 +16,7 @@ func (l *lexer) next() rune {
 	if l.i >= len(l.s) {
 		return 0
 	}
-	r, w := rune(l.s[l.i]), 1
+	r, w := utf8.DecodeRuneInString(l.s[l.i:])
 	l.i += w
 	return r
 }
@@ -24,7 +25,8 @@ func (l *lexer) peek() rune {
 	if l.i >= len(l.s) {
 		return 0
 	}
-	return rune(l.s[l.i])
+	r, _ := utf8.DecodeRuneInString(l.s[l.i:])
+	return r
 }
 
 func (l *lexer) skipWS() {
