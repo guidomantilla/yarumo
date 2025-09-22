@@ -13,7 +13,7 @@ Construir un paquete de lógica en Go que soporte lógica proposicional completa
 ### Fase 1 — Proposicional + DX
 - [x] Completar ToNNF/ToCNF/ToDNF para todos los conectivos
 - [x] SAT (DPLL) e integración en IsSatisfiable/IsTautology/IsContradiction
-- [ ] Entails(KB, φ) por refutación
+- [x] Entails(KB, φ) por refutación
 - [ ] Separar KnowledgeBase vs FactBase; adaptar Evaluate
 - [ ] Mejorar EvalNode (explicaciones, ids, referencia a regla)
 - [ ] Parser de fórmulas y pretty-printer
