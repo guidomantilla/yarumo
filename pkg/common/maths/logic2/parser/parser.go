@@ -1,19 +1,130 @@
 package parser
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic2/props"
 )
 
-// Parse converts a string into a propositional formula.
-// Phase 0: stub that returns an error. Real implementation in Phase 1.
-func Parse(input string) (props.Formula, error) {
-	return nil, errors.New("logic2/parser: Parse not implemented (Phase 0)")
+type parser struct {
+	lex *lexer
+	cur token
 }
 
-// MustParse is a helper that panics if Parse fails.
-// Phase 0: always panics; it will be implemented in Phase 1.
-func MustParse(input string) props.Formula {
-	panic("logic2/parser: MustParse not implemented (Phase 0)")
+func newParser(s string) *parser {
+	p := &parser{lex: &lexer{s: s}}
+	p.next()
+	return p
+}
+
+func (p *parser) next() { p.cur = p.lex.scan() }
+
+func (p *parser) expect(t int) (*token, error) {
+	if p.cur.typ != t {
+		return nil, fmt.Errorf("parse error at %d: expected %v, got %v", p.cur.pos, t, p.cur.typ)
+	}
+	tok := p.cur
+	p.next()
+	return &tok, nil
+}
+
+// Precedence-climbing parser
+// precedence: IFF < IMPL < OR < AND < NOT
+
+func (p *parser) parse() (props.Formula, error) {
+	return p.parseIff()
+}
+
+func (p *parser) parseIff() (props.Formula, error) {
+	left, err := p.parseImpl()
+	if err != nil {
+		return nil, err
+	}
+	for p.cur.typ == tIFF {
+		p.next()
+		right, err := p.parseImpl()
+		if err != nil {
+			return nil, err
+		}
+		left = props.IffF{L: left, R: right}
+	}
+	return left, nil
+}
+
+func (p *parser) parseImpl() (props.Formula, error) {
+	left, err := p.parseOr()
+	if err != nil {
+		return nil, err
+	}
+	for p.cur.typ == tIMPL {
+		p.next()
+		right, err := p.parseOr()
+		if err != nil {
+			return nil, err
+		}
+		left = props.ImplF{L: left, R: right}
+	}
+	return left, nil
+}
+
+func (p *parser) parseOr() (props.Formula, error) {
+	left, err := p.parseAnd()
+	if err != nil {
+		return nil, err
+	}
+	for p.cur.typ == tOR {
+		p.next()
+		right, err := p.parseAnd()
+		if err != nil {
+			return nil, err
+		}
+		left = props.OrF{L: left, R: right}
+	}
+	return left, nil
+}
+
+func (p *parser) parseAnd() (props.Formula, error) {
+	left, err := p.parseUnary()
+	if err != nil {
+		return nil, err
+	}
+	for p.cur.typ == tAND {
+		p.next()
+		right, err := p.parseUnary()
+		if err != nil {
+			return nil, err
+		}
+		left = props.AndF{L: left, R: right}
+	}
+	return left, nil
+}
+
+func (p *parser) parseUnary() (props.Formula, error) {
+	switch p.cur.typ {
+	case tNOT:
+		p.next()
+		inner, err := p.parseUnary()
+		if err != nil {
+			return nil, err
+		}
+		return props.NotF{F: inner}, nil
+	case tLP:
+		p.next()
+		inner, err := p.parseIff()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := p.expect(tRP); err != nil {
+			return nil, err
+		}
+		return props.GroupF{Inner: inner}, nil
+	case tID:
+		id := p.cur.lit
+		p.next()
+		return props.Var(id), nil
+	case tEOF:
+		return nil, fmt.Errorf("parse error at %d: unexpected EOF", p.cur.pos)
+	default:
+		return nil, fmt.Errorf("parse error at %d: unexpected token '%s'", p.cur.pos, p.cur.lit)
+	}
 }
