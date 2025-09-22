@@ -31,18 +31,18 @@ Reglas de dependencia:
 - examples → todos
 
 
-## Fase 0 — Preparación y cimientos (0.5–1 día)
+## Fase 0 — Preparación y cimientos (0.5–1 día) — COMPLETADO
 Tareas:
-- Crear paquetes y archivos README/PLACEHOLDER por paquete.
-- Estándares de código y comentarios GoDoc en públicos.
-- Decidir política de numeración y compatibilidad (API MVP estable en propositions).
+- [x] Crear paquetes y archivos README/PLACEHOLDER por paquete.
+- [x] Estándares de código y comentarios GoDoc en públicos.
+- [x] Decidir política de numeración y compatibilidad (API MVP estable en propositions).
 
 Entregables:
-- Estructura de directorios creada con archivos iniciales y comentarios.
-- README corto en logic2 con visión y ejemplo mínimo (placeholder hasta Fase 1).
+- [x] Estructura de directorios creada con archivos iniciales y comentarios.
+- [x] README corto en logic2 con visión y ejemplo mínimo (placeholder hasta Fase 1).
 
 Criterios de aceptación:
-- go vet y go test (aunque sin tests aún) ejecutan sin fallos de compilación cuando existan skeletons.
+- [x] go vet y go test (aunque sin tests aún) ejecutan sin fallos de compilación cuando existan skeletons.
 
 
 ## Fase 1 — Núcleo proposicional usable (3–5 días)
