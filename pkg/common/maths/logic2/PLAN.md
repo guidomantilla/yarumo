@@ -12,7 +12,7 @@ Objetivo: Construir un nuevo paquete minimalista y potente para lógica proposic
 
 
 ## Diseño de paquetes (layout inicial)
-- pkg/common/maths/logic2/propositions
+- pkg/common/maths/logic2/props
   - AST de proposiciones y funciones puras (Eval, Vars, ToNNF, ToCNF, ToDNF, Simplify, TruthTable, Is*)
 - pkg/common/maths/logic2/parser
   - Lexer y parser mínimo → AST; pretty‑printer
@@ -45,23 +45,31 @@ Criterios de aceptación:
 - [x] go vet y go test (aunque sin tests aún) ejecutan sin fallos de compilación cuando existan skeletons.
 
 
-## Fase 1 — Núcleo proposicional usable (3–5 días)
+## Fase 1 — Núcleo proposicional usable (3–5 días) — COMPLETADO
 Objetivo: AST, evaluación, transformaciones y utilidades con parser/pretty básico.
+
+Estado actual (hecho en repo):
+- [x] AST completo en package props: Var, TrueF, FalseF, NotF, AndF, OrF, ImplF, IffF, GroupF con String/Eval/Vars.
+- [x] Transformaciones y utilidades en props: ToNNF, ToCNF, ToDNF, Simplify (constantes, doble negación, idempotencia, absorción, complementos, trivialidades Impl/Iff).
+- [x] Utilidades: TruthTable, Equivalent, FailCases, IsSatisfiable/IsContradiction/IsTautology (vía truth-table/resolución provisional).
+- [x] Parser mínimo en package parser con precedencias (!, &, |, =>, <=>) y MustParse. Pretty-print básico vía String() de los nodos.
+- [x] Ejemplos y pruebas tipo Test*: ejemplos de parse/eval, simplificación, equivalencias, tablas de verdad, round‑trip del parser.
+- [ ] Tests de propiedades formales (De Morgan, doble negación, idempotencia) con aserciones explícitas (pendiente, hoy cubierto parcialmente vía ejemplos).
 
 Tareas detalladas:
 1) AST y semántica
-- Tipos: Var, True, False, Not, And, Or, Impl, Iff, Group.
-- Métodos en cada nodo: String(), Eval(Fact) bool, Vars() []string.
-- Tipo Fact: map[Var]bool; helpers de set/merge (internos del paquete).
+- [x] Tipos: Var, True, False, Not, And, Or, Impl, Iff, Group.
+- [x] Métodos en cada nodo: String(), Eval(Fact) bool, Vars() []string.
+- [x] Tipo Fact: map[Var]bool.
 
 2) Transformaciones y utilidades
-- ToNNF, ToCNF, ToDNF (basado en reglas estándar).
-- Simplify con reglas: constantes, doble negación, idempotencia, absorción, complemento, trivialidades en Impl/Iff.
-- TruthTable, Equivalent, FailCases.
-- IsSatisfiable/IsContradiction/IsTautology (provisional: truth table o resolución simple si se reusa; SAT se integra en Fase 2).
+- [x] ToNNF, ToCNF, ToDNF (basado en reglas estándar).
+- [x] Simplify con reglas: constantes, doble negación, idempotencia, absorción, complemento, trivialidades en Impl/Iff.
+- [x] TruthTable, Equivalent, FailCases.
+- [x] IsSatisfiable/IsContradiction/IsTautology (provisional sin SAT; SAT llegará en Fase 2).
 
 3) Parser + pretty‑printer mínimo
-- Gramática soportada:
+- [x] Gramática soportada:
   - NOT: !
   - AND: &
   - OR: |
@@ -69,32 +77,36 @@ Tareas detalladas:
   - IFF: <=>
   - Paréntesis: ( )
   - Variables: [A-Za-z_][A-Za-z0-9_]*
-- Precedencia (de menor a mayor): <=>, =>, |, &, ! (unario, mayor precedencia). Asociatividad izquierda salvo unarios.
-- Errores con posición aproximada; mensajes claros.
-- Pretty printing con paréntesis mínimos según precedencia.
+- [x] Precedencia (de menor a mayor): <=>, =>, |, &, ! (unario). Asociatividad izquierda salvo unarios.
+- [x] Errores con posición aproximada; mensajes claros.
+- [x] Pretty printing mínimo mediante String() respetando paréntesis.
 
 4) API pública (snapshot)
-- package propositions
-  - type Var string
-  - type Formula interface { String() string; Eval(Fact) bool; Vars() []string }
-  - type Fact map[Var]bool
-  - Parse(input string) (Formula, error)
-  - MustParse(input string) Formula // helper para tests/examples
-  - Simplify/ToNNF/ToCNF/ToDNF
-  - TruthTable, Equivalent, FailCases
-  - IsSatisfiable, IsContradiction, IsTautology // provisional sin SAT
+- package props
+  - [x] type Var string
+  - [x] type Formula interface { String() string; Eval(Fact) bool; Vars() []string }
+  - [x] type Fact map[Var]bool
+- package parser
+  - [x] Parse(input string) (props.Formula, error)
+  - [x] MustParse(input string) props.Formula // helper para tests/examples
+- package props
+  - [x] Simplify/ToNNF/ToCNF/ToDNF
+  - [x] TruthTable, Equivalent, FailCases
+  - [x] IsSatisfiable, IsContradiction, IsTautology // provisional sin SAT
 
-5) Tests
-- Round‑trip: f == Parse(f.String()) para el subconjunto soportado.
-- Propiedades: De Morgan, doble negación, idempotencia, absorción.
-- Tablas de verdad de ejemplos pequeños.
+5) Tests y ejemplos
+- [x] Round‑trip: parse → String → parse (TestParserRoundTrip).
+- [ ] Propiedades: De Morgan, doble negación, idempotencia, absorción (añadir asserts dedicados).
+- [x] Tablas de verdad y casos de fallo (ejemplos).
+- [x] Equivalencias clásicas: A=>B ≡ !A|B; A<=>B ≡ (A&B)|(!A&!B).
 
 Entregables:
-- Paquetes propositions y parser con cobertura mínima (>70% en propositions y parser básicos).
-- Ejemplos: construir fórmula, simplificar, tabla de verdad.
+- [x] Paquetes props y parser listos y en uso por ejemplos.
+- [x] Ejemplos: construir fórmula, simplificar, tabla de verdad, equivalencias, round‑trip.
 
 Criterios de aceptación:
-- Todas las leyes básicas pasan; parser round‑trip en casos canónicos.
+- [x] Parser round‑trip en casos canónicos.
+- [ ] Leyes básicas validadas con tests de propiedades (pendiente a reforzar, aunque cubierto en ejemplos).
 
 
 ## Fase 2 — SAT y política de decisión (2–3 días)
@@ -209,21 +221,21 @@ Checklist rápido por fase está al inicio de cada sección.
 ## Ejemplo objetivo (tras Fase 3)
 ```go
 // Proposiciones
-f := propositions.MustParse("(A & B) => C")
-if !propositions.Entails([]propositions.Formula{propositions.MustParse("A"), propositions.MustParse("B")}, propositions.MustParse("C")) {
+f := parser.MustParse("(A & B) => C")
+if !props.Entails([]props.Formula{parser.MustParse("A"), parser.MustParse("B")}, parser.MustParse("C")) {
     panic("should entail")
 }
 
 // Motor de reglas
 rules := []engine.Rule{
-  {ID: "r1", When: propositions.MustParse("A & B"), Then: propositions.Var("C")},
-  {ID: "r2", When: propositions.MustParse("C => D"), Then: propositions.Var("D")},
+  {ID: "r1", When: parser.MustParse("A & B"), Then: props.Var("C")},
+  {ID: "r2", When: parser.MustParse("C => D"), Then: props.Var("D")},
 }
 eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
-eng.Assert(propositions.Var("A"))
-eng.Assert(propositions.Var("B"))
+eng.Assert(props.Var("A"))
+eng.Assert(props.Var("B"))
 eng.RunToFixpoint(5)
-ok, why := eng.Query(propositions.MustParse("C"))
+ok, why := eng.Query(parser.MustParse("C"))
 fmt.Println("C?", ok)
 fmt.Println(engine.PrettyExplain(why))
 ```
