@@ -1,8 +1,8 @@
 # logic2 — Paquete de lógica proposicional, SAT y motor de reglas (MVP)
 
-Este paquete provee utilidades de lógica proposicional en Go con foco en simplicidad y buen DX: AST + parser, transformaciones (NNF/CNF/DNF), simplificación, SAT (DPLL) con política de decisión, entailment por refutación, un motor de reglas (forward) sencillo con explicaciones, y utilidades de serialización (DTOs JSON v1).
+Este paquete provee utilidades de lógica proposicional en Go con foco en simplicidad y buen DX: AST + parser, transformaciones (NNF/CNF/DNF), simplificación, SAT (DPLL) con política de decisión, entailment por refutación, un motor de reglas (forward) sencillo con explicaciones, y utilidades de serialización (DTOs JSON/YAML v1).
 
-La documentación a continuación refleja el estado actual del paquete basado en las tareas marcadas como [x] en PLAN.md.
+La documentación a continuación refleja el estado actual del paquete según las tareas marcadas como [x] en PLAN.md, e incluye guía de uso práctica.
 
 
 ## Índice
@@ -10,14 +10,14 @@ La documentación a continuación refleja el estado actual del paquete basado en
 - Instalación e importación
 - Layout de paquetes
 - Características implementadas
-  - Parser y DX
+  - Parser y DX (sinónimos/Unicode y modo estricto)
   - Proposiciones (AST, Eval, Simplify, NNF/CNF/DNF, TruthTable, Equivalent, Is*)
   - Política Is* (umbral SAT)
   - SAT (CNF + DPLL)
   - Entailment (KB ⊨ φ)
   - Motor de reglas (Engine MVP) + PrettyExplain
-  - Serialización (DTOs v1, JSON) y Facts JSON
-- Ejemplos rápidos
+  - Serialización (DTOs v1, JSON/YAML) y Facts JSON
+- Documentación de uso (recetas)
 - Benchmarks y escalamiento
 - Límites conocidos y fuera de alcance del MVP
 
@@ -26,7 +26,7 @@ La documentación a continuación refleja el estado actual del paquete basado en
 - Fase 1 — Núcleo proposicional usable: COMPLETADO
 - Fase 2 — SAT y política Is*: EN PROGRESO (SAT operativo, política Is* y entailment listos; pendiente documentar métricas de escalamiento)
 - Fase 3 — Motor de reglas (MVP): COMPLETADO
-- Fase 4 — DX y serialización: EN PROGRESO (DTOs/JSON/Pretty y parser DX listos)
+- Fase 4 — DX y serialización: COMPLETADO (DTOs v1, JSON/YAML, PrettyExplainTo, parser DX, golden tests, determinismo)
 
 Consulte pkg/common/maths/logic2/PLAN.md para el roadmap detallado.
 
@@ -37,6 +37,7 @@ import (
   p "github.com/guidomantilla/yarumo/pkg/common/maths/logic2/props"
   "github.com/guidomantilla/yarumo/pkg/common/maths/logic2/parser"
   "github.com/guidomantilla/yarumo/pkg/common/maths/logic2/engine"
+  "github.com/guidomantilla/yarumo/pkg/common/maths/logic2/entailment"
   logic2sat "github.com/guidomantilla/yarumo/pkg/common/maths/logic2/sat"
 )
 ```
@@ -44,11 +45,11 @@ import (
 
 ## Layout de paquetes
 - logic2/props: AST y funciones puras (Eval, Vars, Simplify, ToNNF/CNF/DNF, TruthTable, Is*)
-- logic2/parser: lexer+parser con sinónimos/Unicode opcionales; errores con posición
+- logic2/parser: lexer+parser con sinónimos/Unicode opcionales; errores con posición; ParseWith modo estricto
 - logic2/sat: CNF aplanada + DPLL (unit-prop, pure-literal, branching por cláusula más corta)
 - logic2/entailment: Entails y EntailsWithCounterModel
-- logic2/engine: FactBase, Rule, Engine (forward simple) y Explain + PrettyExplain
-- logic2/examples: pruebas y ejemplos reproducibles
+- logic2/engine: FactBase, Rule, Engine (forward simple) y Explain + PrettyExplain/PrettyExplainTo
+- logic2/examples: pruebas y ejemplos reproducibles (incluye golden tests y benchmarks)
 
 Dependencias internas: props ← parser | sat | engine; entailment → props,sat; examples → todos.
 
@@ -71,7 +72,7 @@ f2, err := parser.ParseWith("A ∧ B ⇒ C", parser.ParseOptions{Strict: false})
 ### Proposiciones (AST y utilidades)
 - AST: `Var, TrueF, FalseF, NotF, AndF, OrF, ImplF, IffF, GroupF` con `String()`, `Eval(Fact)`, `Vars()`.
 - Transformaciones: `ToNNF`, `ToCNF`, `ToDNF`.
-- Simplifcación: constantes, doble negación, idempotencia, absorción, complemento, trivialidades Impl/Iff.
+- Simplificación: constantes, doble negación, idempotencia, absorción, complemento, trivialidades Impl/Iff.
 - Utilidades: `TruthTable`, `Equivalent`, `FailCases`.
 - Is*: `IsSatisfiable`, `IsContradiction`, `IsTautology` (con política Is*; ver abajo).
 
@@ -107,39 +108,52 @@ p.RegisterSATSolver(logic2sat.Solver) // registro explícito del backend SAT
 - Semántica especial de firing: si `When` es `A => B` y `Then == B`, la regla dispara cuando `A` es verdadero.
 
 
-### Serialización (DTOs v1) y Facts JSON
+### Serialización (DTOs v1) y Facts JSON/YAML
 - DTOs (v1) en `engine/dto.go`:
   - `RuleDTO{version,id,when,then}`; `RuleSetDTO{version,rules}`; `ExplainDTO{expr,value,why,kids[]}`.
-- JSON helpers en `engine/serialize.go`:
+- JSON/YAML helpers:
   - `LoadRulesJSON(r) ([]Rule, error)`, `SaveRulesJSON(w, rules)`.
+  - `LoadRulesYAML(r) ([]Rule, error)`, `SaveRulesYAML(w, rules)`.
   - `LoadFactsJSON(r) (FactBase, error)`, `SaveFactsJSON(w, facts)`.
 - Las fórmulas se serializan como strings (contrato estable). No se serializa el AST interno.
 
 
-## Ejemplos rápidos
+## Documentación de uso (recetas)
 
-### Parsear, evaluar y simplificar
+### 1) Parseo con sinónimos y modo estricto
 ```text
-f := parser.MustParse("(A & B) => C")
-facts := p.Fact{p.Var("A"): true, p.Var("B"): true, p.Var("C"): false}
-_ = f.Eval(facts) // false
-s := p.Simplify(parser.MustParse("A | (A & B)")) // → A
+// Sinónimos activos (por defecto)
+f1 := parser.MustParse("A AND B -> C <-> (¬A OR B)")
+// Modo estricto: sólo tokens canónicos; sinónimos fallan
+g, err := parser.ParseWith("A ∧ B", parser.ParseOptions{Strict: true}) // err
+_ = f1; _ = g; _ = err
 ```
 
-### Satisfacibilidad con política Is*
+### 2) Construcción/Evaluación/Simplificación
+```text
+f := parser.MustParse("(A & B) => C")
+facts := p.Fact{p.Var("A"): true, p.Var("B"): true}
+ok := f.Eval(facts) // false si C=false
+s := p.Simplify(parser.MustParse("A | (A & B)")) // → A
+_ = ok; _ = s
+```
+
+### 3) Satisfacibilidad con política Is*
 ```text
 p.RegisterSATSolver(logic2sat.Solver)
 if p.IsSatisfiable(parser.MustParse("A | !A")) { /* tautología */ }
+// Ajustar umbral K si hace falta
+p.SATThreshold = 10
 ```
 
-### Entailment
+### 4) Entailment
 ```text
 kb := []p.Formula{parser.MustParse("A => B"), parser.MustParse("A")}
 phi := parser.MustParse("B")
-ok := entailment.Entails(kb, phi) // true
+if !entailment.Entails(kb, phi) { panic("should entail") }
 ```
 
-### Motor de reglas y explicación
+### 5) Motor de reglas
 ```text
 rules := []engine.Rule{
   {ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
@@ -152,19 +166,37 @@ ok, why := eng.Query(parser.MustParse("D"))
 fmt.Print(engine.PrettyExplain(why))
 ```
 
-### Serialización JSON de reglas
+### 6) Serialización de reglas y hechos (JSON/YAML)
 ```text
+// JSON
 var buf bytes.Buffer
 _ = engine.SaveRulesJSON(&buf, rules)
 restored, _ := engine.LoadRulesJSON(&buf)
-_ = restored
+// YAML
+_ = engine.SaveRulesYAML(&buf, rules)
+restoredY, _ := engine.LoadRulesYAML(&buf)
+// Facts JSON
+facts := engine.FactBase{p.Var("A"): true}
+_ = engine.SaveFactsJSON(&buf, facts)
+facts2, _ := engine.LoadFactsJSON(&buf)
+_ = restored; _ = restoredY; _ = facts2
+```
+
+### 7) Pretty printing de fórmulas
+```text
+opts := p.FormatOptions{Unicode: true, Spaces: true}
+canon := parser.MustParse("(A & B) => C")
+fmt.Println(p.Format(canon, opts)) // imprime con símbolos unicode y espacios
 ```
 
 
 ## Benchmarks y escalamiento
 - Ubicación: `pkg/common/maths/logic2/examples/benchmarks_test.go`.
 - Ejecutar: `go test -bench=. -benchmem ./pkg/common/maths/logic2/examples`.
-- Criterio esperado (documentación pendiente de números): para `#vars > K` el camino SAT debe superar a truth-table; en familias 3-CNF con m≈4n, DPLL debe escalar razonablemente para n moderados.
+- Criterio de "escalamiento razonable":
+  - Para `#vars > K` el camino SAT debe superar a truth-table en tiempo (2^n crece exponencialmente).
+  - En 3-CNF con m≈4n, DPLL debe escalar razonablemente para n moderados.
+- Próximo paso: capturar números locales y, si procede, ajustar `SATThreshold`.
 
 
 ## Límites conocidos y fuera de alcance del MVP

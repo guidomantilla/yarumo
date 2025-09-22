@@ -212,11 +212,11 @@ Tareas (detalladas):
   - [x] ParseWith(input, ParseOptions{Strict}) para activar/desactivar sinónimos.  
   - [x] Soporte de sinónimos/Unicode en lexer (keywords AND/OR/NOT/THEN/IFF; operadores &&,||,->,<->; símbolos ¬∧∨→⇒↔⇔; TRUE/FALSE) sin usar reemplazos globales.
 - Golden tests y determinismo:
-  - Golden files de PrettyExplain.  
-  - Round‑trip de RuleSetDTO JSON/YAML.  
-  - Orden estable de Vars() y salidas.
+  - [x] Golden files de PrettyExplain.  
+  - [x] Round‑trip de RuleSetDTO JSON/YAML.  
+  - [x] Orden estable de Vars() y salidas.
 - Documentación:
-  - Errores comunes del parser, límites (SATThreshold, maxIters) y guías de uso.
+  - [x] Errores comunes del parser, límites (SATThreshold, maxIters) y guías de uso.
 
 Entregables:
 - engine/dto.go con RuleDTO, RuleSetDTO, ExplainDTO y helpers ToDTO/FromDTO.  
