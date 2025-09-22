@@ -195,16 +195,50 @@ Criterios de aceptación:
 ## Fase 4 — DX y serialización (2–3 días, opcional)
 Objetivo: Intercambio de reglas y explicaciones, mejora de usabilidad.
 
-Tareas:
-- JSON/YAML para Rule y Explain (DTOs simples sin referencias cíclicas).
-- ParseRules([]byte) y PrettyExplain(*Explain) helpers.
-- Documentación de errores comunes y guías de uso.
+Tareas (detalladas):
+- DTOs explícitos y versionados (v1):
+  - RuleDTO {version,id,when,then} donde when es string (parseable) y then es nombre de variable.  
+  - RuleSetDTO {version,rules}.  
+  - ExplainDTO {expr,value,why,kids[]} sin referencias cíclicas.  
+  - Nota: No serializar structs internos del AST; usar strings de fórmulas como contrato estable.
+- Serialización JSON/YAML (opcional YAML):
+  - LoadRulesJSON/SaveRulesJSON (y variantes YAML si se incluye): io.Reader/io.Writer para testabilidad.  
+  - Round‑trip estable (encode→decode→encode ≈ estable modulo espacios).
+- Pretty‑printing y helpers:
+  - PrettyExplainTo(w io.Writer, *Explain) (determinista).  
+  - Mantener String() canónica; añadir Format(f, opts) opcional (Unicode/espaciado) si aplica.
+- Parser DX y errores mejores:
+  - ParseError con posición (byte/columna) y mensaje claro.  
+  - (Opcional) ParseWith(input, ParseOptions{Strict}) para activar/desactivar sinónimos.  
+  - Soporte de sinónimos/Unicode en lexer (keywords AND/OR/NOT/THEN/IFF; operadores &&,||,->,<->; símbolos ¬∧∨→⇒↔⇔; TRUE/FALSE) sin usar reemplazos globales.
+- Observabilidad mínima del motor:
+  - EngineStats {RulesEvaluated, RulesFired, Iterations}.  
+  - PrettyExplain mantiene orden estable de hijos; Kids en orden determinista.
+- Utilidades de intercambio:
+  - LoadFactsJSON/SaveFactsJSON: map plano {"A":true,...}.  
+  - Serializar contra‑modelos SAT: AssignmentDTO map[string]bool.  
+  - (Opcional) CNFDTO para inspección/depuración.
+- CLI opcional (playground):
+  - logic2cli: parse/sat/entails/run con archivos JSON de reglas y hechos.
+- Golden tests y determinismo:
+  - Golden files de PrettyExplain.  
+  - Round‑trip de RuleSetDTO JSON/YAML.  
+  - Orden estable de Vars() y salidas.
+- Documentación:
+  - Errores comunes del parser, límites (SATThreshold, maxIters) y guías de uso.
 
 Entregables:
-- Subpaquete o archivo dto.go en engine y funciones en parser para serializar fórmulas si aplica.
+- engine/dto.go con RuleDTO, RuleSetDTO, ExplainDTO y helpers ToDTO/FromDTO.  
+- engine/serialize.go con Load/Save JSON (y YAML opcional).  
+- engine/pretty.go con PrettyExplainTo.  
+- parser/errors.go con ParseError y (opcional) parser/options.go con ParseWith.  
+- lexer actualizado con sinónimos/Unicode (si se activa esta parte en Fase 4).  
+- Tests de golden y round‑trip.
 
 Criterios de aceptación:
-- Round‑trip JSON/YAML para conjuntos de reglas pequeñas; PrettyExplain produce salida estable.
+- Round‑trip JSON/YAML para conjuntos de reglas pequeñas; PrettyExplainTo produce salida estable (golden).  
+- Parser reporta posición coherente en errores típicos; si se activa sinónimos, identifiers como "ANDY" no se corrompen.  
+- EngineStats visible y consistente tras RunToFixpoint.
 
 
 ## Fase 5 — Mejoras del motor (opcional)
