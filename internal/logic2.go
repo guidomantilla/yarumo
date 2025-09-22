@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic2/engine"
-	parser2 "github.com/guidomantilla/yarumo/pkg/common/maths/logic2/parser"
+	"github.com/guidomantilla/yarumo/pkg/common/maths/logic2/parser"
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic2/props"
 )
 
@@ -40,7 +40,10 @@ func process(rules []engine.Rule, assertions ...props.Var) error {
 		return errors.New("no rules fired")
 	}
 
-	_, why := eng.Query(parser2.MustParse(Rules[0].String()))
-	fmt.Print(engine.PrettyExplain(why))
+	for _, rule := range rules {
+		_, why := eng.Query(parser.MustParse(rule.String()))
+		fmt.Println(engine.PrettyExplain(why))
+	}
+
 	return nil
 }
