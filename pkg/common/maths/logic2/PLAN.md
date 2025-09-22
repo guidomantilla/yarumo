@@ -128,8 +128,8 @@ Tareas detalladas:
 - [x] IsTautology(f) = !IsSatisfiable(!f). IsContradiction(f) = !IsSatisfiable(f).
 
 4) Entailment
-- [ ] Entails(KB, phi) bool = ¬IsSatisfiable((∧KB) ∧ ¬phi).
-- [ ] EntailsWithCounterModel(KB, phi) (bool, Assignment) opcional (si SAT disponible).
+- [x] Entails(KB, phi) bool = ¬IsSatisfiable((∧KB) ∧ ¬phi).
+- [x] EntailsWithCounterModel(KB, phi) (bool, Assignment) opcional (si SAT disponible).
 
 5) Validación y benchmarks ligeros
 - [x] Tests cruzados: para nVars ≤ 8, comparar truth table vs SAT (resultados idénticos) — ver examples/sat_policy_test.go.
@@ -138,6 +138,7 @@ Tareas detalladas:
 Entregables:
 - [x] Paquete sat con CNF+DPLL.
 - [x] props.IsSatisfiable delega según política con umbral K y hook de registro para SAT.
+- [x] Paquete entailment con Entails/EntailsWithCounterModel y pruebas.
 
 Criterios de aceptación:
 - [x] Suite cruzada pasa al 100% en nVars pequeños (tests agregados).
