@@ -197,13 +197,13 @@ Objetivo: Intercambio de reglas y explicaciones, mejora de usabilidad.
 
 Tareas (detalladas):
 - DTOs explícitos y versionados (v1):
-  - RuleDTO {version,id,when,then} donde when es string (parseable) y then es nombre de variable.  
-  - RuleSetDTO {version,rules}.  
-  - ExplainDTO {expr,value,why,kids[]} sin referencias cíclicas.  
-  - Nota: No serializar structs internos del AST; usar strings de fórmulas como contrato estable.
+  - [x] RuleDTO {version,id,when,then} donde when es string (parseable) y then es nombre de variable.  
+  - [x] RuleSetDTO {version,rules}.  
+  - [x] ExplainDTO {expr,value,why,kids[]} sin referencias cíclicas.  
+  - [x] Nota: No serializar structs internos del AST; usar strings de fórmulas como contrato estable.
 - Serialización JSON/YAML (opcional YAML):
-  - LoadRulesJSON/SaveRulesJSON (y variantes YAML si se incluye): io.Reader/io.Writer para testabilidad.  
-  - Round‑trip estable (encode→decode→encode ≈ estable modulo espacios).
+  - [x] LoadRulesJSON/SaveRulesJSON (y variantes YAML si se incluye): io.Reader/io.Writer para testabilidad.  
+  - [x] Round‑trip estable (encode→decode→encode ≈ estable modulo espacios).
 - Pretty‑printing y helpers:
   - [x] PrettyExplainTo(w io.Writer, *Explain) (determinista).  
   - [x] Mantener String() canónica; añadir Format(f, opts) opcional (Unicode/espaciado) si aplica.
