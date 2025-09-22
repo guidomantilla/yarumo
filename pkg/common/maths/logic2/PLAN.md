@@ -211,8 +211,6 @@ Tareas (detalladas):
   - [x] ParseError con posición (byte/columna) y mensaje claro.  
   - [x] ParseWith(input, ParseOptions{Strict}) para activar/desactivar sinónimos.  
   - [x] Soporte de sinónimos/Unicode en lexer (keywords AND/OR/NOT/THEN/IFF; operadores &&,||,->,<->; símbolos ¬∧∨→⇒↔⇔; TRUE/FALSE) sin usar reemplazos globales.
-- CLI opcional (playground):
-  - logic2cli: parse/sat/entails/run con archivos JSON de reglas y hechos.
 - Golden tests y determinismo:
   - Golden files de PrettyExplain.  
   - Round‑trip de RuleSetDTO JSON/YAML.  
