@@ -109,38 +109,39 @@ Criterios de aceptación:
 - [x] Leyes básicas validadas con tests de propiedades (ver examples/properties_test.go).
 
 
-## Fase 2 — SAT y política de decisión (2–3 días)
+## Fase 2 — SAT y política de decisión (2–3 días) — EN PROGRESO
 Objetivo: Integrar SAT/DPLL y definir política única para Is*.
 
 Tareas detalladas:
 1) CNF aplanada
-- FromFormulaToCNF(f Formula) (CNF, error): Simplify → ToCNF → descomponer a cláusulas.
-- Manejo de True/False, literales y grupos; detección de cláusulas tautológicas.
+- [x] FromFormulaToCNF(f Formula) (CNF, error): Simplify → ToCNF → descomponer a cláusulas.
+- [x] Manejo de True/False, literales y grupos; detección de cláusulas tautológicas.
 
 2) DPLL
-- Unit propagation, pure literal, branching por cláusula más corta.
-- Asignación y simplificación de CNF; utilidades de copia eficiente.
-- Retornar (ok bool, model Assignment) donde Assignment = map[Var]bool.
+- [x] Unit propagation, pure literal, branching por cláusula más corta.
+- [x] Asignación y simplificación de CNF; utilidades de copia eficiente.
+- [x] Retornar (ok bool, model Assignment) donde Assignment = map[Var]bool.
 
 3) Política Is*
-- nVars ≤ K (por defecto 12, configurable) → truth table.
-- nVars > K → SAT (CNF + DPLL).
-- IsTautology(f) = !IsSatisfiable(!f). IsContradiction(f) = !IsSatisfiable(f).
+- [x] nVars ≤ K (por defecto 12, configurable) → truth table.
+- [x] nVars > K → SAT (CNF + DPLL) cuando hay solver registrado (registro explícito; sin init()).
+- [x] IsTautology(f) = !IsSatisfiable(!f). IsContradiction(f) = !IsSatisfiable(f).
 
 4) Entailment
-- Entails(KB, phi) bool = ¬IsSatisfiable((∧KB) ∧ ¬phi).
-- EntailsWithCounterModel(KB, phi) (bool, Assignment) opcional (si SAT disponible).
+- [ ] Entails(KB, phi) bool = ¬IsSatisfiable((∧KB) ∧ ¬phi).
+- [ ] EntailsWithCounterModel(KB, phi) (bool, Assignment) opcional (si SAT disponible).
 
 5) Validación y benchmarks ligeros
-- Tests cruzados: para nVars ≤ 8, comparar truth table vs SAT (resultados idénticos).
-- Benchmarks: familias sintéticas para medir umbral K.
+- [x] Tests cruzados: para nVars ≤ 8, comparar truth table vs SAT (resultados idénticos) — ver examples/sat_policy_test.go.
+- [ ] Benchmarks: familias sintéticas para medir umbral K.
 
 Entregables:
-- Paquete sat con CNF+DPLL.
-- propositions.IsSatisfiable delega según política (exponer parámetro opcional o variable de paquete para K).
+- [x] Paquete sat con CNF+DPLL.
+- [x] props.IsSatisfiable delega según política con umbral K y hook de registro para SAT.
 
 Criterios de aceptación:
-- Suite cruzada pasa al 100%; benchmarks muestran escalamiento razonable.
+- [x] Suite cruzada pasa al 100% en nVars pequeños (tests agregados).
+- [ ] Benchmarks muestran escalamiento razonable (pendiente).
 
 
 ## Fase 3 — Motor de reglas (MVP simple) (3–4 días)
@@ -219,7 +220,7 @@ Checklist rápido por fase está al inicio de cada sección.
 
 
 ## Ejemplo objetivo (tras Fase 3)
-```go
+```text
 // Proposiciones
 f := parser.MustParse("(A & B) => C")
 if !props.Entails([]props.Formula{parser.MustParse("A"), parser.MustParse("B")}, parser.MustParse("C")) {
@@ -257,3 +258,64 @@ fmt.Println(engine.PrettyExplain(why))
 - GoDoc en públicos; nombres claros y consistentes (Var, Formula, Fact).
 - Tests con tablas de casos y property‑based cuando aporte valor.
 - Ejemplos en package examples ejecutables con `go test` (Example*).
+
+
+
+## Anexo A — Política Is* (detallada)
+
+Esta sección documenta explícitamente el punto “3) Política Is*” de la Fase 2, con detalles de configuración, registro del solver SAT y referencias a código.
+
+### ¿Qué resuelve?
+Provee una política única y clara para decidir cómo evaluar satisfacibilidad/tautología/contradicción:
+- Para fórmulas con pocas variables se usa tabla de verdad (brute force).
+- Para fórmulas con muchas variables se usa SAT (CNF aplanada + DPLL), si hay un solver SAT registrado.
+
+### Comportamiento por defecto
+- Umbral K por defecto: `12` (configurable en tiempo de ejecución).
+- Si `nVars ≤ K` → se usa tabla de verdad.
+- Si `nVars > K` y hay solver SAT registrado → se usa SAT.
+- Si no hay solver registrado o este falla → se hace fallback a tabla de verdad.
+- Definiciones derivadas:
+  - `IsContradiction(f) = !IsSatisfiable(f)`
+  - `IsTautology(f) = !IsSatisfiable(!f)`
+
+### API y configuración
+- Umbral configurable:
+  - `props.SATThreshold int` (por defecto `12`).
+- Registro del solver SAT (sin efectos colaterales de init):
+  - `props.RegisterSATSolver(fn func(Formula) (ok bool, result bool))`
+
+Ejemplo de registro (p. ej. en `main.go` o en `TestMain`):
+```text
+import (
+  p "github.com/guidomantilla/yarumo/pkg/common/maths/logic2/props"
+  s "github.com/guidomantilla/yarumo/pkg/common/maths/logic2/sat"
+)
+
+func init() {
+  p.RegisterSATSolver(s.Solver)
+  // p.SATThreshold = 12 // opcional: ajustar K
+}
+```
+
+### Implementación (referencias de código)
+- `pkg/common/maths/logic2/props/functions.go`
+  - `SATThreshold` (líneas ~42–45).
+  - `RegisterSATSolver` y variable `satSolver` (líneas ~46–53).
+  - `IsSatisfiable` con la lógica de política (líneas ~55–75).
+  - `IsContradiction` y `IsTautology` derivadas (líneas ~77–83).
+- `pkg/common/maths/logic2/sat/solver.go`
+  - `func Solver(f Formula) (bool, bool)` convierte a CNF y llama `DPLL`.
+- `pkg/common/maths/logic2/sat/cnf.go`, `dpll.go`
+  - Conversión a CNF aplanada y solver DPLL.
+- Registro en pruebas (para usar SAT en tests):
+  - `pkg/common/maths/logic2/examples/setup_test.go` usa `TestMain` para registrar el solver.
+
+### Validación
+- Pruebas cruzadas (tabla vs SAT) para `nVars ≤ 8`:
+  - `pkg/common/maths/logic2/examples/sat_policy_test.go`.
+- Caso de umbral (fórmula con >K variables) también en `sat_policy_test.go`.
+
+### Notas
+- El paquete legacy `pkg/common/maths/logic` mantiene su propia implementación; la política Is* aquí descrita aplica al paquete nuevo `logic2`.
+- No se utiliza `init()` para registrar el solver en producción; el registro es explícito para evitar efectos ocultos.
