@@ -15,8 +15,8 @@ import (
 // while allowing harmless formatting changes elsewhere.
 func TestPrettyExplain_Simple(t *testing.T) {
 	rules := []engine.Rule{
-		{ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
-		{ID: "r2", When: parser.MustParse("C => D"), Then: p.Var("D")},
+		engine.BuildRule("r1", "A & B", "C"),
+		engine.BuildRule("r2", "C => D", "D"),
 	}
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 	eng.Assert(p.Var("A"))
@@ -43,7 +43,9 @@ func TestPrettyExplain_Simple(t *testing.T) {
 // TestPrettyExplainTo_WriterDeterministic ensures that PrettyExplainTo writes the same
 // deterministic output as PrettyExplain when given the same tree.
 func TestPrettyExplainTo_WriterDeterministic(t *testing.T) {
-	rules := []engine.Rule{{ID: "r1", When: parser.MustParse("A & (B | C)"), Then: p.Var("X")}}
+	rules := []engine.Rule{
+		engine.BuildRule("r1", "A & (B | C)", "X"),
+	}
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 	eng.Assert(p.Var("A"))
 	eng.Assert(p.Var("C"))

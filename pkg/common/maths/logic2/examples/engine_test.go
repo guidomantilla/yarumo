@@ -12,9 +12,9 @@ import (
 // TestEngine_EndToEnd demonstrates a minimal forward-chaining run and query/explain.
 func TestEngine_EndToEnd(t *testing.T) {
 	rules := []engine.Rule{
-		{ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
-		{ID: "r2", When: parser.MustParse("C => D"), Then: p.Var("D")},
-		{ID: "r3", When: parser.MustParse("D & E"), Then: p.Var("F")},
+		engine.BuildRule("r1", "A & B", "C"),
+		engine.BuildRule("r2", "C => D", "D"),
+		engine.BuildRule("r3", "D & E", "F"),
 	}
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 
@@ -48,7 +48,7 @@ func TestEngine_EndToEnd(t *testing.T) {
 // TestEngine_NoFire ensures rules do not fire when conditions are not met.
 func TestEngine_NoFire(t *testing.T) {
 	rules := []engine.Rule{
-		{ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
+		engine.BuildRule("r1", "A & B", "C"),
 	}
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 
@@ -69,9 +69,9 @@ func TestEngine_NoFire(t *testing.T) {
 // TestEngine_ChainingAndIdempotence verifies multi-step chaining and that rules do not re-fire once fact is true.
 func TestEngine_ChainingAndIdempotence(t *testing.T) {
 	rules := []engine.Rule{
-		{ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
-		{ID: "r2", When: parser.MustParse("C => D"), Then: p.Var("D")},
-		{ID: "r3", When: parser.MustParse("D & E"), Then: p.Var("F")},
+		engine.BuildRule("r1", "A & B", "C"),
+		engine.BuildRule("r2", "C => D", "D"),
+		engine.BuildRule("r3", "D & E", "F"),
 	}
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 
@@ -113,10 +113,10 @@ func TestEngine_ChainingAndIdempotence(t *testing.T) {
 func TestEngine_ImplAndIffPatterns(t *testing.T) {
 	rules := []engine.Rule{
 		// For implication, When: X=>Y and Then: Y should fire when X is true.
-		{ID: "imp", When: parser.MustParse("X => Y"), Then: p.Var("Y")},
+		engine.BuildRule("imp", "X => Y", "Y"),
 		// For IFF, if Then is one side, When should fire when the other side is true.
-		{ID: "iff1", When: parser.MustParse("P <=> Q"), Then: p.Var("P")},
-		{ID: "iff2", When: parser.MustParse("P <=> Q"), Then: p.Var("Q")},
+		engine.BuildRule("iff1", "P <=> Q", "P"),
+		engine.BuildRule("iff2", "P <=> Q", "Q"),
 	}
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 
@@ -150,8 +150,8 @@ func TestEngine_ImplAndIffPatterns(t *testing.T) {
 func TestEngine_MaxItersAndLoopGuard(t *testing.T) {
 	// Create a simple cycle: A -> B, B -> A (via implications). Our semantics will fire when antecedent is true.
 	rules := []engine.Rule{
-		{ID: "rA", When: parser.MustParse("A => B"), Then: p.Var("B")},
-		{ID: "rB", When: parser.MustParse("B => A"), Then: p.Var("A")},
+		engine.BuildRule("r1", "A => B", "B"),
+		engine.BuildRule("r2", "B => A", "A"),
 	}
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 
@@ -169,7 +169,7 @@ func TestEngine_MaxItersAndLoopGuard(t *testing.T) {
 // TestEngine_RetractAndReAssert checks behavior when facts change between runs.
 func TestEngine_RetractAndReAssert(t *testing.T) {
 	rules := []engine.Rule{
-		{ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
+		engine.BuildRule("r1", "A & B", "C"),
 	}
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 
@@ -199,8 +199,8 @@ func TestEngine_RetractAndReAssert(t *testing.T) {
 // TestEngine_QueryCompositeFormula validates Query over a composite formula with explanation structure.
 func TestEngine_QueryCompositeFormula(t *testing.T) {
 	rules := []engine.Rule{
-		{ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
-		{ID: "r2", When: parser.MustParse("C => D"), Then: p.Var("D")},
+		engine.BuildRule("r1", "A & B", "C"),
+		engine.BuildRule("r2", "C => D", "D"),
 	}
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 	eng.Assert(p.Var("A"))

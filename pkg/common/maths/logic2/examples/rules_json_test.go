@@ -13,8 +13,8 @@ import (
 
 func TestRulesJSON_RoundTrip(t *testing.T) {
 	rules := []engine.Rule{
-		{ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
-		{ID: "r2", When: parser.MustParse("C => D"), Then: p.Var("D")},
+		engine.BuildRule("r1", "A & B", "C"),
+		engine.BuildRule("r2", "C => D", "D"),
 	}
 	// Encode to JSON
 	var buf bytes.Buffer
@@ -35,7 +35,7 @@ func TestRulesJSON_RoundTrip(t *testing.T) {
 		t.Fatalf("rule count mismatch: got %d want %d", len(gotRules), len(rules))
 	}
 	for i := range rules {
-		if rules[i].ID != gotRules[i].ID || rules[i].Then != gotRules[i].Then || !p.Equivalent(rules[i].When, gotRules[i].When) {
+		if !rules[i].Equals(gotRules[i]) {
 			t.Fatalf("rule %d mismatch after round-trip", i)
 		}
 	}
@@ -55,7 +55,7 @@ func TestRulesJSON_RoundTrip(t *testing.T) {
 func TestExplainDTO_JSON(t *testing.T) {
 	// Build a small engine and query to get an explanation
 	rules := []engine.Rule{
-		{ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
+		engine.BuildRule("r1", "A & B", "C"),
 	}
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 	eng.Assert(p.Var("A"))

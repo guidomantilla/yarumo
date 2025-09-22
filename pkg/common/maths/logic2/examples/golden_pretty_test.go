@@ -15,8 +15,8 @@ import (
 // intentional formatting change, update the golden file accordingly.
 func TestPrettyExplain_Golden(t *testing.T) {
 	rules := []engine.Rule{
-		{ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
-		{ID: "r2", When: parser.MustParse("C => D"), Then: p.Var("D")},
+		engine.BuildRule("r1", "A & B", "C"),
+		engine.BuildRule("r2", "C => D", "D"),
 	}
 	e := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 	e.Assert(p.Var("A"))

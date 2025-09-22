@@ -6,14 +6,12 @@ import (
 	"testing"
 
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic2/engine"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic2/parser"
-	p "github.com/guidomantilla/yarumo/pkg/common/maths/logic2/props"
 )
 
 func TestRulesYAML_RoundTrip(t *testing.T) {
 	rules := []engine.Rule{
-		{ID: "r1", When: parser.MustParse("A & B"), Then: p.Var("C")},
-		{ID: "r2", When: parser.MustParse("C => D"), Then: p.Var("D")},
+		engine.BuildRule("r1", "A & B", "C"),
+		engine.BuildRule("r2", "C => D", "D"),
 	}
 	// Encode to YAML
 	var buf bytes.Buffer
@@ -34,7 +32,7 @@ func TestRulesYAML_RoundTrip(t *testing.T) {
 		t.Fatalf("rule count mismatch: got %d want %d", len(gotRules), len(rules))
 	}
 	for i := range rules {
-		if rules[i].ID != gotRules[i].ID || rules[i].Then != gotRules[i].Then || !p.Equivalent(rules[i].When, gotRules[i].When) {
+		if !rules[i].Equals(gotRules[i]) {
 			t.Fatalf("rule %d mismatch after yaml round-trip", i)
 		}
 	}

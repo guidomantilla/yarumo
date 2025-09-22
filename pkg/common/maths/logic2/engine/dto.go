@@ -19,12 +19,13 @@ const dtoVersionV1 = "v1"
 // Then is the variable name.
 //
 // Example JSON:
-// {
-//   "version": "v1",
-//   "id": "r1",
-//   "when": "A & B",
-//   "then": "C"
-// }
+//
+//	{
+//	  "version": "v1",
+//	  "id": "r1",
+//	  "when": "A & B",
+//	  "then": "C"
+//	}
 //
 // Versioning allows future breaking changes while keeping backward compatibility.
 type RuleDTO struct {
@@ -79,7 +80,7 @@ func FromDTO(d ExplainDTO) *Explain {
 
 // RuleToDTO converts an Engine Rule to RuleDTO (v1).
 func RuleToDTO(r Rule) RuleDTO {
-	return RuleDTO{Version: dtoVersionV1, ID: r.ID, When: r.When.String(), Then: string(r.Then)}
+	return RuleDTO{Version: dtoVersionV1, ID: r.id, When: r.when.String(), Then: string(r.then)}
 }
 
 // RuleFromDTO converts a RuleDTO to an Engine Rule by parsing the When string.
@@ -94,7 +95,7 @@ func RuleFromDTO(d RuleDTO) (Rule, error) {
 	if d.Then == "" {
 		return Rule{}, fmt.Errorf("missing 'then' var name")
 	}
-	return Rule{ID: d.ID, When: f, Then: p.Var(d.Then)}, nil
+	return Rule{id: d.ID, when: f, then: p.Var(d.Then)}, nil
 }
 
 // RulesToDTO converts a slice of rules to a RuleSetDTO (v1).

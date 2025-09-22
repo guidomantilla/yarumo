@@ -93,7 +93,7 @@ func NewRulesFromStrings(specs []struct{ ID, When, Then string }) ([]Rule, error
 		if s.Then == "" {
 			return nil, fmt.Errorf("rule %d: empty Then", i)
 		}
-		out[i] = Rule{ID: s.ID, When: f, Then: p.Var(s.Then)}
+		out[i] = Rule{id: s.ID, when: f, then: p.Var(s.Then)}
 	}
 	return out, nil
 }

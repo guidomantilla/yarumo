@@ -26,6 +26,8 @@ func main() {
 		fmt.Println()
 		fmt.Println()
 
+		process(Rules, "Colombian", "Adult")
+
 		//xxx()
 		//yyy()
 		//zzz()
