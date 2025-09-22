@@ -11,6 +11,8 @@ const (
 	tIFF  // <=>
 	tLP   // (
 	tRP   // )
+	tTRUE // TRUE literal
+	tFALSE // FALSE literal
 )
 
 type token struct {

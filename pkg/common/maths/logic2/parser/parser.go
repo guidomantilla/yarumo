@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic2/props"
 )
 
@@ -11,17 +9,19 @@ type parser struct {
 	cur token
 }
 
-func newParser(s string) *parser {
-	p := &parser{lex: &lexer{s: s}}
+func newParserWithOptions(s string, opts ParseOptions) *parser {
+	p := &parser{lex: &lexer{s: s, strict: opts.Strict}}
 	p.next()
 	return p
 }
+
+func newParser(s string) *parser { return newParserWithOptions(s, ParseOptions{}) }
 
 func (p *parser) next() { p.cur = p.lex.scan() }
 
 func (p *parser) expect(t int) (*token, error) {
 	if p.cur.typ != t {
-		return nil, fmt.Errorf("parse error at %d: expected %v, got %v", p.cur.pos, t, p.cur.typ)
+		return nil, newParseError(p.cur.pos, "unexpected token: expected different token type")
 	}
 	tok := p.cur
 	p.next()
@@ -122,9 +122,15 @@ func (p *parser) parseUnary() (props.Formula, error) {
 		id := p.cur.lit
 		p.next()
 		return props.Var(id), nil
+	case tTRUE:
+		p.next()
+		return props.TrueF{}, nil
+	case tFALSE:
+		p.next()
+		return props.FalseF{}, nil
 	case tEOF:
-		return nil, fmt.Errorf("parse error at %d: unexpected EOF", p.cur.pos)
+		return nil, newParseError(p.cur.pos, "unexpected EOF")
 	default:
-		return nil, fmt.Errorf("parse error at %d: unexpected token '%s'", p.cur.pos, p.cur.lit)
+		return nil, newParseError(p.cur.pos, "unexpected token: '"+p.cur.lit+"'")
 	}
 }

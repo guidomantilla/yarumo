@@ -8,6 +8,7 @@ import (
 type lexer struct {
 	s string
 	i int
+	strict bool
 }
 
 func (l *lexer) next() rune {
@@ -36,53 +37,113 @@ func (l *lexer) scan() token {
 	l.skipWS()
 	ch := l.peek()
 	pos := l.i
-	switch ch {
-	case 0:
+	// 1) EOF
+	if ch == 0 {
 		return token{typ: tEOF, pos: pos}
-	case '!':
-		l.next()
-		return token{typ: tNOT, lit: "!", pos: pos}
-	case '&':
-		l.next()
-		return token{typ: tAND, lit: "&", pos: pos}
-	case '|':
-		l.next()
-		return token{typ: tOR, lit: "|", pos: pos}
-	case '(':
-		l.next()
-		return token{typ: tLP, lit: "(", pos: pos}
-	case ')':
-		l.next()
-		return token{typ: tRP, lit: ")", pos: pos}
-	case '<':
-		// expect <=>
-		if strings.HasPrefix(l.s[l.i:], "<=>") {
+	}
+
+	// 2) Multi-character ASCII operators (longest first)
+	if !l.strict {
+		if len(l.s)-l.i >= 3 {
+			s3 := l.s[l.i : l.i+3]
+			switch s3 {
+			case "<=>":
+				l.i += 3
+				return token{typ: tIFF, lit: "<=>", pos: pos}
+			case "<->":
+				l.i += 3
+				return token{typ: tIFF, lit: "<->", pos: pos}
+			}
+		}
+		if len(l.s)-l.i >= 2 {
+			s2 := l.s[l.i : l.i+2]
+			switch s2 {
+			case "=>", "->":
+				l.i += 2
+				return token{typ: tIMPL, lit: s2, pos: pos}
+			case "||":
+				l.i += 2
+				return token{typ: tOR, lit: s2, pos: pos}
+			case "&&":
+				l.i += 2
+				return token{typ: tAND, lit: s2, pos: pos}
+			}
+		}
+	} else {
+		// Strict: only canonical <=> and => are allowed as multi-char
+		if len(l.s)-l.i >= 3 && l.s[l.i:l.i+3] == "<=>" {
 			l.i += 3
 			return token{typ: tIFF, lit: "<=>", pos: pos}
 		}
-		// fallthrough to error
-	case '=':
-		// expect =>, but our grammar uses only after another '=' from '<=>' or starting with '=' is error
-		if strings.HasPrefix(l.s[l.i:], "=>") {
+		if len(l.s)-l.i >= 2 && l.s[l.i:l.i+2] == "=>" {
 			l.i += 2
 			return token{typ: tIMPL, lit: "=>", pos: pos}
 		}
-		return token{typ: tEOF, pos: pos}
-	default:
-		if unicode.IsLetter(ch) || ch == '_' {
-			start := l.i
-			for {
-				r := l.peek()
-				if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' {
-					l.next()
-					continue
-				}
-				break
-			}
-			return token{typ: tID, lit: l.s[start:l.i], pos: pos}
+	}
+
+	// 3) Single-rune operators (ASCII and Unicode variants)
+	switch ch {
+	case '!':
+		l.next(); return token{typ: tNOT, lit: "!", pos: pos}
+	case '&':
+		l.next(); return token{typ: tAND, lit: "&", pos: pos}
+	case '|':
+		l.next(); return token{typ: tOR, lit: "|", pos: pos}
+	case '(':
+		l.next(); return token{typ: tLP, lit: "(", pos: pos}
+	case ')':
+		l.next(); return token{typ: tRP, lit: ")", pos: pos}
+	}
+	if !l.strict {
+		switch ch {
+		case '¬':
+			l.next(); return token{typ: tNOT, lit: "¬", pos: pos}
+		case '∧':
+			l.next(); return token{typ: tAND, lit: "∧", pos: pos}
+		case '∨':
+			l.next(); return token{typ: tOR, lit: "∨", pos: pos}
+		case '→', '⇒':
+			l.next(); return token{typ: tIMPL, lit: string(ch), pos: pos}
+		case '↔', '⇔':
+			l.next(); return token{typ: tIFF, lit: string(ch), pos: pos}
 		}
 	}
-	// Unknown char
+
+	// 4) Identifiers / keywords
+	if unicode.IsLetter(ch) || ch == '_' {
+		start := l.i
+		for {
+			r := l.peek()
+			if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' {
+				l.next()
+				continue
+			}
+			break
+		}
+		lit := l.s[start:l.i]
+		if !l.strict {
+			up := strings.ToUpper(lit)
+			switch up {
+			case "AND":
+				return token{typ: tAND, lit: lit, pos: pos}
+			case "OR":
+				return token{typ: tOR, lit: lit, pos: pos}
+			case "NOT":
+				return token{typ: tNOT, lit: lit, pos: pos}
+			case "THEN":
+				return token{typ: tIMPL, lit: lit, pos: pos}
+			case "IFF":
+				return token{typ: tIFF, lit: lit, pos: pos}
+			case "TRUE":
+				return token{typ: tTRUE, lit: lit, pos: pos}
+			case "FALSE":
+				return token{typ: tFALSE, lit: lit, pos: pos}
+			}
+		}
+		return token{typ: tID, lit: lit, pos: pos}
+	}
+
+	// 5) Unknown char: consume and return EOF (parser will handle unexpected token)
 	l.next()
 	return token{typ: tEOF, pos: pos}
 }

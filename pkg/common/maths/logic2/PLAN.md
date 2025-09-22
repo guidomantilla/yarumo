@@ -208,9 +208,9 @@ Tareas (detalladas):
   - PrettyExplainTo(w io.Writer, *Explain) (determinista).  
   - Mantener String() canónica; añadir Format(f, opts) opcional (Unicode/espaciado) si aplica.
 - Parser DX y errores mejores:
-  - ParseError con posición (byte/columna) y mensaje claro.  
-  - (Opcional) ParseWith(input, ParseOptions{Strict}) para activar/desactivar sinónimos.  
-  - Soporte de sinónimos/Unicode en lexer (keywords AND/OR/NOT/THEN/IFF; operadores &&,||,->,<->; símbolos ¬∧∨→⇒↔⇔; TRUE/FALSE) sin usar reemplazos globales.
+  - [x] ParseError con posición (byte/columna) y mensaje claro.  
+  - [x] ParseWith(input, ParseOptions{Strict}) para activar/desactivar sinónimos.  
+  - [x] Soporte de sinónimos/Unicode en lexer (keywords AND/OR/NOT/THEN/IFF; operadores &&,||,->,<->; símbolos ¬∧∨→⇒↔⇔; TRUE/FALSE) sin usar reemplazos globales.
 - Observabilidad mínima del motor:
   - EngineStats {RulesEvaluated, RulesFired, Iterations}.  
   - PrettyExplain mantiene orden estable de hijos; Kids en orden determinista.
