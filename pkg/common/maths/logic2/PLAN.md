@@ -133,7 +133,7 @@ Tareas detalladas:
 
 5) Validación y benchmarks ligeros
 - [x] Tests cruzados: para nVars ≤ 8, comparar truth table vs SAT (resultados idénticos) — ver examples/sat_policy_test.go.
-- [ ] Benchmarks: familias sintéticas para medir umbral K.
+- [x] Benchmarks: familias sintéticas para medir umbral K.
 
 Entregables:
 - [x] Paquete sat con CNF+DPLL.
