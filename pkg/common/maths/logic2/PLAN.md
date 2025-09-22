@@ -205,8 +205,8 @@ Tareas (detalladas):
   - LoadRulesJSON/SaveRulesJSON (y variantes YAML si se incluye): io.Reader/io.Writer para testabilidad.  
   - Round‑trip estable (encode→decode→encode ≈ estable modulo espacios).
 - Pretty‑printing y helpers:
-  - PrettyExplainTo(w io.Writer, *Explain) (determinista).  
-  - Mantener String() canónica; añadir Format(f, opts) opcional (Unicode/espaciado) si aplica.
+  - [x] PrettyExplainTo(w io.Writer, *Explain) (determinista).  
+  - [x] Mantener String() canónica; añadir Format(f, opts) opcional (Unicode/espaciado) si aplica.
 - Parser DX y errores mejores:
   - [x] ParseError con posición (byte/columna) y mensaje claro.  
   - [x] ParseWith(input, ParseOptions{Strict}) para activar/desactivar sinónimos.  

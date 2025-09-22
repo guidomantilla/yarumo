@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/guidomantilla/yarumo/pkg/common/maths/logic2/props"
 )
@@ -130,29 +131,11 @@ type Explain struct {
 	Kids  []*Explain
 }
 
-// PrettyExplain renders an explanation tree with indentation.
+// PrettyExplain renders an explanation tree into a string by delegating to PrettyExplainTo.
 func PrettyExplain(e *Explain) string {
-	if e == nil {
-		return "<nil>"
-	}
-	var out string
-	var walk func(n *Explain, indent string)
-	walk = func(n *Explain, indent string) {
-		label := n.ID
-		if label == "" {
-			label = n.Expr
-		}
-		out += fmt.Sprintf("%s- %s = %v", indent, label, n.Value)
-		if n.Why != "" {
-			out += fmt.Sprintf(" (%s)", n.Why)
-		}
-		out += "\n"
-		for _, k := range n.Kids {
-			walk(k, indent+"  ")
-		}
-	}
-	walk(e, "")
-	return out
+	var sb strings.Builder
+	PrettyExplainTo(&sb, e)
+	return sb.String()
 }
 
 // --- internal helpers ---
