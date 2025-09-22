@@ -1,6 +1,8 @@
 package props
 
-import "sort"
+import (
+	"sort"
+)
 
 // TruthTable returns all valuations with a special key "result" set to the formula value.
 func TruthTable(f Formula) []map[string]bool {
@@ -36,11 +38,30 @@ func Equivalent(a, b Formula) bool {
 	return true
 }
 
-// IsSatisfiable returns true if the formula is satisfiable.
+// SATThreshold controls when to switch from truth-table to SAT.
+// If number of variables is greater than SATThreshold, and a SAT solver is registered,
+// IsSatisfiable will use SAT; otherwise it falls back to truth-table.
+var SATThreshold = 12
+
+// RegisterSATSolver lets another package (logic2/sat) register a SAT-based satisfiability checker.
+// The function should return (ok bool, result bool). When ok==true, result is the satisfiability answer.
+// When ok==false, IsSatisfiable will fall back to truth-table.
+var satSolver func(Formula) (bool, bool)
+
+func RegisterSATSolver(fn func(Formula) (bool, bool)) {
+	satSolver = fn
+}
+
+// IsSatisfiable returns true if the formula is satisfiable using the configured policy.
 func IsSatisfiable(f Formula) bool {
-	// Provisional policy (Phase 1): truth-table evaluation
 	vars := f.Vars()
 	n := len(vars)
+	if n > SATThreshold && satSolver != nil {
+		if ok, res := satSolver(f); ok {
+			return res
+		}
+	}
+	// Fallback: brute-force truth table
 	for i := 0; i < (1 << n); i++ {
 		facts := make(Fact, n)
 		for j, v := range vars {
@@ -58,18 +79,7 @@ func IsContradiction(f Formula) bool { return !IsSatisfiable(f) }
 
 // IsTautology returns true if the formula is tautological.
 func IsTautology(f Formula) bool {
-	vars := f.Vars()
-	n := len(vars)
-	for i := 0; i < (1 << n); i++ {
-		facts := make(Fact, n)
-		for j, v := range vars {
-			facts[Var(v)] = (i>>j)&1 == 1
-		}
-		if !f.Eval(facts) {
-			return false
-		}
-	}
-	return true
+	return !IsSatisfiable(NotF{F: f})
 }
 
 // FailCases returns the rows of the truth table that evaluate to false.

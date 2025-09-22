@@ -8,6 +8,8 @@ type Lit struct {
 	Neg bool
 }
 
+func (l Lit) Negated() Lit { return Lit{Var: l.Var, Neg: !l.Neg} }
+
 // Clause is a disjunction of literals.
 type Clause []Lit
 
@@ -16,11 +18,3 @@ type CNF []Clause
 
 // Assignment maps variables to boolean values.
 type Assignment map[props.Var]bool
-
-// FromFormulaToCNF converts a formula into a flattened CNF.
-// Phase 0: stub that returns an error until Phase 2.
-func FromFormulaToCNF(f props.Formula) (CNF, error) { return nil, ErrNotImplemented }
-
-// DPLL solves satisfiability over a CNF.
-// Phase 0: stub that returns false, nil until Phase 2.
-func DPLL(cnf CNF, asg Assignment) (bool, Assignment) { return false, nil }
