@@ -10,16 +10,9 @@ import (
 )
 
 var (
-	Adult2         = props.Var("Adult")
-	Active2        = props.Var("Active")
-	Colombian2     = props.Var("Colombian")
-	EmailValid2    = props.Var("EmailValid")
-	Has2FA2        = props.Var("Has2FA")
-	TermsAccepted2 = props.Var("TermsAccepted")
-	Admin2         = props.Var("Admin")
-	CanLogin2      = props.Var("CanLogin")
-
-	Rules = []engine.Rule{
+	User          = UserType{Name: "Ana", Age: 22, Active: true, Email: "", Country: "CO", IsAdmin: true, Has2FA: false, TermsAccepted: false}
+	UserInferable = UserType{Name: "Ana", Age: 17, Active: true, Email: "hey", Country: "CO", IsAdmin: true, Has2FA: true, TermsAccepted: true}
+	Rules         = []engine.Rule{
 		engine.BuildRule("r1", "Colombian & Adult", "Active"),
 		engine.BuildRule("r2", "Active & Admin", "TermsAccepted"),
 		engine.BuildRule("r3", "Active & Admin => Has2FA", "Has2FA"),

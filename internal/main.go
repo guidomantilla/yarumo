@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/guidomantilla/yarumo/internal/core"
 	"github.com/guidomantilla/yarumo/pkg/boot"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic"
 	"github.com/guidomantilla/yarumo/pkg/servers"
 )
 
@@ -25,69 +23,11 @@ func main() {
 		fmt.Println()
 		fmt.Println()
 
-		process(Rules, "Colombian", "Adult")
-
-		//xxx()
-		//yyy()
-		//zzz()
-		//parser()
+		err = process(Rules, "Colombian", "Adult")
+		fmt.Println(err)
 
 		return nil
 	}, options...)
-}
-
-func xxx() { //nolint:unused
-
-	result, err := Predicates.Evaluate(UserRules[0].Formula, &User)
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Error evaluating proposition: %v", err)) //nolint:gosimple
-		return
-	}
-
-	pretty, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		fmt.Println("Error al formatear JSON:", err)
-		return
-	}
-
-	fmt.Println(string(pretty))
-	fmt.Println()
-	fmt.Println()
-}
-
-func yyy() { //nolint:unused
-	evaluator := logic.NewRuleSet(Predicates, UserRules)
-
-	result, err := evaluator.Evaluate(&User)
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Error evaluating rules: %v", err)) //nolint:gosimple
-		return
-	}
-	pretty, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		fmt.Println("Error al formatear JSON:", err)
-		return
-	}
-
-	fmt.Println(string(pretty))
-}
-
-func zzz() { //nolint:unused
-
-	evaluator := logic.NewRuleSet(Predicates, UserInferableRules)
-
-	result, err := evaluator.Evaluate(&UserInferable)
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Error evaluating rules: %v", err)) //nolint:gosimple
-		return
-	}
-	pretty, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		fmt.Println("Error al formatear JSON:", err)
-		return
-	}
-
-	fmt.Println(string(pretty))
 }
 
 /*
