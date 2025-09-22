@@ -145,7 +145,7 @@ func (l *lexer) scan() token {
 		return token{typ: tID, lit: lit, pos: pos}
 	}
 
-	// 5) Unknown char: consume and return EOF (parser will handle unexpected token)
-	l.next()
-	return token{typ: tEOF, pos: pos}
+	// 5) Unknown char: emit ILLEGAL token and consume one rune
+	bad := l.next()
+	return token{typ: tILLEGAL, lit: string(bad), pos: pos}
 }
