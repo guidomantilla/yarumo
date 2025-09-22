@@ -92,3 +92,5 @@ Construir un paquete de lógica en Go que soporte lógica proposicional completa
 - pkg/common/maths/logic/eval_node.go
 - pkg/common/maths/logic/propositions/*.go
 - pkg/common/maths/logic/predicates/*.go
+- pkg/common/maths/logic/entailment/*.go
+- pkg/common/maths/logic/sat/*.go
