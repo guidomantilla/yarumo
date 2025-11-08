@@ -3,7 +3,12 @@ module github.com/guidomantilla/yarumo/common
 go 1.25.2
 
 require (
+	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc
+	github.com/devmiek/nanoid-go v0.0.0-20241216084707-e17e38258ffc
 	github.com/google/go-cmp v0.7.0
+	github.com/google/uuid v1.6.0
+	github.com/oklog/ulid/v2 v2.1.1
+	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/viper v1.21.0
@@ -21,6 +26,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
