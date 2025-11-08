@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/sony/gobreaker"
 
-	"github.com/guidomantilla/yarumo/pkg/common/assert"
+	"github.com/guidomantilla/yarumo/modules/common/assert"
 	resilience "github.com/guidomantilla/yarumo/pkg/resilience"
 )
 

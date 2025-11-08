@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 
-	"github.com/guidomantilla/yarumo/pkg/common/log"
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
+	"github.com/guidomantilla/yarumo/modules/common/log"
+	"github.com/guidomantilla/yarumo/modules/common/pointer"
 )
 
 // Http

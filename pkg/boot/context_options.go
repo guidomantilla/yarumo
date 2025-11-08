@@ -1,6 +1,6 @@
 package boot
 
-import "github.com/guidomantilla/yarumo/pkg/common/utils"
+import "github.com/guidomantilla/yarumo/modules/common/utils"
 
 type WireContextOptions struct {
 	Hasher                 BeanFn

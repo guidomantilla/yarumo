@@ -3,7 +3,7 @@ package uids
 import (
 	"fmt"
 
-	cerrs "github.com/guidomantilla/yarumo/pkg/common/errs"
+	cerrs "github.com/guidomantilla/yarumo/modules/common/errs"
 )
 
 const (

@@ -9,9 +9,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
-	"github.com/guidomantilla/yarumo/pkg/common/assert"
-	clog "github.com/guidomantilla/yarumo/pkg/common/log"
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
+	"github.com/guidomantilla/yarumo/modules/common/assert"
+	clog "github.com/guidomantilla/yarumo/modules/common/log"
+	"github.com/guidomantilla/yarumo/modules/common/utils"
 )
 
 var singleton atomic.Value

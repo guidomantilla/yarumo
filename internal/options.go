@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/guidomantilla/yarumo/internal/core"
+	"github.com/guidomantilla/yarumo/modules/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/boot"
 	comm "github.com/guidomantilla/yarumo/pkg/comm"
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
 	"github.com/guidomantilla/yarumo/pkg/security/tokens"
 )

@@ -3,7 +3,7 @@ package passwords
 import (
 	"fmt"
 
-	"github.com/guidomantilla/yarumo/pkg/common/assert"
+	"github.com/guidomantilla/yarumo/modules/common/assert"
 )
 
 type manager struct {

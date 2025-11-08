@@ -5,7 +5,7 @@ import (
 
 	jwt "github.com/golang-jwt/jwt/v5"
 
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
+	"github.com/guidomantilla/yarumo/modules/common/utils"
 )
 
 type Claims struct {

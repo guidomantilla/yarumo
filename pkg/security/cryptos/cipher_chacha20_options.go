@@ -3,7 +3,7 @@ package cryptos
 import (
 	"encoding/base64"
 
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
+	"github.com/guidomantilla/yarumo/modules/common/utils"
 )
 
 type ChaCha20CipherOptions struct {

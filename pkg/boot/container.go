@@ -6,9 +6,9 @@ import (
 
 	validator "github.com/go-playground/validator/v10"
 
+	"github.com/guidomantilla/yarumo/modules/common/assert"
+	"github.com/guidomantilla/yarumo/modules/common/pointer"
 	"github.com/guidomantilla/yarumo/pkg/comm"
-	"github.com/guidomantilla/yarumo/pkg/common/assert"
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
 	resilience "github.com/guidomantilla/yarumo/pkg/resilience"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
 	"github.com/guidomantilla/yarumo/pkg/security/hashes"

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
+	"github.com/guidomantilla/yarumo/modules/common/utils"
 	resilience "github.com/guidomantilla/yarumo/pkg/resilience"
 )
 

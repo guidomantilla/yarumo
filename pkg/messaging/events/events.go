@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/guidomantilla/yarumo/pkg/common/utils"
+	"github.com/guidomantilla/yarumo/modules/common/utils"
 )
 
 type eventBus[T any] struct {

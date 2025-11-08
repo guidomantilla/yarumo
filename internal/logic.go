@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/engine"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/parser"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/props"
+	"github.com/guidomantilla/yarumo/modules/common/maths/logic/engine"
+	"github.com/guidomantilla/yarumo/modules/common/maths/logic/parser"
+	"github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
 )
 
 type UserType struct {
