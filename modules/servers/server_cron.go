@@ -7,42 +7,47 @@ import (
 	"github.com/qmdx00/lifecycle"
 	"github.com/rs/zerolog/log"
 
-	"github.com/guidomantilla/yarumo/modules/common/assert"
+	"github.com/guidomantilla/yarumo/common/assert"
 )
 
-type baseServer struct {
+type cronServer struct {
 	ctx          context.Context
 	name         string
+	internal     CronServer
 	closeChannel chan struct{}
 }
 
-func BuildBaseServer() (string, Server) {
-	return "base-server", NewBaseServer()
+func BuildCronServer(cron CronServer) (string, Server) {
+	return "cron-server", NewCronServer(cron)
 }
 
-func NewBaseServer() lifecycle.Server {
-	return &baseServer{
-		name:         "base-server",
+func NewCronServer(cron CronServer) lifecycle.Server {
+	assert.NotNil(cron, fmt.Sprintf("%s - error starting up: cron is nil", "cron-server"))
+	return &cronServer{
+		name:         "cron-server",
+		internal:     cron,
 		closeChannel: make(chan struct{}),
 	}
 }
 
-func (server *baseServer) Run(ctx context.Context) error {
+func (server *cronServer) Run(ctx context.Context) error {
 	assert.NotNil(ctx, fmt.Sprintf("%s - error starting up: context is nil", server.name))
 
 	log.Info().Str("stage", "startup").Str("component", server.name).Msg("starting up")
 
 	server.ctx = ctx
+	server.internal.Start()
 	<-server.closeChannel
 	return nil
 }
 
-func (server *baseServer) Stop(ctx context.Context) error {
+func (server *cronServer) Stop(ctx context.Context) error {
 	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", server.name))
 
 	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopping")
 	defer log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopped")
 
 	close(server.closeChannel)
+	server.internal.Stop()
 	return nil
 }
