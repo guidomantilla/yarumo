@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/guidomantilla/yarumo/modules/common/utils"
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 func Tls(serverName string, caCertificate string, clientCertificate string, clientKey string, insecureSkipVerify bool) (*tls.Config, error) {

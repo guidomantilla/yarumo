@@ -10,7 +10,7 @@ import (
 
 	"golang.org/x/crypto/chacha20poly1305"
 
-	"github.com/guidomantilla/yarumo/modules/common/pointer"
+	"github.com/guidomantilla/yarumo/common/pointer"
 )
 
 func Key(size int) (*string, error) {

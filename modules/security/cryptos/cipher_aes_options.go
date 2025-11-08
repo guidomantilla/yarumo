@@ -3,7 +3,7 @@ package cryptos
 import (
 	"encoding/base64"
 
-	"github.com/guidomantilla/yarumo/modules/common/utils"
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 type AesCipherOptions struct {

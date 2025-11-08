@@ -5,9 +5,9 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/guidomantilla/yarumo/security/cryptos"
 
-	"github.com/guidomantilla/yarumo/modules/common/utils"
-	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 type JwtGeneratorOptions struct {
