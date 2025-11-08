@@ -1,0 +1,9 @@
+go 1.25.2
+
+use (
+	./modules/common
+	./modules/maths
+	./modules/security
+	./modules/servers
+	deprecated
+)
