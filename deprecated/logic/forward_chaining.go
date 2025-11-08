@@ -6,7 +6,6 @@ import (
 
 	"github.com/guidomantilla/yarumo/deprecated/logic/predicates"
 	"github.com/guidomantilla/yarumo/deprecated/logic/propositions"
-	"github.com/guidomantilla/yarumo/deprecated/pointer"
 )
 
 type Rule[T any] struct {
@@ -31,7 +30,7 @@ func NewRuleSet[T any](registry PredicatesRegistry[T], rules []Rule[T]) *RuleSet
 
 // Evaluate evaluates a set of rules against a given input using the provided predicates.
 func (e *RuleSet[T]) Evaluate(input *T) (*EvalNode, error) {
-	if !pointer.IsStruct(input) {
+	if !IsStruct(input) {
 		return nil, fmt.Errorf("input must be a pointer to a struct, got %T", input)
 	}
 
@@ -40,7 +39,7 @@ func (e *RuleSet[T]) Evaluate(input *T) (*EvalNode, error) {
 
 	result := &EvalNode{
 		Label: "rules set evaluation",
-		Value: pointer.ToPtr(true),
+		Value: ToPtr(true),
 		Nodes: []EvalNode{
 			{
 				Expr:  "consequences",
@@ -56,7 +55,7 @@ func (e *RuleSet[T]) Evaluate(input *T) (*EvalNode, error) {
 		}
 
 		tree.Label = rule.Label
-		result.Value = pointer.ToPtr(*result.Value && *tree.Value)
+		result.Value = ToPtr(*result.Value && *tree.Value)
 		if rule.Consequence != nil {
 			predicate := predicates.False[T]()
 			if *tree.Value {

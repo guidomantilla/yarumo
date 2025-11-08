@@ -5,7 +5,6 @@ import (
 
 	"github.com/guidomantilla/yarumo/deprecated/logic/predicates"
 	"github.com/guidomantilla/yarumo/deprecated/logic/propositions"
-	"github.com/guidomantilla/yarumo/deprecated/pointer"
 )
 
 // PredicatesRegistry is a type alias for a registry of predicates that maps proposition variables to their corresponding predicate functions.
@@ -103,7 +102,7 @@ func (registry PredicatesRegistry[T]) Compile(formula propositions.Formula) (pre
 
 // Evaluate evaluates a proposition formula against an input of type T using the predicate registry.
 func (registry PredicatesRegistry[T]) Evaluate(f propositions.Formula, input *T) (*EvalNode, error) {
-	if !pointer.IsStruct(input) {
+	if !IsStruct(input) {
 		return nil, fmt.Errorf("input must be a pointer to a struct, got %T", input)
 	}
 	registry.sanitize()
