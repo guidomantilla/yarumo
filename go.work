@@ -1,9 +1,9 @@
 go 1.25.2
 
 use (
+	./deprecated
 	./modules/common
 	./modules/maths
 	./modules/security
 	./modules/servers
-	deprecated
 )
