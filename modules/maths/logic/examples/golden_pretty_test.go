@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/guidomantilla/yarumo/maths/logic/engine"
+	"github.com/guidomantilla/yarumo/maths/logic/parser"
 	p "github.com/guidomantilla/yarumo/maths/logic/props"
 )
 
