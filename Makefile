@@ -42,16 +42,22 @@ vet:
 	cd modules/servers && go vet ./...
 
 lint:
-	golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./internal/... ./pkg/... ./sdk/...
+	cd modules/common && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
+	cd modules/maths && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
+	cd modules/security && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
+	cd modules/servers && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
 
 test:
-	go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./internal/... ./pkg/... ./sdk/...
-	cat .reports/coverage.out.tmp | grep -v "mocks.go" > .reports/coverage.out && rm .reports/coverage.out.tmp
+	cd modules/common 	&& go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./... 	&& cat .reports/coverage.out.tmp | grep -v "mocks.go" > .reports/coverage.out && rm .reports/coverage.out.tmp
+	cd modules/maths 	&& go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./... 	&& cat .reports/coverage.out.tmp | grep -v "mocks.go" > .reports/coverage.out && rm .reports/coverage.out.tmp
+	cd modules/security && go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./... 	&& cat .reports/coverage.out.tmp | grep -v "mocks.go" > .reports/coverage.out && rm .reports/coverage.out.tmp
+	cd modules/servers 	&& go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./... 	&& cat .reports/coverage.out.tmp | grep -v "mocks.go" > .reports/coverage.out && rm .reports/coverage.out.tmp
 
 coverage: test
-	go tool cover -func=.reports/coverage.out
-	go tool cover -html=.reports/coverage.out -o .reports/coverage.html
-	go-test-coverage --config=.testcoverage.yml
+	cd modules/common 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && go-test-coverage --config=.testcoverage.yml
+	cd modules/maths 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && go-test-coverage --config=.testcoverage.yml
+	cd modules/security && go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && go-test-coverage --config=.testcoverage.yml
+	cd modules/servers 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && go-test-coverage --config=.testcoverage.yml
 
 check: fetch-dependencies imports format vet lint coverage
 
@@ -60,5 +66,8 @@ build: graph check
 ##
 
 update-dependencies:
-	go get -u ./... && go get -t -u ./...
-	go mod tidy
+	cd modules/common 	&& go get -u ./... && go get -t -u ./... && go mod tidy
+	cd modules/maths 	&& go get -u ./... && go get -t -u ./... && go mod tidy
+	cd modules/security && go get -u ./... && go get -t -u ./... && go mod tidy
+	cd modules/servers 	&& go get -u ./... && go get -t -u ./... && go mod tidy
+	go work sync
