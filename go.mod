@@ -2,8 +2,6 @@ module github.com/guidomantilla/yarumo
 
 go 1.24.2
 
-toolchain go1.24.3
-
 require (
 	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc
 	github.com/avast/retry-go/v4 v4.6.1
