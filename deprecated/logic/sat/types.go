@@ -1,6 +1,6 @@
 package sat
 
-import "github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
+import "github.com/guidomantilla/yarumo/deprecated/logic/propositions"
 
 // Lit represents a literal: a (possibly negated) propositional variable.
 type Lit struct {

@@ -1,8 +1,8 @@
 package entailment
 
 import (
-	p "github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/sat"
+	p "github.com/guidomantilla/yarumo/deprecated/logic/propositions"
+	"github.com/guidomantilla/yarumo/deprecated/logic/sat"
 )
 
 // Result captures the outcome of an entailment check.

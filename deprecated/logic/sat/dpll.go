@@ -1,6 +1,6 @@
 package sat
 
-import p "github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
+import p "github.com/guidomantilla/yarumo/deprecated/logic/propositions"
 
 // DPLL determines satisfiability of a CNF. Returns (ok, model if ok).
 func DPLL(cnf CNF, asg Assignment) (bool, Assignment) {

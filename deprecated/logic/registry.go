@@ -3,9 +3,9 @@ package logic
 import (
 	"fmt"
 
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
+	"github.com/guidomantilla/yarumo/deprecated/logic/predicates"
+	"github.com/guidomantilla/yarumo/deprecated/logic/propositions"
+	"github.com/guidomantilla/yarumo/deprecated/pointer"
 )
 
 // PredicatesRegistry is a type alias for a registry of predicates that maps proposition variables to their corresponding predicate functions.

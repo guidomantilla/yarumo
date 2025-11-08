@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/predicates"
-	"github.com/guidomantilla/yarumo/pkg/common/maths/logic/propositions"
-	"github.com/guidomantilla/yarumo/pkg/common/pointer"
+	"github.com/guidomantilla/yarumo/deprecated/logic/predicates"
+	"github.com/guidomantilla/yarumo/deprecated/logic/propositions"
+	"github.com/guidomantilla/yarumo/deprecated/pointer"
 )
 
 type Rule[T any] struct {
