@@ -1,15 +1,12 @@
 .PHONY: phony
 phony-goal: ; @echo $@
 
-install: fetch-dependencies
+install:
 	go install github.com/incu6us/goimports-reviser/v3@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install go.uber.org/mock/mockgen@latest
 	go install github.com/vladopajic/go-test-coverage/v2@latest
 	go install github.com/kisielk/godepgraph@latest
-
-fetch-dependencies:
-	go mod download
 
 generate: graph
 	cd modules/common && go generate ./...
