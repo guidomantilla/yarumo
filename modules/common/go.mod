@@ -8,7 +8,6 @@ require (
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/viper v1.21.0
 	golang.org/x/text v0.30.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
