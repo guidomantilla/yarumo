@@ -1,8 +1,8 @@
 package entailment
 
 import (
-	p "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/sat"
+	p "github.com/guidomantilla/yarumo/common/maths/logic/props"
+	"github.com/guidomantilla/yarumo/common/maths/logic/sat"
 )
 
 // Entails implements entailment by refutation over propositional formulas.

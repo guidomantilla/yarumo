@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
-	"github.com/guidomantilla/yarumo/modules/common/utils"
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 func Configure(name string, version string) zerolog.Logger {

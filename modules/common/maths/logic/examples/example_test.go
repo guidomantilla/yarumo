@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/parser"
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+	"github.com/guidomantilla/yarumo/common/maths/logic/parser"
+	"github.com/guidomantilla/yarumo/common/maths/logic/props"
 )
 
 // --- helpers ---

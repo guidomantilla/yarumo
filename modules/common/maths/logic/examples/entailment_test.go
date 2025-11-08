@@ -3,9 +3,9 @@ package examples
 import (
 	"testing"
 
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/entailment"
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/parser"
-	p "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+	"github.com/guidomantilla/yarumo/common/maths/logic/entailment"
+	"github.com/guidomantilla/yarumo/common/maths/logic/parser"
+	p "github.com/guidomantilla/yarumo/common/maths/logic/props"
 )
 
 func TestEntails_ModusPonens(t *testing.T) {

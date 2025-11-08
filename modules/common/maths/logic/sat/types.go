@@ -1,6 +1,6 @@
 package sat
 
-import "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+import "github.com/guidomantilla/yarumo/common/maths/logic/props"
 
 // Lit represents a literal (a variable or its negation).
 type Lit struct {

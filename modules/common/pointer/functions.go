@@ -3,7 +3,7 @@ package pointer
 import (
 	"reflect"
 
-	"github.com/guidomantilla/yarumo/modules/common/constraints"
+	"github.com/guidomantilla/yarumo/common/constraints"
 )
 
 // IsPointer checks if the value is a pointer type.

@@ -1,6 +1,6 @@
 package engine
 
-import "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+import "github.com/guidomantilla/yarumo/common/maths/logic/props"
 
 // FactBase stores boolean facts.
 type FactBase map[props.Var]bool

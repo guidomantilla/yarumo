@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/engine"
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/parser"
-	p "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+	"github.com/guidomantilla/yarumo/common/maths/logic/engine"
+	"github.com/guidomantilla/yarumo/common/maths/logic/parser"
+	p "github.com/guidomantilla/yarumo/common/maths/logic/props"
 )
 
 // TestPrettyExplain_Golden compares PrettyExplain output with a golden file to

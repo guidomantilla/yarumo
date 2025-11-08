@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+	"github.com/guidomantilla/yarumo/common/maths/logic/props"
 )
 
 // ParseWith parses input using the provided options.

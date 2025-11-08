@@ -1,6 +1,6 @@
 package sat
 
-import p "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+import p "github.com/guidomantilla/yarumo/common/maths/logic/props"
 
 // Solver is an explicit SAT solver hook that callers can register into props
 // using props.RegisterSATSolver(Solver). It avoids package-level side effects

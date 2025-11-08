@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/engine"
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/parser"
-	p "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+	"github.com/guidomantilla/yarumo/common/maths/logic/engine"
+	"github.com/guidomantilla/yarumo/common/maths/logic/parser"
+	p "github.com/guidomantilla/yarumo/common/maths/logic/props"
 )
 
 // TestEngine_EndToEnd demonstrates a minimal forward-chaining run and query/explain.

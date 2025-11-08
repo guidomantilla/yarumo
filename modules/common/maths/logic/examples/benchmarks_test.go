@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	p "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
-	sat "github.com/guidomantilla/yarumo/modules/common/maths/logic/sat"
+	p "github.com/guidomantilla/yarumo/common/maths/logic/props"
+	sat "github.com/guidomantilla/yarumo/common/maths/logic/sat"
 )
 
 // --- Helpers to build synthetic families ---

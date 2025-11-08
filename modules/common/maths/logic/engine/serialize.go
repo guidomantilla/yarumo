@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/parser"
-	p "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+	"github.com/guidomantilla/yarumo/common/maths/logic/parser"
+	p "github.com/guidomantilla/yarumo/common/maths/logic/props"
 )
 
 // LoadRulesJSON reads a RuleSetDTO from r and parses it into engine Rules.

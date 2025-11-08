@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/engine"
+	"github.com/guidomantilla/yarumo/common/maths/logic/engine"
 )
 
 func TestRulesYAML_RoundTrip(t *testing.T) {

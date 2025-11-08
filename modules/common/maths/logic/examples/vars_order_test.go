@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/parser"
+	"github.com/guidomantilla/yarumo/common/maths/logic/parser"
 )
 
 // TestVarsOrder_Stable ensures Vars() returns a stable, sorted order of variable names.

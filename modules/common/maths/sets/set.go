@@ -1,6 +1,6 @@
 package sets
 
-import "github.com/guidomantilla/yarumo/modules/common/pointer"
+import "github.com/guidomantilla/yarumo/common/pointer"
 
 // Set is a generic set data structure that holds unique elements of type T.
 type Set[T comparable] struct {

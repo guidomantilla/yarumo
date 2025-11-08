@@ -3,8 +3,8 @@ package examples
 import (
 	"testing"
 
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/parser"
-	p "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+	"github.com/guidomantilla/yarumo/common/maths/logic/parser"
+	p "github.com/guidomantilla/yarumo/common/maths/logic/props"
 )
 
 // helper to assert equivalence between a synonym expression and a canonical expression

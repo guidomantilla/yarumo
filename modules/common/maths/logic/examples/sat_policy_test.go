@@ -3,9 +3,9 @@ package examples
 import (
 	"testing"
 
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/parser"
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
-	sat "github.com/guidomantilla/yarumo/modules/common/maths/logic/sat"
+	"github.com/guidomantilla/yarumo/common/maths/logic/parser"
+	"github.com/guidomantilla/yarumo/common/maths/logic/props"
+	sat "github.com/guidomantilla/yarumo/common/maths/logic/sat"
 )
 
 func runSAT(f props.Formula) bool {

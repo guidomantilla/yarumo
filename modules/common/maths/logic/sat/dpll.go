@@ -1,7 +1,7 @@
 package sat
 
 import (
-	p "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+	p "github.com/guidomantilla/yarumo/common/maths/logic/props"
 )
 
 // DPLL determines satisfiability of a CNF. Returns (ok, model if ok).

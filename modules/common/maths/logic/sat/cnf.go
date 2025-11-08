@@ -3,7 +3,7 @@ package sat
 import (
 	"fmt"
 
-	p "github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+	p "github.com/guidomantilla/yarumo/common/maths/logic/props"
 )
 
 // FromFormulaToCNF converts any formula to flattened CNF (list of clauses)

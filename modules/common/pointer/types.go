@@ -1,7 +1,7 @@
 package pointer
 
 import (
-	"github.com/guidomantilla/yarumo/modules/common/constraints"
+	"github.com/guidomantilla/yarumo/common/constraints"
 )
 
 var (

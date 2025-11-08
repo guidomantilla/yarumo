@@ -3,7 +3,7 @@ package assert
 import (
 	"github.com/rs/zerolog/log"
 
-	"github.com/guidomantilla/yarumo/modules/common/utils"
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 // NotEmpty checks if the object is not empty and logs a fatal error if it is.

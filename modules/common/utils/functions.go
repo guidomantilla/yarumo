@@ -11,8 +11,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/text/cases"
 
-	"github.com/guidomantilla/yarumo/modules/common/constraints"
-	"github.com/guidomantilla/yarumo/modules/common/pointer"
+	"github.com/guidomantilla/yarumo/common/constraints"
+	"github.com/guidomantilla/yarumo/common/pointer"
 )
 
 // Ternary returns trueValue if condition is true, otherwise returns falseValue.

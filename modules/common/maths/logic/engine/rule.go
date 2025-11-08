@@ -3,8 +3,8 @@ package engine
 import (
 	"fmt"
 
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/parser"
-	"github.com/guidomantilla/yarumo/modules/common/maths/logic/props"
+	"github.com/guidomantilla/yarumo/common/maths/logic/parser"
+	"github.com/guidomantilla/yarumo/common/maths/logic/props"
 )
 
 // Rule represents a propositional rule with a literal consequence (MVP).

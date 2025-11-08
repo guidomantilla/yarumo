@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/guidomantilla/yarumo/modules/common/pointer"
-	"github.com/guidomantilla/yarumo/modules/common/utils"
+	"github.com/guidomantilla/yarumo/common/pointer"
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 // As returns the error as a specific type T if it can be casted, otherwise returns a zero value of T and false.

@@ -1,4 +1,4 @@
-module github.com/guidomantilla/yarumo/modules/common
+module github.com/guidomantilla/yarumo/common
 
 go 1.25.2
 
