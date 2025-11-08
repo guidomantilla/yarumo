@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // LoadRulesYAML reads a RuleSetDTO from r (YAML) and parses it into engine Rules.

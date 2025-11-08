@@ -7,8 +7,8 @@ import (
 )
 
 type lexer struct {
-	s string
-	i int // byte index into s (UTF-8 safe)
+	s      string
+	i      int // byte index into s (UTF-8 safe)
 	strict bool
 }
 
@@ -86,28 +86,38 @@ func (l *lexer) scan() token {
 	// 3) Single-rune operators (ASCII and Unicode variants)
 	switch ch {
 	case '!':
-		l.next(); return token{typ: tNOT, lit: "!", pos: pos}
+		l.next()
+		return token{typ: tNOT, lit: "!", pos: pos}
 	case '&':
-		l.next(); return token{typ: tAND, lit: "&", pos: pos}
+		l.next()
+		return token{typ: tAND, lit: "&", pos: pos}
 	case '|':
-		l.next(); return token{typ: tOR, lit: "|", pos: pos}
+		l.next()
+		return token{typ: tOR, lit: "|", pos: pos}
 	case '(':
-		l.next(); return token{typ: tLP, lit: "(", pos: pos}
+		l.next()
+		return token{typ: tLP, lit: "(", pos: pos}
 	case ')':
-		l.next(); return token{typ: tRP, lit: ")", pos: pos}
+		l.next()
+		return token{typ: tRP, lit: ")", pos: pos}
 	}
 	if !l.strict {
 		switch ch {
 		case '¬':
-			l.next(); return token{typ: tNOT, lit: "¬", pos: pos}
+			l.next()
+			return token{typ: tNOT, lit: "¬", pos: pos}
 		case '∧':
-			l.next(); return token{typ: tAND, lit: "∧", pos: pos}
+			l.next()
+			return token{typ: tAND, lit: "∧", pos: pos}
 		case '∨':
-			l.next(); return token{typ: tOR, lit: "∨", pos: pos}
+			l.next()
+			return token{typ: tOR, lit: "∨", pos: pos}
 		case '→', '⇒':
-			l.next(); return token{typ: tIMPL, lit: string(ch), pos: pos}
+			l.next()
+			return token{typ: tIMPL, lit: string(ch), pos: pos}
 		case '↔', '⇔':
-			l.next(); return token{typ: tIFF, lit: string(ch), pos: pos}
+			l.next()
+			return token{typ: tIFF, lit: string(ch), pos: pos}
 		}
 	}
 

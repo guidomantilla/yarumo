@@ -21,10 +21,10 @@ graph:
 	godepgraph -s ./modules/servers | dot -Tpng -o ./docs/img/servers.png
 
 imports:
-	goimports-reviser -rm-unused -set-alias -format -recursive modules
-	goimports-reviser -rm-unused -set-alias -format -recursive sandbox
-	goimports-reviser -rm-unused -set-alias -format -recursive sdk
-	go mod tidy
+	cd modules/common && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/maths && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/security && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/servers && goimports-reviser -rm-unused -set-alias -format -recursive .
 
 format:
 	go fmt ./internal/... ./pkg/... ./sdk/... ./tools/...

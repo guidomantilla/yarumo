@@ -8,9 +8,8 @@ import (
 	"fmt"
 	"io"
 
-	"golang.org/x/crypto/chacha20poly1305"
-
 	"github.com/guidomantilla/yarumo/common/pointer"
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 func Key(size int) (*string, error) {
