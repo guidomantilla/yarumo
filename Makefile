@@ -56,7 +56,7 @@ coverage: test
 	cd modules/security && go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && go-test-coverage --config=.testcoverage.yml
 	cd modules/servers 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && go-test-coverage --config=.testcoverage.yml
 
-check: fetch-dependencies imports format vet lint coverage
+check: imports format vet lint coverage
 
 build: graph check
 
