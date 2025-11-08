@@ -1,7 +1,6 @@
 package tokens
 
 import (
-	"errors"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -35,10 +34,10 @@ func NewJwtGenerator(opts ...JwtGeneratorOption) Generator {
 
 func (manager *jwtGenerator) Generate(subject string, principal Principal) (*string, error) {
 	if utils.Empty(subject) {
-		return nil, ErrTokenGeneration(errors.New("subject cannot be empty"))
+		return nil, ErrTokenGeneration(ErrSubjectCannotBeEmpty)
 	}
-	if utils.Nil(principal) {
-		return nil, ErrTokenGeneration(errors.New("principal cannot be nil"))
+	if utils.Empty(principal) {
+		return nil, ErrTokenGeneration(ErrPrincipalCannotBeNil)
 	}
 
 	claims := &Claims{
@@ -64,7 +63,7 @@ func (manager *jwtGenerator) Generate(subject string, principal Principal) (*str
 
 func (manager *jwtGenerator) Validate(tokenString string) (Principal, error) {
 	if utils.Empty(tokenString) {
-		return nil, ErrTokenValidation(errors.New("token string cannot be empty"))
+		return nil, ErrTokenValidation(ErrTokenCannotBeEmpty)
 	}
 
 	getKeyFunc := func(token *jwt.Token) (any, error) {

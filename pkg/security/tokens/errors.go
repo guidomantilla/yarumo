@@ -27,6 +27,9 @@ func (e *TokenError) Error() string {
 //
 
 var (
+	ErrSubjectCannotBeEmpty  = errors.New("subject cannot be empty")
+	ErrPrincipalCannotBeNil  = errors.New("principal cannot be nil")
+	ErrTokenCannotBeEmpty    = errors.New("token cannot be empty")
 	ErrTokenFailedParsing    = errors.New("token failed to parse")
 	ErrTokenInvalid          = errors.New("token is invalid")
 	ErrTokenEmptyClaims      = errors.New("token claims is empty")
