@@ -11,7 +11,7 @@ import (
 	"github.com/sony/gobreaker"
 
 	"github.com/guidomantilla/yarumo/modules/common/assert"
-	resilience "github.com/guidomantilla/yarumo/pkg/resilience"
+	resilience "github.com/guidomantilla/yarumo/sandbox/resilience"
 )
 
 type HttpTransport struct {

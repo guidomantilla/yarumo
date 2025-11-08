@@ -7,13 +7,13 @@ import (
 
 	"github.com/guidomantilla/yarumo/modules/common/assert"
 	"github.com/guidomantilla/yarumo/modules/common/pointer"
-	comm "github.com/guidomantilla/yarumo/pkg/comm"
-	resilience "github.com/guidomantilla/yarumo/pkg/resilience"
 	"github.com/guidomantilla/yarumo/pkg/security/cryptos"
 	"github.com/guidomantilla/yarumo/pkg/security/hashes"
 	"github.com/guidomantilla/yarumo/pkg/security/passwords"
 	"github.com/guidomantilla/yarumo/pkg/security/tokens"
 	"github.com/guidomantilla/yarumo/pkg/uids"
+	comm "github.com/guidomantilla/yarumo/sandbox/comm"
+	resilience "github.com/guidomantilla/yarumo/sandbox/resilience"
 )
 
 type ContainerOptions struct {

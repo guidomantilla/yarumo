@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/modules/common/utils"
-	resilience "github.com/guidomantilla/yarumo/pkg/resilience"
+	resilience "github.com/guidomantilla/yarumo/sandbox/resilience"
 )
 
 type HttpClientOptions struct {
