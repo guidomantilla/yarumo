@@ -9,7 +9,7 @@ import (
 	"github.com/guidomantilla/yarumo/common/utils"
 )
 
-// As returns the error as a specific type T if it can be casted, otherwise returns a zero value of T and false.
+// As returns the error as a specific type T if it can be cast, otherwise returns a zero value of T and false.
 func As[T error](err error) (T, bool) {
 	target := pointer.Zero[T]()
 	ok := errors.As(err, &target)

@@ -83,7 +83,7 @@ func ToSlicePtr[T any](collection []T) []*T {
 }
 
 // FromSlicePtr returns a slice with the pointer values.
-// Returns a zero value in case of a nil pointer element.
+// Returns a zero value in the case of a nil pointer element.
 func FromSlicePtr[T any](collection []*T) []T {
 	return convert(collection, func(x *T, _ int) T {
 		if x == nil {

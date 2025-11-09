@@ -15,7 +15,7 @@ import (
 	"github.com/guidomantilla/yarumo/common/pointer"
 )
 
-// Ternary returns trueValue if condition is true, otherwise returns falseValue.
+// Ternary returns trueValue if the condition is true, otherwise returns falseValue.
 func Ternary[T any](condition bool, trueValue T, falseValue T) T {
 	if condition {
 		return trueValue
@@ -101,7 +101,7 @@ func RandomString(length int, opts ...Option) string {
 	return string(b)
 }
 
-// Substring return part of a string.
+// Substring returns part of a string.
 func Substring(str string, offset uint, length uint) string {
 	rs := []rune(str)
 	size := uint(len(rs))
@@ -119,7 +119,7 @@ func Substring(str string, offset uint, length uint) string {
 }
 
 // ChunkString returns an array of strings split into groups the length of size.
-// If array can't be split evenly, the final chunk will be the remaining elements.
+// If an array can't be split evenly, the final chunk will be the remaining elements.
 func ChunkString(str string, size int) []string {
 	if size <= 0 {
 		return []string{""}
@@ -148,7 +148,7 @@ func ChunkString(str string, size int) []string {
 	return chunks
 }
 
-// Capitalize converts the first character of string to upper case and the remaining to lower case.
+// Capitalize converts the first character of string to the upper case and the remaining to the lower case.
 func Capitalize(str string, opts ...Option) string {
 	options := NewOptions(opts...)
 	return cases.Title(options.lang).String(str)
@@ -526,7 +526,7 @@ func Pop[T constraints.Comparable](slice []T) (T, []T) {
 	return slice[len(slice)-1], slice[:len(slice)-1]
 }
 
-// Max returns the maximum value of a byte slice or an error in case of a nil or empty slice
+// Max returns the maximum value of a byte slice
 func Max[T constraints.Ordenable](slice []T) T {
 	if len(slice) == 0 {
 		return pointer.Zero[T]()
@@ -542,7 +542,7 @@ func Max[T constraints.Ordenable](slice []T) T {
 	return value
 }
 
-// Min returns the minimum value of a byte slice or an error in case of a nil or empty slice
+// Min returns the minimum value of a byte slice
 func Min[T constraints.Ordenable](slice []T) T {
 	if len(slice) == 0 {
 		return pointer.Zero[T]()
@@ -566,7 +566,7 @@ func HasKey[K constraints.Comparable, V any](key K, keyValues map[K]V) bool {
 	return ok
 }
 
-// Keys returns a slice of keys from the provided maps.
+// Keys return a slice of keys from the provided maps.
 func Keys[K constraints.Comparable, V any](keyValues ...map[K]V) []K {
 	var size int
 	for i := range keyValues {
@@ -607,7 +607,7 @@ func UniqueKeys[K constraints.Comparable, V any](keyValues ...map[K]V) []K {
 	return result
 }
 
-// Values returns a slice of values from the provided maps.
+// Values return a slice of values from the provided maps.
 func Values[K constraints.Comparable, V any](keyValues ...map[K]V) []V {
 	var size int
 	for i := range keyValues {

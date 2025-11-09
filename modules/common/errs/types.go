@@ -19,5 +19,5 @@ func (e *TypedError) Unwrap() error {
 
 type ErrorInfo struct {
 	Type    string `json:"type,omitempty"`
-	Message string `json:"message"`
+	Message string `json:"message,omitempty"`
 }
