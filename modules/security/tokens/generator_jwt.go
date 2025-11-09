@@ -93,6 +93,6 @@ func (manager *jwtGenerator) Validate(tokenString string) (Principal, error) {
 		return nil, ErrTokenValidation(ErrTokenEmptyPrincipal)
 	}
 
-	principal := Principal(value.(map[string]interface{}))
+	principal := Principal(value.(map[string]any))
 	return principal, nil
 }
