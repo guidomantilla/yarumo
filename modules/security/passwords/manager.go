@@ -12,8 +12,8 @@ type manager struct {
 }
 
 func NewManager(encoder Encoder, generator Generator) Manager {
-	assert.NotNil(encoder, fmt.Sprintf("%s - error creating: encoder is nil", "rest-client"))
-	assert.NotNil(generator, fmt.Sprintf("%s - error creating: generator is nil", "rest-client"))
+	assert.NotNil(encoder, fmt.Sprintf("%s - error creating: encoder is nil", "password-manager"))
+	assert.NotNil(generator, fmt.Sprintf("%s - error creating: generator is nil", "password-manager"))
 	return &manager{
 		encoder:   encoder,
 		generator: generator,

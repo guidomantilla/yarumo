@@ -36,19 +36,19 @@ func NewGenerator(opts ...GeneratorOption) Generator {
 func (generator *generator) Generate() string {
 	var password strings.Builder
 
-	//Set special character
+	//Set special characters
 	for i := 0; i < generator.minSpecialChar; i++ {
 		random, _ := rand.Int(rand.Reader, big.NewInt(int64(len(specialCharSet))))
 		password.WriteString(string(specialCharSet[random.Int64()]))
 	}
 
-	//Set numeric
+	//Set numeric characters
 	for i := 0; i < generator.minNum; i++ {
 		random, _ := rand.Int(rand.Reader, big.NewInt(int64(len(numberSet))))
 		password.WriteString(string(numberSet[random.Int64()]))
 	}
 
-	//Set uppercase
+	//Set uppercase characters
 	for i := 0; i < generator.minUpperCase; i++ {
 		random, _ := rand.Int(rand.Reader, big.NewInt(int64(len(upperCharSet))))
 		password.WriteString(string(upperCharSet[random.Int64()]))
@@ -69,7 +69,7 @@ func (generator *generator) Generate() string {
 func (generator *generator) Validate(rawPassword string) error {
 
 	if len(rawPassword) < generator.passwordLength {
-		return ErrPasswordLength
+		return ErrPasswordValidationFailed(ErrPasswordLength)
 	}
 
 	minSpecialCharCont := 0
@@ -88,15 +88,15 @@ func (generator *generator) Validate(rawPassword string) error {
 	}
 
 	if minSpecialCharCont < generator.minSpecialChar {
-		return ErrPasswordSpecialChars
+		return ErrPasswordValidationFailed(ErrPasswordSpecialChars)
 	}
 
 	if minNumCont < generator.minNum {
-		return ErrPasswordNumbers
+		return ErrPasswordValidationFailed(ErrPasswordNumbers)
 	}
 
 	if minUpperCaseCont < generator.minUpperCase {
-		return ErrPasswordUppercaseChars
+		return ErrPasswordValidationFailed(ErrPasswordUppercaseChars)
 	}
 
 	return nil
