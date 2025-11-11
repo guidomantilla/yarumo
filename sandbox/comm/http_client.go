@@ -23,7 +23,7 @@ type httpClient struct {
 //	defer cancel()
 //	req, _ := http.NewRequestWithContext(ctx, "GET", "https://...", nil)
 //
-// The returned http.Client is equipped with a custom Transport that enables
+// The returned http.Client is equipped with custom Transport that enables
 // connection reuse and sets sane defaults for TCP dial, TLS handshake, and
 // response header timeouts.
 //
