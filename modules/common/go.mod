@@ -4,6 +4,7 @@ go 1.25.2
 
 require (
 	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc
+	github.com/avast/retry-go/v4 v4.7.0
 	github.com/devmiek/nanoid-go v0.0.0-20241216084707-e17e38258ffc
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
@@ -13,6 +14,7 @@ require (
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/viper v1.21.0
 	golang.org/x/text v0.30.0
+	golang.org/x/time v0.14.0
 )
 
 require (
