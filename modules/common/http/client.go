@@ -44,7 +44,7 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 
 		// Only wait on the limiter when it is effectively enabled.
 		// Semantics: rate.Inf means limiter is disabled.
-		if c.RateLimiterEnabled() {
+		if c.LimiterEnabled() {
 			err := c.limiter.Wait(req.Context())
 			if err != nil {
 				return nil, ErrDoCall(ErrRateLimiterExceeded, err)
@@ -53,6 +53,12 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 
 		res, err := c.Client.Do(req)
 		if err != nil {
+			// Defensive: if an implementation returns both a response and an error,
+			// ensure the body is closed to avoid leaking connections before retrying
+			// or returning to the caller.
+			if res != nil && res.Body != nil {
+				_ = res.Body.Close()
+			}
 			return nil, ErrDoCall(ErrHttpRequestFailed, err)
 		}
 
@@ -63,10 +69,6 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 		retry.Attempts(c.attempts), retry.RetryIf(c.retryIf), retry.OnRetry(c.retryHook))
 }
 
-func (c *client) RateLimiterEnabled() bool {
+func (c *client) LimiterEnabled() bool {
 	return utils.NotEmpty(c.limiter) && utils.NotEqual(c.limiter.Limit(), rate.Inf)
-}
-
-func (c *client) RoundTrip(req *http.Request) (*http.Response, error) {
-	return c.Transport.RoundTrip(req)
 }

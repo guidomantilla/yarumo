@@ -19,7 +19,7 @@ func (mock *MockClient) Do(req *http.Request) (*http.Response, error) {
 	return args.Get(0).(*http.Response), args.Error(1)
 }
 
-func (mock *MockClient) RateLimiterEnabled() bool {
+func (mock *MockClient) LimiterEnabled() bool {
 	args := mock.Called()
 	return args.Bool(0)
 }

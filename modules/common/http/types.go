@@ -25,5 +25,5 @@ var (
 //   - The caller is responsible for closing res.Body when err == nil.
 type Client interface {
 	Do(req *http.Request) (*http.Response, error)
-	RateLimiterEnabled() bool
+	LimiterEnabled() bool
 }
