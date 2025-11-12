@@ -39,6 +39,12 @@ func NewOptions(opts ...Option) *Options {
 		opt(options)
 	}
 
+	// Hardening: if limiter is enabled (finite rate) and burst <= 0,
+	// normalize to a minimal safe burst of 1 to avoid over-restrictive behavior.
+	if options.limiterRate != rate.Inf && options.limiterBurst <= 0 {
+		options.limiterBurst = 1
+	}
+
 	return options
 }
 

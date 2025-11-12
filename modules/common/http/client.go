@@ -15,6 +15,11 @@ type client struct {
 	limiter   *rate.Limiter
 }
 
+// NewClient creates a client compatible with *http.Client that can
+// apply rate limiting and retries according to provided Options.
+//
+// If limiterRate == rate.Inf, the limiter is effectively disabled.
+// If limiterRate is finite and limiterBurst <= 0, it is normalized to burst=1.
 func NewClient(options ...Option) Client {
 	opts := NewOptions(options...)
 	return &client{
@@ -29,6 +34,10 @@ func NewClient(options ...Option) Client {
 	}
 }
 
+// Do execute the request. If the limiter is active, it may wait for
+// a token before performing the request. It may retry the request if
+// configured to do so through Options. It returns the first successful
+// response. The caller must close res.Body when err == nil.
 func (c *client) Do(req *http.Request) (*http.Response, error) {
 	retryableCall := func() (*http.Response, error) {
 
