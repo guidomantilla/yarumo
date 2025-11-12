@@ -6,24 +6,36 @@ import (
 	"github.com/guidomantilla/yarumo/common/constraints"
 )
 
+// IsNil checks if a value is nil or if it's a reference type with a nil underlying value.
+func IsNil(x any) bool {
+	if x == nil {
+		return true
+	}
+	v := reflect.ValueOf(x)
+	switch v.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.Slice, reflect.Array, reflect.Interface:
+		return v.IsNil()
+	default:
+		return false
+	}
+}
+
+// IsNotNil checks if a value is not nil or if it's not a reference type with a nil underlying value.
+func IsNotNil(x any) bool {
+	return !IsNil(x)
+}
+
 // IsPointer checks if the value is a pointer type.
 func IsPointer(v any) bool {
-	if v == nil {
+	if IsNil(v) {
 		return false
 	}
 	return reflect.ValueOf(v).Kind() == reflect.Ptr
 }
 
-// IsType checks if the value is of a specific type.
-func IsType(v any, typeName string) bool {
-	if v == nil {
-		return false
-	}
-	if IsPointer(v) {
-		v = reflect.ValueOf(v).Elem().Interface()
-		return reflect.TypeOf(v).String() == typeName
-	}
-	return reflect.TypeOf(v).String() == typeName
+// IsNotPointer checks if the value is not a pointer type.
+func IsNotPointer(v any) bool {
+	return !IsPointer(v)
 }
 
 // Zero returns the zero value
@@ -40,22 +52,6 @@ func IsZero[T constraints.Comparable](v T) bool {
 // IsNotZero returns true if the argument is not a zero value.
 func IsNotZero[T constraints.Comparable](v T) bool {
 	return Zero[T]() != v
-}
-
-// Nil returns a nil pointer of a type.
-func Nil[T any]() *T {
-	return nil
-}
-
-// IsNil checks if a value is nil or if it's a reference type with a nil underlying value.
-func IsNil(x any) bool {
-	defer func() { recover() }() // nolint:errcheck
-	return x == nil || reflect.ValueOf(x).IsNil()
-}
-
-// IsNotNil checks if a value is not nil or if it's not a reference type with a nil underlying value.
-func IsNotNil(x any) bool {
-	return !IsNil(x)
 }
 
 // ToPtr returns a pointer copy of value.
@@ -102,6 +98,18 @@ func convert[T any, R any](collection []T, iteratee func(item T, index int) R) [
 	}
 
 	return result
+}
+
+// IsType checks if the value is of a specific type.
+func IsType(v any, typeName string) bool {
+	if v == nil {
+		return false
+	}
+	if IsPointer(v) {
+		v = reflect.ValueOf(v).Elem().Interface()
+		return reflect.TypeOf(v).String() == typeName
+	}
+	return reflect.TypeOf(v).String() == typeName
 }
 
 // IsStruct checks if the value is a struct
