@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	retry "github.com/avast/retry-go/v4"
+	"github.com/guidomantilla/yarumo/common/utils"
 	"golang.org/x/time/rate"
 )
 
@@ -41,9 +42,13 @@ func NewClient(options ...Option) Client {
 func (c *client) Do(req *http.Request) (*http.Response, error) {
 	retryableCall := func() (*http.Response, error) {
 
-		err := c.limiter.Wait(req.Context())
-		if err != nil {
-			return nil, ErrDoCall(ErrRateLimiterExceeded, err)
+		// Only wait on the limiter when it is effectively enabled.
+		// Semantics: rate.Inf means limiter is disabled.
+		if c.RateLimiterEnabled() {
+			err := c.limiter.Wait(req.Context())
+			if err != nil {
+				return nil, ErrDoCall(ErrRateLimiterExceeded, err)
+			}
 		}
 
 		res, err := c.Client.Do(req)
@@ -56,6 +61,10 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 
 	return retry.DoWithData(retryableCall,
 		retry.Attempts(c.attempts), retry.RetryIf(c.retryIf), retry.OnRetry(c.retryHook))
+}
+
+func (c *client) RateLimiterEnabled() bool {
+	return utils.NotEmpty(c.limiter) && utils.NotEqual(c.limiter.Limit(), rate.Inf)
 }
 
 func (c *client) RoundTrip(req *http.Request) (*http.Response, error) {

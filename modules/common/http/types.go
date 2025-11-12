@@ -11,7 +11,6 @@ package http
 import "net/http"
 
 var (
-	_ Client = (*http.Client)(nil)
 	_ Client = (*client)(nil)
 	_ Client = (*MockClient)(nil)
 )
@@ -26,4 +25,5 @@ var (
 //   - The caller is responsible for closing res.Body when err == nil.
 type Client interface {
 	Do(req *http.Request) (*http.Response, error)
+	RateLimiterEnabled() bool
 }

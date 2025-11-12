@@ -11,7 +11,7 @@ Este documento describe el plan por fases para fortalecer, ampliar y profesional
 - Confirmar correcto cierre de `Body` en todas las rutas (éxito/error/retry).
 - Alinear timeouts (`Client.Timeout`, `Transport` y `Context`).
 - Homogeneizar errores (`ErrDoCall`, wrapping, causas y categorías).
-- Añadir tests básicos (éxito, timeout, cancelación, limiter, retry).
+- Añadir tests que cubran casos de éxito, timeout, cancelación, limiter, retry, etc. Con una cobertura de 100%.
 
 ---
 
