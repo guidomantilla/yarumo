@@ -45,6 +45,30 @@ func NewOptions(opts ...Option) *Options {
 		options.limiterBurst = 1
 	}
 
+	// Timeout alignment: cap selected transport timeouts so they do not exceed
+	// the client-level timeout. We only cap non-zero values (0 means no timeout
+	// for that hop), and we do not mutate the original transport instance.
+	if options.timeout > 0 {
+		t, ok := options.transport.(*http.Transport)
+		if ok {
+			ct := options.timeout
+			clone := t.Clone()
+			if clone.TLSHandshakeTimeout > 0 && clone.TLSHandshakeTimeout > ct {
+				clone.TLSHandshakeTimeout = ct
+			}
+			if clone.ResponseHeaderTimeout > 0 && clone.ResponseHeaderTimeout > ct {
+				clone.ResponseHeaderTimeout = ct
+			}
+			if clone.ExpectContinueTimeout > 0 && clone.ExpectContinueTimeout > ct {
+				clone.ExpectContinueTimeout = ct
+			}
+			// Note: DialContext timeout cannot be reliably capped here without
+			// replacing the dialer/function. We intentionally avoid overriding
+			// DialContext to preserve custom transport.
+			options.transport = clone
+		}
+	}
+
 	return options
 }
 
