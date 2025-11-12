@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/guidomantilla/yarumo/modules/common/assert"
-	"github.com/guidomantilla/yarumo/modules/common/utils"
+	"github.com/guidomantilla/yarumo/common/assert"
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 type restClient struct {
