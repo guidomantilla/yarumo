@@ -72,9 +72,9 @@ type NilFn func(x any) bool
 
 type NotNilFn func(x any) bool
 
-type EmptyFn func(x any) bool
+type EmptyFn func(x ...any) bool
 
-type NotEmptyFn func(x any) bool
+type NotEmptyFn func(x ...any) bool
 
 type RandomStringFn func(length int, opts ...Option) string
 

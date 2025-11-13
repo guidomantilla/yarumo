@@ -2,7 +2,6 @@ package utils
 
 import (
 	rand "math/rand/v2"
-	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -55,33 +54,28 @@ func NotNil(x any) bool {
 	return pointer.IsNotNil(x)
 }
 
-// Empty checks if a value is empty.
-func Empty(x any) bool {
-	if x == nil {
-		return true
-	}
+// Empty checks if all values are empty.
+func Empty(x ...any) bool {
 
-	val := reflect.ValueOf(x)
-	if val.Kind() == reflect.Ptr {
-		if val.IsNil() {
-			return true
+	for _, v := range x {
+		if pointer.IsNotEmpty(v) {
+			return false
 		}
-		val = val.Elem()
 	}
 
-	switch val.Kind() {
-	case reflect.String, reflect.Array, reflect.Slice, reflect.Map, reflect.Chan:
-		return val.Len() == 0
-	case reflect.Interface:
-		return val.IsNil()
-	default:
-		return pointer.IsZero(val)
-	}
+	return true
 }
 
 // NotEmpty checks if a value is not empty.
-func NotEmpty(x any) bool {
-	return !Empty(x)
+func NotEmpty(x ...any) bool {
+
+	for _, v := range x {
+		if pointer.IsEmpty(v) {
+			return false
+		}
+	}
+
+	return true
 }
 
 //

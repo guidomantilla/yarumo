@@ -25,6 +25,35 @@ func IsNotNil(x any) bool {
 	return !IsNil(x)
 }
 
+// IsEmpty checks if a value is empty.
+func IsEmpty(x any) bool {
+	if x == nil {
+		return true
+	}
+
+	val := reflect.ValueOf(x)
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return true
+		}
+		val = val.Elem()
+	}
+
+	switch val.Kind() {
+	case reflect.String, reflect.Array, reflect.Slice, reflect.Map, reflect.Chan:
+		return val.Len() == 0
+	case reflect.Interface:
+		return val.IsNil()
+	default:
+		return IsZero(val)
+	}
+}
+
+// IsNotEmpty checks if a value is not empty.
+func IsNotEmpty(x any) bool {
+	return !IsEmpty(x)
+}
+
 // IsPointer checks if the value is a pointer type.
 func IsPointer(v any) bool {
 	if IsNil(v) {

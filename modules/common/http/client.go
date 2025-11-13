@@ -79,7 +79,7 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 			// Defensive: if an implementation returns both a response and an error,
 			// ensure the body is closed to avoid leaking connections before retrying
 			// or returning to the caller.
-			if res != nil && res.Body != nil {
+			if utils.NotEmpty(res, res.Body) {
 				_ = res.Body.Close()
 			}
 			return nil, ErrDoCall(ErrHttpRequestFailed, err)
