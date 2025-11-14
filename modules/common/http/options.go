@@ -23,15 +23,11 @@ type Options struct {
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		timeout:   30 * time.Second,
-		transport: http.DefaultTransport,
-		attempts:  1,
-		retryIf: func(err error) bool {
-			return false // no retry by default
-		},
-		retryHook: func(_ uint, err error) {
-			// do nothing
-		},
+		timeout:      30 * time.Second,
+		transport:    http.DefaultTransport,
+		attempts:     1,
+		retryIf:      NoopRetryIf,
+		retryHook:    NoopRetryHook,
 		limiterRate:  rate.Inf, // unlimited - same as not having a limiter
 		limiterBurst: 0,        // unlimited - same as not having a limiter
 	}

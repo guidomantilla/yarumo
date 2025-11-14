@@ -27,6 +27,6 @@ var (
 //   - Implementations may apply internal policies (e.g., rate limiting, retries, instrumentation) without changing responsibilities.
 //   - The caller is responsible for closing res.Body when err == nil.
 type Client interface {
-	Do(req *http.Request, options ...Option) (*http.Response, error)
+	Do(req *http.Request) (*http.Response, error)
 	LimiterEnabled() bool
 }

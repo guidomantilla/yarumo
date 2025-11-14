@@ -48,7 +48,7 @@ func (c *client) LimiterEnabled() bool {
 // a token before performing the request. It may retry the request if
 // configured to do so through Options. It returns the first successful
 // response. The caller must close res.Body when err == nil.
-func (c *client) Do(req *http.Request, options ...Option) (*http.Response, error) {
+func (c *client) Do(req *http.Request) (*http.Response, error) {
 
 	retryableCall := func() (*http.Response, error) {
 
@@ -71,19 +71,8 @@ func (c *client) Do(req *http.Request, options ...Option) (*http.Response, error
 		return res, nil
 	}
 
-	attempts, retryIf, retryHook := c.overrides(options...)
 	return retry.DoWithData(retryableCall,
-		retry.Attempts(attempts), retry.RetryIf(retryIf), retry.OnRetry(retryHook))
-}
-
-// overrides returns the configured options for the client, overriding the defaults with the provided options.
-// It returns the configured attempts, retryIf and retryHook.
-func (c *client) overrides(options ...Option) (uint, retry.RetryIfFunc, retry.OnRetryFunc) {
-	opts := NewOptions(options...)
-	attempts := utils.Ternary(opts.attempts > 0, opts.attempts, c.attempts)
-	retryIf := utils.Ternary(utils.NotEmpty(opts.retryIf), opts.retryIf, c.retryIf)
-	retryHook := utils.Ternary(utils.NotEmpty(opts.retryHook), opts.retryHook, c.retryHook)
-	return attempts, retryIf, retryHook
+		retry.Attempts(c.attempts), retry.RetryIf(c.retryIf), retry.OnRetry(c.retryHook))
 }
 
 // waitForLimiter blocks until a token is available from the limiter.
