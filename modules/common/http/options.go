@@ -44,7 +44,7 @@ func NewOptions(opts ...Option) *Options {
 
 	// Timeout alignment: cap selected transport timeouts so they do not exceed the client-level timeout.
 	// We only cap non-zero values (0 means no timeout for that hop), and we do not mutate the original transport instance.
-	if options.timeout > 0 {
+	if utils.NotEmpty(options.timeout) {
 		t, ok := options.transport.(*http.Transport)
 		if ok {
 			clone := t.Clone()
