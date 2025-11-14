@@ -19,6 +19,9 @@ type UIDError struct {
 }
 
 func (e *UIDError) Error() string {
+	if e == nil || e.Err == nil {
+		return ""
+	}
 	return fmt.Sprintf("uid %s error: %s", e.Type, e.Err)
 }
 

@@ -42,8 +42,6 @@ func IsEmpty(x any) bool {
 	switch val.Kind() {
 	case reflect.String, reflect.Array, reflect.Slice, reflect.Map, reflect.Chan:
 		return val.Len() == 0
-	case reflect.Interface:
-		return val.IsNil()
 	default:
 		return IsZero(val)
 	}
