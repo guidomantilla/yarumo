@@ -32,14 +32,15 @@ func IsEmpty(x any) bool {
 	}
 
 	val := reflect.ValueOf(x)
-	if val.Kind() == reflect.Ptr {
+	kind := val.Kind()
+	if kind == reflect.Ptr {
 		if val.IsNil() {
 			return true
 		}
 		val = val.Elem()
 	}
 
-	switch val.Kind() {
+	switch kind {
 	case reflect.String, reflect.Array, reflect.Slice, reflect.Map, reflect.Chan:
 		return val.Len() == 0
 	default:
