@@ -18,7 +18,7 @@ type Options struct {
 	retryIf      retry.RetryIfFunc
 	retryHook    retry.OnRetryFunc
 	limiterRate  rate.Limit
-	limiterBurst int
+	limiterBurst uint
 }
 
 func NewOptions(opts ...Option) *Options {
@@ -109,7 +109,7 @@ func WithLimiterRate(limiterRate float64) Option {
 	}
 }
 
-func WithLimiterBurst(burst int) Option {
+func WithLimiterBurst(burst uint) Option {
 	return func(opts *Options) {
 		if burst > 0 {
 			opts.limiterBurst = burst

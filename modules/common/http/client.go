@@ -34,7 +34,7 @@ func NewClient(options ...Option) Client {
 		attempts:  opts.attempts,
 		retryIf:   opts.retryIf,
 		retryHook: opts.retryHook,
-		limiter:   rate.NewLimiter(opts.limiterRate, opts.limiterBurst),
+		limiter:   rate.NewLimiter(opts.limiterRate, int(opts.limiterBurst)),
 	}
 }
 
