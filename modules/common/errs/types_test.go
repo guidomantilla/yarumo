@@ -1,0 +1,48 @@
+package errs
+
+import (
+	"errors"
+	"testing"
+)
+
+func TestTypedError_Error(t *testing.T) {
+	// nil receiver -> empty string
+	var eNil *TypedError
+	if got := eNil.Error(); got != "" {
+		t.Fatalf("nil receiver Error() = %q, want empty", got)
+	}
+
+	// non-nil with an inner error -> formatted message
+	inner := errors.New("boom")
+	e := &TypedError{Type: "IO", Err: inner}
+	if got := e.Error(); got != "IO error: boom" {
+		t.Fatalf("Error() = %q, want %q", got, "IO error: boom")
+	}
+
+	// non-nil with nil inner -> formatted with <nil>
+	eNilInner := &TypedError{Type: "IO"}
+	if got := eNilInner.Error(); got != "" {
+		t.Fatalf("Error() with nil inner = %q, want = %q", got, " ")
+	}
+}
+
+func TestTypedError_Unwrap(t *testing.T) {
+	// nil receiver -> nil
+	var eNil *TypedError
+	if got := eNil.Unwrap(); got != nil {
+		t.Fatalf("nil receiver Unwrap() = %v, want nil", got)
+	}
+
+	// non-nil returns inner error
+	inner := errors.New("wrapped")
+	e := &TypedError{Type: "X", Err: inner}
+	if got := e.Unwrap(); !errors.Is(got, inner) {
+		t.Fatalf("Unwrap() = %v, want %v", got, inner)
+	}
+
+	// non-nil with nil inner -> returns nil
+	eNilInner := &TypedError{Type: "X"}
+	if got := eNilInner.Unwrap(); got != nil {
+		t.Fatalf("Unwrap() with nil inner = %v, want nil", got)
+	}
+}

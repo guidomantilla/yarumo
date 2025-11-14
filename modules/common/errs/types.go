@@ -8,10 +8,16 @@ type TypedError struct {
 }
 
 func (e *TypedError) Error() string {
+	if e == nil || e.Err == nil {
+		return ""
+	}
 	return fmt.Sprintf("%s error: %s", e.Type, e.Err)
 }
 
 func (e *TypedError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
 	return e.Err
 }
 
