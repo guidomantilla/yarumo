@@ -57,10 +57,6 @@ func NotNil(x any) bool {
 // Empty checks if all values are empty.
 func Empty(x ...any) bool {
 
-	if pointer.IsEmpty(x) {
-		return true
-	}
-
 	for _, v := range x {
 		if pointer.IsNotEmpty(v) {
 			return false
@@ -72,10 +68,6 @@ func Empty(x ...any) bool {
 
 // NotEmpty checks if a value is not empty.
 func NotEmpty(x ...any) bool {
-
-	if pointer.IsNotEmpty(x) {
-		return true
-	}
 
 	for _, v := range x {
 		if pointer.IsEmpty(v) {

@@ -162,8 +162,8 @@ func TestIsEmptyAndIsNotEmpty(t *testing.T) {
 		t.Fatalf("IsEmpty(non-empty array) = true, want false")
 	}
 
-	// Numeric zero is NOT considered empty by the current implementation (default -> IsZero(reflect.Value))
-	if IsEmpty(0) {
+	// Numeric zero is considered empty by the current implementation (default -> reflect.ValueOf(x).IsZero())
+	if !IsEmpty(0) {
 		t.Fatalf("IsEmpty(0) = true, want false per implementation")
 	}
 

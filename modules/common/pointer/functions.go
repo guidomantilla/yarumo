@@ -43,7 +43,7 @@ func IsEmpty(x any) bool {
 	case reflect.String, reflect.Array, reflect.Slice, reflect.Map, reflect.Chan:
 		return val.Len() == 0
 	default:
-		return IsZero(val)
+		return val.IsZero()
 	}
 }
 
