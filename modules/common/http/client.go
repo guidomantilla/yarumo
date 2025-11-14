@@ -76,6 +76,8 @@ func (c *client) Do(req *http.Request, options ...Option) (*http.Response, error
 		retry.Attempts(attempts), retry.RetryIf(retryIf), retry.OnRetry(retryHook))
 }
 
+// overrides returns the configured options for the client, overriding the defaults with the provided options.
+// It returns the configured attempts, retryIf and retryHook.
 func (c *client) overrides(options ...Option) (uint, retry.RetryIfFunc, retry.OnRetryFunc) {
 	opts := NewOptions(options...)
 	attempts := utils.Ternary(opts.attempts > 0, opts.attempts, c.attempts)
