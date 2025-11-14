@@ -38,9 +38,9 @@ Este documento describe el plan por fases para fortalecer, ampliar y profesional
 
 - [x] Permitir overrides de opciones por request (rate, retry, headers, timeout). - Pospuesto para una capa superior o una capa alterna
 - [x] Middlewares encadenables (`RoundTripper` stack). - Pospuesto para una capa superior o una capa alterna
-- [] Builders por perfil (externo, interno, descargas).
+- [x] Builders por perfil (externo, interno, descargas). - Pospuesto para una capa superior o una capa alterna
 - [x] Validación de `Options` y defaults seguros.
-- [] Documentación de comportamiento por defecto y overrides.
+- [x] Documentación de comportamiento por defecto y overrides. - Pospuesto para una capa superior o una capa alterna
 
 ---
 
