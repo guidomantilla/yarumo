@@ -149,9 +149,17 @@ func TestCaseAndWordsFunctions(t *testing.T) {
 }
 
 func TestSliceFiltersAndCountsAndMaps(t *testing.T) {
+	var empty []int
+	got := FilterBy(Copy(empty), func(x int) bool {
+		return false
+	})
+	if !reflect.DeepEqual(got, empty) {
+		t.Fatalf("FilterBy result %v", got)
+	}
+
 	nums := []int{1, 2, 3, 4, 5}
 	even := func(x int) bool { return x%2 == 0 }
-	got := FilterBy(Copy(nums), even)
+	got = FilterBy(Copy(nums), even)
 	if !reflect.DeepEqual(got, []int{2, 4}) {
 		t.Fatalf("FilterBy result %v", got)
 	}
@@ -171,17 +179,23 @@ func TestSliceFiltersAndCountsAndMaps(t *testing.T) {
 		t.Fatalf("ToMapBy even = %v", m2)
 	}
 
-	if In(2, 1, 2, 3) != true || In(9, 1, 2, 3) != false {
+	if In(2, empty...) != false || In(2, 1, 2, 3) != true || In(9, 1, 2, 3) != false {
 		t.Fatalf("In failed")
 	}
 	if NotIn(2, 1, 2) != false || NotIn(9, 1, 2) != true {
 		t.Fatalf("NotIn failed")
+	}
+	if Every([]int{1, 2}, empty...) != false {
+		t.Fatalf("Every failed")
 	}
 	if Every([]int{1, 2}, 1, 2, 3) != true {
 		t.Fatalf("Every failed")
 	}
 	if Every([]int{1, 4}, 1, 2, 3) != false {
 		t.Fatalf("Every false case failed")
+	}
+	if Some([]int{4, 2}, empty...) != false {
+		t.Fatalf("Some true failed")
 	}
 	if Some([]int{4, 2}, 1, 2, 3) != true {
 		t.Fatalf("Some true failed")
@@ -277,7 +291,11 @@ func TestChunkDeletePopPushMinMax(t *testing.T) {
 		t.Fatalf("Chunk size<=0 must be empty, got %v", res)
 	}
 
+	var empty []int
 	// Delete / DeleteRange
+	if out := Delete(-1, empty); out != nil {
+		t.Fatalf("Delete invalid index should return nil slice")
+	}
 	if out := Delete(-1, []int{1, 2}); out != nil {
 		t.Fatalf("Delete invalid index should return nil slice")
 	}
@@ -288,6 +306,9 @@ func TestChunkDeletePopPushMinMax(t *testing.T) {
 		t.Fatalf("Delete valid = %v", out)
 	}
 
+	if out := DeleteRange(-1, 1, empty); out != nil {
+		t.Fatalf("Delete invalid index should return nil slice")
+	}
 	if out := DeleteRange(-1, 1, []int{1, 2}); out != nil {
 		t.Fatalf("DeleteRange invalid start -> nil")
 	}
@@ -295,6 +316,9 @@ func TestChunkDeletePopPushMinMax(t *testing.T) {
 		t.Fatalf("DeleteRange invalid end -> nil")
 	}
 	if out := DeleteRange(2, 1, []int{1, 2}); out != nil {
+		t.Fatalf("DeleteRange start>end -> nil")
+	}
+	if out := DeleteRange(2, 1, []int{1, 2, 3}); out != nil {
 		t.Fatalf("DeleteRange start>end -> nil")
 	}
 	if out := DeleteRange(1, 2, []int{1, 2, 3, 4}); !reflect.DeepEqual(out, []int{1, 4}) {
@@ -325,11 +349,14 @@ func TestChunkDeletePopPushMinMax(t *testing.T) {
 	if Min([]int{2, 9, 3}) != 2 {
 		t.Fatalf("Min failed")
 	}
+	if Min([]int{2, 9, 3, 1}) != 1 {
+		t.Fatalf("Min failed")
+	}
 }
 
 func TestMapHelpers(t *testing.T) {
 	m1 := map[string]int{"a": 1, "b": 2}
-	m2 := map[string]int{"b": 3, "c": 4}
+	m2 := map[string]int{"b": 3, "c": 4, "d": 2}
 
 	if !HasKey("a", m1) || HasKey("z", m1) {
 		t.Fatalf("HasKey failed")
@@ -337,17 +364,17 @@ func TestMapHelpers(t *testing.T) {
 
 	ks := Keys(m1, m2)
 	// ks should contain a,b,b,c (order not guaranteed)
-	if !sameMultiset(ks, []string{"a", "b", "b", "c"}) {
+	if !sameMultiset(ks, []string{"a", "b", "b", "c", "d"}) {
 		t.Fatalf("Keys = %v", ks)
 	}
 
 	uks := UniqueKeys(m1, m2)
-	if !sameMultiset(uks, []string{"a", "b", "c"}) {
+	if !sameMultiset(uks, []string{"a", "b", "c", "d"}) {
 		t.Fatalf("UniqueKeys = %v", uks)
 	}
 
 	vs := Values(m1, m2)
-	if !sameMultiset(vs, []int{1, 2, 3, 4}) {
+	if !sameMultiset(vs, []int{1, 2, 3, 4, 2}) {
 		t.Fatalf("Values = %v", vs)
 	}
 
@@ -373,7 +400,7 @@ func TestMapHelpers(t *testing.T) {
 	}
 
 	ovm := OmitByValues(m2, []int{3})
-	if len(ovm) != 1 || ovm["c"] != 4 {
+	if len(ovm) != 2 || ovm["c"] != 4 || ovm["d"] != 2 {
 		t.Fatalf("OmitByValues = %v", ovm)
 	}
 }
