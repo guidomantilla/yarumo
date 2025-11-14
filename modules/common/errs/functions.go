@@ -32,6 +32,15 @@ func Match[T error](err error, values ...error) bool {
 	return false
 }
 
+// Wrap returns a new error that wraps the provided errors.
+func Wrap(errs ...error) error {
+	joined := errors.Join(errs...)
+	if joined == nil {
+		return nil
+	}
+	return joined
+}
+
 // Unwrap returns a slice of errors by recursively unwrapping the provided error.
 func Unwrap(err error) []error {
 	seen := map[error]struct{}{}
