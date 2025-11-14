@@ -26,11 +26,11 @@ Este documento describe el plan por fases para fortalecer, ampliar y profesional
 
 ## Fase 2 — Observabilidad
 
-- [] Logging estructurado (zerolog): requests/responses redactadas.
-- [] Métricas (Prometheus u OpenTelemetry): latencia, códigos HTTP, retries, esperas de limiter.
-- [] Trazas distribuidas: spans por request, contexto de trace propagado.
-- [] Hooks configurables desde `Options`.
-- [] Tests de validación de métricas y trazas.
+- [x] Logging estructurado (zerolog): requests/responses redactadas. - Pospuesto para una capa superior o una capa alterna
+- [x] Métricas (Prometheus u OpenTelemetry): latencia, códigos HTTP, retries, esperas de limiter. - Pospuesto para una capa superior o una capa alterna
+- [x] Trazas distribuidas: spans por request, contexto de trace propagado. - Pospuesto para una capa superior o una capa alterna
+- [x] Hooks configurables desde `Options`. - Pospuesto para una capa superior o una capa alterna
+- [x] Tests de validación de métricas y trazas. - Pospuesto para una capa superior o una capa alterna
 
 ---
 
