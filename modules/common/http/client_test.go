@@ -52,7 +52,7 @@ type resAndErrRT struct{}
 func (resAndErrRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
 	closed := false
 	body := &trackingBody{Reader: *bytes.NewReader([]byte("x")), closed: &closed}
-	// Embed pointer to closed flag inside the Response via Body wrapper.
+	// Embed pointer to a closed flag inside the Response via Body wrapper.
 	// We will check it from the outer test by capturing through a client transport wrapper.
 	return &stdhttp.Response{StatusCode: 503, Body: body}, context.DeadlineExceeded
 }
@@ -71,7 +71,7 @@ func (rt *flakyRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
 	return &stdhttp.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBufferString("ok"))}, nil
 }
 
-// newRequest creates a minimal GET request with provided context.
+// newRequest creates a minimal GET request with the provided context.
 func newRequest(t *testing.T, ctx context.Context) *stdhttp.Request {
 	t.Helper()
 	req, err := stdhttp.NewRequestWithContext(ctx, stdhttp.MethodGet, "http://example.com", nil)
@@ -173,7 +173,7 @@ func TestClient_Do_Retry_SucceedsAfterFailures(t *testing.T) {
 }
 
 func TestClient_waitForLimiter_DeadlineFromClientTimeout(t *testing.T) {
-	// Enable limiter with finite rate. Because Options hardens burst to 1 when
+	// Enable limiter with a finite rate. Because Options hardens burst to 1 when
 	// finite, we must pre-consume the initial token so that the next Wait blocks
 	// until the rate replenishes, which will exceed the tiny client timeout.
 	c := NewClient(
@@ -182,7 +182,7 @@ func TestClient_waitForLimiter_DeadlineFromClientTimeout(t *testing.T) {
 		WithLimiterRate(100), // 100/s but we'll pre-consume the first token
 	)
 	cc := c.(*client)
-	// Pre-consume initial token so the next wait must block.
+	// Pre-consume the initial token so the next wait must block.
 	_ = cc.limiter.Wait(context.Background())
 
 	req := newRequest(t, context.Background())
@@ -197,7 +197,7 @@ func TestClient_waitForLimiter_DeadlineFromClientTimeout(t *testing.T) {
 }
 
 func TestClient_waitForLimiter_DeadlineFromRequestCtxEarlier(t *testing.T) {
-	// Client timeout longer, but request context deadline is earlier; it should
+	// Client timeout longer, but the request context deadline is earlier; it should
 	// respect the earlier one and fail quickly when limiter has to wait.
 	c := NewClient(
 		WithTransport(successRT{}),
