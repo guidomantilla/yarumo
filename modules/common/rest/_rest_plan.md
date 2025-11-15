@@ -26,19 +26,21 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 - Problema: estás midiendo `duration` justo tras `Do(req)`, antes de `io.ReadAll`. Así mides TTFB y headers, no el tiempo total.
 - Corrección: calcula `duration` después de leer el body (y opcionalmente después de decodificar JSON).
 
-### [x] 4) `ResponseSpec.RawBody` no se rellena (usabilidad)
+### [x] 4) `ResponseSpec.RawBody` no se rellena (usabilidad) - NO APLICA
 - Dónde: `modules/common/rest/client.go` retorno.
-- Problema: `specs.go` define `ResponseSpec.RawBody`, pero nunca lo llenas.
-- Corrección: asigna `RawBody: body` en la respuesta. Esto ayuda a depuración y a casos en que no quieres decodificar.
+- Estado actual: en `specs.go` la estructura `ResponseSpec[T]` NO tiene el campo `RawBody` (sólo `Duration, ContentLength, Headers, Code, Status, Body`).
+- Decisión: si se desea exponer el cuerpo crudo, añadir el campo `RawBody []byte` a `ResponseSpec[T]` y poblarlo en `rest/client.go`. Si no, dejar este punto como no aplicable.
 
 ### [x] 5) `ContentLength` real vs `resp.ContentLength` (detalle)
 - Dónde: `modules/common/rest/client.go` retorno.
 - Comentario: `resp.ContentLength` puede ser `-1`. Como ya tienes el `body`, puedes usar `int64(len(body))` cuando el `ContentLength` "de red" sea desconocido.
+ - Estado: ya se está devolviendo `ContentLength: int64(len(body))`.
 
 ### [x] 6) Decodificación incondicional a JSON (flexibilidad)
 - Dónde: `modules/common/rest/client.go` (líneas 38–44).
 - Problema: siempre intentas `json.Unmarshal` si hay body. Si la respuesta no es JSON, fallarás.
 - Mejora: usa `Content-Type` para decidir. Y soporta `T` comunes como `[]byte` o `string` sin `Unmarshal`.
+ - Estado: implementado a través de `DecodeResponseBody[T](body, statusCode, contentType)` que maneja `[]byte`, `string` y JSON según `Content-Type`.
 
 ### [x] 7) `Build` muta `RequestSpec` (sorpresa de API)
 - Dónde: `modules/common/rest/specs.go` (líneas 51–58).
@@ -67,17 +69,17 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 
 ---
 
-### Sugerencia de ajustes mínimos
+### Sugerencia de ajustes mínimos (actualizada)
 - En `rest/client.go`:
     - [x] Mover el cálculo de `duration` tras `io.ReadAll`.
-    - [] Rellenar `RawBody`.
-    - [] Usar `len(body)` cuando `resp.ContentLength < 0`.
-    - [] Opcional: decodificar basado en `Content-Type` o soportar `[]byte`/`string`.
+    - [] Rellenar `RawBody`. (No aplicable mientras `ResponseSpec` no tenga ese campo)
+    - [x] Usar `len(body)` cuando `resp.ContentLength < 0`. (Actualmente se usa `int64(len(body))` directamente)
+    - [x] Opcional: decodificar basado en `Content-Type` o soportar `[]byte`/`string`. (Hecho vía `DecodeResponseBody`)
 
 - En `rest/specs.go`:
     - [] Dar prioridad a `RawBody` si viene.
-    - [] No mutar `spec` o documentarlo.
-    - [] No forzar `Content-Type` sin body; mantener `Accept`.
+    - [] No mutar `spec` o documentarlo. (Actualmente `Build` asigna `spec.RawBody` al serializar `Body`)
+    - [x] No forzar `Content-Type` sin body; mantener `Accept`. (Aplicado)
     - [] Considerar `QueryParams map[string][]string`.
 
 - En `http/client.go`:
