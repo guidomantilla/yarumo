@@ -8,6 +8,13 @@ install:
 	go install github.com/vladopajic/go-test-coverage/v2@latest
 	go install github.com/kisielk/godepgraph@latest
 
+tidy:
+	cd modules/common && go mod tidy
+	cd modules/maths && go mod tidy
+	cd modules/security && go mod tidy
+	cd modules/servers && go mod tidy
+	go work sync
+
 generate: graph
 	cd modules/common && go generate ./...
 	cd modules/maths && go generate ./...
