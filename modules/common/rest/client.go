@@ -37,7 +37,8 @@ func Call[T any](ctx context.Context, client http.Client, spec RequestSpec) (*Re
 
 	var decoded T
 	if len(body) > 0 {
-		if err := json.Unmarshal(body, &decoded); err != nil {
+		err = json.Unmarshal(body, &decoded)
+		if err != nil {
 			return nil, ErrCall(err)
 		}
 	}
