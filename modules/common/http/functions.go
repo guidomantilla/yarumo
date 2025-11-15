@@ -1,6 +1,6 @@
 package http
 
-import "github.com/avast/retry-go/v4"
+import retry "github.com/avast/retry-go/v4"
 
 var (
 	_ retry.RetryIfFunc = NoopRetryIf

@@ -5,8 +5,9 @@ import (
 	"time"
 
 	retry "github.com/avast/retry-go/v4"
-	"github.com/guidomantilla/yarumo/common/utils"
 	"golang.org/x/time/rate"
+
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 type Option func(opts *Options)

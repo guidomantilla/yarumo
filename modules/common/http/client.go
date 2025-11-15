@@ -6,9 +6,10 @@ import (
 	"time"
 
 	retry "github.com/avast/retry-go/v4"
+	"golang.org/x/time/rate"
+
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	"github.com/guidomantilla/yarumo/common/utils"
-	"golang.org/x/time/rate"
 )
 
 type client struct {
@@ -59,12 +60,8 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 
 		res, err := c.Client.Do(req)
 		if err != nil {
-			// Defensive: if an implementation returns both a response and an error,
-			// ensure the body is closed to avoid leaking connections before retrying
-			// or returning to the caller.
-			if utils.NotEmpty(res, res.Body) {
-				_ = res.Body.Close()
-			}
+			// When an error is returned, the standard net/http client ignores any response value.
+			// Just wrap and return the error.
 			return nil, ErrDoCall(ErrHttpRequestFailed, err)
 		}
 

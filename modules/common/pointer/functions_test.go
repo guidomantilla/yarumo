@@ -10,6 +10,7 @@ type demoStruct struct{ A int }
 
 // helper interface and implementation used to exercise reflect.Interface path
 type demoInterface interface{ Read() int }
+
 type impl struct{}
 
 func (impl) Read() int { return 1 }
