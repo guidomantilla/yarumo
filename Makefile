@@ -65,7 +65,7 @@ coverage: test
 
 check: tidy generate imports format vet lint coverage
 
-build: graph check
+build: check
 
 ##
 define COVERAGE_BADGE
