@@ -87,9 +87,27 @@ func TestErrDoCall_NoArgs_NilInner(t *testing.T) {
 }
 
 func TestSentinelErrors(t *testing.T) {
-	// Basic sanity to reference the sentinel errors; ensures usability with errors.Is
-	joined := errors.Join(ErrRateLimiterExceeded, ErrHttpRequestFailed)
-	if !errors.Is(joined, ErrRateLimiterExceeded) || !errors.Is(joined, ErrHttpRequestFailed) {
-		t.Fatalf("sentinel errors are not matched via errors.Is")
-	}
+    // Basic sanity to reference the sentinel errors; ensures usability with errors.Is
+    joined := errors.Join(ErrRateLimiterExceeded, ErrHttpRequestFailed)
+    if !errors.Is(joined, ErrRateLimiterExceeded) || !errors.Is(joined, ErrHttpRequestFailed) {
+        t.Fatalf("sentinel errors are not matched via errors.Is")
+    }
+}
+
+func TestStatusCodeError_Error_NonNil(t *testing.T) {
+    e := &StatusCodeError{StatusCode: 503}
+    got := e.Error()
+    want := "http retryable status code: 503"
+    if got != want {
+        t.Fatalf("StatusCodeError.Error() = %q, want %q", got, want)
+    }
+}
+
+func TestStatusCodeError_Error_NilReceiver(t *testing.T) {
+    var e *StatusCodeError
+    // Calling method on a nil receiver via interface-style call
+    got := e.Error()
+    if got != "<nil>" {
+        t.Fatalf("StatusCodeError.Error() with nil receiver = %q, want %q", got, "<nil>")
+    }
 }
