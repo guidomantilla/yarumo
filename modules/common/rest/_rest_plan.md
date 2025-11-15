@@ -56,7 +56,7 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 - Dónde: `modules/common/rest/specs.go` (líneas 45–49).
 - Mejora: cambia `map[string]string` por `map[string][]string` para soportar `a=1&a=2`.
 
-### [] 11) `Error.Unwrap` para compatibilidad con `errors.Is/As`
+### [x] 11) `Error.Unwrap` para compatibilidad con `errors.Is/As`
 - Dónde: `modules/common/rest/errors.go`.
 - Mejora: añade `Unwrap() error { return e.Err }` a tu `Error`. Así podrás hacer `errors.As(err, &rest.HTTPError)` cómodamente.
 
