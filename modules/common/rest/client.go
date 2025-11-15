@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"time"
 
@@ -36,12 +35,9 @@ func Call[T any](ctx context.Context, client http.Client, spec RequestSpec) (*Re
 		return nil, ErrCall(&HTTPError{StatusCode: resp.StatusCode, Status: resp.Status, Body: body})
 	}
 
-	var decoded T
-	if resp.StatusCode != 204 && len(body) > 0 { // 204 = No Content
-		err = json.Unmarshal(body, &decoded)
-		if err != nil {
-			return nil, ErrCall(err)
-		}
+	decoded, err := DecodeResponseBody[T](body, resp.StatusCode, resp.Header.Get("Content-Type"))
+	if err != nil {
+		return nil, ErrCall(err)
 	}
 
 	return &ResponseSpec[T]{

@@ -35,12 +35,12 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 - Dónde: `modules/common/rest/client.go` retorno.
 - Comentario: `resp.ContentLength` puede ser `-1`. Como ya tienes el `body`, puedes usar `int64(len(body))` cuando el `ContentLength` "de red" sea desconocido.
 
-### [] 6) Decodificación incondicional a JSON (flexibilidad)
+### [x] 6) Decodificación incondicional a JSON (flexibilidad)
 - Dónde: `modules/common/rest/client.go` (líneas 38–44).
 - Problema: siempre intentas `json.Unmarshal` si hay body. Si la respuesta no es JSON, fallarás.
 - Mejora: usa `Content-Type` para decidir. Y soporta `T` comunes como `[]byte` o `string` sin `Unmarshal`.
 
-### [] 7) `Build` muta `RequestSpec` (sorpresa de API)
+### [x] 7) `Build` muta `RequestSpec` (sorpresa de API)
 - Dónde: `modules/common/rest/specs.go` (líneas 51–58).
 - Problema: `Build` muta `spec.RawBody` cuando serializa `Body`. Considera no mutar, o documentarlo claramente.
 
