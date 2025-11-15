@@ -13,24 +13,26 @@ import (
 type Option func(opts *Options)
 
 type Options struct {
-	timeout      time.Duration
-	transport    http.RoundTripper
-	attempts     uint
-	retryIf      retry.RetryIfFunc
-	retryHook    retry.OnRetryFunc
-	limiterRate  rate.Limit
-	limiterBurst uint
+	timeout         time.Duration
+	transport       http.RoundTripper
+	attempts        uint
+	retryIf         retry.RetryIfFunc
+	retryHook       retry.OnRetryFunc
+	retryOnResponse RetryOnResponseFunc
+	limiterRate     rate.Limit
+	limiterBurst    uint
 }
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		timeout:      30 * time.Second,
-		transport:    http.DefaultTransport,
-		attempts:     1,
-		retryIf:      NoopRetryIf,
-		retryHook:    NoopRetryHook,
-		limiterRate:  rate.Inf, // unlimited - same as not having a limiter
-		limiterBurst: 0,        // unlimited - same as not having a limiter
+		timeout:         30 * time.Second,
+		transport:       http.DefaultTransport,
+		attempts:        1,
+		retryIf:         NoopRetryIf,
+		retryHook:       NoopRetryHook,
+		retryOnResponse: NoopRetryOnResponse,
+		limiterRate:     rate.Inf, // unlimited - same as not having a limiter
+		limiterBurst:    0,        // unlimited - same as not having a limiter
 	}
 
 	for _, opt := range opts {
@@ -98,6 +100,14 @@ func WithRetryHook(retryHook retry.OnRetryFunc) Option {
 	return func(opts *Options) {
 		if retryHook != nil {
 			opts.retryHook = retryHook
+		}
+	}
+}
+
+func WithRetryOnResponse(retryOnResponse RetryOnResponseFunc) Option {
+	return func(o *Options) {
+		if retryOnResponse != nil {
+			o.retryOnResponse = retryOnResponse
 		}
 	}
 }

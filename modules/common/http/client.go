@@ -14,10 +14,11 @@ import (
 
 type client struct {
 	http.Client
-	attempts  uint
-	retryIf   retry.RetryIfFunc
-	retryHook retry.OnRetryFunc
-	limiter   *rate.Limiter
+	attempts        uint
+	retryIf         retry.RetryIfFunc
+	retryHook       retry.OnRetryFunc
+	limiter         *rate.Limiter
+	retryOnResponse RetryOnResponseFunc
 }
 
 // NewClient creates a client compatible with *http.Client that can
@@ -32,10 +33,11 @@ func NewClient(options ...Option) Client {
 			Timeout:   opts.timeout,
 			Transport: opts.transport,
 		},
-		attempts:  opts.attempts,
-		retryIf:   opts.retryIf,
-		retryHook: opts.retryHook,
-		limiter:   rate.NewLimiter(opts.limiterRate, int(opts.limiterBurst)), //nolint:gosec // disable G115
+		attempts:        opts.attempts,
+		retryIf:         opts.retryIf,
+		retryHook:       opts.retryHook,
+		limiter:         rate.NewLimiter(opts.limiterRate, int(opts.limiterBurst)), //nolint:gosec // disable G115
+		retryOnResponse: opts.retryOnResponse,
 	}
 }
 
@@ -83,6 +85,11 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 			// When an error is returned, the standard net/http client ignores any response value.
 			// Just wrap and return the error.
 			return nil, ErrDo(ErrHttpRequestFailed, err)
+		}
+
+		if c.retryOnResponse(res) {
+			_ = res.Body.Close()
+			return nil, ErrDo(&StatusCodeError{StatusCode: res.StatusCode})
 		}
 
 		return res, nil

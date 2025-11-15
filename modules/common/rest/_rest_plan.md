@@ -13,7 +13,7 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
     - Antes de `c.Client.Do(req)`, si `req.GetBody != nil`, hacer `rc, _ := req.GetBody(); req.Body = rc`.
     - Si `req.GetBody == nil` y `req.Body != nil`, documenta que no se pueden reintentar requests con body no re-creable.
 
-### [] 2) Retries por códigos HTTP (5xx, 429) no ocurren (diseño)
+### [x] 2) Retries por códigos HTTP (5xx, 429) no ocurren (diseño)
 - Dónde: `modules/common/http/client.go` `Do` (líneas 54–73).
 - Problema: tu retry actual sólo reintenta ante errores de transporte (cuando `err != nil`). Si el servidor devuelve `HTTP 5xx` o `429`, `err` es `nil` y tu `retryIf` no se entera, por lo que no hay reintentos en base a códigos de estado.
 - Opciones:

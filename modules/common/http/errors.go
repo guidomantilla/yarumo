@@ -26,6 +26,17 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("http request %s error: %s", e.Type, e.Err)
 }
 
+type StatusCodeError struct {
+	StatusCode int
+}
+
+func (e *StatusCodeError) Error() string {
+	if e == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("http retryable status code: %d", e.StatusCode)
+}
+
 //
 
 var (
