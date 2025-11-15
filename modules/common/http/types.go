@@ -29,4 +29,5 @@ var (
 type Client interface {
 	Do(req *http.Request) (*http.Response, error)
 	LimiterEnabled() bool
+	RetrierEnabled() bool
 }

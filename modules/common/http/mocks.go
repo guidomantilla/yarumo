@@ -23,3 +23,8 @@ func (mock *MockClient) LimiterEnabled() bool {
 	args := mock.Called()
 	return args.Bool(0)
 }
+
+func (mock *MockClient) RetrierEnabled() bool {
+	args := mock.Called()
+	return args.Bool(0)
+}

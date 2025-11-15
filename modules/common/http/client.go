@@ -39,6 +39,12 @@ func NewClient(options ...Option) Client {
 	}
 }
 
+// RetrierEnabled returns true if retries are enabled.
+// A retry is enabled if attempts > 1.
+func (c *client) RetrierEnabled() bool {
+	return c.attempts > 1
+}
+
 // LimiterEnabled returns true if the limiter is enabled.
 // A limiter is enabled if its rate is finite and its burst is > 0.
 func (c *client) LimiterEnabled() bool {
