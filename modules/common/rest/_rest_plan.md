@@ -5,7 +5,7 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 
 ---
 
-### [] 1) Retries con cuerpo de request: riesgo de enviar cuerpo vacío en reintentos (crítico)
+### [x] 1) Retries con cuerpo de request: riesgo de enviar cuerpo vacío en reintentos (crítico)
 - Dónde: `modules/common/http/client.go`, método `(*client).Do` (líneas 52–73).
 - Problema: reintentas la misma `*http.Request` en un bucle de `retry.DoWithData`. Si la request tiene body, después del primer intento `req.Body` queda consumido. El `http.Transport` puede usar `req.GetBody` para reintentos automáticos propios, pero en tu bucle manual de `retry` no estás reseteando el body antes de cada nuevo `Do`. Resultado: en reintentos manuales podrías mandar un cuerpo vacío.
 - Por qué te afecta menos en tu caso: en `rest/specs.go` usas `bytes.NewReader(...)` para crear el body. `http.NewRequestWithContext` detecta lectores re-seekables y puede establecer `GetBody` internamente. Aun así, para los reintentos manuales del cliente sería prudente restablecer explícitamente `req.Body` usando `req.GetBody` antes de cada `Do` cuando `req.Body` exista. Esto te protege ante futuros cambios o flujos distintos.
