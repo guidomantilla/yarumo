@@ -51,17 +51,32 @@ func (c *client) LimiterEnabled() bool {
 	return utils.NotEmpty(c.limiter) && utils.NotEqual(c.limiter.Limit(), rate.Inf)
 }
 
-// Do execute the request. If the limiter is active, it may wait for
-// a token before performing the request. It may retry the request if
-// configured to do so through Options. It returns the first successful
-// response. The caller must close res.Body when err == nil.
+// Do execute the request. If the limiter is active, it may wait for a token before performing the request.
+// It may retry the request if configured to do so through Options. It returns the first successful response.
+// The caller must close res.Body when err == nil.
 func (c *client) Do(req *http.Request) (*http.Response, error) {
 
+	// Safety check: if there is a body, and we don't have GetBody, we cannot retry safely.
+	if utils.NotEmpty(req.Body) && utils.Empty(req.GetBody) {
+		return nil, ErrDo(ErrHttpNonReplayableBody, nil)
+	}
+
 	retryableCall := func() (*http.Response, error) {
+		// Clone the base request. Clone makes a shallow copy of fields (including GetBody),
+		// but it does NOT recreate the body: we do that ourselves.
+		reqCtx := req.Context()
+		clonedReq := req.Clone(reqCtx)
+		if utils.NotEmpty(req.Body, req.GetBody) {
+			rc, err := req.GetBody()
+			if err != nil {
+				return nil, ErrDo(ErrHttpGetBodyFailed, err)
+			}
+			clonedReq.Body = rc
+		}
 
 		err := c.waitForLimiter(req.Context())
 		if err != nil {
-			return nil, err
+			return nil, ErrDo(err)
 		}
 
 		res, err := c.Client.Do(req)
@@ -92,7 +107,8 @@ func (c *client) waitForLimiter(ctx context.Context) error {
 	waitCtx := ctx
 	if c.Timeout > 0 {
 		clientDeadline := time.Now().Add(c.Timeout)
-		if deadline, ok := waitCtx.Deadline(); !ok || clientDeadline.Before(deadline) {
+		deadline, ok := waitCtx.Deadline()
+		if !ok || clientDeadline.Before(deadline) {
 			var cancel context.CancelFunc
 			waitCtx, cancel = context.WithDeadline(waitCtx, clientDeadline)
 			defer cancel()

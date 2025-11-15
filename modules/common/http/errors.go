@@ -29,8 +29,10 @@ func (e *Error) Error() string {
 //
 
 var (
-	ErrRateLimiterExceeded = errors.New("rate limit exceeded")
-	ErrHttpRequestFailed   = errors.New("request failed")
+	ErrRateLimiterExceeded   = errors.New("rate limit exceeded")
+	ErrHttpRequestFailed     = errors.New("request failed")
+	ErrHttpNonReplayableBody = errors.New("http non-replayable request body")
+	ErrHttpGetBodyFailed     = errors.New("http get body failed")
 )
 
 func ErrDo(errs ...error) error {
