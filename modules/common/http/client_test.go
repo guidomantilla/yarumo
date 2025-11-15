@@ -50,11 +50,20 @@ func (rt errRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
 type resAndErrRT struct{}
 
 func (resAndErrRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
-	closed := false
-	body := &trackingBody{Reader: *bytes.NewReader([]byte("x")), closed: &closed}
-	// Embed pointer to a closed flag inside the Response via Body wrapper.
-	// We will check it from the outer test by capturing through a client transport wrapper.
-	return &stdhttp.Response{StatusCode: 503, Body: body}, context.DeadlineExceeded
+    closed := false
+    body := &trackingBody{Reader: *bytes.NewReader([]byte("x")), closed: &closed}
+    // Embed pointer to a closed flag inside the Response via Body wrapper.
+    // We will check it from the outer test by capturing through a client transport wrapper.
+    return &stdhttp.Response{StatusCode: 503, Body: body}, context.DeadlineExceeded
+}
+
+// retryOnResponseRT returns a 5xx response without error so that RetryOnResponse
+// logic is exercised (client should close the body and return a *StatusCodeError).
+type retryOnResponseRT struct{ closed *bool }
+
+func (rt retryOnResponseRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
+    body := &trackingBody{Reader: *bytes.NewReader([]byte("should-close")), closed: rt.closed}
+    return &stdhttp.Response{StatusCode: 503, Body: body}, nil
 }
 
 // flakyRT fails the first failCount calls, then succeeds with 200.
@@ -133,6 +142,30 @@ func TestClient_Do_ErrorWithResponse_ClosesBodyAndWraps(t *testing.T) {
 	if !errors.Is(err, ErrHttpRequestFailed) {
 		t.Fatalf("error does not wrap ErrHttpRequestFailed: %v", err)
 	}
+}
+
+func TestClient_Do_RetryOnResponse_ClosesBodyAndReturnsStatusCodeError(t *testing.T) {
+    // Transport returns 503 with a real body and no error; WithRetryOnResponse should
+    // trigger close and make Do return an error wrapping *StatusCodeError.
+    var wasClosed bool
+    c := NewClient(
+        WithTransport(retryOnResponseRT{closed: &wasClosed}),
+        WithAttempts(1),
+        WithRetryOnResponse(RetryOn5xxAnd429Response),
+    )
+
+    req := newRequest(t, context.Background())
+    res, err := c.Do(req)
+    if err == nil {
+        t.Fatalf("expected error, got nil and res=%+v", res)
+    }
+    var scErr *StatusCodeError
+    if !errors.As(err, &scErr) || scErr == nil || scErr.StatusCode != 503 {
+        t.Fatalf("expected *StatusCodeError{503}, got %v", err)
+    }
+    if !wasClosed {
+        t.Fatalf("response body was not closed when retryOnResponse triggered")
+    }
 }
 
 func TestClient_Do_ErrorOnly_Wraps(t *testing.T) {

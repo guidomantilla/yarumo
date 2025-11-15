@@ -82,4 +82,9 @@ func TestRetryIfHttpError(t *testing.T) {
     if got := RetryIfHttpError(testNetErr{timeout: false}); got {
         t.Fatalf("RetryIfHttpError(net.Error no-timeout) = %v, want false", got)
     }
+
+    // other error (non net.Error, non StatusCodeError) -> false
+    if got := RetryIfHttpError(errors.New("plain")); got {
+        t.Fatalf("RetryIfHttpError(plain error) = %v, want false", got)
+    }
 }
