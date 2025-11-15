@@ -214,7 +214,81 @@ func TestClient_waitForLimiter_DeadlineFromRequestCtxEarlier(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error due to request context deadline, got nil")
 	}
-	if !errors.Is(err, ErrRateLimiterExceeded) {
-		t.Fatalf("expected ErrRateLimiterExceeded wrapping, got %v", err)
-	}
+    if !errors.Is(err, ErrRateLimiterExceeded) {
+        t.Fatalf("expected ErrRateLimiterExceeded wrapping, got %v", err)
+    }
+}
+
+func TestClient_RetrierEnabled(t *testing.T) {
+    c1 := NewClient(WithAttempts(1))
+    if cc, ok := c1.(*client); !ok || cc.RetrierEnabled() {
+        t.Fatalf("RetrierEnabled attempts=1 = true, want false")
+    }
+
+    c2 := NewClient(WithAttempts(2))
+    if cc, ok := c2.(*client); !ok || !cc.RetrierEnabled() {
+        t.Fatalf("RetrierEnabled attempts=2 = false, want true")
+    }
+}
+
+func TestClient_Do_NonReplayableBody(t *testing.T) {
+    // Body present but GetBody is nil should fail fast with ErrHttpNonReplayableBody
+    c := NewClient()
+
+    req := newRequest(t, context.Background())
+    req.Body = io.NopCloser(bytes.NewBufferString("x"))
+    req.GetBody = nil
+
+    res, err := c.Do(req)
+    if err == nil {
+        t.Fatalf("expected error, got nil and res=%+v", res)
+    }
+    if !errors.Is(err, ErrHttpNonReplayableBody) {
+        t.Fatalf("error does not wrap ErrHttpNonReplayableBody: %v", err)
+    }
+}
+
+func TestClient_Do_GetBodyFailure(t *testing.T) {
+    // GetBody exists but returns an error; should wrap ErrHttpGetBodyFailed
+    c := NewClient(WithTransport(successRT{body: "ignored"}))
+
+    req := newRequest(t, context.Background())
+    req.Body = io.NopCloser(bytes.NewBufferString("x"))
+    req.GetBody = func() (io.ReadCloser, error) {
+        return nil, errors.New("boom")
+    }
+
+    res, err := c.Do(req)
+    if err == nil {
+        t.Fatalf("expected error, got nil and res=%+v", res)
+    }
+    if !errors.Is(err, ErrHttpGetBodyFailed) {
+        t.Fatalf("error does not wrap ErrHttpGetBodyFailed: %v", err)
+    }
+}
+
+func TestClient_Do_ReplayableBody_Success(t *testing.T) {
+    // Body present and GetBody provided returning a fresh reader each time.
+    // This should pass and exercise the path that clones and resets the body.
+    c := NewClient(
+        WithTransport(successRT{body: "ok"}),
+        WithAttempts(1),
+    )
+
+    req := newRequest(t, context.Background())
+    // Provide a non-nil Body and a working GetBody to make the request replayable.
+    initial := []byte("payload")
+    req.Body = io.NopCloser(bytes.NewReader(initial))
+    req.GetBody = func() (io.ReadCloser, error) {
+        return io.NopCloser(bytes.NewReader(initial)), nil
+    }
+
+    res, err := c.Do(req)
+    if err != nil {
+        t.Fatalf("unexpected error: %v", err)
+    }
+    if res == nil || res.StatusCode != 200 {
+        t.Fatalf("unexpected response: %+v", res)
+    }
+    _ = res.Body.Close()
 }
