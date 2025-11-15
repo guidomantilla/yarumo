@@ -46,7 +46,7 @@ func Call[T any](ctx context.Context, client http.Client, spec RequestSpec) (*Re
 
 	return &ResponseSpec[T]{
 		Duration:      duration,
-		ContentLength: resp.ContentLength,
+		ContentLength: int64(len(body)),
 		Headers:       resp.Header.Clone(),
 		Code:          resp.StatusCode,
 		Status:        resp.Status,

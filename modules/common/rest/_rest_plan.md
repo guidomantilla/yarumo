@@ -26,12 +26,12 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 - Problema: estás midiendo `duration` justo tras `Do(req)`, antes de `io.ReadAll`. Así mides TTFB y headers, no el tiempo total.
 - Corrección: calcula `duration` después de leer el body (y opcionalmente después de decodificar JSON).
 
-### [] 4) `ResponseSpec.RawBody` no se rellena (usabilidad)
+### [x] 4) `ResponseSpec.RawBody` no se rellena (usabilidad)
 - Dónde: `modules/common/rest/client.go` retorno.
 - Problema: `specs.go` define `ResponseSpec.RawBody`, pero nunca lo llenas.
 - Corrección: asigna `RawBody: body` en la respuesta. Esto ayuda a depuración y a casos en que no quieres decodificar.
 
-### [] 5) `ContentLength` real vs `resp.ContentLength` (detalle)
+### [x] 5) `ContentLength` real vs `resp.ContentLength` (detalle)
 - Dónde: `modules/common/rest/client.go` retorno.
 - Comentario: `resp.ContentLength` puede ser `-1`. Como ya tienes el `body`, puedes usar `int64(len(body))` cuando el `ContentLength` "de red" sea desconocido.
 
