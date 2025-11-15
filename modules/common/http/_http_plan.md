@@ -16,7 +16,7 @@ Este documento describe el plan por fases para fortalecer, ampliar y profesional
 
 ## Fase 1 — Resiliencia y políticas de reintento
 
-- [] Definir política de retry por tipo de error (red, 5xx, 429, etc.).
+- [x] Definir política de retry por tipo de error (red, 5xx, 429, etc.).
 - [] Soportar `Retry-After` y backoff exponencial con jitter.
 - [] Permitir reintentos seguros (`Idempotency-Key`).
 - [] Incorporar `circuit breaker` opcional.
