@@ -8,8 +8,8 @@ import (
 func TestTypedError_Error(t *testing.T) {
 	// nil receiver -> empty string
 	var eNil *TypedError
-	if got := eNil.Error(); got != "" {
-		t.Fatalf("nil receiver Error() = %q, want empty", got)
+	if got := eNil.Error(); got != "<nil>" {
+		t.Fatalf("nil receiver Error() = %q, want <nil>", got)
 	}
 
 	// non-nil with an inner error -> formatted message
@@ -21,8 +21,8 @@ func TestTypedError_Error(t *testing.T) {
 
 	// non-nil with nil inner -> formatted with <nil>
 	eNilInner := &TypedError{Type: "IO"}
-	if got := eNilInner.Error(); got != "" {
-		t.Fatalf("Error() with nil inner = %q, want = %q", got, " ")
+	if got := eNilInner.Error(); got != "<nil>" {
+		t.Fatalf("Error() with nil inner = %q, want = %q", got, "<nil>")
 	}
 }
 

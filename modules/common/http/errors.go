@@ -20,6 +20,9 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
+	if e == nil || e.Err == nil {
+		return "<nil>"
+	}
 	return fmt.Sprintf("http request %s error: %s", e.Type, e.Err)
 }
 
@@ -30,7 +33,7 @@ var (
 	ErrHttpRequestFailed   = errors.New("request failed")
 )
 
-func ErrDoCall(errs ...error) error {
+func ErrDo(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: RequestType,

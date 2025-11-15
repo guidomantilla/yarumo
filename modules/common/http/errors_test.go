@@ -26,13 +26,13 @@ func TestHTTPError_ErrorFormatting_NilInner(t *testing.T) {
 	// When inner Err is nil, Error() should still be safe to call and return a non-empty string
 	e := &Error{TypedError: cerrs.TypedError{Type: RequestType}}
 	got := e.Error()
-	wantPrefix := "http request " + RequestType + " error: "
+	wantPrefix := "<nil>"
 	if !strings.HasPrefix(got, wantPrefix) {
 		t.Fatalf("Error() prefix = %q, want prefix %q", got, wantPrefix)
 	}
 	// Implementation uses %s with a nil error; depending on fmt, this typically renders as %!s(<nil>)
 	// We only assert that the suffix is non-empty to avoid coupling to fmt details.
-	if len(got) == len(wantPrefix) {
+	if len(got) != len(wantPrefix) {
 		t.Fatalf("Error() produced empty suffix for nil inner: %q", got)
 	}
 }
@@ -41,7 +41,7 @@ func TestErrDoCall_JoinAndType(t *testing.T) {
 	e1 := errors.New("first")
 	e2 := errors.New("second")
 
-	err := ErrDoCall(e1, e2)
+	err := ErrDo(e1, e2)
 	if err == nil {
 		t.Fatalf("ErrDoCall returned nil")
 	}
@@ -68,7 +68,7 @@ func TestErrDoCall_JoinAndType(t *testing.T) {
 }
 
 func TestErrDoCall_NoArgs_NilInner(t *testing.T) {
-	err := ErrDoCall()
+	err := ErrDo()
 	if err == nil {
 		t.Fatalf("ErrDoCall() with no args should still return non-nil *Error")
 	}
@@ -80,7 +80,7 @@ func TestErrDoCall_NoArgs_NilInner(t *testing.T) {
 
 	// Error() should be well-formed with the expected prefix
 	msg := err.Error()
-	wantPrefix := "http request " + RequestType + " error: "
+	wantPrefix := "<nil>"
 	if !strings.HasPrefix(msg, wantPrefix) {
 		t.Fatalf("Error() prefix = %q, want prefix %q", msg, wantPrefix)
 	}

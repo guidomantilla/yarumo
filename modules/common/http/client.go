@@ -62,7 +62,7 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 		if err != nil {
 			// When an error is returned, the standard net/http client ignores any response value.
 			// Just wrap and return the error.
-			return nil, ErrDoCall(ErrHttpRequestFailed, err)
+			return nil, ErrDo(ErrHttpRequestFailed, err)
 		}
 
 		return res, nil

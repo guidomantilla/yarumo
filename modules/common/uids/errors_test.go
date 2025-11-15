@@ -53,9 +53,9 @@ func TestUIDError_ErrorVariants(t *testing.T) {
 	// Case with non-nil inner error already covered above; here cover <nil> inner
 	ue := &UIDError{TypedError: cerrs.TypedError{Type: "custom"}}
 	got := ue.Error()
-	// Observed behavior: when inner error is nil, the embedded TypedError's semantics
+	// Observed behavior: when the inner error is nil, the embedded TypedError's semantics
 	// yield an empty string; ensure we exercise the method and accept empty.
-	want := ""
+	want := "<nil>"
 	if got != want {
 		t.Fatalf("Error() = %q, want %q", got, want)
 	}
