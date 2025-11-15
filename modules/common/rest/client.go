@@ -24,12 +24,13 @@ func Call[T any](ctx context.Context, client http.Client, spec RequestSpec) (*Re
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(resp.Body)
-	duration := time.Since(start)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, ErrCall(err)
 	}
+
+	duration := time.Since(start)
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, ErrCall(&HTTPError{StatusCode: resp.StatusCode, Status: resp.Status, Body: body})

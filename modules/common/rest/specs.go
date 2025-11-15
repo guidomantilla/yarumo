@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,7 +18,6 @@ type ResponseSpec[T any] struct {
 	Headers       map[string][]string
 	Code          int
 	Status        string
-	RawBody       []byte
 	Body          T
 }
 
@@ -32,6 +32,9 @@ type RequestSpec struct {
 }
 
 func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
+	if spec == nil {
+		return nil, fmt.Errorf("request spec is nil")
+	}
 
 	u, err := url.Parse(spec.URL)
 	if err != nil {
@@ -55,6 +58,13 @@ func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 			return nil, err
 		}
 		body = bytes.NewReader(spec.RawBody)
+
+		if spec.Headers == nil {
+			spec.Headers = make(map[string]string)
+		}
+		spec.Headers["Content-Length"] = fmt.Sprintf("%d", len(spec.RawBody))
+		spec.Headers["Content-Type"] = "application/json"
+		spec.Headers["Accept"] = "application/json"
 	}
 
 	req, err := http.NewRequestWithContext(ctx, spec.Method, u.String(), body)
@@ -64,13 +74,6 @@ func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 
 	for k, v := range spec.Headers {
 		req.Header.Set(k, v)
-	}
-
-	if req.Header.Get("Content-Type") == "" {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	if req.Header.Get("Accept") == "" {
-		req.Header.Set("Accept", "application/json")
 	}
 
 	return req, nil
