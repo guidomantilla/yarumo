@@ -196,15 +196,15 @@ func TestOptions_RetryAndLimiter(t *testing.T) {
 }
 
 func TestOptions_WithRetryOnResponse_SetAndIgnoreNil(t *testing.T) {
-    var called bool
-    fn := func(res *stdhttp.Response) bool { called = true; return true }
+	var called bool
+	fn := func(res *stdhttp.Response) bool { called = true; return true }
 
-    // nil should be ignored; non-nil should be applied
-    o := NewOptions(
-        WithRetryOnResponse(nil),
-        WithRetryOnResponse(RetryOnResponseFunc(fn)),
-    )
-    if !o.retryOnResponse(&stdhttp.Response{StatusCode: 200}) || !called {
-        t.Fatalf("retryOnResponse not set or not invoked")
-    }
+	// nil should be ignored; non-nil should be applied
+	o := NewOptions(
+		WithRetryOnResponse(nil),
+		WithRetryOnResponse(RetryOnResponseFunc(fn)),
+	)
+	if !o.retryOnResponse(&stdhttp.Response{StatusCode: 200}) || !called {
+		t.Fatalf("retryOnResponse not set or not invoked")
+	}
 }

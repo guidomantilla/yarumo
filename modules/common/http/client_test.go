@@ -50,11 +50,11 @@ func (rt errRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
 type resAndErrRT struct{}
 
 func (resAndErrRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
-    closed := false
-    body := &trackingBody{Reader: *bytes.NewReader([]byte("x")), closed: &closed}
-    // Embed pointer to a closed flag inside the Response via Body wrapper.
-    // We will check it from the outer test by capturing through a client transport wrapper.
-    return &stdhttp.Response{StatusCode: 503, Body: body}, context.DeadlineExceeded
+	closed := false
+	body := &trackingBody{Reader: *bytes.NewReader([]byte("x")), closed: &closed}
+	// Embed pointer to a closed flag inside the Response via Body wrapper.
+	// We will check it from the outer test by capturing through a client transport wrapper.
+	return &stdhttp.Response{StatusCode: 503, Body: body}, context.DeadlineExceeded
 }
 
 // retryOnResponseRT returns a 5xx response without error so that RetryOnResponse
@@ -62,8 +62,8 @@ func (resAndErrRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
 type retryOnResponseRT struct{ closed *bool }
 
 func (rt retryOnResponseRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
-    body := &trackingBody{Reader: *bytes.NewReader([]byte("should-close")), closed: rt.closed}
-    return &stdhttp.Response{StatusCode: 503, Body: body}, nil
+	body := &trackingBody{Reader: *bytes.NewReader([]byte("should-close")), closed: rt.closed}
+	return &stdhttp.Response{StatusCode: 503, Body: body}, nil
 }
 
 // flakyRT fails the first failCount calls, then succeeds with 200.
@@ -145,27 +145,27 @@ func TestClient_Do_ErrorWithResponse_ClosesBodyAndWraps(t *testing.T) {
 }
 
 func TestClient_Do_RetryOnResponse_ClosesBodyAndReturnsStatusCodeError(t *testing.T) {
-    // Transport returns 503 with a real body and no error; WithRetryOnResponse should
-    // trigger close and make Do return an error wrapping *StatusCodeError.
-    var wasClosed bool
-    c := NewClient(
-        WithTransport(retryOnResponseRT{closed: &wasClosed}),
-        WithAttempts(1),
-        WithRetryOnResponse(RetryOn5xxAnd429Response),
-    )
+	// Transport returns 503 with a real body and no error; WithRetryOnResponse should
+	// trigger close and make Do return an error wrapping *StatusCodeError.
+	var wasClosed bool
+	c := NewClient(
+		WithTransport(retryOnResponseRT{closed: &wasClosed}),
+		WithAttempts(1),
+		WithRetryOnResponse(RetryOn5xxAnd429Response),
+	)
 
-    req := newRequest(t, context.Background())
-    res, err := c.Do(req)
-    if err == nil {
-        t.Fatalf("expected error, got nil and res=%+v", res)
-    }
-    var scErr *StatusCodeError
-    if !errors.As(err, &scErr) || scErr == nil || scErr.StatusCode != 503 {
-        t.Fatalf("expected *StatusCodeError{503}, got %v", err)
-    }
-    if !wasClosed {
-        t.Fatalf("response body was not closed when retryOnResponse triggered")
-    }
+	req := newRequest(t, context.Background())
+	res, err := c.Do(req)
+	if err == nil {
+		t.Fatalf("expected error, got nil and res=%+v", res)
+	}
+	var scErr *StatusCodeError
+	if !errors.As(err, &scErr) || scErr == nil || scErr.StatusCode != 503 {
+		t.Fatalf("expected *StatusCodeError{503}, got %v", err)
+	}
+	if !wasClosed {
+		t.Fatalf("response body was not closed when retryOnResponse triggered")
+	}
 }
 
 func TestClient_Do_ErrorOnly_Wraps(t *testing.T) {
@@ -247,81 +247,81 @@ func TestClient_waitForLimiter_DeadlineFromRequestCtxEarlier(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error due to request context deadline, got nil")
 	}
-    if !errors.Is(err, ErrRateLimiterExceeded) {
-        t.Fatalf("expected ErrRateLimiterExceeded wrapping, got %v", err)
-    }
+	if !errors.Is(err, ErrRateLimiterExceeded) {
+		t.Fatalf("expected ErrRateLimiterExceeded wrapping, got %v", err)
+	}
 }
 
 func TestClient_RetrierEnabled(t *testing.T) {
-    c1 := NewClient(WithAttempts(1))
-    if cc, ok := c1.(*client); !ok || cc.RetrierEnabled() {
-        t.Fatalf("RetrierEnabled attempts=1 = true, want false")
-    }
+	c1 := NewClient(WithAttempts(1))
+	if cc, ok := c1.(*client); !ok || cc.RetrierEnabled() {
+		t.Fatalf("RetrierEnabled attempts=1 = true, want false")
+	}
 
-    c2 := NewClient(WithAttempts(2))
-    if cc, ok := c2.(*client); !ok || !cc.RetrierEnabled() {
-        t.Fatalf("RetrierEnabled attempts=2 = false, want true")
-    }
+	c2 := NewClient(WithAttempts(2))
+	if cc, ok := c2.(*client); !ok || !cc.RetrierEnabled() {
+		t.Fatalf("RetrierEnabled attempts=2 = false, want true")
+	}
 }
 
 func TestClient_Do_NonReplayableBody(t *testing.T) {
-    // Body present but GetBody is nil should fail fast with ErrHttpNonReplayableBody
-    c := NewClient()
+	// Body present but GetBody is nil should fail fast with ErrHttpNonReplayableBody
+	c := NewClient()
 
-    req := newRequest(t, context.Background())
-    req.Body = io.NopCloser(bytes.NewBufferString("x"))
-    req.GetBody = nil
+	req := newRequest(t, context.Background())
+	req.Body = io.NopCloser(bytes.NewBufferString("x"))
+	req.GetBody = nil
 
-    res, err := c.Do(req)
-    if err == nil {
-        t.Fatalf("expected error, got nil and res=%+v", res)
-    }
-    if !errors.Is(err, ErrHttpNonReplayableBody) {
-        t.Fatalf("error does not wrap ErrHttpNonReplayableBody: %v", err)
-    }
+	res, err := c.Do(req)
+	if err == nil {
+		t.Fatalf("expected error, got nil and res=%+v", res)
+	}
+	if !errors.Is(err, ErrHttpNonReplayableBody) {
+		t.Fatalf("error does not wrap ErrHttpNonReplayableBody: %v", err)
+	}
 }
 
 func TestClient_Do_GetBodyFailure(t *testing.T) {
-    // GetBody exists but returns an error; should wrap ErrHttpGetBodyFailed
-    c := NewClient(WithTransport(successRT{body: "ignored"}))
+	// GetBody exists but returns an error; should wrap ErrHttpGetBodyFailed
+	c := NewClient(WithTransport(successRT{body: "ignored"}))
 
-    req := newRequest(t, context.Background())
-    req.Body = io.NopCloser(bytes.NewBufferString("x"))
-    req.GetBody = func() (io.ReadCloser, error) {
-        return nil, errors.New("boom")
-    }
+	req := newRequest(t, context.Background())
+	req.Body = io.NopCloser(bytes.NewBufferString("x"))
+	req.GetBody = func() (io.ReadCloser, error) {
+		return nil, errors.New("boom")
+	}
 
-    res, err := c.Do(req)
-    if err == nil {
-        t.Fatalf("expected error, got nil and res=%+v", res)
-    }
-    if !errors.Is(err, ErrHttpGetBodyFailed) {
-        t.Fatalf("error does not wrap ErrHttpGetBodyFailed: %v", err)
-    }
+	res, err := c.Do(req)
+	if err == nil {
+		t.Fatalf("expected error, got nil and res=%+v", res)
+	}
+	if !errors.Is(err, ErrHttpGetBodyFailed) {
+		t.Fatalf("error does not wrap ErrHttpGetBodyFailed: %v", err)
+	}
 }
 
 func TestClient_Do_ReplayableBody_Success(t *testing.T) {
-    // Body present and GetBody provided returning a fresh reader each time.
-    // This should pass and exercise the path that clones and resets the body.
-    c := NewClient(
-        WithTransport(successRT{body: "ok"}),
-        WithAttempts(1),
-    )
+	// Body present and GetBody provided returning a fresh reader each time.
+	// This should pass and exercise the path that clones and resets the body.
+	c := NewClient(
+		WithTransport(successRT{body: "ok"}),
+		WithAttempts(1),
+	)
 
-    req := newRequest(t, context.Background())
-    // Provide a non-nil Body and a working GetBody to make the request replayable.
-    initial := []byte("payload")
-    req.Body = io.NopCloser(bytes.NewReader(initial))
-    req.GetBody = func() (io.ReadCloser, error) {
-        return io.NopCloser(bytes.NewReader(initial)), nil
-    }
+	req := newRequest(t, context.Background())
+	// Provide a non-nil Body and a working GetBody to make the request replayable.
+	initial := []byte("payload")
+	req.Body = io.NopCloser(bytes.NewReader(initial))
+	req.GetBody = func() (io.ReadCloser, error) {
+		return io.NopCloser(bytes.NewReader(initial)), nil
+	}
 
-    res, err := c.Do(req)
-    if err != nil {
-        t.Fatalf("unexpected error: %v", err)
-    }
-    if res == nil || res.StatusCode != 200 {
-        t.Fatalf("unexpected response: %+v", res)
-    }
-    _ = res.Body.Close()
+	res, err := c.Do(req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res == nil || res.StatusCode != 200 {
+		t.Fatalf("unexpected response: %+v", res)
+	}
+	_ = res.Body.Close()
 }

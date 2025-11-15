@@ -9,47 +9,47 @@ install:
 	go install github.com/kisielk/godepgraph@latest
 
 tidy:
-	cd modules/common && go mod tidy
-	cd modules/maths && go mod tidy
+	cd modules/common 	&& go mod tidy
+	cd modules/maths 	&& go mod tidy
 	cd modules/security && go mod tidy
-	cd modules/servers && go mod tidy
+	cd modules/servers 	&& go mod tidy
 	go work sync
 
 generate: graph
-	cd modules/common && go generate ./...
-	cd modules/maths && go generate ./...
+	cd modules/common 	&& go generate ./...
+	cd modules/maths 	&& go generate ./...
 	cd modules/security && go generate ./...
-	cd modules/servers && go generate ./...
+	cd modules/servers 	&& go generate ./...
 
 graph:
-	godepgraph -s ./modules/common | dot -Tpng -o ./docs/img/common.png
-	godepgraph -s ./modules/maths | dot -Tpng -o ./docs/img/maths.png
+	godepgraph -s ./modules/common 	 | dot -Tpng -o ./docs/img/common.png
+	godepgraph -s ./modules/maths 	 | dot -Tpng -o ./docs/img/maths.png
 	godepgraph -s ./modules/security | dot -Tpng -o ./docs/img/security.png
-	godepgraph -s ./modules/servers | dot -Tpng -o ./docs/img/servers.png
+	godepgraph -s ./modules/servers  | dot -Tpng -o ./docs/img/servers.png
 
 imports:
-	cd modules/common && goimports-reviser -rm-unused -set-alias -format -recursive .
-	cd modules/maths && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/common 	&& goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/maths 	&& goimports-reviser -rm-unused -set-alias -format -recursive .
 	cd modules/security && goimports-reviser -rm-unused -set-alias -format -recursive .
-	cd modules/servers && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/servers 	&& goimports-reviser -rm-unused -set-alias -format -recursive .
 
 format:
-	cd modules/common && go fmt ./...
-	cd modules/maths && go fmt ./...
+	cd modules/common 	&& go fmt ./...
+	cd modules/maths 	&& go fmt ./...
 	cd modules/security && go fmt ./...
-	cd modules/servers && go fmt ./...
+	cd modules/servers 	&& go fmt ./...
 
 vet:
-	cd modules/common && go vet ./...
-	cd modules/maths && go vet ./...
+	cd modules/common 	&& go vet ./...
+	cd modules/maths 	&& go vet ./...
 	cd modules/security && go vet ./...
-	cd modules/servers && go vet ./...
+	cd modules/servers 	&& go vet ./...
 
 lint:
-	cd modules/common && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
-	cd modules/maths && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
+	cd modules/common 	&& golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
+	cd modules/maths 	&& golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
 	cd modules/security && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
-	cd modules/servers && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
+	cd modules/servers 	&& golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
 
 test:
 	cd modules/common 	&& go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./... 	&& cat .reports/coverage.out.tmp | grep -v "mocks.go" > .reports/coverage.out && rm .reports/coverage.out.tmp
@@ -58,49 +58,24 @@ test:
 	cd modules/servers 	&& go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./... 	&& cat .reports/coverage.out.tmp | grep -v "mocks.go" > .reports/coverage.out && rm .reports/coverage.out.tmp
 
 coverage: test
-	# modules/common
-	cd modules/common \
-		&& COVERAGE_OUT=.reports/coverage.out COVERAGE_HTML=.reports/coverage.html; \
-		go tool cover -func=$$COVERAGE_OUT \
-		&& go tool cover -html=$$COVERAGE_OUT -o $$COVERAGE_HTML \
-		&& COVERAGE_PCT=$$(go tool cover -func="$$COVERAGE_OUT" | tail -1 | awk '{print $$3}') \
-		&& awk -v pct="$$COVERAGE_PCT" '{print} /<body[^>]*>/{print "<div style=\"position:fixed;top:10px;right:10px;padding:6px 10px;background:#222;color:#fff;border-radius:4px;font:14px/1.4 sans-serif;z-index:9999\">Total coverage: " pct "</div>"}' $$COVERAGE_HTML > $$COVERAGE_HTML.tmp \
-		&& mv $$COVERAGE_HTML.tmp $$COVERAGE_HTML \
-		&& go-test-coverage --config=.testcoverage.yml
-	# modules/maths
-	cd modules/maths \
-		&& COVERAGE_OUT=.reports/coverage.out COVERAGE_HTML=.reports/coverage.html; \
-		go tool cover -func=$$COVERAGE_OUT \
-		&& go tool cover -html=$$COVERAGE_OUT -o $$COVERAGE_HTML \
-		&& COVERAGE_PCT=$$(go tool cover -func="$$COVERAGE_OUT" | tail -1 | awk '{print $$3}') \
-		&& awk -v pct="$$COVERAGE_PCT" '{print} /<body[^>]*>/{print "<div style=\"position:fixed;top:10px;right:10px;padding:6px 10px;background:#222;color:#fff;border-radius:4px;font:14px/1.4 sans-serif;z-index:9999\">Total coverage: " pct "</div>"}' $$COVERAGE_HTML > $$COVERAGE_HTML.tmp \
-		&& mv $$COVERAGE_HTML.tmp $$COVERAGE_HTML \
-		&& go-test-coverage --config=.testcoverage.yml
-	# modules/security
-	cd modules/security \
-		&& COVERAGE_OUT=.reports/coverage.out COVERAGE_HTML=.reports/coverage.html; \
-		go tool cover -func=$$COVERAGE_OUT \
-		&& go tool cover -html=$$COVERAGE_OUT -o $$COVERAGE_HTML \
-		&& COVERAGE_PCT=$$(go tool cover -func="$$COVERAGE_OUT" | tail -1 | awk '{print $$3}') \
-		&& awk -v pct="$$COVERAGE_PCT" '{print} /<body[^>]*>/{print "<div style=\"position:fixed;top:10px;right:10px;padding:6px 10px;background:#222;color:#fff;border-radius:4px;font:14px/1.4 sans-serif;z-index:9999\">Total coverage: " pct "</div>"}' $$COVERAGE_HTML > $$COVERAGE_HTML.tmp \
-		&& mv $$COVERAGE_HTML.tmp $$COVERAGE_HTML \
-		&& go-test-coverage --config=.testcoverage.yml
-	# modules/servers
-	cd modules/servers \
-		&& COVERAGE_OUT=.reports/coverage.out COVERAGE_HTML=.reports/coverage.html; \
-		go tool cover -func=$$COVERAGE_OUT \
-		&& go tool cover -html=$$COVERAGE_OUT -o $$COVERAGE_HTML \
-		&& COVERAGE_PCT=$$(go tool cover -func="$$COVERAGE_OUT" | tail -1 | awk '{print $$3}') \
-		&& awk -v pct="$$COVERAGE_PCT" '{print} /<body[^>]*>/{print "<div style=\"position:fixed;top:10px;right:10px;padding:6px 10px;background:#222;color:#fff;border-radius:4px;font:14px/1.4 sans-serif;z-index:9999\">Total coverage: " pct "</div>"}' $$COVERAGE_HTML > $$COVERAGE_HTML.tmp \
-		&& mv $$COVERAGE_HTML.tmp $$COVERAGE_HTML \
-		&& go-test-coverage --config=.testcoverage.yml
+	cd modules/common 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
+	cd modules/maths 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
+	cd modules/security && go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
+	cd modules/servers 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
 
-check: imports format vet lint coverage
+check: tidy generate imports format vet lint coverage
 
 build: graph check
 
 ##
+define COVERAGE_BADGE
+COVERAGE_OUT=.reports/coverage.out COVERAGE_HTML=.reports/coverage.html; \
+COVERAGE_PCT=$$(go tool cover -func="$$COVERAGE_OUT" | tail -1 | awk '{print $$3}') \
+&& awk -v pct="$$COVERAGE_PCT" '{print} /<body[^>]*>/{print "<div style=\"position:fixed;top:10px;right:10px;padding:6px 10px;background:#222;color:#fff;border-radius:4px;font:14px/1.4 sans-serif;z-index:9999\">Total coverage: " pct "</div>"}' $$COVERAGE_HTML > $$COVERAGE_HTML.tmp \
+&& mv $$COVERAGE_HTML.tmp $$COVERAGE_HTML
+endef
 
+##
 update-dependencies:
 	cd modules/common 	&& go get -u ./... && go get -t -u ./... && go mod tidy
 	cd modules/maths 	&& go get -u ./... && go get -t -u ./... && go mod tidy
