@@ -51,6 +51,14 @@ func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 	}
 	u.RawQuery = q.Encode()
 
+	if spec.Headers == nil {
+		spec.Headers = make(map[string]string)
+	}
+	_, ok := spec.Headers["Accept"]
+	if !ok {
+		spec.Headers["Accept"] = "application/json"
+	}
+
 	var body io.Reader
 	if spec.Body != nil {
 		spec.RawBody, err = json.Marshal(spec.Body)
@@ -59,12 +67,11 @@ func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 		}
 		body = bytes.NewReader(spec.RawBody)
 
-		if spec.Headers == nil {
-			spec.Headers = make(map[string]string)
-		}
 		spec.Headers["Content-Length"] = fmt.Sprintf("%d", len(spec.RawBody))
-		spec.Headers["Content-Type"] = "application/json"
-		spec.Headers["Accept"] = "application/json"
+		_, ok := spec.Headers["Content-Type"]
+		if !ok {
+			spec.Headers["Content-Type"] = "application/json"
+		}
 	}
 
 	req, err := http.NewRequestWithContext(ctx, spec.Method, u.String(), body)
