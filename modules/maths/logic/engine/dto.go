@@ -125,7 +125,7 @@ func RulesFromDTO(set RuleSetDTO) ([]Rule, error) {
 
 // normalizeJSON produces a canonical, indented JSON string for DTOs so that
 // round-trip comparisons are stable modulo whitespace.
-func normalizeJSON(v any) (string, error) {
+func normalizeJSON(v any) (string, error) { //nolint:unused
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return "", err

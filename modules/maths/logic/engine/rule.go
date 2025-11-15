@@ -25,7 +25,7 @@ func BuildRule(id string, when string, then string) Rule {
 }
 
 func (r *Rule) Equals(rule Rule) bool {
-	return r.id == r.id && r.then == r.then && p.Equivalent(r.when, rule.when)
+	return r.id == rule.id && r.then == rule.then && p.Equivalent(r.when, rule.when)
 }
 
 func (r *Rule) String() string {

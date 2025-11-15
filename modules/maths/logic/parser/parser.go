@@ -15,7 +15,9 @@ func newParserWithOptions(s string, opts ParseOptions) *parser {
 	return p
 }
 
-func newParser(s string) *parser { return newParserWithOptions(s, ParseOptions{}) }
+func newParser(s string) *parser { //nolint:unused
+	return newParserWithOptions(s, ParseOptions{})
+}
 
 func (parser *parser) next() { parser.cur = parser.lex.scan() }
 
