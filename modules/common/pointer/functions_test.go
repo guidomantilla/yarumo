@@ -183,8 +183,7 @@ func TestIsEmptyAndIsNotEmpty(t *testing.T) {
 	if !IsEmpty(di) {    // Kind == Interface and IsNil() == true
 		t.Fatalf("IsEmpty(typed interface nil) = false, want true")
 	}
-	// Non-nil interface value: solo ejercemos la ruta sin suponer semántica específica
-	// (la implementación de IsEmpty cambió y la consideración de interfaces no nulos puede variar)
+
 	var dni demoInterface = impl{}
 	if !IsEmpty(dni) {
 		t.Fatalf("IsEmpty(typed interface non-nil) = true, want false per implementation")
