@@ -37,7 +37,7 @@ func Call[T any](ctx context.Context, client http.Client, spec RequestSpec) (*Re
 	}
 
 	var decoded T
-	if len(body) > 0 {
+	if resp.StatusCode != 204 && len(body) > 0 { // 204 = No Content
 		err = json.Unmarshal(body, &decoded)
 		if err != nil {
 			return nil, ErrCall(err)
