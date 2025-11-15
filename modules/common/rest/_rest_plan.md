@@ -42,7 +42,7 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 - Mejora: usa `Content-Type` para decidir. Y soporta `T` comunes como `[]byte` o `string` sin `Unmarshal`.
  - Estado: implementado a través de `DecodeResponseBody[T](body, statusCode, contentType)` que maneja `[]byte`, `string` y JSON según `Content-Type`.
 
-### [x] 7) `Build` muta `RequestSpec` (sorpresa de API)
+### [x] 7) `Build` muta `RequestSpec` (sorpresa de API) - NO APLICA
 - Dónde: `modules/common/rest/specs.go` (líneas 51–58).
 - Problema: `Build` muta `spec.RawBody` cuando serializa `Body`. Considera no mutar, o documentarlo claramente.
 
@@ -72,13 +72,13 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 ### Sugerencia de ajustes mínimos (actualizada)
 - En `rest/client.go`:
     - [x] Mover el cálculo de `duration` tras `io.ReadAll`.
-    - [] Rellenar `RawBody`. (No aplicable mientras `ResponseSpec` no tenga ese campo)
+    - [x] Rellenar `RawBody`. (No aplicable mientras `ResponseSpec` no tenga ese campo) - NO APLICA
     - [x] Usar `len(body)` cuando `resp.ContentLength < 0`. (Actualmente se usa `int64(len(body))` directamente)
     - [x] Opcional: decodificar basado en `Content-Type` o soportar `[]byte`/`string`. (Hecho vía `DecodeResponseBody`)
 
 - En `rest/specs.go`:
     - [] Dar prioridad a `RawBody` si viene.
-    - [] No mutar `spec` o documentarlo. (Actualmente `Build` asigna `spec.RawBody` al serializar `Body`)
+    - [x] No mutar `spec` o documentarlo. (Actualmente `Build` asigna `spec.RawBody` al serializar `Body`) - NO APLICA
     - [x] No forzar `Content-Type` sin body; mantener `Accept`. (Aplicado)
     - [] Considerar `QueryParams map[string][]string`.
 
