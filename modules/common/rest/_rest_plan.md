@@ -48,7 +48,7 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 - Dónde: `modules/common/rest/specs.go`.
 - Mejora: si `RawBody` viene dado, úsalo tal cual. Sólo serializa `Body` si `RawBody` está vacío.
 
-### [] 9) `Content-Type` por defecto sólo cuando hay body
+### [x] 9) `Content-Type` por defecto sólo cuando hay body
 - Dónde: `modules/common/rest/specs.go` (líneas 69–74).
 - Mejora: no fuerces `Content-Type` en GET sin body; deja sólo `Accept: application/json` por defecto.
 
