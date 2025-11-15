@@ -64,8 +64,7 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 	retryableCall := func() (*http.Response, error) {
 		// Clone the base request. Clone makes a shallow copy of fields (including GetBody),
 		// but it does NOT recreate the body: we do that ourselves.
-		reqCtx := req.Context()
-		clonedReq := req.Clone(reqCtx)
+		clonedReq := req.Clone(req.Context())
 		if utils.NotEmpty(req.Body, req.GetBody) {
 			rc, err := req.GetBody()
 			if err != nil {
@@ -74,12 +73,12 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 			clonedReq.Body = rc
 		}
 
-		err := c.waitForLimiter(req.Context())
+		err := c.waitForLimiter(clonedReq.Context())
 		if err != nil {
 			return nil, ErrDo(err)
 		}
 
-		res, err := c.Client.Do(req)
+		res, err := c.Client.Do(clonedReq)
 		if err != nil {
 			// When an error is returned, the standard net/http client ignores any response value.
 			// Just wrap and return the error.
