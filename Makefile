@@ -58,10 +58,42 @@ test:
 	cd modules/servers 	&& go test -covermode atomic -coverprofile .reports/coverage.out.tmp ./... 	&& cat .reports/coverage.out.tmp | grep -v "mocks.go" > .reports/coverage.out && rm .reports/coverage.out.tmp
 
 coverage: test
-	cd modules/common 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && go-test-coverage --config=.testcoverage.yml
-	cd modules/maths 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && go-test-coverage --config=.testcoverage.yml
-	cd modules/security && go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && go-test-coverage --config=.testcoverage.yml
-	cd modules/servers 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && go-test-coverage --config=.testcoverage.yml
+	# modules/common
+	cd modules/common \
+		&& COVERAGE_OUT=.reports/coverage.out COVERAGE_HTML=.reports/coverage.html; \
+		go tool cover -func=$$COVERAGE_OUT \
+		&& go tool cover -html=$$COVERAGE_OUT -o $$COVERAGE_HTML \
+		&& COVERAGE_PCT=$$(go tool cover -func="$$COVERAGE_OUT" | tail -1 | awk '{print $$3}') \
+		&& awk -v pct="$$COVERAGE_PCT" '{print} /<body[^>]*>/{print "<div style=\"position:fixed;top:10px;right:10px;padding:6px 10px;background:#222;color:#fff;border-radius:4px;font:14px/1.4 sans-serif;z-index:9999\">Total coverage: " pct "</div>"}' $$COVERAGE_HTML > $$COVERAGE_HTML.tmp \
+		&& mv $$COVERAGE_HTML.tmp $$COVERAGE_HTML \
+		&& go-test-coverage --config=.testcoverage.yml
+	# modules/maths
+	cd modules/maths \
+		&& COVERAGE_OUT=.reports/coverage.out COVERAGE_HTML=.reports/coverage.html; \
+		go tool cover -func=$$COVERAGE_OUT \
+		&& go tool cover -html=$$COVERAGE_OUT -o $$COVERAGE_HTML \
+		&& COVERAGE_PCT=$$(go tool cover -func="$$COVERAGE_OUT" | tail -1 | awk '{print $$3}') \
+		&& awk -v pct="$$COVERAGE_PCT" '{print} /<body[^>]*>/{print "<div style=\"position:fixed;top:10px;right:10px;padding:6px 10px;background:#222;color:#fff;border-radius:4px;font:14px/1.4 sans-serif;z-index:9999\">Total coverage: " pct "</div>"}' $$COVERAGE_HTML > $$COVERAGE_HTML.tmp \
+		&& mv $$COVERAGE_HTML.tmp $$COVERAGE_HTML \
+		&& go-test-coverage --config=.testcoverage.yml
+	# modules/security
+	cd modules/security \
+		&& COVERAGE_OUT=.reports/coverage.out COVERAGE_HTML=.reports/coverage.html; \
+		go tool cover -func=$$COVERAGE_OUT \
+		&& go tool cover -html=$$COVERAGE_OUT -o $$COVERAGE_HTML \
+		&& COVERAGE_PCT=$$(go tool cover -func="$$COVERAGE_OUT" | tail -1 | awk '{print $$3}') \
+		&& awk -v pct="$$COVERAGE_PCT" '{print} /<body[^>]*>/{print "<div style=\"position:fixed;top:10px;right:10px;padding:6px 10px;background:#222;color:#fff;border-radius:4px;font:14px/1.4 sans-serif;z-index:9999\">Total coverage: " pct "</div>"}' $$COVERAGE_HTML > $$COVERAGE_HTML.tmp \
+		&& mv $$COVERAGE_HTML.tmp $$COVERAGE_HTML \
+		&& go-test-coverage --config=.testcoverage.yml
+	# modules/servers
+	cd modules/servers \
+		&& COVERAGE_OUT=.reports/coverage.out COVERAGE_HTML=.reports/coverage.html; \
+		go tool cover -func=$$COVERAGE_OUT \
+		&& go tool cover -html=$$COVERAGE_OUT -o $$COVERAGE_HTML \
+		&& COVERAGE_PCT=$$(go tool cover -func="$$COVERAGE_OUT" | tail -1 | awk '{print $$3}') \
+		&& awk -v pct="$$COVERAGE_PCT" '{print} /<body[^>]*>/{print "<div style=\"position:fixed;top:10px;right:10px;padding:6px 10px;background:#222;color:#fff;border-radius:4px;font:14px/1.4 sans-serif;z-index:9999\">Total coverage: " pct "</div>"}' $$COVERAGE_HTML > $$COVERAGE_HTML.tmp \
+		&& mv $$COVERAGE_HTML.tmp $$COVERAGE_HTML \
+		&& go-test-coverage --config=.testcoverage.yml
 
 check: imports format vet lint coverage
 
