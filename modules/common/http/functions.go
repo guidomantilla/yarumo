@@ -8,6 +8,7 @@ var (
 )
 
 func NoopRetryIf(err error) bool {
+	// no-op: explicitly touch params to generate coverage statements
 	_ = err
 	return false
 }
