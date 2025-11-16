@@ -16,7 +16,6 @@ import "net/http"
 
 var (
 	_ Client = (*client)(nil)
-	_ Client = (*MockClient)(nil)
 )
 
 // Client represents the minimal contract compatible with *http.Client.
