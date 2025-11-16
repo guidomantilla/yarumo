@@ -2,10 +2,10 @@ go 1.25.2
 
 use (
 	./deprecated
+	./internal/dlocal
 	./internal/examples
 	./modules/common
 	./modules/maths
 	./modules/security
 	./modules/servers
-	./sdk/dlocal
 )

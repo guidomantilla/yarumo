@@ -1,4 +1,4 @@
-module github.com/guidomantilla/yarumo/sdk/dlocal
+module github.com/guidomantilla/yarumo/internal/dlocal
 
 go 1.25.2
 
