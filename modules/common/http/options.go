@@ -18,7 +18,7 @@ type Options struct {
 	attempts        uint
 	retryIf         retry.RetryIfFunc
 	retryHook       retry.OnRetryFunc
-	retryOnResponse RetryOnResponseFunc
+	retryOnResponse RetryOnResponseFn
 	limiterRate     rate.Limit
 	limiterBurst    uint
 }
@@ -104,7 +104,7 @@ func WithRetryHook(retryHook retry.OnRetryFunc) Option {
 	}
 }
 
-func WithRetryOnResponse(retryOnResponse RetryOnResponseFunc) Option {
+func WithRetryOnResponse(retryOnResponse RetryOnResponseFn) Option {
 	return func(o *Options) {
 		if retryOnResponse != nil {
 			o.retryOnResponse = retryOnResponse

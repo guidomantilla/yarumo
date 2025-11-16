@@ -35,7 +35,7 @@ type RequestSpec struct {
 
 func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 	assert.NotEmpty(spec, "request spec is nil")
-	
+
 	u, err := url.Parse(spec.URL)
 	if err != nil {
 		return nil, err

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	retry "github.com/avast/retry-go/v4"
-	"github.com/guidomantilla/yarumo/common/assert"
 	"golang.org/x/time/rate"
 
+	"github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	"github.com/guidomantilla/yarumo/common/utils"
 )
@@ -26,7 +26,7 @@ type client struct {
 	retryIf         retry.RetryIfFunc
 	retryHook       retry.OnRetryFunc
 	limiter         *rate.Limiter
-	retryOnResponse RetryOnResponseFunc
+	retryOnResponse RetryOnResponseFn
 }
 
 // NewClient creates a client compatible with *http.Client that can
@@ -152,12 +152,13 @@ type fakeClient struct {
 	RetrierOn bool
 }
 
-func NewFakeClient(do func(*http.Request) (*http.Response, error)) Client {
+func NewFakeClient(do DoFn) Client {
+	assert.NotEmpty(do, "DoFn is nil")
 	return &fakeClient{DoFunc: do}
 }
 
 func (c *fakeClient) Do(req *http.Request) (*http.Response, error) {
-	assert.NotEmpty(c.DoFunc, "DoFunc is nil")
+	assert.NotEmpty(c.DoFunc, "DoFn is nil")
 	assert.NotEmpty(req, "request is nil")
 	return c.DoFunc(req)
 }

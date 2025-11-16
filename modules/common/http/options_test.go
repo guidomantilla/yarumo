@@ -202,7 +202,7 @@ func TestOptions_WithRetryOnResponse_SetAndIgnoreNil(t *testing.T) {
 	// nil should be ignored; non-nil should be applied
 	o := NewOptions(
 		WithRetryOnResponse(nil),
-		WithRetryOnResponse(RetryOnResponseFunc(fn)),
+		WithRetryOnResponse(RetryOnResponseFn(fn)),
 	)
 	if !o.retryOnResponse(&stdhttp.Response{StatusCode: 200}) || !called {
 		t.Fatalf("retryOnResponse not set or not invoked")

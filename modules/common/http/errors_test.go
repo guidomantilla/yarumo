@@ -23,12 +23,12 @@ func TestHTTPError_ErrorFormatting_NonNil(t *testing.T) {
 }
 
 func TestHTTPError_NilInner_UnwrapIsNilAndNoErrorCall(t *testing.T) {
-    // Do not call Error() because current implementation fatals on nil inner.
-    // Still, Unwrap should be nil via the embedded TypedError.
-    e := &Error{TypedError: cerrs.TypedError{Type: RequestType}}
-    if u := errors.Unwrap(e); u != nil {
-        t.Fatalf("errors.Unwrap(e) = %v, want nil", u)
-    }
+	// Do not call Error() because current implementation fatals on nil inner.
+	// Still, Unwrap should be nil via the embedded TypedError.
+	e := &Error{TypedError: cerrs.TypedError{Type: RequestType}}
+	if u := errors.Unwrap(e); u != nil {
+		t.Fatalf("errors.Unwrap(e) = %v, want nil", u)
+	}
 }
 
 func TestErrDoCall_JoinAndType(t *testing.T) {
@@ -62,17 +62,17 @@ func TestErrDoCall_JoinAndType(t *testing.T) {
 }
 
 func TestErrDoCall_NoArgs_NilInner(t *testing.T) {
-    err := ErrDo()
-    if err == nil {
-        t.Fatalf("ErrDoCall() with no args should still return non-nil *Error")
-    }
+	err := ErrDo()
+	if err == nil {
+		t.Fatalf("ErrDoCall() with no args should still return non-nil *Error")
+	}
 
-    // Unwrap should be nil because TypedError.Err is nil
-    if u := errors.Unwrap(err); u != nil {
-        t.Fatalf("errors.Unwrap() = %v, want nil", u)
-    }
+	// Unwrap should be nil because TypedError.Err is nil
+	if u := errors.Unwrap(err); u != nil {
+		t.Fatalf("errors.Unwrap() = %v, want nil", u)
+	}
 
-    // Do not call Error() on err because inner Err is nil and assert will fatal.
+	// Do not call Error() on err because inner Err is nil and assert will fatal.
 }
 
 func TestSentinelErrors(t *testing.T) {

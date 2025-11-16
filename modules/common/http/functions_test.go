@@ -91,3 +91,36 @@ func TestRetryIfHttpError(t *testing.T) {
 		t.Fatalf("RetryIfHttpError(plain error) = %v, want false", got)
 	}
 }
+
+func TestNoopDo_ReturnsErrDoRequestFailed(t *testing.T) {
+	// NoopDo ignores the request and always returns ErrDo(ErrHttpRequestFailed)
+	res, err := NoopDo(nil)
+	if res != nil {
+		t.Fatalf("NoopDo returned non-nil response: %+v", res)
+	}
+	if err == nil || !errors.Is(err, ErrHttpRequestFailed) {
+		t.Fatalf("NoopDo error = %v, want wrapping ErrHttpRequestFailed", err)
+	}
+}
+
+func TestDo_UsesDefaultClientTransport(t *testing.T) {
+	// Swap the default client's transport with a success round tripper and ensure Do delegates.
+	oldTransport := http.DefaultTransport
+	t.Cleanup(func() { http.DefaultTransport = oldTransport })
+
+	http.DefaultTransport = successRT{body: ""}
+
+	req, err := http.NewRequest(http.MethodGet, "http://example.com", nil)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+
+	res, err := Do(req)
+	if err != nil {
+		t.Fatalf("Do returned error: %v", err)
+	}
+	if res == nil || res.StatusCode != 200 {
+		t.Fatalf("unexpected response: %+v", res)
+	}
+	_ = res.Body.Close()
+}

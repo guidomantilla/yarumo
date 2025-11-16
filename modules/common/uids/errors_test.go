@@ -50,27 +50,27 @@ func TestErrUIDFunctionNotFound(t *testing.T) {
 }
 
 func TestUIDError_ErrorVariants(t *testing.T) {
-    t.Run("panics when receiver is nil", func(t *testing.T) {
-        defer func() {
-            if r := recover(); r == nil {
-                t.Fatalf("expected panic when calling Error() on nil receiver")
-            }
-        }()
-        var ue *UIDError
-        _ = ue.Error() // should trigger assert.NotEmpty(e, "error is nil")
-    })
+	t.Run("panics when receiver is nil", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Fatalf("expected panic when calling Error() on nil receiver")
+			}
+		}()
+		var ue *UIDError
+		_ = ue.Error() // should trigger assert.NotEmpty(e, "error is nil")
+	})
 
-    t.Run("formats when inner error is nil", func(t *testing.T) {
-        ue := &UIDError{TypedError: cerrs.TypedError{Type: "custom"}}
-        got := ue.Error()
-        // With Err == nil and %s formatting, fmt prints %!s(<nil>)
-        want := "uid custom error: %!s(<nil>)"
-        if got != want {
-            t.Fatalf("Error() = %q, want %q", got, want)
-        }
-        // Unwrap should return nil when inner Err is nil
-        if u := errors.Unwrap(ue); u != nil {
-            t.Fatalf("Unwrap() = %v, want <nil>", u)
-        }
-    })
+	t.Run("formats when inner error is nil", func(t *testing.T) {
+		ue := &UIDError{TypedError: cerrs.TypedError{Type: "custom"}}
+		got := ue.Error()
+		// With Err == nil and %s formatting, fmt prints %!s(<nil>)
+		want := "uid custom error: %!s(<nil>)"
+		if got != want {
+			t.Fatalf("Error() = %q, want %q", got, want)
+		}
+		// Unwrap should return nil when inner Err is nil
+		if u := errors.Unwrap(ue); u != nil {
+			t.Fatalf("Unwrap() = %v, want <nil>", u)
+		}
+	})
 }

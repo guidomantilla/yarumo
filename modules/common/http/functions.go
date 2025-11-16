@@ -9,12 +9,14 @@ import (
 )
 
 var (
-	_ retry.RetryIfFunc   = NoopRetryIf
-	_ retry.OnRetryFunc   = NoopRetryHook
-	_ RetryOnResponseFunc = NoopRetryOnResponse
+	_ DoFn              = NoopDo
+	_ retry.RetryIfFunc = NoopRetryIf
+	_ retry.OnRetryFunc = NoopRetryHook
+	_ RetryOnResponseFn = NoopRetryOnResponse
 
-	_ retry.RetryIfFunc   = RetryIfHttpError
-	_ RetryOnResponseFunc = RetryOn5xxAnd429Response
+	_ DoFn              = Do
+	_ retry.RetryIfFunc = RetryIfHttpError
+	_ RetryOnResponseFn = RetryOn5xxAnd429Response
 )
 
 // Noop
@@ -37,9 +39,13 @@ func NoopRetryHook(n uint, err error) {
 	_ = err
 }
 
-// Defaults
+func NoopDo(req *http.Request) (*http.Response, error) {
+	// no-op: explicitly touch params to generate coverage statements
+	_ = req
+	return nil, ErrDo(ErrHttpRequestFailed)
+}
 
-type RetryOnResponseFunc func(res *http.Response) bool
+// Defaults
 
 func RetryOn5xxAnd429Response(res *http.Response) bool {
 	if res == nil {
@@ -70,4 +76,8 @@ func RetryIfHttpError(err error) bool {
 	}
 
 	return false
+}
+
+func Do(req *http.Request) (*http.Response, error) {
+	return http.DefaultClient.Do(req)
 }

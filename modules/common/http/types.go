@@ -30,3 +30,7 @@ type Client interface {
 	LimiterEnabled() bool
 	RetrierEnabled() bool
 }
+
+type RetryOnResponseFn func(res *http.Response) bool
+
+type DoFn func(req *http.Request) (*http.Response, error)
