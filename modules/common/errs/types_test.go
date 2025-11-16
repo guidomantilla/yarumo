@@ -16,12 +16,6 @@ func TestTypedError_Error(t *testing.T) {
 }
 
 func TestTypedError_Unwrap(t *testing.T) {
-	// nil receiver -> nil
-	var eNil *TypedError
-	if got := eNil.Unwrap(); got != nil {
-		t.Fatalf("nil receiver Unwrap() = %v, want nil", got)
-	}
-
 	// non-nil returns inner error
 	inner := errors.New("wrapped")
 	e := &TypedError{Type: "X", Err: inner}

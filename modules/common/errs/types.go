@@ -18,9 +18,7 @@ func (e *TypedError) Error() string {
 }
 
 func (e *TypedError) Unwrap() error {
-	if e == nil {
-		return nil
-	}
+	assert.NotEmpty(e, "error is nil")
 	return e.Err
 }
 
