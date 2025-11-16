@@ -325,3 +325,42 @@ func TestClient_Do_ReplayableBody_Success(t *testing.T) {
 	}
 	_ = res.Body.Close()
 }
+
+func TestNewFakeClient_DoAndFlags(t *testing.T) {
+    called := false
+    fc := NewFakeClient(func(req *stdhttp.Request) (*stdhttp.Response, error) {
+        called = true
+        return &stdhttp.Response{StatusCode: 204, Body: stdhttp.NoBody}, nil
+    })
+
+    // Set flags and verify LimiterEnabled/RetrierEnabled
+    fci, ok := fc.(*fakeClient)
+    if !ok {
+        t.Fatalf("NewFakeClient did not return *fakeClient")
+    }
+    fci.LimiterOn = true
+    fci.RetrierOn = true
+    if !fc.LimiterEnabled() || !fc.RetrierEnabled() {
+        t.Fatalf("fake client flags not reflected in methods")
+    }
+
+    // Exercise Do path
+    req := newRequest(t, context.Background())
+    res, err := fc.Do(req)
+    if err != nil {
+        t.Fatalf("fake Do returned error: %v", err)
+    }
+    if res == nil || res.StatusCode != 204 {
+        t.Fatalf("unexpected response: %+v", res)
+    }
+    if !called {
+        t.Fatalf("fake DoFunc was not invoked")
+    }
+
+    // Also test flag false values
+    fci.LimiterOn = false
+    fci.RetrierOn = false
+    if fc.LimiterEnabled() || fc.RetrierEnabled() {
+        t.Fatalf("expected false from LimiterEnabled/RetrierEnabled with flags off")
+    }
+}

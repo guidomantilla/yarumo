@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"path"
 	"time"
+
+	"github.com/guidomantilla/yarumo/common/assert"
 )
 
 type ResponseSpec[T any] struct {
@@ -32,10 +34,8 @@ type RequestSpec struct {
 }
 
 func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
-	if spec == nil {
-		return nil, fmt.Errorf("request spec is nil")
-	}
-
+	assert.NotEmpty(spec, "request spec is nil")
+	
 	u, err := url.Parse(spec.URL)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,10 @@
 package errs
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/guidomantilla/yarumo/common/assert"
+)
 
 type TypedError struct {
 	Type string
@@ -8,9 +12,8 @@ type TypedError struct {
 }
 
 func (e *TypedError) Error() string {
-	if e == nil || e.Err == nil {
-		return "<nil>"
-	}
+	assert.NotEmpty(e, "error is nil")
+	assert.NotEmpty(e.Err, "internal error is nil")
 	return fmt.Sprintf("%s error: %s", e.Type, e.Err)
 }
 

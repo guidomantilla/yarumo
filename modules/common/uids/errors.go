@@ -3,6 +3,7 @@ package uids
 import (
 	"fmt"
 
+	"github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
@@ -19,9 +20,8 @@ type UIDError struct {
 }
 
 func (e *UIDError) Error() string {
-	if e == nil || e.Err == nil {
-		return "<nil>"
-	}
+	assert.NotEmpty(e, "error is nil")
+	assert.NotEmpty(e.Err, "internal error is nil")
 	return fmt.Sprintf("uid %s error: %s", e.Type, e.Err)
 }
 

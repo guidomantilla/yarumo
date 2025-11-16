@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
@@ -20,9 +21,8 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	if e == nil || e.Err == nil {
-		return "<nil>"
-	}
+	assert.NotEmpty(e, "error is nil")
+	assert.NotEmpty(e.Err, "internal error is nil")
 	return fmt.Sprintf("http request %s error: %s", e.Type, e.Err)
 }
 
@@ -31,9 +31,7 @@ type StatusCodeError struct {
 }
 
 func (e *StatusCodeError) Error() string {
-	if e == nil {
-		return "<nil>"
-	}
+	assert.NotEmpty(e, "error is nil")
 	return fmt.Sprintf("http retryable status code: %d", e.StatusCode)
 }
 
