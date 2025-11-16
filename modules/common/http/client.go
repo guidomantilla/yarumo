@@ -68,6 +68,7 @@ func (c *client) LimiterEnabled() bool {
 // The caller must close res.Body when err == nil.
 func (c *client) Do(req *http.Request) (*http.Response, error) {
 	assert.NotEmpty(c, "client is nil")
+	assert.NotEmpty(req, "request is nil")
 
 	// Safety check: if there is a body, and we don't have GetBody, we cannot retry safely.
 	if utils.NotEmpty(req.Body) && utils.Empty(req.GetBody) {
@@ -114,7 +115,8 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 // It returns an error if the limiter is disabled or if the context expires before a token is available.
 func (c *client) waitForLimiter(ctx context.Context) error {
 	assert.NotEmpty(c, "client is nil")
-	
+	assert.NotEmpty(ctx, "context is nil")
+
 	// Only wait on the limiter when it is effectively enabled.
 	// Semantics: rate.Inf means limiter is disabled.
 	if !c.LimiterEnabled() {
@@ -156,6 +158,7 @@ func NewFakeClient(do func(*http.Request) (*http.Response, error)) Client {
 
 func (c *fakeClient) Do(req *http.Request) (*http.Response, error) {
 	assert.NotEmpty(c.DoFunc, "DoFunc is nil")
+	assert.NotEmpty(req, "request is nil")
 	return c.DoFunc(req)
 }
 
