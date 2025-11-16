@@ -7,4 +7,5 @@ use (
 	./modules/maths
 	./modules/security
 	./modules/servers
+	./sdk/dlocal
 )

@@ -10,6 +10,7 @@ install:
 
 tidy:
 	cd internal/examples && go mod tidy
+	#cd sdk/dlocal		 && go mod tidy
 	cd modules/common 	 && go mod tidy
 	cd modules/maths 	 && go mod tidy
 	cd modules/security  && go mod tidy
@@ -30,6 +31,7 @@ graph:
 
 imports:
 	cd internal/examples && goimports-reviser -rm-unused -set-alias -format -recursive .
+	#cd sdk/dlocal		 && goimports-reviser -rm-unused -set-alias -format -recursive .
 	cd modules/common 	 && goimports-reviser -rm-unused -set-alias -format -recursive .
 	cd modules/maths 	 && goimports-reviser -rm-unused -set-alias -format -recursive .
 	cd modules/security  && goimports-reviser -rm-unused -set-alias -format -recursive .
@@ -37,6 +39,7 @@ imports:
 
 format:
 	cd internal/examples && go fmt ./...
+	cd sdk/dlocal		 && go fmt ./...
 	cd modules/common 	 && go fmt ./...
 	cd modules/maths 	 && go fmt ./...
 	cd modules/security  && go fmt ./...
