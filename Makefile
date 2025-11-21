@@ -64,10 +64,10 @@ test:
 	cd modules/servers 	&& go test -covermode atomic -coverprofile .reports/coverage.out ./...
 
 coverage: test
-	cd modules/common 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
-	cd modules/maths 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
-	cd modules/security && go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
-	cd modules/servers 	&& go tool cover -func=.reports/coverage.out && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
+	cd modules/common 	&& go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
+	cd modules/maths 	&& go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
+	cd modules/security && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
+	cd modules/servers 	&& go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
 
 check: tidy generate imports format vet lint coverage
 
