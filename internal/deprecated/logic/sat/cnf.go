@@ -3,7 +3,7 @@ package sat
 import (
 	"fmt"
 
-	p "github.com/guidomantilla/yarumo/deprecated/logic/propositions"
+	p "github.com/guidomantilla/yarumo/internal/deprecated/logic/propositions"
 )
 
 // FromFormulaToCNF converts any formula to CNF (as a list of clauses) using

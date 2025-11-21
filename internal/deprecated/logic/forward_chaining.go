@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/guidomantilla/yarumo/deprecated/logic/predicates"
-	"github.com/guidomantilla/yarumo/deprecated/logic/propositions"
+	"github.com/guidomantilla/yarumo/internal/deprecated/logic/predicates"
+	"github.com/guidomantilla/yarumo/internal/deprecated/logic/propositions"
 )
 
 type Rule[T any] struct {

@@ -1,7 +1,7 @@
 package logic
 
 import (
-	"github.com/guidomantilla/yarumo/deprecated/logic/propositions"
+	"github.com/guidomantilla/yarumo/internal/deprecated/logic/propositions"
 )
 
 type EvalNode struct {

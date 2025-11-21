@@ -3,7 +3,7 @@ package sat
 import (
 	"testing"
 
-	p "github.com/guidomantilla/yarumo/deprecated/logic/propositions"
+	p "github.com/guidomantilla/yarumo/internal/deprecated/logic/propositions"
 )
 
 func TestDPLL_Satisfiable(t *testing.T) {

@@ -3,7 +3,7 @@ package entailment
 import (
 	"testing"
 
-	p "github.com/guidomantilla/yarumo/deprecated/logic/propositions"
+	p "github.com/guidomantilla/yarumo/internal/deprecated/logic/propositions"
 )
 
 func TestEntails_ModusPonens(t *testing.T) {

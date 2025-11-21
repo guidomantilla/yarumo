@@ -146,7 +146,8 @@ func simplifyOnce(f Formula) Formula {
 
 // --- Helpers ---
 
-func isTrue(f Formula) bool  { _, ok := f.(TrueF); return ok }
+func isTrue(f Formula) bool { _, ok := f.(TrueF); return ok }
+
 func isFalse(f Formula) bool { _, ok := f.(FalseF); return ok }
 
 // isNegationOf checks if a is the negation of b.

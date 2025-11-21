@@ -9,12 +9,13 @@ install:
 	go install github.com/kisielk/godepgraph@latest
 
 tidy:
-	cd internal/examples && go mod tidy
-	#cd internal/dlocal	 && go mod tidy
-	cd modules/common 	 && go mod tidy
-	cd modules/maths 	 && go mod tidy
-	cd modules/security  && go mod tidy
-	cd modules/servers 	 && go mod tidy
+	cd internal/deprecated && go mod tidy
+	cd internal/examples   && go mod tidy
+	#cd internal/dlocal	   && go mod tidy
+	cd modules/common 	   && go mod tidy
+	cd modules/maths 	   && go mod tidy
+	cd modules/security    && go mod tidy
+	cd modules/servers 	   && go mod tidy
 	go work sync
 
 generate: graph
@@ -30,20 +31,22 @@ graph:
 	godepgraph -s ./modules/servers  | dot -Tpng -o ./docs/img/servers.png
 
 imports:
-	cd internal/examples && goimports-reviser -rm-unused -set-alias -format -recursive .
-	#cd internal/dlocal	 && goimports-reviser -rm-unused -set-alias -format -recursive .
-	cd modules/common 	 && goimports-reviser -rm-unused -set-alias -format -recursive .
-	cd modules/maths 	 && goimports-reviser -rm-unused -set-alias -format -recursive .
-	cd modules/security  && goimports-reviser -rm-unused -set-alias -format -recursive .
-	cd modules/servers 	 && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd internal/deprecated && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd internal/examples   && goimports-reviser -rm-unused -set-alias -format -recursive .
+	#cd internal/dlocal	   && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/common 	   && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/maths 	   && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/security    && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/servers 	   && goimports-reviser -rm-unused -set-alias -format -recursive .
 
 format:
-	cd internal/examples && go fmt ./...
-	#cd internal/dlocal	 && go fmt ./...
-	cd modules/common 	 && go fmt ./...
-	cd modules/maths 	 && go fmt ./...
-	cd modules/security  && go fmt ./...
-	cd modules/servers 	 && go fmt ./...
+	cd internal/deprecated && go fmt ./...
+	cd internal/examples   && go fmt ./...
+	#cd internal/dlocal	   && go fmt ./...
+	cd modules/common 	   && go fmt ./...
+	cd modules/maths 	   && go fmt ./...
+	cd modules/security    && go fmt ./...
+	cd modules/servers 	   && go fmt ./...
 
 vet:
 	cd modules/common 	&& go vet ./...

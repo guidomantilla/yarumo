@@ -1,8 +1,8 @@
 package entailment
 
 import (
-	p "github.com/guidomantilla/yarumo/deprecated/logic/propositions"
-	"github.com/guidomantilla/yarumo/deprecated/logic/sat"
+	p "github.com/guidomantilla/yarumo/internal/deprecated/logic/propositions"
+	"github.com/guidomantilla/yarumo/internal/deprecated/logic/sat"
 )
 
 // Result captures the outcome of an entailment check.
