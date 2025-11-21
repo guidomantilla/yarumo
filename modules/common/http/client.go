@@ -158,6 +158,7 @@ func NewFakeClient(do DoFn) Client {
 }
 
 func (c *fakeClient) Do(req *http.Request) (*http.Response, error) {
+	assert.NotEmpty(c, "client is nil")
 	assert.NotEmpty(c.DoFunc, "DoFn is nil")
 	assert.NotEmpty(req, "request is nil")
 	return c.DoFunc(req)
