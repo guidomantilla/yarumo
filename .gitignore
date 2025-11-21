@@ -33,6 +33,9 @@ Thumbs.db
 # Sonarqube
 .scannerwork/
 
+# Internal Git Repository
+.git/
+
 .env
 .envrc
 *.crt
