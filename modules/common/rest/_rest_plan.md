@@ -46,7 +46,7 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 - Dónde: `modules/common/rest/specs.go` (líneas 51–58).
 - Problema: `Build` muta `spec.RawBody` cuando serializa `Body`. Considera no mutar, o documentarlo claramente.
 
-### [] 8) Prioridad entre `RawBody` y `Body` (robustez)
+### [x] 8) Prioridad entre `RawBody` y `Body` (robustez)
 - Dónde: `modules/common/rest/specs.go`.
 - Mejora: si `RawBody` viene dado, úsalo tal cual. Sólo serializa `Body` si `RawBody` está vacío.
 
