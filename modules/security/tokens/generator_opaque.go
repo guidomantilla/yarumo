@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/guidomantilla/yarumo/common/utils"
+
 	"github.com/guidomantilla/yarumo/security/cryptos"
 )
 

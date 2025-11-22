@@ -170,44 +170,44 @@ func TestCall_JSONWithoutContentType_Decodes(t *testing.T) {
 }
 
 func TestCall_ContextNilAndSpecNil(t *testing.T) {
-    // ctx nil
-    spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
-    if _, err := Call[sample](nil, spec, WithDoFn(func(r *http.Request) (*http.Response, error) {
-        t.Fatalf("doFn should not be called when ctx is nil")
-        return nil, nil
-    })); err == nil {
-        t.Fatalf("expected error when context is nil")
-    }
+	// ctx nil
+	spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
+	if _, err := Call[sample](nil, spec, WithDoFn(func(r *http.Request) (*http.Response, error) { //nolint:staticcheck
+		t.Fatalf("doFn should not be called when ctx is nil")
+		return nil, nil
+	})); err == nil {
+		t.Fatalf("expected error when context is nil")
+	}
 
-    // spec nil
-    if _, err := Call[sample](context.Background(), nil, WithDoFn(func(r *http.Request) (*http.Response, error) {
-        t.Fatalf("doFn should not be called when spec is nil")
-        return nil, nil
-    })); err == nil {
-        t.Fatalf("expected error when spec is nil")
-    }
+	// spec nil
+	if _, err := Call[sample](context.Background(), nil, WithDoFn(func(r *http.Request) (*http.Response, error) {
+		t.Fatalf("doFn should not be called when spec is nil")
+		return nil, nil
+	})); err == nil {
+		t.Fatalf("expected error when spec is nil")
+	}
 }
 
 func TestDecodeResponseBody_UnknownStatusOrEmptyBody(t *testing.T) {
-    // Unknown status code (no http.StatusText), should return zero value without error
-    body := []byte(`{"X":123}`)
-    var zero sample
-    got, err := decodeResponseBody[sample](body, 0, "application/json")
-    if err != nil {
-        t.Fatalf("unexpected error: %v", err)
-    }
-    if got != zero {
-        t.Fatalf("expected zero value when status text is empty, got: %+v", got)
-    }
+	// Unknown status code (no http.StatusText), should return zero value without error
+	body := []byte(`{"X":123}`)
+	var zero sample
+	got, err := decodeResponseBody[sample](body, 0, "application/json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != zero {
+		t.Fatalf("expected zero value when status text is empty, got: %+v", got)
+	}
 
-    // Empty body should also yield zero without error
-    got2, err := decodeResponseBody[sample]([]byte{}, 200, "application/json")
-    if err != nil {
-        t.Fatalf("unexpected error: %v", err)
-    }
-    if got2 != zero {
-        t.Fatalf("expected zero value with empty body, got: %+v", got2)
-    }
+	// Empty body should also yield zero without error
+	got2, err := decodeResponseBody[sample]([]byte{}, 200, "application/json")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got2 != zero {
+		t.Fatalf("expected zero value with empty body, got: %+v", got2)
+	}
 }
 
 func TestCall_SpecBuildErrorIsWrapped(t *testing.T) {

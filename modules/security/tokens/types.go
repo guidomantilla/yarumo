@@ -1,6 +1,6 @@
 package tokens
 
-import "github.com/golang-jwt/jwt/v5"
+import jwt "github.com/golang-jwt/jwt/v5"
 
 var (
 	_ Generator = (*jwtGenerator)(nil)

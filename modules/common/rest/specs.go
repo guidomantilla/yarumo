@@ -37,7 +37,7 @@ type RequestSpec struct {
 
 func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 	assert.NotNil(spec, "request spec is nil")
-	
+
 	if utils.Nil(ctx) {
 		return nil, ErrCall(ErrContextNil)
 	}

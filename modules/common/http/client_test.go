@@ -366,46 +366,46 @@ func TestNewFakeClient_DoAndFlags(t *testing.T) {
 }
 
 func TestClient_Do_RequestNil(t *testing.T) {
-    c := NewClient()
-    res, err := c.Do(nil)
-    if err == nil {
-        t.Fatalf("expected error for nil request, got res=%+v", res)
-    }
-    if !errors.Is(err, ErrHttpRequestNil) {
-        t.Fatalf("error does not wrap ErrHttpRequestNil: %v", err)
-    }
+	c := NewClient()
+	res, err := c.Do(nil)
+	if err == nil {
+		t.Fatalf("expected error for nil request, got res=%+v", res)
+	}
+	if !errors.Is(err, ErrHttpRequestNil) {
+		t.Fatalf("error does not wrap ErrHttpRequestNil: %v", err)
+	}
 }
 
 func TestClient_waitForLimiter_ContextNil(t *testing.T) {
-    c := NewClient()
-    cc := c.(*client)
-    if err := cc.waitForLimiter(nil); err == nil || !errors.Is(err, ErrContextNil) {
-        t.Fatalf("expected ErrContextNil, got %v", err)
-    }
+	c := NewClient()
+	cc := c.(*client)
+	if err := cc.waitForLimiter(nil); err == nil || !errors.Is(err, ErrContextNil) { //nolint:staticcheck
+		t.Fatalf("expected ErrContextNil, got %v", err)
+	}
 }
 
 func TestClient_waitForLimiter_DisabledLimiter_NoWait(t *testing.T) {
-    // By default limiter is disabled (rate.Inf). Method should return nil immediately.
-    c := NewClient()
-    cc := c.(*client)
-    if !cc.LimiterEnabled() {
-        if err := cc.waitForLimiter(context.Background()); err != nil {
-            t.Fatalf("waitForLimiter should return nil when limiter disabled; got %v", err)
-        }
-    } else {
-        t.Fatalf("expected limiter disabled by default")
-    }
+	// By default limiter is disabled (rate.Inf). Method should return nil immediately.
+	c := NewClient()
+	cc := c.(*client)
+	if !cc.LimiterEnabled() {
+		if err := cc.waitForLimiter(context.Background()); err != nil {
+			t.Fatalf("waitForLimiter should return nil when limiter disabled; got %v", err)
+		}
+	} else {
+		t.Fatalf("expected limiter disabled by default")
+	}
 }
 
 func TestFakeClient_Do_RequestNil(t *testing.T) {
-    fc := NewFakeClient(func(req *stdhttp.Request) (*stdhttp.Response, error) {
-        return &stdhttp.Response{StatusCode: 200, Body: stdhttp.NoBody}, nil
-    })
-    res, err := fc.Do(nil)
-    if err == nil {
-        t.Fatalf("expected error for nil request, got res=%+v", res)
-    }
-    if !errors.Is(err, ErrHttpRequestNil) {
-        t.Fatalf("error does not wrap ErrHttpRequestNil: %v", err)
-    }
+	fc := NewFakeClient(func(req *stdhttp.Request) (*stdhttp.Response, error) {
+		return &stdhttp.Response{StatusCode: 200, Body: stdhttp.NoBody}, nil
+	})
+	res, err := fc.Do(nil)
+	if err == nil {
+		t.Fatalf("expected error for nil request, got res=%+v", res)
+	}
+	if !errors.Is(err, ErrHttpRequestNil) {
+		t.Fatalf("error does not wrap ErrHttpRequestNil: %v", err)
+	}
 }

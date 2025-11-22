@@ -157,3 +157,14 @@ func TestRequestSpec_Build_PathOnlyAddsToURL(t *testing.T) {
 		t.Fatalf("expected path '/v1', got %q", req.URL.Path)
 	}
 }
+
+func TestRequestSpec_Build_ContextNil(t *testing.T) {
+	spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
+	req, err := spec.Build(nil) //nolint:staticcheck
+	if err == nil || req != nil {
+		t.Fatalf("expected error when context is nil, got req=%v err=%v", req, err)
+	}
+	if !strings.Contains(err.Error(), "context is nil") {
+		t.Fatalf("expected wrapped ErrContextNil, got %v", err)
+	}
+}
