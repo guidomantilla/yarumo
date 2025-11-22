@@ -29,8 +29,9 @@ type RequestSpec struct {
 	Path        string
 	Headers     map[string]string
 	QueryParams map[string]string
-	RawBody     []byte
-	Body        any
+	// Deprecated: use Body instead
+	RawBody []byte
+	Body    any
 }
 
 func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
