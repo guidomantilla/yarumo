@@ -64,9 +64,6 @@ A continuación dejo la lista consolidada, marcando lo nuevo/crítico.
 
 ### [] 12) Extras
 - `path.Join` puede normalizar barras; valida que sea el comportamiento deseado.
-- Considera una variante `CallStream` para respuestas grandes.
-- Si planeas `retry/backoff` por status en la capa HTTP, asegúrate de cerrar `res.Body` antes de cada reintento para evitar fugas.
-
 ---
 
 ### Sugerencia de ajustes mínimos (actualizada)
