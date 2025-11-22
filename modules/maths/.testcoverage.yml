@@ -8,31 +8,31 @@
 profile: .reports/coverage.out
 
 # (optional; but recommended to set)
-# When specified reported file paths will not contain local prefix in the output
+# When specified, reported file paths will not contain local prefix in the output
 local-prefix: "github.com/guidomantilla/yarumo/maths"
 
 # Holds coverage thresholds percentages, values should be in range [0-100]
 threshold:
   # (optional; default 0)
   # The minimum coverage that each file should have
-  file: 80
+  file: 100
 
   # (optional; default 0)
   # The minimum coverage that each package should have
-  package: 80
+  package: 100
 
   # (optional; default 0)
-  # The minimum total coverage project should have
-  total: 80
+  # The minimum total coverage a project should have
+  total: 100
 
 # Holds regexp rules which will override thresholds for matched files or packages
 # using their paths.
 #
-# First rule from this list that matches file or package is going to apply
-# new threshold to it. If project has multiple rules that match same path,
+# The first rule from this list that matches a file or package is going to apply
+# a new threshold to it. If a project has multiple rules that match the same path,
 # override rules should be listed in order from specific to more general rules.
 #override:
-#  # Increase coverage threshold to 100% for `foo` package
+#  # Increase the coverage threshold to 100% for `foo` package
 #  # (default is 80, as configured above in this example)
 #  - threshold: 100
 #    path: ^sandbox/lib/foo$
@@ -42,9 +42,9 @@ threshold:
 #exclude:
 #  # Exclude files or packages matching their paths
 #  paths:
-#    - \.pb\.go$    # excludes all protobuf generated files
-#    - ^sandbox/bar     # exclude package `sandbox/bar`
+#    - \.pb\.go$      # excludes all protobuf generated files
+#    - ^sandbox/bar   # exclude package `sandbox/bar`
 
 # NOTES:
-# - symbol `/` in all path regexps will be replaced by current OS file path separator
+# - symbol `/` in all path regexps will be replaced by the current OS file path separator
 #   to properly work on Windows
