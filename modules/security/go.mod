@@ -7,7 +7,7 @@ replace github.com/guidomantilla/yarumo/common => ../common
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/guidomantilla/yarumo/common v0.0.0
-	golang.org/x/crypto v0.44.0
+	golang.org/x/crypto v0.45.0
 )
 
 require (

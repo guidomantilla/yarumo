@@ -22,7 +22,7 @@ func TestHTTPErrorFormatting(t *testing.T) {
 }
 
 func TestDecodeResponseErrorFormatting(t *testing.T) {
-	// Use non-pointer generic type to satisfy assert.NotNil(e.T)
+	// Use a non-pointer generic type to satisfy assert.NotNil(e.T)
 	de := &DecodeResponseError[sample]{ContentType: "text/plain", T: sample{}}
 	s := de.Error()
 	if !strings.Contains(s, "content type text/plain not supported") {
