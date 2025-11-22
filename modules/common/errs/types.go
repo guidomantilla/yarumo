@@ -12,13 +12,13 @@ type TypedError struct {
 }
 
 func (e *TypedError) Error() string {
-	assert.NotEmpty(e, "error is nil")
-	assert.NotEmpty(e.Err, "internal error is nil")
+	assert.NotNil(e, "error is nil")
+	assert.NotNil(e.Err, "internal error is nil")
 	return fmt.Sprintf("%s error: %s", e.Type, e.Err)
 }
 
 func (e *TypedError) Unwrap() error {
-	assert.NotEmpty(e, "error is nil")
+	assert.NotNil(e, "error is nil")
 	return e.Err
 }
 

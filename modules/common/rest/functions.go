@@ -9,14 +9,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 // Call executes a request and returns the response.
 func Call[T any](ctx context.Context, spec *RequestSpec, options ...Option) (*ResponseSpec[T], error) {
-	assert.NotEmpty(ctx, "ctx is nil")
-	assert.NotEmpty(spec, "spec is nil")
+	if utils.Nil(ctx) {
+		return nil, ErrCall(ErrContextNil)
+	}
+
+	if utils.Nil(spec) {
+		return nil, ErrCall(ErrRequestSpecNil)
+	}
 
 	opts := NewOptions(options...)
 	req, err := spec.Build(ctx)

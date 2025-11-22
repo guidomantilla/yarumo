@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/common/assert"
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 type ResponseSpec[T any] struct {
@@ -35,8 +36,11 @@ type RequestSpec struct {
 }
 
 func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
-	assert.NotEmpty(spec, "request spec is nil")
-	assert.NotEmpty(ctx, "ctx is nil")
+	assert.NotNil(spec, "request spec is nil")
+	
+	if utils.Nil(ctx) {
+		return nil, ErrCall(ErrContextNil)
+	}
 
 	// Fix headers
 

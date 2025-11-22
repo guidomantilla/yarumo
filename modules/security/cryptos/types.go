@@ -8,7 +8,7 @@ var (
 	_ CipherFn = ChaCha20Decrypt
 )
 
-type KeyFn func(size int) (*string, error)
+type KeyFn func(size int) ([]byte, error)
 
 type CipherFn func(key []byte, plaintext []byte) ([]byte, error)
 

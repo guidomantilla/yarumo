@@ -25,7 +25,7 @@ func NewOptions(opts ...Option) *Options {
 
 func WithDoFn(doFn http.DoFn) Option {
 	return func(opts *Options) {
-		if utils.NotEmpty(doFn) {
+		if utils.NotNil(doFn) {
 			opts.DoFn = doFn
 		}
 	}

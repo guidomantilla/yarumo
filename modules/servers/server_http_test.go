@@ -58,7 +58,7 @@ func TestHttpServer_Run_ErrorOnStart(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if se, ok := err.(*ServerError); !ok || se.Type != ServerStartType {
+	if se, ok := err.(*Error); !ok || se.Type != ServerStartType {
 		t.Fatalf("expected ServerError type=start, got %#v", err)
 	}
 }
@@ -103,7 +103,7 @@ func TestHttpServer_Stop_WrapsError(t *testing.T) {
 	if stopErr == nil {
 		t.Fatal("expected error from Stop with short timeout")
 	}
-	if se, ok := stopErr.(*ServerError); !ok || se.Type != ServerStopType {
+	if se, ok := stopErr.(*Error); !ok || se.Type != ServerStopType {
 		t.Fatalf("expected ServerError type=stop, got %#v", stopErr)
 	}
 

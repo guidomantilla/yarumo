@@ -21,8 +21,8 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	assert.NotEmpty(e, "error is nil")
-	assert.NotEmpty(e.Err, "internal error is nil")
+	assert.NotNil(e, "error is nil")
+	assert.NotNil(e.Err, "internal error is nil")
 	return fmt.Sprintf("rest request %s error: %s", e.Type, e.Err)
 }
 
@@ -33,7 +33,7 @@ type HTTPError struct {
 }
 
 func (e *HTTPError) Error() string {
-	assert.NotEmpty(e, "error is nil")
+	assert.NotNil(e, "error is nil")
 	return fmt.Sprintf("unexpected status code %d: %s", e.StatusCode, e.Status)
 }
 
@@ -43,12 +43,17 @@ type DecodeResponseError[T any] struct {
 }
 
 func (e *DecodeResponseError[T]) Error() string {
-	assert.NotEmpty(e, "error is nil")
+	assert.NotNil(e, "error is nil")
 	assert.NotNil(e.T, "type is nil")
 	return fmt.Sprintf("content type %s not supported for type  %T", e.ContentType, e.T)
 }
 
 //
+
+var (
+	ErrContextNil     = errors.New("context is nil")
+	ErrRequestSpecNil = errors.New("request spec is nil")
+)
 
 func ErrCall(errs ...error) error {
 	return &Error{

@@ -13,6 +13,10 @@ import (
 	"github.com/guidomantilla/yarumo/common/utils"
 )
 
+var (
+	DefaultClient = NewClient()
+)
+
 /*
  * Client implementation.
  */
@@ -52,26 +56,29 @@ func NewClient(options ...Option) Client {
 // RetrierEnabled returns true if retries are enabled.
 // A retry is enabled if attempts > 1.
 func (c *client) RetrierEnabled() bool {
-	assert.NotEmpty(c, "client is nil")
+	assert.NotNil(c, "client is nil")
 	return c.attempts > 1
 }
 
 // LimiterEnabled returns true if the limiter is enabled.
 // A limiter is enabled if its rate is finite and its burst is > 0.
 func (c *client) LimiterEnabled() bool {
-	assert.NotEmpty(c, "client is nil")
-	return utils.NotEmpty(c.limiter) && utils.NotEqual(c.limiter.Limit(), rate.Inf)
+	assert.NotNil(c, "client is nil")
+	return utils.NotNil(c.limiter) && utils.NotEqual(c.limiter.Limit(), rate.Inf)
 }
 
 // Do execute the request. If the limiter is active, it may wait for a token before performing the request.
 // It may retry the request if configured to do so through Options. It returns the first successful response.
 // The caller must close res.Body when err == nil.
 func (c *client) Do(req *http.Request) (*http.Response, error) {
-	assert.NotEmpty(c, "client is nil")
-	assert.NotEmpty(req, "request is nil")
+	assert.NotNil(c, "client is nil")
+
+	if utils.Nil(req) {
+		return nil, ErrDo(ErrHttpRequestNil)
+	}
 
 	// Safety check: if there is a body, and we don't have GetBody, we cannot retry safely.
-	if utils.NotEmpty(req.Body) && utils.Empty(req.GetBody) {
+	if utils.NotNil(req.Body) && utils.Nil(req.GetBody) {
 		return nil, ErrDo(ErrHttpNonReplayableBody, nil)
 	}
 
@@ -114,8 +121,11 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 // waitForLimiter blocks until a token is available from the limiter.
 // It returns an error if the limiter is disabled or if the context expires before a token is available.
 func (c *client) waitForLimiter(ctx context.Context) error {
-	assert.NotEmpty(c, "client is nil")
-	assert.NotEmpty(ctx, "context is nil")
+	assert.NotNil(c, "client is nil")
+
+	if utils.Nil(ctx) {
+		return ErrDo(ErrContextNil)
+	}
 
 	// Only wait on the limiter when it is effectively enabled.
 	// Semantics: rate.Inf means limiter is disabled.
@@ -153,23 +163,27 @@ type fakeClient struct {
 }
 
 func NewFakeClient(do DoFn) Client {
-	assert.NotEmpty(do, "DoFn is nil")
+	assert.NotNil(do, "DoFn is nil")
 	return &fakeClient{DoFunc: do}
 }
 
 func (c *fakeClient) Do(req *http.Request) (*http.Response, error) {
-	assert.NotEmpty(c, "client is nil")
-	assert.NotEmpty(c.DoFunc, "DoFn is nil")
-	assert.NotEmpty(req, "request is nil")
+	assert.NotNil(c, "client is nil")
+	assert.NotNil(c.DoFunc, "DoFn is nil")
+
+	if utils.Empty(req) {
+		return nil, ErrDo(ErrHttpRequestNil)
+	}
+
 	return c.DoFunc(req)
 }
 
 func (c *fakeClient) LimiterEnabled() bool {
-	assert.NotEmpty(c, "client is nil")
+	assert.NotNil(c, "client is nil")
 	return c.LimiterOn
 }
 
 func (c *fakeClient) RetrierEnabled() bool {
-	assert.NotEmpty(c, "client is nil")
+	assert.NotNil(c, "client is nil")
 	return c.RetrierOn
 }

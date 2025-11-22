@@ -6,8 +6,6 @@ import (
 	"net/http"
 
 	retry "github.com/avast/retry-go/v4"
-
-	"github.com/guidomantilla/yarumo/common/assert"
 )
 
 var (
@@ -81,6 +79,5 @@ func RetryIfHttpError(err error) bool {
 }
 
 func Do(req *http.Request) (*http.Response, error) {
-	assert.NotEmpty(req, "request is nil")
-	return http.DefaultClient.Do(req)
+	return DefaultClient.Do(req)
 }

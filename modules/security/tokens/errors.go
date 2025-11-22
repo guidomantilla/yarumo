@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
@@ -21,6 +22,8 @@ type TokenError struct {
 }
 
 func (e *TokenError) Error() string {
+	assert.NotEmpty(e, "error is nil")
+	assert.NotEmpty(e.Err, "internal error is nil")
 	return fmt.Sprintf("token %s error: %s", e.Type, e.Err)
 }
 
@@ -29,6 +32,7 @@ func (e *TokenError) Error() string {
 var (
 	ErrSubjectCannotBeEmpty  = errors.New("subject cannot be empty")
 	ErrPrincipalCannotBeNil  = errors.New("principal cannot be nil")
+	ErrTokenExpired          = errors.New("token expired")
 	ErrTokenCannotBeEmpty    = errors.New("token cannot be empty")
 	ErrTokenFailedParsing    = errors.New("token failed to parse")
 	ErrTokenInvalid          = errors.New("token is invalid")

@@ -14,8 +14,7 @@ func NewChaCha20CipherOptions(opts ...ChaCha20CipherOption) *ChaCha20CipherOptio
 	options := &ChaCha20CipherOptions{
 		key: func() []byte {
 			key, _ := Key(32)
-			b, _ := base64.StdEncoding.DecodeString(*key)
-			return b
+			return key
 		}(),
 	}
 
@@ -31,7 +30,7 @@ type ChaCha20CipherOption func(opts *ChaCha20CipherOptions)
 func WithChaCha20CipherKeySize32() ChaCha20CipherOption {
 	return func(opts *ChaCha20CipherOptions) {
 		key, _ := Key(32)
-		opts.key = []byte(*key)
+		opts.key = key
 	}
 }
 

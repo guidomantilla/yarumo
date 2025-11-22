@@ -21,8 +21,8 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	assert.NotEmpty(e, "error is nil")
-	assert.NotEmpty(e.Err, "internal error is nil")
+	assert.NotNil(e, "error is nil")
+	assert.NotNil(e.Err, "internal error is nil")
 	return fmt.Sprintf("http request %s error: %s", e.Type, e.Err)
 }
 
@@ -31,15 +31,17 @@ type StatusCodeError struct {
 }
 
 func (e *StatusCodeError) Error() string {
-	assert.NotEmpty(e, "error is nil")
+	assert.NotNil(e, "error is nil")
 	return fmt.Sprintf("http retryable status code: %d", e.StatusCode)
 }
 
 //
 
 var (
+	ErrContextNil            = errors.New("context is nil")
+	ErrHttpRequestNil        = errors.New("http request is nil")
 	ErrRateLimiterExceeded   = errors.New("rate limit exceeded")
-	ErrHttpRequestFailed     = errors.New("request failed")
+	ErrHttpRequestFailed     = errors.New("http request failed")
 	ErrHttpNonReplayableBody = errors.New("http non-replayable request body")
 	ErrHttpGetBodyFailed     = errors.New("http get body failed")
 )

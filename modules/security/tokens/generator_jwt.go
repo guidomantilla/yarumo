@@ -7,11 +7,6 @@ import (
 	"github.com/guidomantilla/yarumo/common/utils"
 )
 
-type Claims struct {
-	jwt.RegisteredClaims
-	Principal Principal `json:"principal,omitempty"`
-}
-
 type jwtGenerator struct {
 	issuer        string
 	timeout       time.Duration
@@ -20,18 +15,18 @@ type jwtGenerator struct {
 	signingMethod jwt.SigningMethod
 }
 
-func NewJwtGenerator(opts ...JwtGeneratorOption) Generator {
-	options := NewJwtGeneratorOptions(opts...)
+func NewJwtGenerator(opts ...Option) Generator {
+	options := NewOptions(opts...)
 	return &jwtGenerator{
 		issuer:        options.issuer,
 		timeout:       options.timeout,
-		signingKey:    options.signingKey,
-		verifyingKey:  options.verifyingKey,
+		signingKey:    append([]byte(nil), options.signingKey...),
+		verifyingKey:  append([]byte(nil), options.verifyingKey...),
 		signingMethod: options.signingMethod,
 	}
 }
 
-func (manager *jwtGenerator) Generate(subject string, principal Principal) (*string, error) {
+func (generator *jwtGenerator) Generate(subject string, principal Principal) (*string, error) {
 	if utils.Empty(subject) {
 		return nil, ErrTokenGeneration(ErrSubjectCannotBeEmpty)
 	}
@@ -41,18 +36,18 @@ func (manager *jwtGenerator) Generate(subject string, principal Principal) (*str
 
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    manager.issuer,
+			Issuer:    generator.issuer,
 			Subject:   subject,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(manager.timeout)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(generator.timeout)),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 		Principal: principal,
 	}
 
-	token := jwt.NewWithClaims(manager.signingMethod, claims)
+	token := jwt.NewWithClaims(generator.signingMethod, claims)
 
-	tokenString, err := token.SignedString(manager.signingKey)
+	tokenString, err := token.SignedString(generator.signingKey)
 	if err != nil {
 		return nil, ErrTokenGeneration(err)
 	}
@@ -60,21 +55,21 @@ func (manager *jwtGenerator) Generate(subject string, principal Principal) (*str
 	return &tokenString, nil
 }
 
-func (manager *jwtGenerator) Validate(tokenString string) (Principal, error) {
+func (generator *jwtGenerator) Validate(tokenString string) (Principal, error) {
 	if utils.Empty(tokenString) {
 		return nil, ErrTokenValidation(ErrTokenCannotBeEmpty)
 	}
 
 	getKeyFunc := func(token *jwt.Token) (any, error) {
-		return manager.verifyingKey, nil
+		return generator.verifyingKey, nil
 	}
 
 	parserOptions := []jwt.ParserOption{
-		jwt.WithIssuer(manager.issuer),
-		jwt.WithValidMethods([]string{manager.signingMethod.Alg()}),
+		jwt.WithIssuer(generator.issuer),
+		jwt.WithValidMethods([]string{generator.signingMethod.Alg()}),
 	}
 
-	token, err := jwt.Parse(tokenString, getKeyFunc, parserOptions...)
+	token, err := jwt.ParseWithClaims(tokenString, Claims{}, getKeyFunc, parserOptions...)
 	if err != nil {
 		return nil, ErrTokenValidation(ErrTokenFailedParsing, err)
 	}
@@ -83,16 +78,19 @@ func (manager *jwtGenerator) Validate(tokenString string) (Principal, error) {
 		return nil, ErrTokenValidation(ErrTokenInvalid)
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(Claims)
 	if !ok {
 		return nil, ErrTokenValidation(ErrTokenEmptyClaims)
 	}
 
-	value, ok := claims["principal"]
-	if !ok {
+	now := time.Now()
+	if utils.NotNil(claims.RegisteredClaims.ExpiresAt) && now.After(claims.RegisteredClaims.ExpiresAt.Time) {
+		return nil, ErrTokenValidation(ErrTokenExpired)
+	}
+
+	if utils.Nil(claims.Principal) {
 		return nil, ErrTokenValidation(ErrTokenEmptyPrincipal)
 	}
 
-	principal := Principal(value.(map[string]any))
-	return principal, nil
+	return claims.Principal, nil
 }

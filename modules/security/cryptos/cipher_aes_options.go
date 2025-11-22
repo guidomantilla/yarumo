@@ -14,8 +14,7 @@ func NewAesCipherOptions(opts ...AesCipherOption) *AesCipherOptions {
 	options := &AesCipherOptions{
 		key: func() []byte {
 			key, _ := Key(32)
-			b, _ := base64.StdEncoding.DecodeString(*key)
-			return b
+			return key
 		}(),
 	}
 
@@ -31,7 +30,7 @@ type AesCipherOption func(opts *AesCipherOptions)
 func WithAesCipherKeySize32() AesCipherOption {
 	return func(opts *AesCipherOptions) {
 		key, _ := Key(32)
-		opts.key = []byte(*key)
+		opts.key = key
 	}
 }
 

@@ -45,7 +45,7 @@ func TestGrpcServer_Run_ListenError(t *testing.T) {
 	gs := NewGrpcServer("127.0.0.1:-1", f)
 	if err := gs.Run(context.Background()); err == nil {
 		t.Fatal("expected error")
-	} else if se, ok := err.(*ServerError); !ok || se.Type != ServerStartType {
+	} else if se, ok := err.(*Error); !ok || se.Type != ServerStartType {
 		t.Fatalf("expected ServerError type=start, got %#v", err)
 	}
 }
@@ -55,7 +55,7 @@ func TestGrpcServer_Run_ServeError(t *testing.T) {
 	gs := NewGrpcServer("127.0.0.1:0", f)
 	if err := gs.Run(context.Background()); err == nil {
 		t.Fatal("expected error")
-	} else if se, ok := err.(*ServerError); !ok || se.Type != ServerStartType {
+	} else if se, ok := err.(*Error); !ok || se.Type != ServerStartType {
 		t.Fatalf("expected ServerError type=start, got %#v", err)
 	}
 }

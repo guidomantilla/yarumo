@@ -4,21 +4,19 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"io"
 
-	"github.com/guidomantilla/yarumo/common/pointer"
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
-func Key(size int) (*string, error) {
+func Key(size int) ([]byte, error) {
 	key := make([]byte, size)
 	_, err := rand.Reader.Read(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate key: %w", err)
 	}
-	return pointer.ToPtr(base64.StdEncoding.EncodeToString(key)), nil
+	return key, nil
 }
 
 func AesEncrypt(key []byte, plaintext []byte) ([]byte, error) {
