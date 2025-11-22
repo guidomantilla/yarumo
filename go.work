@@ -4,6 +4,7 @@ use (
 	./internal/deprecated
 	./internal/dlocal
 	./internal/examples
+	./internal/temporal/courses/edu-101-go-code
 	./modules/common
 	./modules/maths
 	./modules/security
