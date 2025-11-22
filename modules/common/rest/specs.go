@@ -28,7 +28,7 @@ type RequestSpec struct {
 	URL         string
 	Path        string
 	Headers     map[string]string
-	QueryParams map[string]string
+	QueryParams map[string][]string
 	// Deprecated: use Body instead
 	RawBody []byte
 	Body    any
@@ -38,20 +38,7 @@ func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 	assert.NotEmpty(spec, "request spec is nil")
 	assert.NotEmpty(ctx, "ctx is nil")
 
-	u, err := url.Parse(spec.URL)
-	if err != nil {
-		return nil, err
-	}
-
-	if spec.Path != "" {
-		u.Path = path.Join(u.Path, spec.Path)
-	}
-
-	q := u.Query()
-	for k, v := range spec.QueryParams {
-		q.Set(k, v)
-	}
-	u.RawQuery = q.Encode()
+	// Fix headers
 
 	if spec.Headers == nil {
 		spec.Headers = make(map[string]string)
@@ -61,6 +48,9 @@ func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 		spec.Headers["Accept"] = "application/json"
 	}
 
+	// Process body
+
+	var err error
 	var body io.Reader
 	if spec.Body != nil {
 		spec.RawBody, err = json.Marshal(spec.Body)
@@ -75,6 +65,25 @@ func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 			spec.Headers["Content-Type"] = "application/json"
 		}
 	}
+
+	// Build request
+
+	u, err := url.Parse(spec.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	if spec.Path != "" {
+		u.Path = path.Join(u.Path, spec.Path)
+	}
+
+	q := u.Query()
+	for k, vals := range spec.QueryParams {
+		for _, v := range vals {
+			q.Add(k, v)
+		}
+	}
+	u.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, spec.Method, u.String(), body)
 	if err != nil {
