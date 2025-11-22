@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	retry "github.com/avast/retry-go/v4"
+
 	"github.com/guidomantilla/yarumo/common/assert"
 )
 

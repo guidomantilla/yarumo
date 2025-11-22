@@ -115,7 +115,7 @@ func TestDo_UsesDefaultClientTransport(t *testing.T) {
 		t.Fatalf("new request: %v", err)
 	}
 
-	res, err := Do(req)
+	res, err := Do(req) // nolint:gosec
 	if err != nil {
 		t.Fatalf("Do returned error: %v", err)
 	}
