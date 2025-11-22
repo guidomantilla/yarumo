@@ -30,6 +30,7 @@ func NewCronServer(cron CronServer) lifecycle.Server {
 }
 
 func (server *cronServer) Run(ctx context.Context) error {
+	assert.NotNil(server, "cronServer instance is nil")
 	assert.NotNil(ctx, fmt.Sprintf("%s - error starting up: context is nil", server.name))
 
 	log.Info().Str("stage", "startup").Str("component", server.name).Msg("starting up")
@@ -41,6 +42,7 @@ func (server *cronServer) Run(ctx context.Context) error {
 }
 
 func (server *cronServer) Stop(ctx context.Context) error {
+	assert.NotNil(server, "cronServer instance is nil")
 	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", server.name))
 
 	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopping")

@@ -34,6 +34,7 @@ func NewGrpcServer(address string, server GrpcServer) lifecycle.Server {
 }
 
 func (server *grpcServer) Run(ctx context.Context) error {
+	assert.NotNil(server, "grpcServer instance is nil")
 	assert.NotNil(ctx, fmt.Sprintf("%s - error starting up: context is nil", server.name))
 
 	log.Info().Str("stage", "startup").Str("component", server.name).Msg("starting up")
@@ -55,6 +56,7 @@ func (server *grpcServer) Run(ctx context.Context) error {
 }
 
 func (server *grpcServer) Stop(ctx context.Context) error {
+	assert.NotNil(server, "grpcServer instance is nil")
 	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", server.name))
 
 	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopping")

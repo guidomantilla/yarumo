@@ -27,6 +27,7 @@ func NewBaseServer() lifecycle.Server {
 }
 
 func (server *baseServer) Run(ctx context.Context) error {
+	assert.NotNil(server, "baseServer instance is nil")
 	assert.NotNil(ctx, fmt.Sprintf("%s - error starting up: context is nil", server.name))
 
 	log.Info().Str("stage", "startup").Str("component", server.name).Msg("starting up")
@@ -37,6 +38,7 @@ func (server *baseServer) Run(ctx context.Context) error {
 }
 
 func (server *baseServer) Stop(ctx context.Context) error {
+	assert.NotNil(server, "baseServer instance is nil")
 	assert.NotNil(ctx, fmt.Sprintf("%s -  error shutting down: context is nil", server.name))
 
 	log.Info().Str("stage", "shut down").Str("component", server.name).Msg("stopping")
