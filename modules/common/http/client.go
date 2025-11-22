@@ -156,34 +156,29 @@ func (c *client) waitForLimiter(ctx context.Context) error {
  * Fake implementation
  */
 
-type fakeClient struct {
-	DoFunc    func(req *http.Request) (*http.Response, error)
+type FakeClient struct {
+	DoFn      DoFn
 	LimiterOn bool
 	RetrierOn bool
 }
 
-func NewFakeClient(do DoFn) Client {
-	assert.NotNil(do, "DoFn is nil")
-	return &fakeClient{DoFunc: do}
-}
-
-func (c *fakeClient) Do(req *http.Request) (*http.Response, error) {
+func (c *FakeClient) Do(req *http.Request) (*http.Response, error) {
 	assert.NotNil(c, "client is nil")
-	assert.NotNil(c.DoFunc, "DoFn is nil")
+	assert.NotNil(c.DoFn, "DoFn is nil")
 
 	if utils.Empty(req) {
 		return nil, ErrDo(ErrHttpRequestNil)
 	}
 
-	return c.DoFunc(req)
+	return c.DoFn(req)
 }
 
-func (c *fakeClient) LimiterEnabled() bool {
+func (c *FakeClient) LimiterEnabled() bool {
 	assert.NotNil(c, "client is nil")
 	return c.LimiterOn
 }
 
-func (c *fakeClient) RetrierEnabled() bool {
+func (c *FakeClient) RetrierEnabled() bool {
 	assert.NotNil(c, "client is nil")
 	return c.RetrierOn
 }

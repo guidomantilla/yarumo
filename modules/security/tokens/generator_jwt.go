@@ -4,7 +4,12 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/utils"
+)
+
+var (
+	JwtGenerator = NewJwtGenerator()
 )
 
 type jwtGenerator struct {
@@ -26,7 +31,9 @@ func NewJwtGenerator(opts ...Option) Generator {
 	}
 }
 
-func (generator *jwtGenerator) Generate(subject string, principal Principal) (*string, error) {
+func (g *jwtGenerator) Generate(subject string, principal Principal) (*string, error) {
+	assert.NotNil(g, "generator is nil")
+
 	if utils.Empty(subject) {
 		return nil, ErrTokenGeneration(ErrSubjectCannotBeEmpty)
 	}
@@ -36,18 +43,18 @@ func (generator *jwtGenerator) Generate(subject string, principal Principal) (*s
 
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    generator.issuer,
+			Issuer:    g.issuer,
 			Subject:   subject,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(generator.timeout)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(g.timeout)),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 		Principal: principal,
 	}
 
-	token := jwt.NewWithClaims(generator.signingMethod, claims)
+	token := jwt.NewWithClaims(g.signingMethod, claims)
 
-	tokenString, err := token.SignedString(generator.signingKey)
+	tokenString, err := token.SignedString(g.signingKey)
 	if err != nil {
 		return nil, ErrTokenGeneration(err)
 	}
@@ -55,18 +62,20 @@ func (generator *jwtGenerator) Generate(subject string, principal Principal) (*s
 	return &tokenString, nil
 }
 
-func (generator *jwtGenerator) Validate(tokenString string) (Principal, error) {
+func (g *jwtGenerator) Validate(tokenString string) (Principal, error) {
+	assert.NotNil(g, "generator is nil")
+
 	if utils.Empty(tokenString) {
 		return nil, ErrTokenValidation(ErrTokenCannotBeEmpty)
 	}
 
 	getKeyFunc := func(token *jwt.Token) (any, error) {
-		return generator.verifyingKey, nil
+		return g.verifyingKey, nil
 	}
 
 	parserOptions := []jwt.ParserOption{
-		jwt.WithIssuer(generator.issuer),
-		jwt.WithValidMethods([]string{generator.signingMethod.Alg()}),
+		jwt.WithIssuer(g.issuer),
+		jwt.WithValidMethods([]string{g.signingMethod.Alg()}),
 	}
 
 	token, err := jwt.ParseWithClaims(tokenString, Claims{}, getKeyFunc, parserOptions...)

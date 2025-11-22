@@ -328,18 +328,15 @@ func TestClient_Do_ReplayableBody_Success(t *testing.T) {
 
 func TestNewFakeClient_DoAndFlags(t *testing.T) {
 	called := false
-	fc := NewFakeClient(func(req *stdhttp.Request) (*stdhttp.Response, error) {
-		called = true
-		return &stdhttp.Response{StatusCode: 204, Body: stdhttp.NoBody}, nil
-	})
-
-	// Set flags and verify LimiterEnabled/RetrierEnabled
-	fci, ok := fc.(*fakeClient)
-	if !ok {
-		t.Fatalf("NewFakeClient did not return *fakeClient")
+	fc := &FakeClient{
+		DoFn: func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			called = true
+			return &stdhttp.Response{StatusCode: 204, Body: stdhttp.NoBody}, nil
+		},
+		LimiterOn: true,
+		RetrierOn: true,
 	}
-	fci.LimiterOn = true
-	fci.RetrierOn = true
+
 	if !fc.LimiterEnabled() || !fc.RetrierEnabled() {
 		t.Fatalf("fake client flags not reflected in methods")
 	}
@@ -358,8 +355,8 @@ func TestNewFakeClient_DoAndFlags(t *testing.T) {
 	}
 
 	// Also test flag false values
-	fci.LimiterOn = false
-	fci.RetrierOn = false
+	fc.LimiterOn = false
+	fc.RetrierOn = false
 	if fc.LimiterEnabled() || fc.RetrierEnabled() {
 		t.Fatalf("expected false from LimiterEnabled/RetrierEnabled with flags off")
 	}
@@ -398,9 +395,13 @@ func TestClient_waitForLimiter_DisabledLimiter_NoWait(t *testing.T) {
 }
 
 func TestFakeClient_Do_RequestNil(t *testing.T) {
-	fc := NewFakeClient(func(req *stdhttp.Request) (*stdhttp.Response, error) {
-		return &stdhttp.Response{StatusCode: 200, Body: stdhttp.NoBody}, nil
-	})
+	fc := &FakeClient{
+		DoFn: func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			return &stdhttp.Response{StatusCode: 200, Body: stdhttp.NoBody}, nil
+		},
+		LimiterOn: false,
+		RetrierOn: false,
+	}
 	res, err := fc.Do(nil)
 	if err == nil {
 		t.Fatalf("expected error for nil request, got res=%+v", res)

@@ -6,9 +6,14 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/utils"
 
 	"github.com/guidomantilla/yarumo/security/cryptos"
+)
+
+var (
+	OpaqueGenerator = NewOpaqueGenerator()
 )
 
 type opaqueGenerator struct {
@@ -24,7 +29,9 @@ func NewOpaqueGenerator(opts ...Option) Generator {
 	}
 }
 
-func (generator *opaqueGenerator) Generate(subject string, principal Principal) (*string, error) {
+func (g *opaqueGenerator) Generate(subject string, principal Principal) (*string, error) {
+	assert.NotNil(g, "generator is nil")
+
 	if utils.Empty(subject) {
 		return nil, ErrTokenGeneration(ErrSubjectCannotBeEmpty)
 	}
@@ -35,7 +42,7 @@ func (generator *opaqueGenerator) Generate(subject string, principal Principal) 
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   subject,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(generator.timeout)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(g.timeout)),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
@@ -47,7 +54,7 @@ func (generator *opaqueGenerator) Generate(subject string, principal Principal) 
 		return nil, ErrTokenGeneration(err)
 	}
 
-	ciphered, err := cryptos.AesEncrypt(generator.cipherKey, plain)
+	ciphered, err := cryptos.AesEncrypt(g.cipherKey, plain)
 	if err != nil {
 		return nil, ErrTokenGeneration(err)
 	}
@@ -56,7 +63,9 @@ func (generator *opaqueGenerator) Generate(subject string, principal Principal) 
 	return &token, nil
 }
 
-func (generator *opaqueGenerator) Validate(tokenString string) (Principal, error) {
+func (g *opaqueGenerator) Validate(tokenString string) (Principal, error) {
+	assert.NotNil(g, "generator is nil")
+
 	if utils.Empty(tokenString) {
 		return nil, ErrTokenValidation(ErrTokenCannotBeEmpty)
 	}
@@ -66,7 +75,7 @@ func (generator *opaqueGenerator) Validate(tokenString string) (Principal, error
 		return nil, ErrTokenValidation(err)
 	}
 
-	plain, err := cryptos.AesDecrypt(generator.cipherKey, ciphered)
+	plain, err := cryptos.AesDecrypt(g.cipherKey, ciphered)
 	if err != nil {
 		return nil, ErrTokenValidation(err)
 	}

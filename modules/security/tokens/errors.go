@@ -22,8 +22,8 @@ type TokenError struct {
 }
 
 func (e *TokenError) Error() string {
-	assert.NotEmpty(e, "error is nil")
-	assert.NotEmpty(e.Err, "internal error is nil")
+	assert.NotNil(e, "error is nil")
+	assert.NotNil(e.Err, "internal error is nil")
 	return fmt.Sprintf("token %s error: %s", e.Type, e.Err)
 }
 

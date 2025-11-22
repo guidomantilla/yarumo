@@ -65,7 +65,7 @@ func AesDecrypt(key []byte, ciphertext []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-func ChaCha20Encrypt(key, plaintext []byte) ([]byte, error) {
+func ChaCha20Encrypt(key []byte, plaintext []byte) ([]byte, error) {
 	aead, err := chacha20poly1305.New(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create chacha20poly1305 cipher: %w", err)
@@ -81,7 +81,7 @@ func ChaCha20Encrypt(key, plaintext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func ChaCha20Decrypt(key, ciphertext []byte) ([]byte, error) {
+func ChaCha20Decrypt(key []byte, ciphertext []byte) ([]byte, error) {
 	aead, err := chacha20poly1305.New(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create chacha20poly1305 cipher: %w", err)

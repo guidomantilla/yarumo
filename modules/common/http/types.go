@@ -16,6 +16,7 @@ import "net/http"
 
 var (
 	_ Client = (*client)(nil)
+	_ Client = (*FakeClient)(nil)
 )
 
 // Client represents the minimal contract compatible with *http.Client.
@@ -30,7 +31,3 @@ type Client interface {
 	LimiterEnabled() bool
 	RetrierEnabled() bool
 }
-
-type RetryOnResponseFn func(res *http.Response) bool
-
-type DoFn func(req *http.Request) (*http.Response, error)

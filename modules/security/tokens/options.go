@@ -76,7 +76,7 @@ func WithJwtSigningMethod(signingMethod jwt.SigningMethod) Option {
 	}
 }
 
-func WithOpaqueCipherKey(cipherKey []byte) Option {
+func WithOpaqueKey(cipherKey []byte) Option {
 	return func(opts *Options) {
 		if utils.NotEmpty(cipherKey) {
 			opts.cipherKey = cipherKey

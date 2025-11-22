@@ -17,7 +17,15 @@ var (
 	_ DoFn              = Do
 	_ retry.RetryIfFunc = RetryIfHttpError
 	_ RetryOnResponseFn = RetryOn5xxAnd429Response
+
+	_ DoFn = DefaultClient.Do
 )
+
+// Types
+
+type RetryOnResponseFn func(res *http.Response) bool
+
+type DoFn func(req *http.Request) (*http.Response, error)
 
 // Noop
 

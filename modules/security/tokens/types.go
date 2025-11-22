@@ -4,6 +4,8 @@ import jwt "github.com/golang-jwt/jwt/v5"
 
 var (
 	_ Generator = (*jwtGenerator)(nil)
+	_ Generator = (*opaqueGenerator)(nil)
+	_ Generator = (*FakeGenerator)(nil)
 )
 
 type Claims struct {
