@@ -2,23 +2,25 @@ package rest
 
 import (
 	"encoding/json"
-	"fmt"
 	"mime"
+	"net/http"
 	"strings"
+
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
-// IsJSONMediaType informa si el media type es JSON (application/json o *+json)
-func IsJSONMediaType(mediaType string) bool {
-	if mediaType == "application/json" {
+// isJSONMediaType checks if the media type is JSON.
+func isJSONMediaType(mediaType string) bool {
+	if utils.Equal(mediaType, "application/json") {
 		return true
 	}
 	return strings.HasSuffix(mediaType, "+json")
 }
 
-// DecodeResponseBody extrae la lógica de decodificación genérica del cuerpo HTTP.
-func DecodeResponseBody[T any](body []byte, statusCode int, contentType string) (T, error) {
+// decodeResponseBody decodes the response body into the provided type.
+func decodeResponseBody[T any](body []byte, statusCode int, contentType string) (T, error) {
 	var zero T
-	if statusCode == 204 || len(body) == 0 {
+	if utils.Empty(http.StatusText(statusCode)) || utils.Equal(http.StatusNoContent, statusCode) || utils.Empty(body) {
 		return zero, nil
 	}
 
@@ -41,7 +43,7 @@ func DecodeResponseBody[T any](body []byte, statusCode int, contentType string) 
 	}
 
 	var decoded T
-	if IsJSONMediaType(mediaType) || mediaType == "" {
+	if isJSONMediaType(mediaType) || mediaType == "" {
 		err := json.Unmarshal(body, &decoded)
 		if err != nil {
 			return zero, err
@@ -49,5 +51,5 @@ func DecodeResponseBody[T any](body []byte, statusCode int, contentType string) 
 		return decoded, nil
 	}
 
-	return zero, fmt.Errorf("content-type '%s' no soportado para el tipo de respuesta solicitado", contentType)
+	return zero, &DecodeResponseError[T]{ContentType: contentType, T: zero}
 }

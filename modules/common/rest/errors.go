@@ -37,6 +37,17 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprintf("unexpected status code %d: %s", e.StatusCode, e.Status)
 }
 
+type DecodeResponseError[T any] struct {
+	ContentType string
+	T           T
+}
+
+func (e *DecodeResponseError[T]) Error() string {
+	assert.NotEmpty(e, "error is nil")
+	assert.NotNil(e.T, "type is nil")
+	return fmt.Sprintf("content type %s not supported for type  %T", e.ContentType, e.T)
+}
+
 //
 
 func ErrCall(errs ...error) error {

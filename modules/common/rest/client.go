@@ -5,18 +5,21 @@ import (
 	"io"
 	"time"
 
-	"github.com/guidomantilla/yarumo/common/http"
+	"github.com/guidomantilla/yarumo/common/assert"
 )
 
-func Call[T any](ctx context.Context, client http.Client, spec RequestSpec) (*ResponseSpec[T], error) {
+func Call[T any](ctx context.Context, spec *RequestSpec, options ...Option) (*ResponseSpec[T], error) {
+	assert.NotEmpty(ctx, "ctx is nil")
+	assert.NotEmpty(spec, "spec is nil")
 
+	opts := NewOptions(options...)
 	req, err := spec.Build(ctx)
 	if err != nil {
 		return nil, ErrCall(err)
 	}
 
 	start := time.Now()
-	resp, err := client.Do(req)
+	resp, err := opts.DoFn(req)
 	if err != nil {
 		return nil, ErrCall(err)
 	}
@@ -35,7 +38,7 @@ func Call[T any](ctx context.Context, client http.Client, spec RequestSpec) (*Re
 		return nil, ErrCall(&HTTPError{StatusCode: resp.StatusCode, Status: resp.Status, Body: body})
 	}
 
-	decoded, err := DecodeResponseBody[T](body, resp.StatusCode, resp.Header.Get("Content-Type"))
+	decoded, err := decodeResponseBody[T](body, resp.StatusCode, resp.Header.Get("Content-Type"))
 	if err != nil {
 		return nil, ErrCall(err)
 	}
