@@ -7,11 +7,11 @@ var (
 	_ GenerateFn = OpaqueGenerate
 	_ ValidateFn = OpaqueValidate
 
-	_ GenerateFn = JwtGenerator.Generate
-	_ ValidateFn = JwtGenerator.Validate
+	_ GenerateFn = DefaultJwtGenerator.Generate
+	_ ValidateFn = DefaultJwtGenerator.Validate
 
-	_ GenerateFn = OpaqueGenerator.Generate
-	_ ValidateFn = OpaqueGenerator.Validate
+	_ GenerateFn = DefaultOpaqueGenerator.Generate
+	_ ValidateFn = DefaultOpaqueGenerator.Validate
 )
 
 // Types
@@ -23,17 +23,17 @@ type ValidateFn func(tokenString string) (Principal, error)
 // Defaults
 
 func JwtGenerate(subject string, principal Principal) (*string, error) {
-	return JwtGenerator.Generate(subject, principal)
+	return DefaultJwtGenerator.Generate(subject, principal)
 }
 
 func JwtValidate(tokenString string) (Principal, error) {
-	return JwtGenerator.Validate(tokenString)
+	return DefaultJwtGenerator.Validate(tokenString)
 }
 
 func OpaqueGenerate(subject string, principal Principal) (*string, error) {
-	return OpaqueGenerator.Generate(subject, principal)
+	return DefaultOpaqueGenerator.Generate(subject, principal)
 }
 
 func OpaqueValidate(tokenString string) (Principal, error) {
-	return OpaqueGenerator.Validate(tokenString)
+	return DefaultOpaqueGenerator.Validate(tokenString)
 }

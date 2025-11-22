@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	JwtGenerator = NewJwtGenerator()
+	DefaultJwtGenerator = NewJwtGenerator()
 )
 
 type jwtGenerator struct {

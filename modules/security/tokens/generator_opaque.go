@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	OpaqueGenerator = NewOpaqueGenerator()
+	DefaultOpaqueGenerator = NewOpaqueGenerator()
 )
 
 type opaqueGenerator struct {
