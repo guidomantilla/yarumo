@@ -1,4 +1,4 @@
-package uids
+package hashes
 
 import (
 	"errors"
@@ -8,11 +8,11 @@ import (
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
-func TestErrUIDFunctionNotFound(t *testing.T) {
+func TestErrHashFunctionNotFound(t *testing.T) {
 	name := "generate"
-	err := ErrUIDFunctionNotFound(name)
+	err := ErrHashFunctionNotFound(name)
 	if err == nil {
-		t.Fatalf("ErrUIDFunctionNotFound returned nil")
+		t.Fatalf("ErrHashFunctionNotFound returned nil")
 	}
 
 	// Type assertion to *UIDError
@@ -22,16 +22,16 @@ func TestErrUIDFunctionNotFound(t *testing.T) {
 	}
 
 	// Check exported constant and inner error message
-	if ue.Type != UIDNotFound {
-		t.Fatalf("Type = %q, want %q", ue.Type, UIDNotFound)
+	if ue.Type != HashNotFound {
+		t.Fatalf("Type = %q, want %q", ue.Type, HashNotFound)
 	}
-	innerMsg := "uid function " + name + " not found"
+	innerMsg := "hash function " + name + " not found"
 	if ue.Err == nil || ue.Err.Error() != innerMsg {
 		t.Fatalf("inner error message = %v, want %q", ue.Err, innerMsg)
 	}
 
 	// Check Error() formatting overrides the embedded type
-	expected := "uid " + UIDNotFound + " error: " + innerMsg
+	expected := "hash " + HashNotFound + " error: " + innerMsg
 	if got := ue.Error(); got != expected {
 		t.Fatalf("Error() = %q, want %q", got, expected)
 	}
@@ -64,7 +64,7 @@ func TestUIDError_ErrorVariants(t *testing.T) {
 		ue := &Error{TypedError: cerrs.TypedError{Type: "custom"}}
 		got := ue.Error()
 		// With Err == nil and %s formatting, fmt prints %!s(<nil>)
-		want := "uid custom error: %!s(<nil>)"
+		want := "hash custom error: %!s(<nil>)"
 		if got != want {
 			t.Fatalf("Error() = %q, want %q", got, want)
 		}

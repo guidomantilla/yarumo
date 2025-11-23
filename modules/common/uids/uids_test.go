@@ -136,7 +136,7 @@ func TestGetByName_Unknown(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error for unknown name")
 	}
-	var ue *UIDError
+	var ue *Error
 	if !errors.As(err, &ue) || ue == nil {
 		t.Fatalf("error is not *UIDError: %T", err)
 	}

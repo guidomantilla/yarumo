@@ -3,6 +3,7 @@ package hashes
 import (
 	"fmt"
 
+	"github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
@@ -11,19 +12,21 @@ const (
 )
 
 var (
-	_ error = (*HashError)(nil)
+	_ error = (*Error)(nil)
 )
 
-type HashError struct {
+type Error struct {
 	cerrs.TypedError
 }
 
-func (e *HashError) Error() string {
+func (e *Error) Error() string {
+	assert.NotNil(e, "error is nil")
+	assert.NotNil(e.Err, "internal error is nil")
 	return fmt.Sprintf("hash %s error: %s", e.Type, e.Err)
 }
 
 func ErrHashFunctionNotFound(name string) error {
-	return &HashError{
+	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: HashNotFound,
 			Err:  fmt.Errorf("hash function %s not found", name),

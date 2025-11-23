@@ -12,21 +12,21 @@ const (
 )
 
 var (
-	_ error = (*UIDError)(nil)
+	_ error = (*Error)(nil)
 )
 
-type UIDError struct {
+type Error struct {
 	cerrs.TypedError
 }
 
-func (e *UIDError) Error() string {
+func (e *Error) Error() string {
 	assert.NotEmpty(e, "error is nil")
 	assert.NotEmpty(e.Err, "internal error is nil")
 	return fmt.Sprintf("uid %s error: %s", e.Type, e.Err)
 }
 
 func ErrUIDFunctionNotFound(name string) error {
-	return &UIDError{
+	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: UIDNotFound,
 			Err:  fmt.Errorf("uid function %s not found", name),
