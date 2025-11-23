@@ -30,16 +30,14 @@ func (e *TokenError) Error() string {
 //
 
 var (
-	ErrSubjectCannotBeEmpty  = errors.New("subject cannot be empty")
-	ErrPrincipalCannotBeNil  = errors.New("principal cannot be nil")
-	ErrTokenExpired          = errors.New("token expired")
-	ErrTokenCannotBeEmpty    = errors.New("token cannot be empty")
-	ErrTokenFailedParsing    = errors.New("token failed to parse")
-	ErrTokenInvalid          = errors.New("token is invalid")
-	ErrTokenEmptyClaims      = errors.New("token claims is empty")
-	ErrTokenEmptyPrincipal   = errors.New("token principal is empty")
-	ErrTokenGenerationFailed = errors.New("token generation failed")
-	ErrTokenValidationFailed = errors.New("token validation failed")
+	ErrSubjectCannotBeEmpty             = errors.New("subject cannot be empty")
+	ErrPrincipalCannotBeNil             = errors.New("principal cannot be nil")
+	ErrTokenExpired                     = errors.New("token expired")
+	ErrTokenCannotBeEmpty               = errors.New("token cannot be empty")
+	ErrTokenFailedParsing               = errors.New("token failed to parse")
+	ErrTokenEmptgit          yPrincipal = errors.New("token principal is empty")
+	ErrTokenGenerationFailed            = errors.New("token generation failed")
+	ErrTokenValidationFailed            = errors.New("token validation failed")
 )
 
 func ErrTokenGeneration(errs ...error) error {

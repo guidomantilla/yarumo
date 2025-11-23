@@ -83,15 +83,7 @@ func (g *jwtGenerator) Validate(tokenString string) (Principal, error) {
 		return nil, ErrTokenValidation(ErrTokenFailedParsing, err)
 	}
 
-	if !token.Valid {
-		return nil, ErrTokenValidation(ErrTokenInvalid)
-	}
-
-	claims, ok := token.Claims.(*Claims)
-	if !ok {
-		return nil, ErrTokenValidation(ErrTokenEmptyClaims)
-	}
-
+	claims := token.Claims.(*Claims)
 	if utils.Nil(claims.Principal) {
 		return nil, ErrTokenValidation(ErrTokenEmptyPrincipal)
 	}

@@ -44,6 +44,13 @@ func TestJwtGenerate_InputErrors(t *testing.T) {
 	}
 }
 
+func TestJwtGenerate_SigningMethodErrors(t *testing.T) {
+	g := newJwtWith([]byte("k"), "", jwt.SigningMethodNone, time.Hour)
+	if _, err := g.Generate("sub", Principal{"a": 1}); err == nil || !errors.Is(err, ErrTokenGenerationFailed) {
+		t.Fatalf("expected error for signing method none, got %v", err)
+	}
+}
+
 func TestJwtValidate_InputEmptyToken(t *testing.T) {
 	g := newJwtWith([]byte("k"), "", jwt.SigningMethodHS512, time.Hour)
 	if _, err := g.Validate(""); err == nil || !errors.Is(err, ErrTokenValidationFailed) {
