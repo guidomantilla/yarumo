@@ -34,7 +34,7 @@ func TestError_ErrorMessage_StartAndStop(t *testing.T) {
 	if e1 == nil {
 		t.Fatal("nil error")
 	}
-	// Call the Error() method explicitly to cover it and validate message text
+	// Call the Error() method explicitly to cover it and validate the message text
 	msg1 := e1.Error()
 	if msg1 == "" || !containsAll(msg1, []string{"server", "api", "failed to start", "root-cause"}) {
 		t.Fatalf("unexpected start error message: %q", msg1)

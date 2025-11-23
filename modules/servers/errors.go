@@ -23,7 +23,7 @@ type Error struct {
 func (e *Error) Error() string {
 	assert.NotNil(e, "error is nil")
 	assert.NotNil(e.Err, "internal error is nil")
-	return e.Err.Error()
+	return fmt.Sprintf("server %s error: %s", e.Type, e.Err)
 }
 
 func ErrServerFailedToStart(name string, err error) error {

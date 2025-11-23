@@ -78,7 +78,7 @@ func (g *jwtGenerator) Validate(tokenString string) (Principal, error) {
 		jwt.WithValidMethods([]string{g.signingMethod.Alg()}),
 	}
 
-	token, err := jwt.ParseWithClaims(tokenString, Claims{}, getKeyFunc, parserOptions...)
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, getKeyFunc, parserOptions...)
 	if err != nil {
 		return nil, ErrTokenValidation(ErrTokenFailedParsing, err)
 	}
@@ -87,14 +87,9 @@ func (g *jwtGenerator) Validate(tokenString string) (Principal, error) {
 		return nil, ErrTokenValidation(ErrTokenInvalid)
 	}
 
-	claims, ok := token.Claims.(Claims)
+	claims, ok := token.Claims.(*Claims)
 	if !ok {
 		return nil, ErrTokenValidation(ErrTokenEmptyClaims)
-	}
-
-	now := time.Now()
-	if utils.NotNil(claims.RegisteredClaims.ExpiresAt) && now.After(claims.RegisteredClaims.ExpiresAt.Time) {
-		return nil, ErrTokenValidation(ErrTokenExpired)
 	}
 
 	if utils.Nil(claims.Principal) {
