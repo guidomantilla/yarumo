@@ -50,7 +50,7 @@ func NoopRetryHook(n uint, err error) {
 func NoopDo(req *http.Request) (*http.Response, error) {
 	// no-op: explicitly touch params to generate coverage statements
 	_ = req
-	return nil, ErrDo(ErrHttpRequestFailed)
+	return nil, ErrDo()
 }
 
 // Defaults

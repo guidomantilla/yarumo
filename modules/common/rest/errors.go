@@ -51,6 +51,7 @@ func (e *DecodeResponseError[T]) Error() string {
 //
 
 var (
+	ErrRestCallFailed = errors.New("rest call failed")
 	ErrContextNil     = errors.New("context is nil")
 	ErrRequestSpecNil = errors.New("request spec is nil")
 )
@@ -59,7 +60,7 @@ func ErrCall(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: RequestType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrRestCallFailed)...),
 		},
 	}
 }

@@ -38,10 +38,10 @@ func (e *StatusCodeError) Error() string {
 //
 
 var (
+	ErrHttpRequestFailed     = errors.New("http request failed")
 	ErrContextNil            = errors.New("context is nil")
 	ErrHttpRequestNil        = errors.New("http request is nil")
 	ErrRateLimiterExceeded   = errors.New("rate limit exceeded")
-	ErrHttpRequestFailed     = errors.New("http request failed")
 	ErrHttpNonReplayableBody = errors.New("http non-replayable request body")
 	ErrHttpGetBodyFailed     = errors.New("http get body failed")
 )
@@ -50,7 +50,7 @@ func ErrDo(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: RequestType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrHttpRequestFailed)...),
 		},
 	}
 }

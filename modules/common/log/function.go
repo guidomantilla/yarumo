@@ -21,7 +21,6 @@ func Configure(name string, version string) zerolog.Logger {
 			writers = append(writers, conn)
 		}
 	}
-
 	logger := zerolog.New(zerolog.MultiLevelWriter(writers...)).With()
 	if utils.NotEmpty(name) {
 		logger = logger.Str("name", name)
