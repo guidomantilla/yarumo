@@ -10,6 +10,10 @@ import (
 	"github.com/guidomantilla/yarumo/security/cryptos"
 )
 
+type BadClaims struct {
+	A int
+}
+
 func newOpaqueWithKeyTimeout(key []byte, timeout time.Duration) Generator {
 	return NewOpaqueGenerator(WithOpaqueKey(key), WithTimeout(timeout))
 }
@@ -40,6 +44,26 @@ func TestOpaqueGenerate_Errors(t *testing.T) {
 	}
 	if _, err := g.Generate("sub", nil); err == nil || !errors.Is(err, ErrTokenGenerationFailed) {
 		t.Fatalf("expected generation error for nil principal, got %v", err)
+	}
+}
+
+func TestOpaqueGenerate_ClaimMarshalError(t *testing.T) {
+	key := []byte("0123456789abcdef0123456789abcdef")
+	g := newOpaqueWithKeyTimeout(key, time.Hour)
+
+	fn := func() {}
+
+	if _, err := g.Generate("sub", Principal{"x": fn}); err == nil || !errors.Is(err, ErrTokenGenerationFailed) {
+		t.Fatalf("expected generation error for empty subject, got %v", err)
+	}
+}
+
+func TestOpaqueGenerate_AesEncryptError(t *testing.T) {
+	key := []byte("1")
+	g := newOpaqueWithKeyTimeout(key, time.Hour)
+
+	if _, err := g.Generate("sub", Principal{"x": 1}); err == nil || !errors.Is(err, ErrTokenGenerationFailed) {
+		t.Fatalf("expected generation error for empty subject, got %v", err)
 	}
 }
 
