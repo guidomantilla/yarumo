@@ -61,14 +61,14 @@ func TestErrDoCall_JoinAndType(t *testing.T) {
 	}
 }
 
-func TestErrDoCall_NoArgs_NilInner(t *testing.T) {
+func TestErrDoCall_NoArgs_ErrHttpRequestFailedInner(t *testing.T) {
 	err := ErrDo()
 	if err == nil {
 		t.Fatalf("ErrDoCall() with no args should still return non-nil *Error")
 	}
 
-	// Unwrap should be nil because TypedError.Err is nil
-	if u := errors.Unwrap(err); u != nil {
+	// Unwrap should be nil because TypedError.Err is ErrHttpRequestFailed
+	if u := errors.Unwrap(err); !errors.Is(u, ErrHttpRequestFailed) {
 		t.Fatalf("errors.Unwrap() = %v, want nil", u)
 	}
 
