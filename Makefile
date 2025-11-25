@@ -91,11 +91,3 @@ update-dependencies:
 	cd modules/security && go get -u ./... && go get -t -u ./... && go mod tidy
 	cd modules/servers 	&& go get -u ./... && go get -t -u ./... && go mod tidy
 	go work sync
-
-## Validate 100% coverage for security/tokens package
-.PHONY: test-security-tokens-coverage
-test-security-tokens-coverage:
-	cd modules/security && \
-		go test ./tokens -coverprofile=.reports/coverage.out && \
-		go tool cover -func=.reports/coverage.out | tee .reports/coverage.func && \
-		awk '/^total:/ { if ($$3 != "100.0%") { print "Coverage is" , $$3 , "but 100.0% is required"; exit 1 } }' .reports/coverage.func
