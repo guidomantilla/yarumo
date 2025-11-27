@@ -37,7 +37,7 @@ func WithChaCha20CipherKeySize32() ChaCha20CipherOption {
 func WithChaCha20CipherKey(key string) ChaCha20CipherOption {
 	return func(opts *ChaCha20CipherOptions) {
 		if utils.NotEmpty(key) {
-			b, _ := base64.StdEncoding.DecodeString(key)
+			b, _ := base64.RawStdEncoding.DecodeString(key)
 			opts.key = b
 		}
 	}

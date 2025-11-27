@@ -37,7 +37,7 @@ func WithAesCipherKeySize32() AesCipherOption {
 func WithAesCipherKey(key string) AesCipherOption {
 	return func(opts *AesCipherOptions) {
 		if utils.NotEmpty(key) {
-			b, _ := base64.StdEncoding.DecodeString(key)
+			b, _ := base64.RawStdEncoding.DecodeString(key)
 			opts.key = b
 		}
 	}

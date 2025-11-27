@@ -51,9 +51,9 @@ func GenerateSalt(saltSize int) ([]byte, error) {
 		return nil, err
 	}
 
-	length := base64.StdEncoding.EncodedLen(len(unEncodedSalt))
+	length := base64.RawStdEncoding.EncodedLen(len(unEncodedSalt))
 	encodedSalt := make([]byte, length)
-	base64.StdEncoding.Encode(encodedSalt, unEncodedSalt)
+	base64.RawStdEncoding.Encode(encodedSalt, unEncodedSalt)
 
 	return encodedSalt, nil
 }

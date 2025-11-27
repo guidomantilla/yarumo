@@ -23,7 +23,7 @@ func HMAC_SHA256(key []byte, data []byte) []byte {
 	return m.Sum(nil)
 }
 
-func HMAC_SHA3_256(key, data []byte) []byte {
+func HMAC_SHA3_256(key []byte, data []byte) []byte {
 	if len(key) == 0 {
 		return nil
 	}
@@ -35,7 +35,7 @@ func HMAC_SHA3_256(key, data []byte) []byte {
 	return m.Sum(nil)
 }
 
-func BLAKE2b_256_MAC(key, data []byte) []byte {
+func BLAKE2b_256_MAC(key []byte, data []byte) []byte {
 	if len(key) == 0 {
 		return nil
 	}
@@ -64,7 +64,7 @@ func HMAC_SHA512(key []byte, data []byte) []byte {
 	return m.Sum(nil)
 }
 
-func HMAC_SHA3_512(key, data []byte) []byte {
+func HMAC_SHA3_512(key []byte, data []byte) []byte {
 	if len(key) == 0 {
 		return nil
 	}
@@ -76,7 +76,7 @@ func HMAC_SHA3_512(key, data []byte) []byte {
 	return m.Sum(nil)
 }
 
-func BLAKE2b_512_MAC(key, data []byte) []byte {
+func BLAKE2b_512_MAC(key []byte, data []byte) []byte {
 	if len(key) == 0 {
 		return nil
 	}
