@@ -1,13 +1,21 @@
 package tokens
 
 import (
+	"fmt"
+
 	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 type FakeGenerator struct {
-	GenerateFn GenerateFn
-	ValidateFn ValidateFn
+	GenerateFn  GenerateFn
+	ValidateFn  ValidateFn
+	Description string
+}
+
+func (g *FakeGenerator) Name() string {
+	assert.NotNil(g, "generator is nil")
+	return fmt.Sprintf("%s-%s-%s", "FAKE", "CUSTOM", g.Description)
 }
 
 func (g *FakeGenerator) Generate(subject string, principal Principal) (*string, error) {

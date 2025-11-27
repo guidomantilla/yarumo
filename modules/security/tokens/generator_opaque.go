@@ -3,6 +3,7 @@ package tokens
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -10,10 +11,6 @@ import (
 	"github.com/guidomantilla/yarumo/common/utils"
 
 	"github.com/guidomantilla/yarumo/security/cryptos"
-)
-
-var (
-	DefaultOpaqueGenerator = NewOpaqueGenerator()
 )
 
 type opaqueGenerator struct {
@@ -27,6 +24,11 @@ func NewOpaqueGenerator(opts ...Option) Generator {
 		timeout:   options.timeout,
 		cipherKey: append([]byte(nil), options.cipherKey...),
 	}
+}
+
+func (g *opaqueGenerator) Name() string {
+	assert.NotNil(g, "generator is nil")
+	return fmt.Sprintf("%s-%s", "OPAQUE", "AES256")
 }
 
 func (g *opaqueGenerator) Generate(subject string, principal Principal) (*string, error) {

@@ -1,15 +1,12 @@
 package tokens
 
 import (
+	"fmt"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/utils"
-)
-
-var (
-	DefaultJwtGenerator = NewJwtGenerator()
 )
 
 type jwtGenerator struct {
@@ -29,6 +26,11 @@ func NewJwtGenerator(opts ...Option) Generator {
 		verifyingKey:  append([]byte(nil), options.verifyingKey...),
 		signingMethod: options.signingMethod,
 	}
+}
+
+func (g *jwtGenerator) Name() string {
+	assert.NotNil(g, "generator is nil")
+	return fmt.Sprintf("%s-%s", "JWT", g.signingMethod.Alg())
 }
 
 func (g *jwtGenerator) Generate(subject string, principal Principal) (*string, error) {

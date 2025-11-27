@@ -5,7 +5,6 @@ import (
 )
 
 func TestWrappers_DelegateToDefaultGenerators(t *testing.T) {
-	// Guardar originales y restaurar al finalizar
 	origJWT := DefaultJwtGenerator
 	origOpaque := DefaultOpaqueGenerator
 	t.Cleanup(func() {
@@ -13,21 +12,18 @@ func TestWrappers_DelegateToDefaultGenerators(t *testing.T) {
 		DefaultOpaqueGenerator = origOpaque
 	})
 
-	// Mock para JWT
 	jwtMock := NewMockGenerator()
 	retTok := "jwt-token"
 	jwtMock.On("Generate", "sub", Principal{"p": 1}).Return(&retTok, nil)
 	jwtMock.On("Validate", "jwt-token").Return(Principal{"ok": true}, nil)
 	DefaultJwtGenerator = jwtMock
 
-	// Mock para Opaque
 	opMock := NewMockGenerator()
 	retTok2 := "op-token"
 	opMock.On("Generate", "sub2", Principal{"q": 2}).Return(&retTok2, nil)
 	opMock.On("Validate", "op-token").Return(Principal{"ok2": true}, nil)
 	DefaultOpaqueGenerator = opMock
 
-	// Llamadas a wrappers
 	t1, err := JwtGenerate("sub", Principal{"p": 1})
 	if err != nil || t1 == nil || *t1 != "jwt-token" {
 		t.Fatalf("unexpected jwt wrapper result: %v %v", t1, err)

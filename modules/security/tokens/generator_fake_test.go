@@ -20,13 +20,11 @@ func TestFakeGenerator_Generate_SuccessAndValidations(t *testing.T) {
 		t.Fatalf("unexpected: %v %v", tok, err)
 	}
 
-	// subject vacío
 	_, err = g.Generate("", Principal{"a": 1})
 	if err == nil || !errors.Is(err, ErrTokenGenerationFailed) {
 		t.Fatalf("expected wrapped generation error for empty subject, got %v", err)
 	}
 
-	// principal vacío
 	_, err = g.Generate("sub", nil)
 	if err == nil || !errors.Is(err, ErrTokenGenerationFailed) {
 		t.Fatalf("expected wrapped generation error for empty principal, got %v", err)
@@ -47,7 +45,6 @@ func TestFakeGenerator_Validate_SuccessAndValidations(t *testing.T) {
 		t.Fatalf("unexpected: %v %v", p, err)
 	}
 
-	// token vacío
 	_, err = g.Validate("")
 	if err == nil || !errors.Is(err, ErrTokenValidationFailed) {
 		t.Fatalf("expected wrapped validation error for empty token, got %v", err)

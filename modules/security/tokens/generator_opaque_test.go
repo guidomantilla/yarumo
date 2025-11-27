@@ -75,7 +75,6 @@ func TestOpaqueValidate_InputErrors(t *testing.T) {
 		t.Fatalf("expected validation error for empty token, got %v", err)
 	}
 
-	// base64 inválido
 	if _, err := g.Validate("***not-base64***"); err == nil || !errors.Is(err, ErrTokenValidationFailed) {
 		t.Fatalf("expected validation error for bad base64, got %v", err)
 	}
@@ -97,7 +96,6 @@ func TestOpaqueValidate_DecryptErrorWithWrongKey(t *testing.T) {
 
 func TestOpaqueValidate_JSONError(t *testing.T) {
 	key := []byte("0123456789abcdef0123456789abcdef")
-	// construir token con JSON inválido pero cifrado con la misma clave
 	badJSON := []byte("{not-json}")
 	cipher, err := cryptos.AesEncrypt(key, badJSON)
 	if err != nil {
@@ -114,7 +112,6 @@ func TestOpaqueValidate_JSONError(t *testing.T) {
 func TestOpaqueValidate_ExpiredAndEmptyPrincipal(t *testing.T) {
 	key := []byte("0123456789abcdef0123456789abcdef")
 
-	// Expired: usar timeout negativo
 	gExpired := newOpaqueWithKeyTimeout(key, -time.Minute)
 	tok, err := gExpired.Generate("s", Principal{"a": 1})
 	if err != nil {
@@ -124,10 +121,9 @@ func TestOpaqueValidate_ExpiredAndEmptyPrincipal(t *testing.T) {
 		t.Fatalf("expected expired error, got %v", err)
 	}
 
-	// Principal vacío: construir claims con principal = nil
 	claims := Claims{}
 	claims.RegisteredClaims.Subject = "s"
-	claims.RegisteredClaims.ExpiresAt = nil // dejar sin exp para no disparar expirado
+	claims.RegisteredClaims.ExpiresAt = nil
 	plain, _ := json.Marshal(claims)
 	cipher, err := cryptos.AesEncrypt(key, plain)
 	if err != nil {

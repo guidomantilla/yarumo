@@ -9,7 +9,6 @@ import (
 )
 
 func newJwtWith(key []byte, issuer string, method jwt.SigningMethod, timeout time.Duration) *jwtGenerator {
-	// Construimos el generador real usando opciones públicas
 	g := NewJwtGenerator(
 		WithJwtKey(key),
 		WithJwtIssuer(issuer),
@@ -83,7 +82,6 @@ func TestJwtValidate_Expired(t *testing.T) {
 }
 
 func TestJwtValidate_PrincipalEmpty(t *testing.T) {
-	// Usamos el generador para firmar manualmente un token con principal = nil
 	g := newJwtWith([]byte("key-x"), "issuer-y", jwt.SigningMethodHS512, time.Hour)
 
 	claims := Claims{
@@ -108,7 +106,6 @@ func TestJwtValidate_PrincipalEmpty(t *testing.T) {
 }
 
 func TestJwtValidate_InvalidMethod(t *testing.T) {
-	// El validador solo acepta HS512, construimos un token HS256
 	g := newJwtWith([]byte("k"), "issuer-z", jwt.SigningMethodHS512, time.Hour)
 
 	claims := Claims{RegisteredClaims: jwt.RegisteredClaims{Issuer: g.issuer, Subject: "s"}, Principal: Principal{"x": 1}}

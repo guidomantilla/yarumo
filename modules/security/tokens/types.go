@@ -14,6 +14,7 @@ type Claims struct {
 }
 
 type Generator interface {
+	Name() string
 	Generate(subject string, principal Principal) (*string, error)
 	Validate(tokenString string) (Principal, error)
 }
