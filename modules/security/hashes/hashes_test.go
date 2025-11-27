@@ -13,6 +13,7 @@ func TestGetByName_Supported(t *testing.T) {
 	}{
 		{name: Sha256, want: SHA256},
 		{name: Sha3_256, want: SHA3_256},
+		{name: Blake2b_256, want: BLAKE2b_256},
 		{name: Sha512, want: SHA512},
 		{name: Sha3_512, want: SHA3_512},
 		{name: Blake2b_512, want: BLAKE2b_512},

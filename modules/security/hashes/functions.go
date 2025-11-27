@@ -8,6 +8,8 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
+// 256
+
 func SHA256(data []byte) []byte {
 	if len(data) == 0 {
 		return nil
@@ -24,6 +26,17 @@ func SHA3_256(data []byte) []byte {
 	_, _ = d.Write(data)
 	return d.Sum(nil)
 }
+
+func BLAKE2b_256(data []byte) []byte {
+	if len(data) == 0 {
+		return nil
+	}
+	d, _ := blake2b.New256(nil)
+	d.Write(data)
+	return d.Sum(nil)
+}
+
+// 512
 
 func SHA512(data []byte) []byte {
 	if len(data) == 0 {

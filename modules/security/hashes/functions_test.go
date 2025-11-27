@@ -53,6 +53,24 @@ func TestSHA3_256(t *testing.T) {
 	}
 }
 
+func TestBLAKE2b_256(t *testing.T) {
+	if got := BLAKE2b_256(nil); got != nil {
+		t.Fatalf("BLAKE2b_512(nil) expected nil, got %v", got)
+	}
+	if got := BLAKE2b_256([]byte{}); got != nil {
+		t.Fatalf("BLAKE2b_512(empty) expected nil, got %v", got)
+	}
+
+	want := mustHex(t, "bddd813c634239723171ef3fee98579b94964e3bb1cb3e427262c8c068d52319")
+	got := BLAKE2b_256([]byte("abc"))
+	if got == nil || len(got) != 32 {
+		t.Fatalf("BLAKE2b_512 length mismatch: got len=%d", len(got))
+	}
+	if hex.EncodeToString(got) != hex.EncodeToString(want) {
+		t.Fatalf("BLAKE2b_512 mismatch: got %s want %s", hex.EncodeToString(got), hex.EncodeToString(want))
+	}
+}
+
 func TestSHA512(t *testing.T) {
 	if got := SHA512(nil); got != nil {
 		t.Fatalf("SHA512(nil) expected nil, got %v", got)
