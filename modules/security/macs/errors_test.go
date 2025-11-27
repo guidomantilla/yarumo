@@ -1,4 +1,4 @@
-package hashes
+package macs
 
 import (
 	"errors"
@@ -10,28 +10,28 @@ import (
 
 func TestErrHashFunctionNotFound(t *testing.T) {
 	name := "generate"
-	err := ErrHashFunctionNotFound(name)
+	err := ErrMacFunctionNotFound(name)
 	if err == nil {
-		t.Fatalf("ErrHashFunctionNotFound returned nil")
+		t.Fatalf("ErrMacFunctionNotFound returned nil")
 	}
 
-	// Type assertion to *UIDError
+	// Type assertion to *Error
 	ue, ok := err.(*Error)
 	if !ok {
 		t.Fatalf("error is not *Error: %T", err)
 	}
 
 	// Check exported constant and inner error message
-	if ue.Type != HashNotFound {
-		t.Fatalf("Type = %q, want %q", ue.Type, HashNotFound)
+	if ue.Type != MacNotFound {
+		t.Fatalf("Type = %q, want %q", ue.Type, MacNotFound)
 	}
-	innerMsg := "hash function " + name + " not found"
+	innerMsg := "mac function " + name + " not found"
 	if ue.Err == nil || ue.Err.Error() != innerMsg {
 		t.Fatalf("inner error message = %v, want %q", ue.Err, innerMsg)
 	}
 
 	// Check Error() formatting overrides the embedded type
-	expected := "hash " + HashNotFound + " error: " + innerMsg
+	expected := "mac " + MacNotFound + " error: " + innerMsg
 	if got := ue.Error(); got != expected {
 		t.Fatalf("Error() = %q, want %q", got, expected)
 	}
@@ -64,7 +64,7 @@ func TestError_ErrorVariants(t *testing.T) {
 		ue := &Error{TypedError: cerrs.TypedError{Type: "custom"}}
 		got := ue.Error()
 		// With Err == nil and %s formatting, fmt prints %!s(<nil>)
-		want := "hash custom error: %!s(<nil>)"
+		want := "mac custom error: %!s(<nil>)"
 		if got != want {
 			t.Fatalf("Error() = %q, want %q", got, want)
 		}
