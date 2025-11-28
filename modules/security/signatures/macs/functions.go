@@ -129,3 +129,7 @@ func BLAKE2b_512_MAC(key []byte, data []byte) ([]byte, error) {
 	d.Write(data)
 	return d.Sum(nil), nil
 }
+
+func Equal(a []byte, b []byte) bool {
+	return hmac.Equal(a, b)
+}

@@ -1,7 +1,6 @@
 package signatures
 
 import (
-	"crypto/hmac"
 	"errors"
 
 	"github.com/guidomantilla/yarumo/common/errs"
@@ -32,7 +31,7 @@ func (s *MacSigner) Verify(key any, signature []byte, data []byte) error {
 		return err
 	}
 
-	if !hmac.Equal(signature, sig) {
+	if !macs.Equal(signature, sig) {
 		return ErrSignatureInvalid
 	}
 
