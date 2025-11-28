@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 
-	"github.com/guidomantilla/yarumo/security/keys"
+	"github.com/guidomantilla/yarumo/common/rand"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/sha3"
 )
@@ -15,7 +15,7 @@ func Key(name Name) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return keys.Key(alg.KeySize), nil
+	return rand.Key(alg.KeySize), nil
 }
 
 // 256

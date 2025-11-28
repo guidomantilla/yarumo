@@ -4,8 +4,8 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/guidomantilla/yarumo/common/rand"
 	"github.com/guidomantilla/yarumo/common/utils"
-	"github.com/guidomantilla/yarumo/security/keys"
 )
 
 type Option func(opts *Options)
@@ -20,8 +20,8 @@ type Options struct {
 }
 
 func NewOptions(opts ...Option) *Options {
-	signingKey := keys.Key(64) // for HS512
-	cipherKey := keys.Key(32)  // for AES-256
+	signingKey := rand.Key(64) // for HS512
+	cipherKey := rand.Key(32)  // for AES-256
 
 	options := &Options{
 		issuer:        "",

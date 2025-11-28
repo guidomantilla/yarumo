@@ -3,8 +3,8 @@ package cryptos
 import (
 	"encoding/base64"
 
+	"github.com/guidomantilla/yarumo/common/rand"
 	"github.com/guidomantilla/yarumo/common/utils"
-	"github.com/guidomantilla/yarumo/security/keys"
 )
 
 type AesCipherOptions struct {
@@ -13,7 +13,7 @@ type AesCipherOptions struct {
 
 func NewAesCipherOptions(opts ...AesCipherOption) *AesCipherOptions {
 	options := &AesCipherOptions{
-		key: keys.Key(32),
+		key: rand.Key(32),
 	}
 
 	for _, opt := range opts {
@@ -27,7 +27,7 @@ type AesCipherOption func(opts *AesCipherOptions)
 
 func WithAesCipherKeySize32() AesCipherOption {
 	return func(opts *AesCipherOptions) {
-		opts.key = keys.Key(32)
+		opts.key = rand.Key(32)
 	}
 }
 
