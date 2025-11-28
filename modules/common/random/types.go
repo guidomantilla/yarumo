@@ -1,6 +1,6 @@
 package random
 
-import "github.com/google/cel-go/common/types"
+import "github.com/guidomantilla/yarumo/common/types"
 
 var (
 	_ KeyFn    = Key

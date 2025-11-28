@@ -5,22 +5,14 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 
-	"github.com/guidomantilla/yarumo/common/random"
+	"github.com/guidomantilla/yarumo/common/types"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/sha3"
 )
 
-func Key(name Name) ([]byte, error) {
-	alg, err := Get(name)
-	if err != nil {
-		return nil, err
-	}
-	return random.Key(alg.KeySize), nil
-}
-
 // 256
 
-func HMAC_SHA256(key []byte, data []byte) ([]byte, error) {
+func HMAC_SHA256(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	if len(key) == 0 {
 		return nil, ErrKeySizeInvalid
 	}
@@ -37,7 +29,7 @@ func HMAC_SHA256(key []byte, data []byte) ([]byte, error) {
 	return m.Sum(nil), nil
 }
 
-func HMAC_SHA3_256(key []byte, data []byte) ([]byte, error) {
+func HMAC_SHA3_256(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	if len(key) == 0 {
 		return nil, ErrKeySizeInvalid
 	}
@@ -54,7 +46,7 @@ func HMAC_SHA3_256(key []byte, data []byte) ([]byte, error) {
 	return m.Sum(nil), nil
 }
 
-func BLAKE2b_256_MAC(key []byte, data []byte) ([]byte, error) {
+func BLAKE2b_256_MAC(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	if len(key) == 0 {
 		return nil, ErrKeySizeInvalid
 	}
@@ -66,17 +58,15 @@ func BLAKE2b_256_MAC(key []byte, data []byte) ([]byte, error) {
 		return nil, ErrKeySizeInvalid
 	}
 
-	d, err := blake2b.New256(key)
-	if err != nil {
-		return nil, err
-	}
-	d.Write(data)
-	return d.Sum(nil), nil
+    // With enforced key size, blake2b.New256 will not return an error.
+    d, _ := blake2b.New256(key)
+    d.Write(data)
+    return d.Sum(nil), nil
 }
 
 // 512
 
-func HMAC_SHA512(key []byte, data []byte) ([]byte, error) {
+func HMAC_SHA512(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	if len(key) == 0 {
 		return nil, ErrKeySizeInvalid
 	}
@@ -93,7 +83,7 @@ func HMAC_SHA512(key []byte, data []byte) ([]byte, error) {
 	return m.Sum(nil), nil
 }
 
-func HMAC_SHA3_512(key []byte, data []byte) ([]byte, error) {
+func HMAC_SHA3_512(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	if len(key) == 0 {
 		return nil, ErrKeySizeInvalid
 	}
@@ -110,7 +100,7 @@ func HMAC_SHA3_512(key []byte, data []byte) ([]byte, error) {
 	return m.Sum(nil), nil
 }
 
-func BLAKE2b_512_MAC(key []byte, data []byte) ([]byte, error) {
+func BLAKE2b_512_MAC(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	if len(key) == 0 {
 		return nil, ErrKeySizeInvalid
 	}
@@ -122,18 +112,16 @@ func BLAKE2b_512_MAC(key []byte, data []byte) ([]byte, error) {
 		return nil, ErrKeySizeInvalid
 	}
 
-	d, err := blake2b.New512(key)
-	if err != nil {
-		return nil, err
-	}
-	d.Write(data)
-	return d.Sum(nil), nil
+    // With enforced key size, blake2b.New512 will not return an error.
+    d, _ := blake2b.New512(key)
+    d.Write(data)
+    return d.Sum(nil), nil
 }
 
-func Equal(a []byte, b []byte) bool {
+func Equal(a types.Bytes, b types.Bytes) bool {
 	return hmac.Equal(a, b)
 }
 
-func NotEqual(a []byte, b []byte) bool {
+func NotEqual(a types.Bytes, b types.Bytes) bool {
 	return !Equal(a, b)
 }

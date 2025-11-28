@@ -1,5 +1,7 @@
 package macs
 
+import "github.com/guidomantilla/yarumo/common/types"
+
 type Name string
 
 const (
@@ -20,7 +22,7 @@ var (
 	_ MacFn = BLAKE2b_512_MAC
 )
 
-type MacFn func(key []byte, data []byte) ([]byte, error)
+type MacFn func(key types.Bytes, data types.Bytes) (types.Bytes, error)
 
 type Algorithm struct {
 	Name    Name  `json:"name"`
