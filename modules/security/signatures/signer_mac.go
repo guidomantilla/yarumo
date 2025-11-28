@@ -3,6 +3,7 @@ package signatures
 import (
 	"errors"
 
+	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/errs"
 	"github.com/guidomantilla/yarumo/security/signatures/macs"
 )
@@ -16,6 +17,7 @@ func NewMacSigner(macFn macs.MacFn) *MacSigner {
 }
 
 func (s *MacSigner) Sign(key any, data []byte) ([]byte, error) {
+	assert.NotNil(s, "signer is nil")
 
 	keyBytes, ok := key.([]byte)
 	if !ok {
@@ -25,13 +27,14 @@ func (s *MacSigner) Sign(key any, data []byte) ([]byte, error) {
 }
 
 func (s *MacSigner) Verify(key any, signature []byte, data []byte) error {
+	assert.NotNil(s, "signer is nil")
 
 	sig, err := s.Sign(key, data)
 	if err != nil {
 		return err
 	}
 
-	if !macs.Equal(signature, sig) {
+	if macs.NotEqual(signature, sig) {
 		return ErrSignatureInvalid
 	}
 

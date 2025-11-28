@@ -1,9 +1,9 @@
 package cryptos
 
-import "github.com/guidomantilla/yarumo/common/rand"
+import "github.com/guidomantilla/yarumo/common/random"
 
 var (
-	_ KeyFn    = rand.Key
+	_ KeyFn    = random.Key
 	_ CipherFn = AesEncrypt
 	_ CipherFn = AesDecrypt
 	_ CipherFn = ChaCha20Encrypt

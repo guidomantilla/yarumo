@@ -1,0 +1,22 @@
+package random
+
+var (
+	_ KeyFn    = Key
+	_ NumberFn = Number
+	_ StringFn = String
+	_ TextFn   = TextLower
+	_ TextFn   = TextUpper
+	_ TextFn   = TextNumber
+	_ TextFn   = TextSpecial
+	_ TextFn   = TextAlpha
+	_ TextFn   = TextAlphaNum
+	_ TextFn   = TextAll
+)
+
+type KeyFn func(size int) []byte
+
+type NumberFn func(max int64) (int64, error)
+
+type StringFn func(size int, charset string) (string, error)
+
+type TextFn func(size int) (string, error)

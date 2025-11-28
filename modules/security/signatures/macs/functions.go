@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 
-	"github.com/guidomantilla/yarumo/common/rand"
+	"github.com/guidomantilla/yarumo/common/random"
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/sha3"
 )
@@ -15,7 +15,7 @@ func Key(name Name) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return rand.Key(alg.KeySize), nil
+	return random.Key(alg.KeySize), nil
 }
 
 // 256
@@ -132,4 +132,8 @@ func BLAKE2b_512_MAC(key []byte, data []byte) ([]byte, error) {
 
 func Equal(a []byte, b []byte) bool {
 	return hmac.Equal(a, b)
+}
+
+func NotEqual(a []byte, b []byte) bool {
+	return !Equal(a, b)
 }

@@ -1,10 +1,10 @@
 package passwords
 
 const (
-	PasswordLength = 16
-	MinSpecialChar = 2
-	MinNum         = 2
-	MinUpperCase   = 2
+	PasswordLength = 26
+	MinSpecialChar = 4
+	MinNum         = 6
+	MinUpperCase   = 6
 )
 
 type GeneratorOptions struct {

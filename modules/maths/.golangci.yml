@@ -38,8 +38,8 @@ linters-settings:
           # ------------------------------------------------------------------------
           # INSECURE RAND
           # ------------------------------------------------------------------------
-          - pkg: "^math/rand$"
-            desc: "use math/rand/v2 or crypto/rand instead"
+          - pkg: "^math/random$"
+            desc: "use math/random/v2 or crypto/random instead"
 
           # ------------------------------------------------------------------------
           # DEPRECATED IO

@@ -1,10 +1,10 @@
 package passwords
 
 import (
-	"crypto/rand"
-	"math/big"
-	math "math/rand"
+	"math/rand/v2"
 	"strings"
+
+	"github.com/guidomantilla/yarumo/common/random"
 )
 
 const (
@@ -37,30 +37,24 @@ func (generator *generator) Generate() string {
 	var password strings.Builder
 
 	//Set special characters
-	for i := 0; i < generator.minSpecialChar; i++ {
-		random, _ := rand.Int(rand.Reader, big.NewInt(int64(len(specialCharSet))))
-		password.WriteString(string(specialCharSet[random.Int64()]))
-	}
+	text, _ := random.TextSpecial(generator.minSpecialChar)
+	password.WriteString(text)
 
 	//Set numeric characters
-	for i := 0; i < generator.minNum; i++ {
-		random, _ := rand.Int(rand.Reader, big.NewInt(int64(len(numberSet))))
-		password.WriteString(string(numberSet[random.Int64()]))
-	}
+	text, _ = random.TextNumber(generator.minNum)
+	password.WriteString(text)
 
 	//Set uppercase characters
-	for i := 0; i < generator.minUpperCase; i++ {
-		random, _ := rand.Int(rand.Reader, big.NewInt(int64(len(upperCharSet))))
-		password.WriteString(string(upperCharSet[random.Int64()]))
-	}
+	text, _ = random.TextUpper(generator.minUpperCase)
+	password.WriteString(text)
 
+	//Set lowercase characters
 	remainingLength := generator.passwordLength - generator.minSpecialChar - generator.minNum - generator.minUpperCase
-	for i := 0; i < remainingLength; i++ {
-		random, _ := rand.Int(rand.Reader, big.NewInt(int64(len(allCharSet))))
-		password.WriteString(string(allCharSet[random.Int64()]))
-	}
+	text, _ = random.TextLower(remainingLength)
+	password.WriteString(text)
+
 	inRune := []rune(password.String())
-	math.Shuffle(len(inRune), func(i, j int) {
+	rand.Shuffle(len(inRune), func(i, j int) {
 		inRune[i], inRune[j] = inRune[j], inRune[i]
 	})
 	return string(inRune)

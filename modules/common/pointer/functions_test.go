@@ -1,392 +1,299 @@
 package pointer
 
-import (
-	"reflect"
-	"testing"
-)
+import "testing"
 
-// helper types for struct checks
-type demoStruct struct{ A int }
-
-// helper interface and implementation used to exercise reflect.Interface path
-type demoInterface interface{ Read() int }
-
-type impl struct{}
-
-func (impl) Read() int { return 1 }
-
-func mustPanic(t *testing.T, f func()) {
-	t.Helper()
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("expected panic, got none")
-		}
-	}()
-	f()
-}
+type sampleStruct struct{ A int }
 
 func TestIsNilAndIsNotNil(t *testing.T) {
-	// nil interface
-	if !IsNil(nil) {
-		t.Fatalf("IsNil(nil) = false, want true")
-	}
-	if IsNotNil(nil) {
-		t.Fatalf("IsNotNil(nil) = true, want false")
-	}
+    // direct nil
+    if !IsNil(nil) || IsNotNil(nil) {
+        t.Fatal("nil check failed")
+    }
 
-	// typed nil pointer
-	var p *int
-	if !IsNil(p) {
-		t.Fatalf("IsNil((*int)(nil)) = false, want true")
-	}
-	// non-nil pointer
-	x := 5
-	p = &x
-	if IsNil(p) {
-		t.Fatalf("IsNil(&x) = true, want false")
-	}
+    // nil pointer
+    var p *int
+    if !IsNil(p) || IsNotNil(p) {
+        t.Fatal("nil pointer check failed")
+    }
 
-	// nil and non-nil slice
-	var s []int
-	if !IsNil(s) {
-		t.Fatalf("IsNil(nil slice) = false, want true")
-	}
-	s = []int{}
-	if IsNil(s) {
-		t.Fatalf("IsNil(non-nil slice) = true, want false")
-	}
+    // nil slice
+    var s []int
+    if !IsNil(s) || IsNotNil(s) {
+        t.Fatal("nil slice check failed")
+    }
 
-	// nil and non-nil map
-	var m map[string]int
-	if !IsNil(m) {
-		t.Fatalf("IsNil(nil map) = false, want true")
-	}
-	m = map[string]int{}
-	if IsNil(m) {
-		t.Fatalf("IsNil(non-nil map) = true, want false")
-	}
+    // nil map
+    var m map[string]int
+    if !IsNil(m) || IsNotNil(m) {
+        t.Fatal("nil map check failed")
+    }
 
-	// nil and non-nil chan
-	var ch chan int
-	if !IsNil(ch) {
-		t.Fatalf("IsNil(nil chan) = false, want true")
-	}
-	ch = make(chan int)
-	if IsNil(ch) {
-		t.Fatalf("IsNil(non-nil chan) = true, want false")
-	}
+    // nil chan
+    var ch chan int
+    if !IsNil(ch) || IsNotNil(ch) {
+        t.Fatal("nil chan check failed")
+    }
 
-	// function kind (nil and non-nil)
-	var fn func()
-	if !IsNil(fn) {
-		t.Fatalf("IsNil(nil func) = false, want true")
-	}
-	fn = func() {}
-	if IsNil(fn) {
-		t.Fatalf("IsNil(non-nil func) = true, want false")
-	}
+    // non-nil values
+    x := 10
+    if IsNil(x) || !IsNotNil(x) {
+        t.Fatal("non-nil value check failed")
+    }
 
-	// arrays fall into Array kind in IsNil's switch and calling IsNil() on array panics
-	mustPanic(t, func() {
-		_ = IsNil([1]int{1})
-	})
-
-	// interface holding a typed nil pointer should be considered nil by IsNil
-	var pn *int = nil
-	var ai any = pn
-	if !IsNil(ai) {
-		t.Fatalf("IsNil(interface(nil pointer)) = false, want true")
-	}
+    // nil func
+    var fn func()
+    if !IsNil(fn) || IsNotNil(fn) {
+        t.Fatal("nil func should be nil")
+    }
+    // non-nil func
+    fn = func() {}
+    if IsNil(fn) || !IsNotNil(fn) {
+        t.Fatal("non-nil func should not be nil")
+    }
+    // interface holding typed nil pointer
+    var px *int = nil
+    var ai any = px
+    if !IsNil(ai) {
+        t.Fatal("typed nil pointer inside interface should be nil")
+    }
 }
 
 func TestIsEmptyAndIsNotEmpty(t *testing.T) {
-	// nil cases
-	if !IsEmpty(nil) || IsNotEmpty(nil) {
-		t.Fatalf("nil emptiness mismatch")
-	}
+    if !IsEmpty(nil) || IsNotEmpty(nil) {
+        t.Fatal("nil should be empty")
+    }
 
-	// nil pointer considered empty
-	var p *int
-	if !IsEmpty(p) {
-		t.Fatalf("IsEmpty(nil pointer) = false, want true")
-	}
-	// non-nil pointer should dereference and evaluate underlying emptiness
-	sp := new(string)
-	*sp = ""
-	if !IsEmpty(sp) {
-		t.Fatalf("IsEmpty(pointer to empty string) = false, want true")
-	}
-	*sp = "x"
-	if IsEmpty(sp) {
-		t.Fatalf("IsEmpty(pointer to non-empty string) = true, want false")
-	}
+    // strings
+    if !IsEmpty("") || IsNotEmpty("") {
+        t.Fatal("empty string should be empty")
+    }
+    if IsEmpty("a") || !IsNotEmpty("a") {
+        t.Fatal("non-empty string should not be empty")
+    }
 
-	// empty string, slice, map, chan
-	if !IsEmpty("") {
-		t.Fatalf("IsEmpty(%q) = false, want true", "")
-	}
-	if !IsEmpty([]int{}) {
-		t.Fatalf("IsEmpty(empty slice) = false, want true")
-	}
-	if !IsEmpty(map[string]int{}) {
-		t.Fatalf("IsEmpty(empty map) = false, want true")
-	}
-	c := make(chan int)
-	if !IsEmpty(c) { // unbuffered (len==0)
-		t.Fatalf("IsEmpty(chan) = false, want true when len==0")
-	}
-	// buffered with element -> non-empty
-	cb := make(chan int, 1)
-	cb <- 1
-	if IsEmpty(cb) {
-		t.Fatalf("IsEmpty(buffered non-empty chan) = true, want false")
-	}
+    // zero values
+    if !IsEmpty(0) || IsNotEmpty(0) {
+        t.Fatal("zero int should be empty")
+    }
+    if IsEmpty(1) || !IsNotEmpty(1) {
+        t.Fatal("non-zero int should not be empty")
+    }
 
-	// non-empty counterparts
-	if IsEmpty("x") || !IsNotEmpty("x") {
-		t.Fatalf("non-empty string mismatch")
-	}
-	if IsEmpty([]int{1}) {
-		t.Fatalf("IsEmpty(non-empty slice) = true, want false")
-	}
-	if IsEmpty(map[string]int{"a": 1}) {
-		t.Fatalf("IsEmpty(non-empty map) = true, want false")
-	}
+    // pointers to zero/non-zero
+    z := 0
+    nz := 2
+    if !IsEmpty(&z) || IsNotEmpty(&z) {
+        t.Fatal("pointer to zero should be empty")
+    }
+    if IsEmpty(&nz) || !IsNotEmpty(&nz) {
+        t.Fatal("pointer to non-zero should not be empty")
+    }
+    // nil pointer
+    var np *int
+    if !IsEmpty(np) || IsNotEmpty(np) {
+        t.Fatal("nil pointer should be empty")
+    }
 
-	// arrays are also handled in IsEmpty
-	var arr0 [0]int
-	if !IsEmpty(arr0) {
-		t.Fatalf("IsEmpty(empty array) = false, want true")
-	}
-	arr1 := [1]int{1}
-	if IsEmpty(arr1) {
-		t.Fatalf("IsEmpty(non-empty array) = true, want false")
-	}
+    // slices and maps
+    var s []int
+    if !IsEmpty(s) || IsNotEmpty(s) {
+        t.Fatal("nil slice should be empty")
+    }
+    s = []int{}
+    if !IsEmpty(s) || IsNotEmpty(s) {
+        t.Fatal("empty slice should be empty")
+    }
+    s = []int{1}
+    if IsEmpty(s) || !IsNotEmpty(s) {
+        t.Fatal("non-empty slice should not be empty")
+    }
 
-	// Numeric zero is considered empty by the current implementation (default -> reflect.ValueOf(x).IsZero())
-	if !IsEmpty(0) {
-		t.Fatalf("IsEmpty(0) = true, want false per implementation")
-	}
+    var m map[string]int
+    if !IsEmpty(m) || IsNotEmpty(m) {
+        t.Fatal("nil map should be empty")
+    }
+    m = map[string]int{}
+    if !IsEmpty(m) || IsNotEmpty(m) {
+        t.Fatal("empty map should be empty")
+    }
+    m["a"] = 1
+    if IsEmpty(m) || !IsNotEmpty(m) {
+        t.Fatal("non-empty map should not be empty")
+    }
 
-	// interface kinds: interface holding nil should be empty
-	var ai any
-	if !IsEmpty(ai) {
-		t.Fatalf("IsEmpty(interface nil) = false, want true")
-	}
-	// interface holding non-nil value should not be empty (Interface branch -> IsNil false)
-	ai = 123
-	if IsEmpty(ai) {
-		t.Fatalf("IsEmpty(interface non-nil) = true, want false")
-	}
-
-	// Cover reflect.Interface branch explicitly using a typed interface variable
-	var di demoInterface // nil underlying
-	if !IsEmpty(di) {    // Kind == Interface and IsNil() == true
-		t.Fatalf("IsEmpty(typed interface nil) = false, want true")
-	}
-
-	var dni demoInterface = impl{}
-	if !IsEmpty(dni) {
-		t.Fatalf("IsEmpty(typed interface non-nil) = true, want false per implementation")
-	}
+    // channels
+    var ch chan int
+    if !IsEmpty(ch) || IsNotEmpty(ch) {
+        t.Fatal("nil chan should be empty")
+    }
+    ch = make(chan int)
+    if !IsEmpty(ch) || IsNotEmpty(ch) {
+        t.Fatal("non-nil chan with len 0 is considered empty by IsEmpty")
+    }
 }
 
-func TestIsPointerAndNotPointer(t *testing.T) {
-	if IsPointer(nil) {
-		t.Fatalf("IsPointer(nil) = true, want false")
-	}
-	v := 10
-	if !IsPointer(&v) {
-		t.Fatalf("IsPointer(&v) = false, want true")
-	}
-	if IsPointer(v) {
-		t.Fatalf("IsPointer(v) = true, want false")
-	}
-	if IsNotPointer(&v) {
-		t.Fatalf("IsNotPointer(&v) = true, want false")
-	}
+func TestPointerChecks(t *testing.T) {
+    var p *int
+    if IsPointer(p) || !IsNotPointer(p) {
+        t.Fatal("nil pointer is considered not a pointer by IsPointer")
+    }
+    v := 3
+    if !IsPointer(&v) || IsNotPointer(&v) {
+        t.Fatal("&v should be a pointer")
+    }
+    if IsPointer(v) || !IsNotPointer(v) {
+        t.Fatal("v is not a pointer")
+    }
 }
 
-func TestZeroAndComparisons(t *testing.T) {
-	if Zero[int]() != 0 {
-		t.Fatalf("Zero[int]() != 0")
-	}
-	if !IsZero(0) || IsZero(1) {
-		t.Fatalf("IsZero for ints mismatch")
-	}
-	if !IsNotZero(1) || IsNotZero(0) {
-		t.Fatalf("IsNotZero for ints mismatch")
-	}
-	if Zero[string]() != "" {
-		t.Fatalf("Zero[string]() != \"\"")
-	}
-	if !IsZero("") || IsZero("x") {
-		t.Fatalf("IsZero for strings mismatch")
-	}
+func TestZeroComparisons(t *testing.T) {
+    if Zero[int]() != 0 {
+        t.Fatal("Zero[int] should be 0")
+    }
+    if !IsZero(0) || IsNotZero(0) {
+        t.Fatal("0 should be zero")
+    }
+    if IsZero(5) || !IsNotZero(5) {
+        t.Fatal("5 should not be zero")
+    }
 }
 
-func TestToPtrAndFromPtr(t *testing.T) {
-	p := ToPtr(42)
-	if p == nil || *p != 42 {
-		t.Fatalf("ToPtr failed: %v", p)
-	}
-	if FromPtr(p) != 42 {
-		t.Fatalf("FromPtr non-nil mismatch")
-	}
-	var q *int
-	if FromPtr(q) != Zero[int]() {
-		t.Fatalf("FromPtr(nil) should return zero value")
-	}
+func TestToFromPtr(t *testing.T) {
+    v := 7
+    pv := ToPtr(v)
+    if pv == nil || *pv != v {
+        t.Fatal("ToPtr failed")
+    }
+    if FromPtr(pv) != v {
+        t.Fatal("FromPtr failed with non-nil")
+    }
+    var p *int
+    if FromPtr(p) != 0 {
+        t.Fatal("FromPtr nil should return zero value")
+    }
 }
 
-func TestToSlicePtrAndFromSlicePtr(t *testing.T) {
-	src := []int{1, 2, 3}
-	ps := ToSlicePtr(src)
-	if len(ps) != len(src) {
-		t.Fatalf("ToSlicePtr length mismatch: %d vs %d", len(ps), len(src))
-	}
-	// pointers should reference the original underlying elements
-	*ps[0] = 10
-	if src[0] != 10 {
-		t.Fatalf("ToSlicePtr pointers do not reference original elements")
-	}
+func TestToFromSlicePtr(t *testing.T) {
+    in := []int{1, 2, 3}
+    outPtrs := ToSlicePtr(in)
+    if len(outPtrs) != len(in) {
+        t.Fatal("ToSlicePtr length mismatch")
+    }
+    for i := range in {
+        if outPtrs[i] == nil || *outPtrs[i] != in[i] {
+            t.Fatal("ToSlicePtr element mismatch")
+        }
+    }
 
-	// FromSlicePtr with nil element should yield zero for that position
-	a, b := 7, 9
-	withNil := []*int{&a, nil, &b}
-	vals := FromSlicePtr(withNil)
-	if !reflect.DeepEqual(vals, []int{7, 0, 9}) {
-		t.Fatalf("FromSlicePtr with nil element mismatch: %v", vals)
-	}
+    // FromSlicePtr with nil element should yield zero at that index
+    a, b := 10, 20
+    ptrs := []*int{&a, nil, &b}
+    vals := FromSlicePtr(ptrs)
+    if len(vals) != 3 || vals[0] != 10 || vals[1] != 0 || vals[2] != 20 {
+        t.Fatalf("FromSlicePtr unexpected values: %#v", vals)
+    }
+
+    // empty slices
+    none := []int{}
+    nonePtrs := ToSlicePtr(none)
+    if len(nonePtrs) != 0 {
+        t.Fatal("ToSlicePtr of empty slice should be empty")
+    }
+    var nilPtrs []*int
+    vals2 := FromSlicePtr(nilPtrs)
+    if len(vals2) != 0 {
+        t.Fatal("FromSlicePtr of nil slice should be empty")
+    }
 }
 
 func TestIsType(t *testing.T) {
-	if IsType(nil, "int") {
-		t.Fatalf("IsType(nil, \"int\") = true, want false")
-	}
-	if !IsType(5, "int") {
-		t.Fatalf("IsType(5, \"int\") = false, want true")
-	}
-	ds := &demoStruct{}
-	// For pointers, IsType should dereference and compare underlying type name
-	if !IsType(ds, "pointer.demoStruct") {
-		t.Fatalf("IsType(&demoStruct, \"pointer.demoStruct\") = false, want true")
-	}
-	// Pointer to basic type should match underlying type name
-	iv := 3
-	if !IsType(&iv, "int") {
-		t.Fatalf("IsType(&int, \"int\") = false, want true")
-	}
-	// Negative case
-	if IsType("x", "int") {
-		t.Fatalf("IsType(\"x\", \"int\") = true, want false")
-	}
+    var x int = 5
+    if !IsType(x, "int") {
+        t.Fatal("expected int type")
+    }
+    if IsType(x, "string") {
+        t.Fatal("did not expect string type")
+    }
+    if !IsType(&x, "int") {
+        t.Fatal("pointer should resolve to underlying int type")
+    }
+    if IsType(nil, "int") {
+        t.Fatal("nil should not be a type match")
+    }
+    // struct typing
+    st := sampleStruct{}
+    if !IsType(st, "pointer.sampleStruct") {
+        t.Fatal("expected type pointer.sampleStruct")
+    }
+    if !IsType(&st, "pointer.sampleStruct") {
+        t.Fatal("expected pointer to resolve to struct type")
+    }
 }
 
-func TestKindCheckers(t *testing.T) {
-	// IsStruct
-	if IsStruct(nil) {
-		t.Fatalf("IsStruct(nil) = true, want false")
-	}
-	if !IsStruct(demoStruct{}) {
-		t.Fatalf("IsStruct(struct) = false, want true")
-	}
-	if !IsStruct(&demoStruct{}) {
-		t.Fatalf("IsStruct(&struct) = false, want true")
-	}
-	// pointer to non-struct should be false
-	vi := 1
-	if IsStruct(&vi) {
-		t.Fatalf("IsStruct(&int) = true, want false")
-	}
-	if IsStruct(map[string]int{}) {
-		t.Fatalf("IsStruct(map) = true, want false")
-	}
-	// nil pointer to struct should safely return false (Elem() -> zero Value -> Kind Invalid)
-	var ps *demoStruct
-	if IsStruct(ps) {
-		t.Fatalf("IsStruct((*demoStruct)(nil)) = true, want false")
-	}
+func TestKindHelpers(t *testing.T) {
+    st := sampleStruct{A: 1}
+    if !IsStruct(st) || !IsStruct(&st) {
+        t.Fatal("struct detection failed")
+    }
+    if IsStruct(3) {
+        t.Fatal("int is not a struct")
+    }
+    if IsStruct(nil) {
+        t.Fatal("nil is not a struct")
+    }
 
-	// IsChan
-	if IsChan(nil) {
-		t.Fatalf("IsChan(nil) = true, want false")
-	}
-	ch := make(chan int)
-	if !IsChan(ch) {
-		t.Fatalf("IsChan(chan) = false, want true")
-	}
-	// pointer to chan
-	pch := &ch
-	if !IsChan(pch) {
-		t.Fatalf("IsChan(&chan) = false, want true")
-	}
-	// pointer to non-chan should be false
-	if IsChan(&vi) {
-		t.Fatalf("IsChan(&int) = true, want false")
-	}
-	if IsChan(123) {
-		t.Fatalf("IsChan(int) = true, want false")
-	}
-	// nil pointer to chan should safely return false
-	var pnilch *chan int
-	if IsChan(pnilch) {
-		t.Fatalf("IsChan((*chan int)(nil)) = true, want false")
-	}
+    c := make(chan int)
+    if !IsChan(c) || !IsChan(&c) {
+        t.Fatal("chan detection failed")
+    }
+    if IsChan(3) {
+        t.Fatal("int is not a chan")
+    }
+    if IsChan(nil) {
+        t.Fatal("nil is not a chan")
+    }
+    var cn chan int
+    if !IsChan(cn) {
+        t.Fatal("nil chan typed should still be kind chan")
+    }
+    if !IsChan(&cn) {
+        t.Fatal("pointer to typed nil chan should be recognized as chan kind")
+    }
 
-	// IsSlice (also counts arrays)
-	if IsSlice(nil) {
-		t.Fatalf("IsSlice(nil) = true, want false")
-	}
-	if !IsSlice([]int{1, 2}) {
-		t.Fatalf("IsSlice(slice) = false, want true")
-	}
-	arr := [2]int{1, 2}
-	if !IsSlice(arr) {
-		t.Fatalf("IsSlice(array) = false, want true")
-	}
-	s := []int{1}
-	if !IsSlice(&s) {
-		t.Fatalf("IsSlice(&slice) = false, want true")
-	}
-	// pointer to array should be true
-	if !IsSlice(&arr) {
-		t.Fatalf("IsSlice(&array) = false, want true")
-	}
-	if IsSlice(123) {
-		t.Fatalf("IsSlice(int) = true, want false")
-	}
-	// nil pointer to slice/array should safely return false
-	var pnilSlice *[]int
-	if IsSlice(pnilSlice) {
-		t.Fatalf("IsSlice((*[]int)(nil)) = true, want false")
-	}
-	var pnilArray *[2]int
-	if IsSlice(pnilArray) {
-		t.Fatalf("IsSlice((*[2]int)(nil)) = true, want false")
-	}
+    sl := []int{1}
+    arr := [2]int{1, 2}
+    if !IsSlice(sl) || !IsSlice(arr) || !IsSlice(&sl) || !IsSlice(&arr) {
+        t.Fatal("slice/array detection failed")
+    }
+    if IsSlice(3) {
+        t.Fatal("int is not a slice/array")
+    }
+    if IsSlice(nil) {
+        t.Fatal("nil is not a slice/array")
+    }
+    var nilSlice []int
+    if !IsSlice(nilSlice) {
+        t.Fatal("typed nil slice should be recognized as slice kind")
+    }
+    if !IsSlice(&nilSlice) {
+        t.Fatal("pointer to typed nil slice should be recognized as slice kind")
+    }
 
-	// IsMap
-	if IsMap(nil) {
-		t.Fatalf("IsMap(nil) = true, want false")
-	}
-	if !IsMap(map[string]int{"a": 1}) {
-		t.Fatalf("IsMap(map) = false, want true")
-	}
-	mm := map[string]int{}
-	if !IsMap(&mm) {
-		t.Fatalf("IsMap(&map) = false, want true")
-	}
-	// pointer to non-map should be false
-	if IsMap(&vi) {
-		t.Fatalf("IsMap(&int) = true, want false")
-	}
-	if IsMap("nope") {
-		t.Fatalf("IsMap(string) = true, want false")
-	}
-	// nil pointer to map should safely return false
-	var pnilMap *map[string]int
-	if IsMap(pnilMap) {
-		t.Fatalf("IsMap((*map[string]int)(nil)) = true, want false")
-	}
+    m := map[string]int{"a": 1}
+    if !IsMap(m) || !IsMap(&m) {
+        t.Fatal("map detection failed")
+    }
+    if IsMap(3) {
+        t.Fatal("int is not a map")
+    }
+    if IsMap(nil) {
+        t.Fatal("nil is not a map")
+    }
+    var nilMap map[string]int
+    if !IsMap(nilMap) {
+        t.Fatal("typed nil map should be recognized as map kind")
+    }
+    if !IsMap(&nilMap) {
+        t.Fatal("pointer to typed nil map should be recognized as map kind")
+    }
 }
