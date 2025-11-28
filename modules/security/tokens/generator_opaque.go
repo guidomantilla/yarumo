@@ -26,9 +26,9 @@ func NewOpaqueGenerator(opts ...Option) Generator {
 	}
 }
 
-func (g *opaqueGenerator) Name() string {
+func (g *opaqueGenerator) Name() Name {
 	assert.NotNil(g, "generator is nil")
-	return fmt.Sprintf("%s-%s", "OPAQUE", "AES256")
+	return Name(fmt.Sprintf("%s-%s", "OPAQUE", "AES256"))
 }
 
 func (g *opaqueGenerator) Generate(subject string, principal Principal) (*string, error) {

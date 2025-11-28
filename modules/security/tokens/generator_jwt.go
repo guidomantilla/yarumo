@@ -28,9 +28,9 @@ func NewJwtGenerator(opts ...Option) Generator {
 	}
 }
 
-func (g *jwtGenerator) Name() string {
+func (g *jwtGenerator) Name() Name {
 	assert.NotNil(g, "generator is nil")
-	return fmt.Sprintf("%s-%s", "JWT", g.signingMethod.Alg())
+	return Name(fmt.Sprintf("%s-%s", "JWT", g.signingMethod.Alg()))
 }
 
 func (g *jwtGenerator) Generate(subject string, principal Principal) (*string, error) {

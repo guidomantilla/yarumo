@@ -30,6 +30,7 @@ func (e *TokenError) Error() string {
 //
 
 var (
+	ErrAlgorithmNotSupported = errors.New("algorithm not supported")
 	ErrSubjectCannotBeEmpty  = errors.New("subject cannot be empty")
 	ErrPrincipalCannotBeNil  = errors.New("principal cannot be nil")
 	ErrTokenExpired          = errors.New("token expired")

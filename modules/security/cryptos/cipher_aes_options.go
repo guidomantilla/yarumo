@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 
 	"github.com/guidomantilla/yarumo/common/utils"
+	"github.com/guidomantilla/yarumo/security/keys"
 )
 
 type AesCipherOptions struct {
@@ -12,10 +13,7 @@ type AesCipherOptions struct {
 
 func NewAesCipherOptions(opts ...AesCipherOption) *AesCipherOptions {
 	options := &AesCipherOptions{
-		key: func() []byte {
-			key, _ := Key(32)
-			return key
-		}(),
+		key: keys.Key(32),
 	}
 
 	for _, opt := range opts {
@@ -29,8 +27,7 @@ type AesCipherOption func(opts *AesCipherOptions)
 
 func WithAesCipherKeySize32() AesCipherOption {
 	return func(opts *AesCipherOptions) {
-		key, _ := Key(32)
-		opts.key = key
+		opts.key = keys.Key(32)
 	}
 }
 

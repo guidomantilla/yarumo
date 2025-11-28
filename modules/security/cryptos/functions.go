@@ -10,15 +10,6 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
-func Key(size int) ([]byte, error) {
-	key := make([]byte, size)
-	_, err := rand.Reader.Read(key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate key: %w", err)
-	}
-	return key, nil
-}
-
 func AesEncrypt(key []byte, plaintext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {

@@ -13,9 +13,9 @@ type FakeGenerator struct {
 	Description string
 }
 
-func (g *FakeGenerator) Name() string {
+func (g *FakeGenerator) Name() Name {
 	assert.NotNil(g, "generator is nil")
-	return fmt.Sprintf("%s-%s-%s", "FAKE", "CUSTOM", g.Description)
+	return Name(fmt.Sprintf("%s-%s-%s", "FAKE", "CUSTOM", g.Description))
 }
 
 func (g *FakeGenerator) Generate(subject string, principal Principal) (*string, error) {
