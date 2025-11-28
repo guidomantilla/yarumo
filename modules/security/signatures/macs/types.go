@@ -24,7 +24,7 @@ type MacFn func(key []byte, data []byte) ([]byte, error)
 
 type Algorithm struct {
 	Name    Name  `json:"name"`
-	Other   Name  `json:"other"`
+	Alias   Name  `json:"alias"`
 	Fn      MacFn `json:"-"`
 	KeySize int   `json:"key-size"`
 }

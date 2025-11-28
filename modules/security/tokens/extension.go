@@ -32,7 +32,7 @@ func Get(name Name) (*Algorithm, error) {
 	return &alg, nil
 }
 
-func SupportedList() []Algorithm {
+func Supported() []Algorithm {
 	lock.Lock()
 	defer lock.Unlock()
 
