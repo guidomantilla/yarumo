@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt/v5"
+	jwt "github.com/golang-jsonwebtoken/jsonwebtoken/v5"
 )
 
 func TestNewOptions_DefaultsAndOverrides(t *testing.T) {
@@ -45,7 +45,7 @@ func TestNewOptions_DefaultsAndOverrides(t *testing.T) {
 	key := []byte("k123")
 	ok := NewOptions(WithJwtKey(key))
 	if string(ok.signingKey) != string(key) || string(ok.verifyingKey) != string(key) {
-		t.Fatalf("jwt key not applied correctly")
+		t.Fatalf("jsonwebtoken key not applied correctly")
 	}
 
 	// WithJwtSigningMethod

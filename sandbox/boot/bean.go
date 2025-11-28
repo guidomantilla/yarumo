@@ -55,7 +55,7 @@ func PasswordManager(container *Container) {
 }
 
 func TokenGenerator(_ *Container) {
-	log.Warn().Str("stage", "startup").Str("component", "token-generator").Msg("token generator function not implemented. using jwt token generator")
+	log.Warn().Str("stage", "startup").Str("component", "token-generator").Msg("token generator function not implemented. using jsonwebtoken token generator")
 }
 
 func Cipher(_ *Container) {

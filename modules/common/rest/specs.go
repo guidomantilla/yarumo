@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/common/assert"
+	"github.com/guidomantilla/yarumo/common/types"
 	"github.com/guidomantilla/yarumo/common/utils"
 )
 
@@ -31,7 +32,7 @@ type RequestSpec struct {
 	Headers     map[string]string
 	QueryParams map[string][]string
 	// Deprecated: use Body instead
-	RawBody []byte
+	RawBody types.Bytes
 	Body    any
 }
 

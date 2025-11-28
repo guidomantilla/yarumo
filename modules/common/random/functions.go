@@ -4,6 +4,8 @@ import (
 	crand "crypto/rand"
 	"math/big"
 	"strings"
+
+	"github.com/guidomantilla/yarumo/common/types"
 )
 
 const (
@@ -21,7 +23,7 @@ const (
 var randInt = crand.Int
 
 // Key returns cryptographically random bytes.
-func Key(size int) []byte {
+func Key(size int) types.Bytes {
 	key := make([]byte, size)
 	_, _ = crand.Read(key)
 	return key

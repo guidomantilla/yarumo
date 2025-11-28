@@ -3,8 +3,9 @@ package tokens
 import (
 	"time"
 
-	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/guidomantilla/yarumo/common/random"
+	"github.com/guidomantilla/yarumo/common/types"
 	"github.com/guidomantilla/yarumo/common/utils"
 )
 
@@ -13,9 +14,9 @@ type Option func(opts *Options)
 type Options struct {
 	issuer        string
 	timeout       time.Duration
-	cipherKey     []byte
-	signingKey    []byte
-	verifyingKey  []byte
+	cipherKey     types.Bytes
+	signingKey    types.Bytes
+	verifyingKey  types.Bytes
 	signingMethod jwt.SigningMethod
 }
 
@@ -53,11 +54,10 @@ func WithJwtIssuer(issuer string) Option {
 	}
 }
 
-func WithJwtKey(key []byte) Option {
+func WithJwtKey(key types.Bytes) Option {
 	return func(opts *Options) {
 		if utils.NotEmpty(key) {
-			opts.signingKey = key
-			opts.verifyingKey = key
+			opts.signingKey, opts.verifyingKey = key, key
 		}
 	}
 }
@@ -70,7 +70,7 @@ func WithJwtSigningMethod(signingMethod jwt.SigningMethod) Option {
 	}
 }
 
-func WithOpaqueKey(cipherKey []byte) Option {
+func WithOpaqueKey(cipherKey types.Bytes) Option {
 	return func(opts *Options) {
 		if utils.NotEmpty(cipherKey) {
 			opts.cipherKey = cipherKey

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt/v5"
+	jwt "github.com/golang-jsonwebtoken/jsonwebtoken/v5"
 )
 
 func newJwtWith(key []byte, issuer string, method jwt.SigningMethod, timeout time.Duration) *jwtGenerator {

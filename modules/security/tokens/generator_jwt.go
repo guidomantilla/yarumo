@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/utils"
+	"github.com/guidomantilla/yarumo/security/tokens/jsonwebtoken"
 )
 
 type jwtGenerator struct {
@@ -33,17 +34,17 @@ func (g *jwtGenerator) Name() Name {
 	return Name(fmt.Sprintf("%s-%s", "JWT", g.signingMethod.Alg()))
 }
 
-func (g *jwtGenerator) Generate(subject string, principal Principal) (*string, error) {
+func (g *jwtGenerator) Generate(subject string, principal Principal) (string, error) {
 	assert.NotNil(g, "generator is nil")
 
 	if utils.Empty(subject) {
-		return nil, ErrTokenGeneration(ErrSubjectCannotBeEmpty)
+		return "", ErrTokenGeneration(ErrSubjectCannotBeEmpty)
 	}
 	if utils.Empty(principal) {
-		return nil, ErrTokenGeneration(ErrPrincipalCannotBeNil)
+		return "", ErrTokenGeneration(ErrPrincipalCannotBeNil)
 	}
 
-	claims := &Claims{
+	claims := &jsonwebtoken.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    g.issuer,
 			Subject:   subject,
@@ -51,44 +52,29 @@ func (g *jwtGenerator) Generate(subject string, principal Principal) (*string, e
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
-		Principal: principal,
+		Payload: principal,
 	}
 
-	token := jwt.NewWithClaims(g.signingMethod, claims)
-
-	tokenString, err := token.SignedString(g.signingKey)
-	if err != nil {
-		return nil, ErrTokenGeneration(err)
-	}
-
-	return &tokenString, nil
+	return jsonwebtoken.Generate(claims, g.signingKey, g.signingMethod)
 }
 
-func (g *jwtGenerator) Validate(tokenString string) (Principal, error) {
+func (g *jwtGenerator) Validate(token string) (Principal, error) {
 	assert.NotNil(g, "generator is nil")
 
-	if utils.Empty(tokenString) {
+	if utils.Empty(token) {
 		return nil, ErrTokenValidation(ErrTokenCannotBeEmpty)
 	}
 
-	getKeyFunc := func(token *jwt.Token) (any, error) {
-		return g.verifyingKey, nil
-	}
-
-	parserOptions := []jwt.ParserOption{
-		jwt.WithIssuer(g.issuer),
-		jwt.WithValidMethods([]string{g.signingMethod.Alg()}),
-	}
-
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, getKeyFunc, parserOptions...)
+	claims, err := jsonwebtoken.Validate(token, g.verifyingKey, g.signingMethod, jwt.WithIssuer(g.issuer))
 	if err != nil {
-		return nil, ErrTokenValidation(ErrTokenFailedParsing, err)
+		return nil, ErrTokenValidation(err)
 	}
 
-	claims := token.Claims.(*Claims)
-	if utils.Nil(claims.Principal) {
+	principal := claims.Payload.(Principal)
+
+	if utils.Nil(principal) {
 		return nil, ErrTokenValidation(ErrTokenEmptyPrincipal)
 	}
 
-	return claims.Principal, nil
+	return principal, nil
 }

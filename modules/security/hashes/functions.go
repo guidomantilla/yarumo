@@ -5,12 +5,13 @@ import (
 	"crypto/sha3"
 	"crypto/sha512"
 
+	"github.com/guidomantilla/yarumo/common/types"
 	"golang.org/x/crypto/blake2b"
 )
 
 // 256
 
-func SHA256(data []byte) []byte {
+func SHA256(data types.Bytes) types.Bytes {
 	if len(data) == 0 {
 		return []byte{}
 	}
@@ -18,7 +19,7 @@ func SHA256(data []byte) []byte {
 	return sum[:]
 }
 
-func SHA3_256(data []byte) []byte {
+func SHA3_256(data types.Bytes) types.Bytes {
 	if len(data) == 0 {
 		return []byte{}
 	}
@@ -27,7 +28,7 @@ func SHA3_256(data []byte) []byte {
 	return d.Sum(nil)
 }
 
-func BLAKE2b_256(data []byte) []byte {
+func BLAKE2b_256(data types.Bytes) types.Bytes {
 	if len(data) == 0 {
 		return []byte{}
 	}
@@ -37,7 +38,7 @@ func BLAKE2b_256(data []byte) []byte {
 
 // 512
 
-func SHA512(data []byte) []byte {
+func SHA512(data types.Bytes) types.Bytes {
 	if len(data) == 0 {
 		return []byte{}
 	}
@@ -45,7 +46,7 @@ func SHA512(data []byte) []byte {
 	return sum[:]
 }
 
-func SHA3_512(data []byte) []byte {
+func SHA3_512(data types.Bytes) types.Bytes {
 	if len(data) == 0 {
 		return []byte{}
 	}
@@ -54,7 +55,7 @@ func SHA3_512(data []byte) []byte {
 	return d.Sum(nil)
 }
 
-func BLAKE2b_512(data []byte) []byte {
+func BLAKE2b_512(data types.Bytes) types.Bytes {
 	if len(data) == 0 {
 		return []byte{}
 	}

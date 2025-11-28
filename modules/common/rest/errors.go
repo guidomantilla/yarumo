@@ -6,6 +6,7 @@ import (
 
 	"github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	"github.com/guidomantilla/yarumo/common/types"
 )
 
 const (
@@ -29,7 +30,7 @@ func (e *Error) Error() string {
 type HTTPError struct {
 	StatusCode int
 	Status     string
-	Body       []byte
+	Body       types.Bytes
 }
 
 func (e *HTTPError) Error() string {

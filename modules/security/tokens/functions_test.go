@@ -13,9 +13,9 @@ func TestWrappers_DelegateToDefaultGenerators(t *testing.T) {
 	})
 
 	jwtMock := NewMockGenerator()
-	retTok := "jwt-token"
+	retTok := "jsonwebtoken-token"
 	jwtMock.On("Generate", "sub", Principal{"p": 1}).Return(&retTok, nil)
-	jwtMock.On("Validate", "jwt-token").Return(Principal{"ok": true}, nil)
+	jwtMock.On("Validate", "jsonwebtoken-token").Return(Principal{"ok": true}, nil)
 	DefaultJwtGenerator = jwtMock
 
 	opMock := NewMockGenerator()
@@ -25,12 +25,12 @@ func TestWrappers_DelegateToDefaultGenerators(t *testing.T) {
 	DefaultOpaqueGenerator = opMock
 
 	t1, err := JwtGenerate("sub", Principal{"p": 1})
-	if err != nil || t1 == nil || *t1 != "jwt-token" {
-		t.Fatalf("unexpected jwt wrapper result: %v %v", t1, err)
+	if err != nil || t1 == nil || *t1 != "jsonwebtoken-token" {
+		t.Fatalf("unexpected jsonwebtoken wrapper result: %v %v", t1, err)
 	}
-	p1, err := JwtValidate("jwt-token")
+	p1, err := JwtValidate("jsonwebtoken-token")
 	if err != nil || p1["ok"].(bool) != true {
-		t.Fatalf("unexpected jwt validate result: %v %v", p1, err)
+		t.Fatalf("unexpected jsonwebtoken validate result: %v %v", p1, err)
 	}
 
 	t2, err := OpaqueGenerate("sub2", Principal{"q": 2})

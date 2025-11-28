@@ -1,5 +1,7 @@
 package random
 
+import "github.com/google/cel-go/common/types"
+
 var (
 	_ KeyFn    = Key
 	_ NumberFn = Number
@@ -13,7 +15,7 @@ var (
 	_ TextFn   = TextAll
 )
 
-type KeyFn func(size int) []byte
+type KeyFn func(size int) types.Bytes
 
 type NumberFn func(max int64) (int64, error)
 

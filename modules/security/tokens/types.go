@@ -1,7 +1,5 @@
 package tokens
 
-import jwt "github.com/golang-jwt/jwt/v5"
-
 type Name string
 
 var (
@@ -10,14 +8,9 @@ var (
 	_ Generator = (*FakeGenerator)(nil)
 )
 
-type Claims struct {
-	jwt.RegisteredClaims
-	Principal Principal `json:"principal,omitempty"`
-}
-
 type Generator interface {
 	Name() Name
-	Generate(subject string, principal Principal) (*string, error)
+	Generate(subject string, principal Principal) (string, error)
 	Validate(tokenString string) (Principal, error)
 }
 
