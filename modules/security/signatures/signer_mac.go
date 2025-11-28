@@ -5,6 +5,7 @@ import (
 
 	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/errs"
+
 	"github.com/guidomantilla/yarumo/security/signatures/macs"
 )
 

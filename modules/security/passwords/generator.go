@@ -1,7 +1,7 @@
 package passwords
 
 import (
-	"math/rand/v2"
+	rand "math/rand/v2"
 	"strings"
 
 	"github.com/guidomantilla/yarumo/common/random"

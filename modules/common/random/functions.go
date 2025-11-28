@@ -1,9 +1,9 @@
 package random
 
 import (
-    crand "crypto/rand"
-    "math/big"
-    "strings"
+	crand "crypto/rand"
+	"math/big"
+	"strings"
 )
 
 const (
@@ -22,18 +22,18 @@ var randInt = crand.Int
 
 // Key returns cryptographically random bytes.
 func Key(size int) []byte {
-    key := make([]byte, size)
-    _, _ = crand.Read(key)
-    return key
+	key := make([]byte, size)
+	_, _ = crand.Read(key)
+	return key
 }
 
 // Number returns a cryptographically random integer in [0, max).
 func Number(max int64) (int64, error) {
-    n, err := randInt(crand.Reader, big.NewInt(max))
-    if err != nil {
-        return 0, err
-    }
-    return n.Int64(), nil
+	n, err := randInt(crand.Reader, big.NewInt(max))
+	if err != nil {
+		return 0, err
+	}
+	return n.Int64(), nil
 }
 
 // String returns a cryptographically random string with custom charset.
