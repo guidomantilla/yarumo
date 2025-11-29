@@ -42,8 +42,7 @@ threshold:
 #exclude:
 #  # Exclude files or packages matching their paths
 #  paths:
-#    - \.pb\.go$      # excludes all protobuf generated files
-#    - ^sandbox/bar   # exclude package `sandbox/bar`
+#    - ^assert
 
 # NOTES:
 # - symbol `/` in all path regexps will be replaced by the current OS file path separator

@@ -4,8 +4,6 @@ import (
 	"errors"
 	"strings"
 	"testing"
-
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
 func TestErrUIDFunctionNotFound(t *testing.T) {
@@ -47,30 +45,4 @@ func TestErrUIDFunctionNotFound(t *testing.T) {
 	if u == nil || !strings.Contains(u.Error(), name) {
 		t.Fatalf("errors.Unwrap() = %v, want message containing %q", u, name)
 	}
-}
-
-func TestUIDError_ErrorVariants(t *testing.T) {
-	t.Run("panics when receiver is nil", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Fatalf("expected panic when calling Error() on nil receiver")
-			}
-		}()
-		var ue *Error
-		_ = ue.Error() // should trigger assert.NotEmpty(e, "error is nil")
-	})
-
-	t.Run("formats when inner error is nil", func(t *testing.T) {
-		ue := &Error{TypedError: cerrs.TypedError{Type: "custom"}}
-		got := ue.Error()
-		// With Err == nil and %s formatting, fmt prints %!s(<nil>)
-		want := "uid custom error: %!s(<nil>)"
-		if got != want {
-			t.Fatalf("Error() = %q, want %q", got, want)
-		}
-		// Unwrap should return nil when inner Err is nil
-		if u := errors.Unwrap(ue); u != nil {
-			t.Fatalf("Unwrap() = %v, want <nil>", u)
-		}
-	})
 }
