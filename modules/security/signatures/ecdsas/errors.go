@@ -29,10 +29,11 @@ func (e *Error) Error() string {
 //
 
 var (
-	ErrMethodInvalid = errors.New("ecdsa method is invalid")
-	ErrKeyInvalid    = errors.New("ecdsa key is invalid")
-	ErrDataEmpty     = errors.New("ecdsa data is empty")
-	ErrSignFailed    = errors.New("ecdsa sign failed")
+	ErrMethodInvalid     = errors.New("ecdsa method is invalid")
+	ErrKeyInvalid        = errors.New("ecdsa key is invalid")
+	ErrSignatureInvalid  = errors.New("ecdsa signature is invalid")
+	ErrSignFailed        = errors.New("ecdsa sign failed")
+	ErrFormatUnsupported = errors.New("ecdsa format unsupported")
 )
 
 func ErrAlgorithmNotSupported(name string) error {

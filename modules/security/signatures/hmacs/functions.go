@@ -9,7 +9,7 @@ import (
 )
 
 func Digest(hash crypto.Hash, key types.Bytes, data types.Bytes) types.Bytes {
-	assert.True(hash.Available(), "hash function not available")
+	assert.True(hash.Available(), "hash function not available. call crypto.RegisterHash(...)")
 
 	h := hmac.New(hash.New, key)
 	_, _ = h.Write(data)
@@ -17,7 +17,7 @@ func Digest(hash crypto.Hash, key types.Bytes, data types.Bytes) types.Bytes {
 }
 
 func Validate(hash crypto.Hash, key types.Bytes, signature types.Bytes, data types.Bytes) bool {
-	assert.True(hash.Available(), "hash function not available")
+	assert.True(hash.Available(), "hash function not available. call crypto.RegisterHash(...)")
 	calculated := Digest(hash, key, data)
 	return hmac.Equal(signature, calculated)
 }
