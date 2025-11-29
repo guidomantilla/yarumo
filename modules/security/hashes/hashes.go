@@ -2,7 +2,6 @@ package hashes
 
 import (
 	"crypto"
-	"hash"
 
 	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/types"
