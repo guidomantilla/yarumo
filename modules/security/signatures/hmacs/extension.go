@@ -1,6 +1,8 @@
 package hmacs
 
 import (
+	_ "crypto/sha256"
+	_ "crypto/sha512"
 	"sync"
 )
 
