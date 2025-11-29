@@ -1,4 +1,4 @@
-package macs
+package hmacs
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	HashNotFound = "hash_function_not_found"
+	HmacNotFound = "hmac_function_not_found"
 )
 
 var (
@@ -22,7 +22,7 @@ type Error struct {
 func (e *Error) Error() string {
 	assert.NotNil(e, "error is nil")
 	assert.NotNil(e.Err, "internal error is nil")
-	return fmt.Sprintf("hash %s error: %s", e.Type, e.Err)
+	return fmt.Sprintf("hmac %s error: %s", e.Type, e.Err)
 }
 
 //
@@ -30,8 +30,8 @@ func (e *Error) Error() string {
 func ErrAlgorithmNotSupported(name string) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: HashNotFound,
-			Err:  fmt.Errorf("hash function %s not found", name),
+			Type: HmacNotFound,
+			Err:  fmt.Errorf("hmac function %s not found", name),
 		},
 	}
 }

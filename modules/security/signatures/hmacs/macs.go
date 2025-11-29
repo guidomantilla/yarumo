@@ -1,4 +1,4 @@
-package macs
+package hmacs
 
 import (
 	"crypto"
