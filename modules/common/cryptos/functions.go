@@ -2,13 +2,10 @@ package cryptos
 
 import (
 	"crypto"
-	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/hmac"
-	"crypto/rand"
 
 	"github.com/guidomantilla/yarumo/common/assert"
-	"github.com/guidomantilla/yarumo/common/errs"
 	"github.com/guidomantilla/yarumo/common/types"
 
 	_ "crypto/sha256"
@@ -45,44 +42,10 @@ var (
 
 // Base Functions
 
-func Hash(hash crypto.Hash, data types.Bytes) types.Bytes {
-	assert.True(hash.Available(), "hash function not available")
-
-	h := hash.New()
-	_, _ = h.Write(data)
-	return h.Sum(nil)
-}
-
 func HmacSign(hash crypto.Hash, key types.Bytes, data types.Bytes) types.Bytes {
 	assert.True(hash.Available(), "hash function not available")
 
 	h := hmac.New(hash.New, key)
 	_, _ = h.Write(data)
 	return h.Sum(nil)
-}
-
-func EcdsaSign(hash crypto.Hash, key *ecdsa.PrivateKey, data types.Bytes) (types.Bytes, error) {
-	if key == nil {
-		return nil, ErrKeyInvalid
-	}
-	if key.Curve != elliptic.P256() {
-		return nil, ErrKeyInvalid
-	}
-	if len(data) == 0 {
-		return nil, ErrDataEmpty
-	}
-
-	r, s, err := ecdsa.Sign(rand.Reader, key, Hash(hash, data))
-	if err != nil {
-		return nil, errs.Wrap(ErrSignFailed, err)
-	}
-
-	// We serialize the outputs (r and s) into big-endian byte arrays padded with zeros on the left to make sure the sizes work out.
-	// Output must be 2*keyBytes long.
-	const keyBytes = 32
-	out := make([]byte, 2*keyBytes)
-
-	r.FillBytes(out[0:keyBytes]) // r is assigned to the first half of output.
-	s.FillBytes(out[keyBytes:])  // s is assigned to the second half of output.
-	return out, nil
 }
