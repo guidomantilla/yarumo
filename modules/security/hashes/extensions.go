@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-var algorithms = map[string]Algorithm{
+var methods = map[string]Method{
 	SHA256.name:      *SHA256,
 	SHA512.name:      *SHA512,
 	SHA3_256.name:    *SHA3_256,
@@ -16,32 +16,32 @@ var algorithms = map[string]Algorithm{
 
 var lock = new(sync.RWMutex)
 
-func Register(algorithm Algorithm) {
+func Register(method Method) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	algorithms[algorithm.name] = algorithm
-	crypto.RegisterHash(algorithm.kind, algorithm.fn)
+	methods[method.name] = method
+	crypto.RegisterHash(method.kind, method.fn)
 }
 
-func Get(name string) (*Algorithm, error) {
+func Get(name string) (*Method, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	alg, ok := algorithms[name]
+	alg, ok := methods[name]
 	if !ok {
 		return nil, ErrAlgorithmNotSupported(name)
 	}
 	return &alg, nil
 }
 
-func Supported() []Algorithm {
+func Supported() []Method {
 	lock.Lock()
 	defer lock.Unlock()
 
-	var list []Algorithm
-	for _, alg := range algorithms {
-		list = append(list, alg)
+	var list []Method
+	for _, method := range methods {
+		list = append(list, method)
 	}
 	return list
 }

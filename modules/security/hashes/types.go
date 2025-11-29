@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	_ HashFn = Hash
+	_ Fn = Hash
 )
 
-type HashFn func(hash crypto.Hash, data types.Bytes) types.Bytes
+type Fn func(hash crypto.Hash, data types.Bytes) types.Bytes

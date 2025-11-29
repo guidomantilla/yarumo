@@ -29,7 +29,7 @@ func ECDSA_P256_SHA256(key *ecdsa.PrivateKey, data types.Bytes) (types.Bytes, er
 		return nil, ErrDataEmpty
 	}
 
-	hash := hashes.SHA256(data)
+	hash := hashes.SHA256.Hash(data)
 	r, s, err := ecdsa.Sign(rand.Reader, key, hash)
 	if err != nil {
 		return nil, errs.Wrap(ErrSignFailed, err)
@@ -57,7 +57,7 @@ func ECDSA_P521_SHA512(key *ecdsa.PrivateKey, data types.Bytes) (types.Bytes, er
 		return nil, ErrDataEmpty
 	}
 
-	hash := hashes.SHA3_512(data)
+	hash := hashes.SHA3_512.Hash(data)
 	r, s, err := ecdsa.Sign(rand.Reader, key, hash)
 	if err != nil {
 		return nil, errs.Wrap(ErrSignFailed, err)

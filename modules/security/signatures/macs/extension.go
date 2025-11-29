@@ -4,43 +4,38 @@ import (
 	"sync"
 )
 
-var algorithms = map[Name]Algorithm{
-	HS_256:   {Name: HS_256, Alias: "HS_256", Fn: HMAC_SHA256, KeySize: 32},
-	HS3_256:  {Name: HS3_256, Alias: "HS3_256", Fn: HMAC_SHA3_256, KeySize: 32},
-	MB2b_256: {Name: MB2b_256, Alias: "MB2b_256", Fn: BLAKE2b_256_MAC, KeySize: 32},
-	HS_512:   {Name: HS_512, Alias: "HS_512", Fn: HMAC_SHA512, KeySize: 64},
-	HS3_512:  {Name: HS3_512, Alias: "HS3_512", Fn: HMAC_SHA3_512, KeySize: 64},
-	MB2b_512: {Name: MB2b_512, Alias: "MB2b_512", Fn: BLAKE2b_512_MAC, KeySize: 64},
+var methods = map[string]Method{
+	HMAC_with_SHA256.name: *HMAC_with_SHA256,
+	HMAC_with_SHA512.name: *HMAC_with_SHA512,
 }
 
 var lock = new(sync.RWMutex)
 
-func Register(algorithm Algorithm) {
+func Register(method Method) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	algorithms[algorithm.Name] = algorithm
+	methods[method.name] = method
 }
 
-func Get(name Name) (*Algorithm, error) {
+func Get(name string) (*Method, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	alg, ok := algorithms[name]
+	alg, ok := methods[name]
 	if !ok {
-		return nil, ErrAlgorithmNotSupported
+		return nil, ErrAlgorithmNotSupported(name)
 	}
-
 	return &alg, nil
 }
 
-func Supported() []Algorithm {
+func Supported() []Method {
 	lock.Lock()
 	defer lock.Unlock()
 
-	var list []Algorithm
-	for _, alg := range algorithms {
-		list = append(list, alg)
+	var list []Method
+	for _, method := range methods {
+		list = append(list, method)
 	}
 	return list
 }

@@ -18,4 +18,8 @@ func main() {
 	println(hash.ToHex())
 	println(hash.ToBase64Std())
 
+	hash = hashes.Hash(10000, nil)
+	println(hash.ToHex())
+	println(hash.ToBase64Std())
+
 }

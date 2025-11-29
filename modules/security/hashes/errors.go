@@ -24,6 +24,9 @@ func (e *Error) Error() string {
 	assert.NotNil(e.Err, "internal error is nil")
 	return fmt.Sprintf("hash %s error: %s", e.Type, e.Err)
 }
+
+//
+
 func ErrAlgorithmNotSupported(name string) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
