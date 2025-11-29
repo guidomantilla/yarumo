@@ -166,7 +166,7 @@ func (c *FakeClient) Do(req *http.Request) (*http.Response, error) {
 	assert.NotNil(c, "client is nil")
 	assert.NotNil(c.DoFn, "DoFn is nil")
 
-	if utils.Empty(req) {
+	if utils.Nil(req) {
 		return nil, ErrDo(ErrHttpRequestNil)
 	}
 

@@ -1,16 +1,13 @@
 package hashes
 
 import (
+	"crypto"
+
 	"github.com/guidomantilla/yarumo/common/types"
 )
 
 var (
-	_ HashFn = SHA256
-	_ HashFn = SHA3_256
-	_ HashFn = BLAKE2b_256
-	_ HashFn = SHA512
-	_ HashFn = SHA3_512
-	_ HashFn = BLAKE2b_512
+	_ HashFn = Hash
 )
 
-type HashFn func(data types.Bytes) types.Bytes
+type HashFn func(hash crypto.Hash, data types.Bytes) types.Bytes

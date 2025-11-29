@@ -1,7 +1,5 @@
 package tokens
 
-type Name string
-
 var (
 	_ Generator = (*jwtGenerator)(nil)
 	_ Generator = (*opaqueGenerator)(nil)
@@ -9,14 +7,9 @@ var (
 )
 
 type Generator interface {
-	Name() Name
+	Name() string
 	Generate(subject string, principal Principal) (string, error)
 	Validate(tokenString string) (Principal, error)
 }
 
 type Principal map[string]any
-
-type Algorithm struct {
-	Name      Name      `json:"name"`
-	Generator Generator `json:"-"`
-}

@@ -25,7 +25,7 @@ func (g *FakeGenerator) Generate(subject string, principal Principal) (*string, 
 	if utils.Empty(subject) {
 		return nil, ErrTokenGeneration(ErrSubjectCannotBeEmpty)
 	}
-	if utils.Empty(principal) {
+	if utils.Nil(principal) {
 		return nil, ErrTokenGeneration(ErrPrincipalCannotBeNil)
 	}
 

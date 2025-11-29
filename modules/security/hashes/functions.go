@@ -1,64 +1,49 @@
 package hashes
 
 import (
+	"crypto"
 	"crypto/sha256"
 	"crypto/sha3"
 	"crypto/sha512"
+	"hash"
 
+	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/types"
 	"golang.org/x/crypto/blake2b"
 )
 
-// 256
+func Hash(hash crypto.Hash, data types.Bytes) types.Bytes {
+	assert.True(hash.Available(), "hash function not available")
 
-func SHA256(data types.Bytes) types.Bytes {
-	if len(data) == 0 {
-		return []byte{}
-	}
-	sum := sha256.Sum256(data)
-	return sum[:]
+	h := hash.New()
+	_, _ = h.Write(data)
+	return h.Sum(nil)
 }
 
-func SHA3_256(data types.Bytes) types.Bytes {
-	if len(data) == 0 {
-		return []byte{}
-	}
-	d := sha3.New256()
-	_, _ = d.Write(data)
-	return d.Sum(nil)
+// internal use only
+
+func sha_new256() hash.Hash {
+	return sha256.New()
 }
 
-func BLAKE2b_256(data types.Bytes) types.Bytes {
-	if len(data) == 0 {
-		return []byte{}
-	}
-	sum := blake2b.Sum256(nil)
-	return sum[:]
+func sha_new512() hash.Hash {
+	return sha512.New()
 }
 
-// 512
-
-func SHA512(data types.Bytes) types.Bytes {
-	if len(data) == 0 {
-		return []byte{}
-	}
-	sum := sha512.Sum512(data)
-	return sum[:]
+func sha3_new256() hash.Hash {
+	return sha3.New256()
 }
 
-func SHA3_512(data types.Bytes) types.Bytes {
-	if len(data) == 0 {
-		return []byte{}
-	}
-	d := sha3.New512()
-	_, _ = d.Write(data)
-	return d.Sum(nil)
+func sha3_new512() hash.Hash {
+	return sha3.New512()
 }
 
-func BLAKE2b_512(data types.Bytes) types.Bytes {
-	if len(data) == 0 {
-		return []byte{}
-	}
-	sum := blake2b.Sum512(nil)
-	return sum[:]
+func blake2b_new256() hash.Hash {
+	h, _ := blake2b.New256(nil)
+	return h
+}
+
+func blake2b_new512() hash.Hash {
+	h, _ := blake2b.New512(nil)
+	return h
 }

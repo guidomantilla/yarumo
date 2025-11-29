@@ -1,10 +1,17 @@
-package tokens
+package hashes
 
-import "sync"
+import (
+	"crypto"
+	"sync"
+)
 
 var algorithms = map[string]Algorithm{
-	DefaultJwtGenerator.Name():    {name: DefaultJwtGenerator.Name(), generator: DefaultJwtGenerator},
-	DefaultOpaqueGenerator.Name(): {name: DefaultOpaqueGenerator.Name(), generator: DefaultOpaqueGenerator},
+	SHA256.name:      *SHA256,
+	SHA512.name:      *SHA512,
+	SHA3_256.name:    *SHA3_256,
+	SHA3_512.name:    *SHA3_512,
+	BLAKE2b_256.name: *BLAKE2b_256,
+	BLAKE2b_512.name: *BLAKE2b_512,
 }
 
 var lock = new(sync.RWMutex)
@@ -14,6 +21,7 @@ func Register(algorithm Algorithm) {
 	defer lock.Unlock()
 
 	algorithms[algorithm.name] = algorithm
+	crypto.RegisterHash(algorithm.kind, algorithm.fn)
 }
 
 func Get(name string) (*Algorithm, error) {
@@ -22,7 +30,7 @@ func Get(name string) (*Algorithm, error) {
 
 	alg, ok := algorithms[name]
 	if !ok {
-		return nil, ErrAlgorithmNotSupported
+		return nil, ErrAlgorithmNotSupported(name)
 	}
 	return &alg, nil
 }

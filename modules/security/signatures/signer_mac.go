@@ -10,11 +10,11 @@ import (
 )
 
 type MacSigner struct {
-	macFn macs.MacFn
+	alg macs.Algorithm
 }
 
-func NewMacSigner(macFn macs.MacFn) *MacSigner {
-	return &MacSigner{macFn: macFn}
+func NewMacSigner(alg macs.Algorithm) *MacSigner {
+	return &MacSigner{alg: alg}
 }
 
 func (s *MacSigner) Sign(key any, data []byte) ([]byte, error) {
@@ -24,20 +24,16 @@ func (s *MacSigner) Sign(key any, data []byte) ([]byte, error) {
 	if !ok {
 		return nil, errs.Wrap(ErrInvalidKeyType, errors.New("HMAC_SHA256 sign expects []byte"))
 	}
-	return s.macFn(keyBytes, data)
+	return s.alg.Fn(keyBytes, data)
 }
 
-func (s *MacSigner) Verify(key any, signature []byte, data []byte) error {
+func (s *MacSigner) Verify(key any, signature []byte, data []byte) (bool, error) {
 	assert.NotNil(s, "signer is nil")
 
-	sig, err := s.Sign(key, data)
-	if err != nil {
-		return err
+	keyBytes, ok := key.([]byte)
+	if !ok {
+		return false, errs.Wrap(ErrInvalidKeyType, errors.New("HMAC_SHA256 sign expects []byte"))
 	}
 
-	if macs.NotEqual(signature, sig) {
-		return ErrSignatureInvalid
-	}
-
-	return nil
+	return macs.Verify(keyBytes, signature, data, s.alg.Fn)
 }

@@ -40,7 +40,7 @@ func (g *jwtGenerator) Generate(subject string, principal Principal) (string, er
 	if utils.Empty(subject) {
 		return "", ErrTokenGeneration(ErrSubjectCannotBeEmpty)
 	}
-	if utils.Empty(principal) {
+	if utils.Nil(principal) {
 		return "", ErrTokenGeneration(ErrPrincipalCannotBeNil)
 	}
 
