@@ -1,6 +1,7 @@
 package ecdsas
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/guidomantilla/yarumo/common/assert"
@@ -26,6 +27,13 @@ func (e *Error) Error() string {
 }
 
 //
+
+var (
+	ErrMethodInvalid = errors.New("ecdsa method is invalid")
+	ErrKeyInvalid    = errors.New("ecdsa key is invalid")
+	ErrDataEmpty     = errors.New("ecdsa data is empty")
+	ErrSignFailed    = errors.New("ecdsa sign failed")
+)
 
 func ErrAlgorithmNotSupported(name string) error {
 	return &Error{
