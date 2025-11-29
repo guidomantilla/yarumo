@@ -1,17 +1,16 @@
 package ecdsas
 
 import (
-	"crypto"
 	"crypto/ecdsa"
 
 	"github.com/guidomantilla/yarumo/common/types"
 )
 
 var (
-	_ SignFn   = ECDSA_P256_SHA256
-	_ VerifyFn = ECDSA_P521_SHA512
+	_ SignFn   = Sign
+	_ VerifyFn = Verify
 )
 
-type SignFn func(key *ecdsa.PrivateKey, data types.Bytes) (types.Bytes, error)
+type SignFn func(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format) (types.Bytes, error)
 
-type VerifyFn func(key *ecdsa.PublicKey, signature types.Bytes, data types.Bytes) bool
+type VerifyFn func(method *Method, key *ecdsa.PublicKey, signature types.Bytes, data types.Bytes, format Format) (bool, error)
