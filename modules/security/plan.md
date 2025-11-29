@@ -58,7 +58,60 @@ signatures: Ed25519, ECDSA_P256_SHA256, RSASSA_PSS_SHA256
 | **Signature size:** 132 bytes (`R=66` + `S=66`) | Formato R \|\| S |
 
 
+# RSASSA_PSS_SHA256 — Equivalencias
 
+| Nombre | Significado / Descripción |
+|--------|---------------------------|
+| **RSASSA_PSS_SHA256** | Nombre oficial usado en AWS KMS, PKCS#11 y APIs modernas |
+| **PS256** | Nombre oficial en JOSE/JWT/JWS (RFC 7518) |
+| **RSASSA-PSS using SHA-256** | Nombre formal según PKCS#1 v2.2 |
+| **RSASSA-PSS + SHA256 + MGF1(SHA256)** | Definición criptográfica precisa |
+| **RSA-PSS(SHA256)** | Nombre genérico en literatura criptográfica |
+| **sha256WithRSAandMGF1** | Nombre en certificados X.509 y CSR |
+| **OID: 1.2.840.113549.1.1.10** | Identificador ASN.1 para RSASSA-PSS |
+| **OpenSSL (CLI)** | `rsa_padding_mode:pss` + `-sha256` |
+| **WebCrypto API** | `{ name: "RSA-PSS", hash: "SHA-256", saltLength: 32 }` |
+| **Go (crypto/rsa)** | `rsa.SignPSS(..., crypto.SHA256, ...)` |
+| **Java JCA/JCE** | `"RSASSA-PSS"` con parámetros `SHA-256` |
+| **Key size:** variable | 2048/3072/4096 bits según clave RSA |
+| **Signature size:** igual al tamaño de la clave RSA | Ej: 256 bytes (RSA 2048), 384 bytes (RSA 3072) |
+
+
+# RSASSA_PSS_SHA512 — Equivalencias
+
+| Nombre | Significado / Descripción |
+|--------|---------------------------|
+| **RSASSA_PSS_SHA512** | Nombre oficial usado en AWS KMS, PKCS#11 y APIs modernas |
+| **PS512** | Nombre oficial en JOSE/JWT/JWS (RFC 7518) |
+| **RSASSA-PSS using SHA-512** | Nombre formal según PKCS#1 v2.2 |
+| **RSASSA-PSS + SHA512 + MGF1(SHA512)** | Definición criptográfica precisa |
+| **RSA-PSS(SHA512)** | Nombre genérico en literatura criptográfica |
+| **sha512WithRSAandMGF1** | Nombre en certificados X.509 y CSR |
+| **OID: 1.2.840.113549.1.1.10** | Identificador ASN.1 para RSASSA-PSS (con hash=SHA512) |
+| **OpenSSL (CLI)** | `rsa_padding_mode:pss` + `-sha512` |
+| **WebCrypto API** | `{ name: "RSA-PSS", hash: "SHA-512", saltLength: 64 }` |
+| **Go (crypto/rsa)** | `rsa.SignPSS(..., crypto.SHA512, ...)` |
+| **Java JCA/JCE** | `"RSASSA-PSS"` con parámetros `SHA-512` |
+| **Key size:** 3072 o 4096 bits recomendado | 2048 bits es desbalanceado |
+| **Signature size:** igual al tamaño de la clave RSA | Ej: 512 bytes (RSA 4096) |
+
+
+# Ed25519 — Equivalencias
+
+| Nombre | Significado / Descripción |
+|--------|---------------------------|
+| **Ed25519** | Nombre oficial según RFC 8032 (EdDSA sobre Curve25519) |
+| **ED25519** | Nombre usado en muchas APIs (Go, libsodium, OpenSSL ≥ 1.1.1) |
+| **EdDSA with SHA-512 over Curve25519** | Descripción formal |
+| **EdDSA + SHA-512 + edwards25519** | Nombre genérico |
+| **OKP (Octet Key Pair) — Ed25519** | Nombre en JOSE/JWT/JWK (RFC 8037) |
+| **"EdDSA" (alg) con crv:"Ed25519"** | Nombre en JWS/JWT (algoritmo EdDSA) |
+| **OpenSSL** | `-ed25519` (firma y claves) |
+| **Go (crypto/ed25519)** | `ed25519.Sign()` / `ed25519.Verify()` |
+| **libsodium / NaCl** | `crypto_sign_ed25519_*` |
+| **Key size:** 32 bytes | Clave pública Ed25519 |
+| **Secret key size:** 32 bytes | Más 32 bytes internos de expansión |
+| **Signature size:** 64 bytes | Tamaño fijo (R || S) |
 
 cryptos: cifrado asimetrico y simetrico
  - Asimetrico: 
