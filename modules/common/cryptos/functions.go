@@ -23,10 +23,6 @@ type Algorithm struct {
 	Curve   elliptic.Curve `json:"curve"`
 }
 
-func (a *Algorithm) Hash(data types.Bytes) types.Bytes {
-	return Hash(a.HashFn, data)
-}
-
 var (
 	SHA256                      = Algorithm{Name: "SHA256", Kind: "HASH", HashFn: crypto.SHA256}
 	SHA512                      = Algorithm{Name: "SHA512", Kind: "HASH", HashFn: crypto.SHA512}
