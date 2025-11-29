@@ -1,8 +1,13 @@
 package hashes
 
 import (
-	"crypto"
 	"sync"
+
+	_ "crypto/sha256"
+	_ "crypto/sha3"
+	_ "crypto/sha512"
+
+	_ "golang.org/x/crypto/blake2b"
 )
 
 var methods = map[string]Method{
@@ -21,7 +26,6 @@ func Register(method Method) {
 	defer lock.Unlock()
 
 	methods[method.name] = method
-	crypto.RegisterHash(method.kind, method.fn)
 }
 
 func Get(name string) (*Method, error) {

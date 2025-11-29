@@ -77,6 +77,16 @@ func TestCall_SupportsByteSliceAndString(t *testing.T) {
 	if err != nil || res2.Body != "hello" {
 		t.Fatalf("unexpected (string) result: %v %q", err, res2.Body)
 	}
+
+	// []byte
+	do3 := func(_ *http.Request) (*http.Response, error) {
+		return makeResp(200, []byte("abc"), map[string]string{"Content-Type": "application/octet-stream"}), nil
+	}
+	spec = &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
+	res3, err := Call[[]byte](context.Background(), spec, WithDoFn(do3))
+	if err != nil || string(res3.Body) != "abc" {
+		t.Fatalf("unexpected ([]byte]) result: %v %q", err, string(res1.Body))
+	}
 }
 
 func TestCall_JSONContentTypeVariants(t *testing.T) {

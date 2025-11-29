@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/guidomantilla/yarumo/common/types"
 	"github.com/guidomantilla/yarumo/common/utils"
 )
 
@@ -73,7 +72,7 @@ func isJSONMediaType(mediaType string) bool {
 }
 
 // decodeResponseBody decodes the response body into the provided type.
-func decodeResponseBody[T any](body types.Bytes, statusCode int, contentType string) (T, error) {
+func decodeResponseBody[T any](body []byte, statusCode int, contentType string) (T, error) {
 	var zero T
 	if utils.Empty(http.StatusText(statusCode)) || utils.Equal(http.StatusNoContent, statusCode) || utils.Empty(body) {
 		return zero, nil
