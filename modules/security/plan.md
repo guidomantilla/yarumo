@@ -121,3 +121,6 @@ cryptos: cifrado asimetrico y simetrico
    - X25519-HKDF-ChaCha20-Poly1305
 
 
+Capa de KDF y passwords
+•	HKDF sobre SHA-256 y/o SHA-512.
+•	Para contraseñas: Argon2id o scrypt (aunque no estén en stdlib, vale la pena envolverlas si importas libs externas).
