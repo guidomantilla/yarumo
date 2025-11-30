@@ -1,4 +1,4 @@
-package aesgcm
+package aead
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	AesNotFound = "aes_function_not_found"
+	AeadNotFound = "aead_function_not_found"
 )
 
 var (
@@ -31,18 +31,11 @@ func (e *Error) Error() string {
 var (
 	ErrMethodInvalid      = errors.New("cipher method is invalid")
 	ErrKeyInvalid         = errors.New("cipher key is invalid")
-	ErrNonceInvalid       = errors.New("nonce generation failed")
 	ErrCipherInitFailed   = errors.New("cipher initialization failed")
-	ErrNonceMissing       = errors.New("nonce missing")
 	ErrCiphertextTooShort = errors.New("ciphertext too short")
 	ErrDecryptFailed      = errors.New("decrypt failed")
 )
 
 func ErrAlgorithmNotSupported(name string) error {
-	return &Error{
-		TypedError: cerrs.TypedError{
-			Type: AesNotFound,
-			Err:  fmt.Errorf("hmac function %s not found", name),
-		},
-	}
+	return fmt.Errorf("aead function %s not found", name)
 }

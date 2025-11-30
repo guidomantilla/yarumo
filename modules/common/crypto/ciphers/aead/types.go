@@ -1,15 +1,16 @@
-package aesgcm
+package aead
 
 import (
 	"crypto/cipher"
 
-	"github.com/guidomantilla/yarumo/common/crypto/ciphers/aesgcm/internal"
+	"github.com/guidomantilla/yarumo/common/crypto/ciphers/aead/internal"
 	"github.com/guidomantilla/yarumo/common/types"
 )
 
 var (
 	_ AeadFn    = internal.AESGCM
 	_ AeadFn    = internal.ChaCha20Poly1305
+	_ AeadFn    = internal.XChaCha20Poly1305
 	_ KeyFn     = key
 	_ EncryptFn = encrypt
 	_ DecryptFn = decrypt

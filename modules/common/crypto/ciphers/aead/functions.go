@@ -1,4 +1,4 @@
-package aesgcm
+package aead
 
 import (
 	"github.com/guidomantilla/yarumo/common/errs"

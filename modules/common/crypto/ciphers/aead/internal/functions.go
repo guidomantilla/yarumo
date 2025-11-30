@@ -19,3 +19,7 @@ func AESGCM(key types.Bytes, nonceSize int) (cipher.AEAD, error) {
 func ChaCha20Poly1305(key types.Bytes, _ int) (cipher.AEAD, error) {
 	return chacha20poly1305.New(key)
 }
+
+func XChaCha20Poly1305(key types.Bytes, _ int) (cipher.AEAD, error) {
+	return chacha20poly1305.NewX(key)
+}
