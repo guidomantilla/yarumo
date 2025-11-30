@@ -81,6 +81,16 @@ Signs data using ECDSA.
 
 #### Behavior
 
+- Validate inputs: returns an error if `method` or `key` are nil.
+- Check compatibility: if the key's curve does not match the method's curve, return an error.
+- Hashes `data` using the hash defined by `method` (e.g., SHA-256 or SHA-512).
+- For RS format:
+  - Uses `ecdsa.Sign` to obtain `(r, s)`.
+  - Encodes `r` and `s` as big-endian, fixed-size `keySize` each, concatenated as `r||s`.
+- For ASN1 format:
+  - Uses `ecdsa.SignASN1` to produce a standard DER signature.
+- Returns an error if the requested format is not supported.
+
 
 #### Returns
 
@@ -88,6 +98,11 @@ Signs data using ECDSA.
 - `error` - An error if one occurred.
 
 #### Notes
+
+- RS produces fixed-size signatures: `2*keySize` bytes (see table below).
+- ASN1 produces variable size (DER), suitable for X.509/TLS.
+- Does not implement new hashes; it relies on Go's `crypto`.
+- Common errors include: invalid method/key, incompatible curve, and unsupported format.
 
 
 
@@ -105,6 +120,16 @@ Verifies an ECDSA signature.
 
 #### Behavior
 
+- Validate inputs: return an error if `method` or `key` are nil.
+- Check curve compatibility between `key` and `method`.
+- Hash `data` using the method's hash.
+- For RS:
+  - Enforce exact length `2*keySize`.
+  - Split `r` and `s` and call `ecdsa.Verify`.
+- For ASN1:
+  - Call `ecdsa.VerifyASN1` with the DER bytes.
+- Distinguish between invalid format (error) and incorrect signature (return `false, nil`).
+
 
 #### Returns
 
@@ -112,6 +137,10 @@ Verifies an ECDSA signature.
 - `error` - An error if one occurred.
 
 #### Notes
+
+- If the signature does not correspond to the message/key, return `(false, nil)`.
+- If the format is incorrect or incompatible, return `(false, err)`.
+- Make sure to use the same `method` for signing and verification (same curve and hash).
 
 ---
 
@@ -142,6 +171,13 @@ ok, _ := Verify(method, pub, sig, data, RS)
 ---
 
 ## Why This Package?
+
+- Unified and safe API on top of Go's `crypto/ecdsa`.
+- Explicit handling of signature formats (RS and ASN1), avoiding interoperability pitfalls.
+- Strict curve–method compatibility to prevent unsafe usage.
+- Fixed-size RS encoding for integrations with JWT/JOSE, WebAuthn, and FIDO2.
+- Well-classified errors and clear flow: distinguishes invalid format from verification failure.
+- Eases testing and maintenance with a single method abstraction (curve, hash, size).
 
 ---
 
