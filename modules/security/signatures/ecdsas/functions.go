@@ -26,17 +26,19 @@ const (
 //
 // Parameters:
 //   - method: cryptographic method defining the hash function, curve, and key size.
-//   - key: ECDSA private key used to produce the signature.
+//   - key: ECDSA private key used to produce the signature. Must not be nil and
+//     must use the same curve as method.curve.
 //   - data: message to be signed.
-//   - format: output signature format (RS or ASN1DER).
+//   - format: output signature format (RS or ASN1).
 //
 // Behavior:
 //   - Returns an error if method or key are nil.
 //   - Returns an error if the key's curve does not match the method's curve.
 //   - Computes the hash of data using the method's hash function.
-//   - Invokes ecdsa.Sign to produce (r, s).
-//   - RS format: serializes r||s as fixed-size big-endian byte slices (2*keySize).
-//   - ASN1DER format: encodes r and s into a standard ASN.1 DER structure.
+//   - For RS: calls ecdsa.Sign to obtain (r, s) and serializes r||s as
+//     fixed-size big-endian byte slices (2*keySize).
+//   - For ASN1: calls ecdsa.SignASN1 to produce a standard ASN.1 DER-encoded
+//     ECDSA signature.
 //
 // Returns:
 //   - A byte slice containing the encoded signature.
@@ -60,11 +62,10 @@ func Sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 		return nil, ErrKeyInvalid
 	}
 
+	h := hashes.Hash(method.kind, data)
 	switch format {
 	case RS:
-		h := hashes.Hash(method.kind, data)
 		r, s, err := ecdsa.Sign(rand.Reader, key, h)
-		//ecdsa.SignASN1()
 		if err != nil {
 			return nil, errs.Wrap(ErrSignFailed, err)
 		}
@@ -77,7 +78,6 @@ func Sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 		return out, nil
 
 	case ASN1:
-		h := hashes.Hash(method.kind, data)
 		out, err := ecdsa.SignASN1(rand.Reader, key, h)
 		if err != nil {
 			return nil, errs.Wrap(ErrSignFailed, err)
@@ -93,17 +93,20 @@ func Sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 //
 // Parameters:
 //   - method: cryptographic method defining the hash function and curve.
-//   - key: ECDSA public key used for verification.
-//   - signature: the signature to verify (in RS or ASN1DER format).
+//   - key: ECDSA public key used for verification. Must not be nil and must
+//     use the same curve as method.curve.
+//   - signature: the signature to verify (in RS or ASN1 format).
 //   - data: the original message that was signed.
-//   - format: signature format (RS or ASN1DER).
+//   - format: signature format (RS or ASN1).
 //
 // Behavior:
 //   - Returns an error if method or key are nil.
 //   - Returns an error if the key's curve does not match the method's curve.
-//   - RS format: splits the signature into r||s using method.keySize.
-//   - ASN1DER format: decodes a tuple ASN.1 structure containing R and S.
-//   - Hashes the data using the method's hash and invokes ecdsa.Verify.
+//   - Computes the hash of data using the method's hash function.
+//   - For RS: splits the signature into r||s using method.keySize and calls
+//     ecdsa.Verify.
+//   - For ASN1: calls ecdsa.VerifyASN1 with the hash and the ASN.1 DER-encoded
+//     signature.
 //
 // Returns:
 //   - (true, nil)  if the signature is valid.
@@ -117,7 +120,7 @@ func Sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 //   - ErrFormatUnsupported
 //
 // The function never panics and does not return an error for a simple
-// verification failure (it returns false, nil instead).
+// verification failure; it returns (false, nil) instead.
 func Verify(method *Method, key *ecdsa.PublicKey, signature types.Bytes, data types.Bytes, format Format) (bool, error) {
 	if method == nil {
 		return false, ErrMethodInvalid
@@ -129,20 +132,18 @@ func Verify(method *Method, key *ecdsa.PublicKey, signature types.Bytes, data ty
 		return false, ErrKeyInvalid
 	}
 
-	var r, s *big.Int
+	h := hashes.Hash(method.kind, data)
 	switch format {
 	case RS:
 		keyBytes := method.keySize
 		if len(signature) != 2*keyBytes {
 			return false, ErrSignatureInvalid
 		}
-		r = new(big.Int).SetBytes(signature[0:keyBytes])
-		s = new(big.Int).SetBytes(signature[keyBytes:])
-		h := hashes.Hash(method.kind, data)
+		r := new(big.Int).SetBytes(signature[0:keyBytes])
+		s := new(big.Int).SetBytes(signature[keyBytes:])
 		ok := ecdsa.Verify(key, h, r, s)
 		return ok, nil
 	case ASN1:
-		h := hashes.Hash(method.kind, data)
 		ok := ecdsa.VerifyASN1(key, h, signature)
 		return ok, nil
 	}
