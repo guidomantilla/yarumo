@@ -8,6 +8,9 @@ import (
 	"github.com/guidomantilla/yarumo/common/utils"
 )
 
+func init() {
+}
+
 var logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
 
 // NotEmpty checks if the object is not empty and logs a fatal error if it is.

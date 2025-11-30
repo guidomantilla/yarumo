@@ -160,7 +160,7 @@ func TestRequestSpec_Build_PathOnlyAddsToURL(t *testing.T) {
 
 func TestRequestSpec_Build_ContextNil(t *testing.T) {
 	spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
-	req, err := spec.Build(nil) //nolint:staticcheck
+	req, err := spec.Build(nil)
 	if err == nil || req != nil {
 		t.Fatalf("expected error when context is nil, got req=%v err=%v", req, err)
 	}

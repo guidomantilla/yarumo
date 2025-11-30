@@ -376,7 +376,7 @@ func TestClient_Do_RequestNil(t *testing.T) {
 func TestClient_waitForLimiter_ContextNil(t *testing.T) {
 	c := NewClient()
 	cc := c.(*client)
-	if err := cc.waitForLimiter(nil); err == nil || !errors.Is(err, ErrContextNil) { //nolint:staticcheck
+	if err := cc.waitForLimiter(nil); err == nil || !errors.Is(err, ErrContextNil) {
 		t.Fatalf("expected ErrContextNil, got %v", err)
 	}
 }

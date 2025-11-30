@@ -4,12 +4,21 @@ linters:
     - staticcheck
     - forbidigo
     - depguard
+    - gochecknoinits
 
 issues:
   exclude-rules:
     - linters:
         - staticcheck
       text: "SA9003"
+      path: "_test.go$"
+    - linters:
+        - staticcheck
+      text: "SA1012"
+      path: "_test.go$"
+    - linters:
+        - gochecknoinits
+        - gosec
       path: "_test.go$"
 
 linters-settings:

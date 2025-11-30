@@ -182,7 +182,7 @@ func TestCall_JSONWithoutContentType_Decodes(t *testing.T) {
 func TestCall_ContextNilAndSpecNil(t *testing.T) {
 	// ctx nil
 	spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
-	if _, err := Call[sample](nil, spec, WithDoFn(func(r *http.Request) (*http.Response, error) { //nolint:staticcheck
+	if _, err := Call[sample](nil, spec, WithDoFn(func(r *http.Request) (*http.Response, error) {
 		t.Fatalf("doFn should not be called when ctx is nil")
 		return nil, nil
 	})); err == nil {
