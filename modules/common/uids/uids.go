@@ -1,29 +1,27 @@
 package uids
 
-const (
-	UuidV4 = "UUIDv4"
-	NanoID = "NANOID"
-	Cuid2  = "CUID2"
-	UuidV7 = "UUIDv7"
-	Ulid   = "ULID"
-	XId    = "XId"
+var (
+	UuidV4 = NewUID("UUIDv4", UUIDv4)
+	NanoID = NewUID("NanoID", NANOID)
+	Cuid2  = NewUID("CUID2", CUID2)
+	UuidV7 = NewUID("UUIDv7", UUIDv7)
+	Ulid   = NewUID("ULID", ULID)
+	XId    = NewUID("XID", XID)
 )
 
-func GetByName(name string) (UIDFn, error) {
-	switch name {
-	case UuidV4:
-		return UUIDv4, nil
-	case NanoID:
-		return NANOID, nil
-	case Cuid2:
-		return CUID2, nil
-	case UuidV7:
-		return UUIDv7, nil
-	case Ulid:
-		return ULID, nil
-	case XId:
-		return XID, nil
-	default:
-		return nil, ErrUIDFunctionNotFound(name)
-	}
+type UID struct {
+	name string
+	fn   UIDFn
+}
+
+func NewUID(name string, fn UIDFn) *UID {
+	return &UID{name: name, fn: fn}
+}
+
+func (u *UID) Name() string {
+	return u.name
+}
+
+func (u *UID) Generate() string {
+	return u.fn()
 }

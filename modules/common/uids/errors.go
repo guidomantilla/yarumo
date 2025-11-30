@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	UIDNotFound = "uid_function_not_found"
+	UidNotFound = "uid_function_not_found"
 )
 
 var (
@@ -20,11 +20,18 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	assert.NotEmpty(e, "error is nil")
-	assert.NotEmpty(e.Err, "internal error is nil")
+	assert.NotNil(e, "error is nil")
+	assert.NotNil(e.Err, "internal error is nil")
 	return fmt.Sprintf("uid %s error: %s", e.Type, e.Err)
 }
 
-func ErrUIDFunctionNotFound(name string) error {
-	return fmt.Errorf("uid function %s not found", name)
+//
+
+func ErrAlgorithmNotSupported(name string) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: UidNotFound,
+			Err:  fmt.Errorf("hash function %s not found", name),
+		},
+	}
 }

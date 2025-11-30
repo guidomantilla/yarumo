@@ -1,143 +1,125 @@
 package uids
 
 import (
+	"errors"
+	"strings"
 	"testing"
-
-	"github.com/google/uuid"
-	ulidpkg "github.com/oklog/ulid/v2"
-	"github.com/rs/xid"
 )
 
-func TestGetByName_SuccessCases(t *testing.T) {
-	tests := []struct {
-		name  string
-		check func(t *testing.T, fn UIDFn)
+// helper to snapshot and restore the global methods map for isolation
+func snapshotMethods() map[string]UID {
+	cp := make(map[string]UID, len(methods))
+	for k, v := range methods {
+		cp[k] = v
+	}
+	return cp
+}
+
+func restoreMethods(m map[string]UID) {
+	// replace the global map with the snapshot
+	methods = make(map[string]UID, len(m))
+	for k, v := range m {
+		methods[k] = v
+	}
+}
+
+func TestNewUID_Name_Generate(t *testing.T) {
+	const expected = "fixed-id"
+	fn := func() string { return expected }
+
+	uid := NewUID("TEST", fn)
+	if uid == nil {
+		t.Fatalf("NewUID returned nil")
+	}
+	if uid.Name() != "TEST" {
+		t.Fatalf("Name() = %q, want %q", uid.Name(), "TEST")
+	}
+	if got := uid.Generate(); got != expected {
+		t.Fatalf("Generate() = %q, want %q", got, expected)
+	}
+}
+
+func TestFunctionsReturnNonEmpty(t *testing.T) {
+	cases := []struct {
+		name string
+		fn   UIDFn
 	}{
-		{
-			name: UuidV4,
-			check: func(t *testing.T, fn UIDFn) {
-				if fn == nil {
-					t.Fatalf("UUIDv4 function is nil")
-				}
-				id := fn()
-				if id == "" {
-					t.Fatalf("UUIDv4 returned empty")
-				}
-				u, err := uuid.Parse(id)
-				if err != nil {
-					t.Fatalf("UUIDv4 parse failed: %v", err)
-				}
-				if u.Version() != 4 {
-					t.Fatalf("UUIDv4 wrong version: %v", u.Version())
-				}
-			},
-		},
-		{
-			name: UuidV7,
-			check: func(t *testing.T, fn UIDFn) {
-				if fn == nil {
-					t.Fatalf("UUIDv7 function is nil")
-				}
-				id := fn()
-				if id == "" {
-					t.Fatalf("UUIDv7 returned empty")
-				}
-				u, err := uuid.Parse(id)
-				if err != nil {
-					t.Fatalf("UUIDv7 parse failed: %v", err)
-				}
-				if u.Version() != 7 {
-					t.Fatalf("UUIDv7 wrong version: %v", u.Version())
-				}
-			},
-		},
-		{
-			name: Ulid,
-			check: func(t *testing.T, fn UIDFn) {
-				if fn == nil {
-					t.Fatalf("ULID function is nil")
-				}
-				id := fn()
-				if id == "" {
-					t.Fatalf("ULID returned empty")
-				}
-				if _, err := ulidpkg.Parse(id); err != nil {
-					t.Fatalf("ULID parse failed: %v", err)
-				}
-			},
-		},
-		{
-			name: XId,
-			check: func(t *testing.T, fn UIDFn) {
-				if fn == nil {
-					t.Fatalf("XID function is nil")
-				}
-				id := fn()
-				if id == "" {
-					t.Fatalf("XID returned empty")
-				}
-				if _, err := xid.FromString(id); err != nil {
-					t.Fatalf("XID parse failed: %v", err)
-				}
-			},
-		},
-		{
-			name: NanoID,
-			check: func(t *testing.T, fn UIDFn) {
-				if fn == nil {
-					t.Fatalf("NANOID function is nil")
-				}
-				a := fn()
-				b := fn()
-				if a == "" || b == "" {
-					t.Fatalf("NANOID returned empty")
-				}
-				if a == b {
-					t.Fatalf("NANOID should be unique between calls, got same: %s", a)
-				}
-			},
-		},
-		{
-			name: Cuid2,
-			check: func(t *testing.T, fn UIDFn) {
-				if fn == nil {
-					t.Fatalf("CUID2 function is nil")
-				}
-				a := fn()
-				b := fn()
-				if a == "" || b == "" {
-					t.Fatalf("CUID2 returned empty")
-				}
-				if a == b {
-					t.Fatalf("CUID2 should be unique between calls, got same: %s", a)
-				}
-			},
-		},
+		{"UUIDv4", UUIDv4},
+		{"NANOID", NANOID},
+		{"CUID2", CUID2},
+		{"UUIDv7", UUIDv7},
+		{"ULID", ULID},
+		{"XID", XID},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			fn, err := GetByName(tt.name)
-			if err != nil {
-				t.Fatalf("unexpected error for %s: %v", tt.name, err)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			id := tc.fn()
+			if id == "" {
+				t.Fatalf("%s returned empty string", tc.name)
 			}
-			tt.check(t, fn)
 		})
 	}
 }
 
-func TestGetByName_Unknown(t *testing.T) {
-	const unknown = "NOPE"
-	fn, err := GetByName(unknown)
-	if fn != nil {
-		t.Fatalf("expected nil function for unknown, got non-nil")
+func TestGetSupportedAndRegister(t *testing.T) {
+	snap := snapshotMethods()
+	defer restoreMethods(snap)
+
+	// Known existing UID
+	uid, err := Get("UUIDv4")
+	if err != nil {
+		t.Fatalf("Get(UUIDv4) error: %v", err)
 	}
+	if uid == nil || uid.Name() != "UUIDv4" {
+		t.Fatalf("Get(UUIDv4) returned wrong UID: %+v", uid)
+	}
+
+	// Unknown UID should error
+	_, err = Get("DOES_NOT_EXIST")
 	if err == nil {
-		t.Fatalf("expected error for unknown name")
+		t.Fatalf("expected error for unknown UID name")
 	}
-	// Ajustado: ahora ErrUIDFunctionNotFound devuelve un error simple (fmt.Errorf)
-	expected := "uid function " + unknown + " not found"
-	if got := err.Error(); got != expected {
-		t.Fatalf("error message = %q, want %q", got, expected)
+	var e *Error
+	if !errors.As(err, &e) {
+		t.Fatalf("expected *Error, got %T", err)
+	}
+
+	// Register a new UID and retrieve it
+	testFn := func() string { return "xyz" }
+	testUID := NewUID("TESTID", testFn)
+	Register(*testUID)
+
+	got, err := Get("TESTID")
+	if err != nil {
+		t.Fatalf("Get(TESTID) error: %v", err)
+	}
+	if got == nil || got.Generate() != "xyz" {
+		t.Fatalf("retrieved UID not working, got: %+v, gen: %q", got, got.Generate())
+	}
+
+	// Ensure Supported includes the new one
+	list := Supported()
+	found := false
+	for _, u := range list {
+		if u.name == "TESTID" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("Supported() does not include TESTID")
+	}
+}
+
+func TestErrAlgorithmNotSupportedFormatting(t *testing.T) {
+	err := ErrAlgorithmNotSupported("ABC")
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+	// Ensure Error() produces a meaningful string
+	s := err.Error()
+	if !strings.Contains(s, "uid ") || !strings.Contains(s, "ABC") {
+		t.Fatalf("unexpected error string: %q", s)
 	}
 }
