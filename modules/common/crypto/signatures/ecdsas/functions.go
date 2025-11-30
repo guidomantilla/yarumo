@@ -5,9 +5,9 @@ import (
 	"crypto/rand"
 	"math/big"
 
+	"github.com/guidomantilla/yarumo/common/crypto/hashes"
 	"github.com/guidomantilla/yarumo/common/errs"
 	"github.com/guidomantilla/yarumo/common/types"
-	"github.com/guidomantilla/yarumo/security/hashes"
 )
 
 type Format int

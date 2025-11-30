@@ -5,10 +5,10 @@ import (
 	"crypto/rsa"
 	"errors"
 
+	"github.com/guidomantilla/yarumo/common/crypto/hashes"
 	"github.com/guidomantilla/yarumo/common/errs"
 	"github.com/guidomantilla/yarumo/common/types"
 	"github.com/guidomantilla/yarumo/common/utils"
-	"github.com/guidomantilla/yarumo/security/hashes"
 )
 
 // Sign creates an RSA-PSS signature over the given data using the specified
