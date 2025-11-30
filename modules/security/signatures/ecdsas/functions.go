@@ -23,6 +23,8 @@ const (
 	//
 	// Used in: X.509 / OpenSSL
 	ASN1DER
+
+	ASN1
 )
 
 // Sign generates an ECDSA signature over the given data using the provided
@@ -64,15 +66,14 @@ func Sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 		return nil, ErrKeyInvalid
 	}
 
-	h := hashes.Hash(method.kind, data)
-	r, s, err := ecdsa.Sign(rand.Reader, key, h)
-	//ecdsa.SignASN1()
-	if err != nil {
-		return nil, errs.Wrap(ErrSignFailed, err)
-	}
-
 	switch format {
 	case RS:
+		h := hashes.Hash(method.kind, data)
+		r, s, err := ecdsa.Sign(rand.Reader, key, h)
+		//ecdsa.SignASN1()
+		if err != nil {
+			return nil, errs.Wrap(ErrSignFailed, err)
+		}
 		// We serialize the outputs (r and s) into big-endian byte arrays padded with zeros on the left to make sure the sizes work out.
 		// Output must be 2*keyBytes long.
 		keyBytes := method.keySize
@@ -80,15 +81,28 @@ func Sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 		r.FillBytes(out[0:keyBytes]) // r is assigned to the first half of output.
 		s.FillBytes(out[keyBytes:])  // s is assigned to the second half of output.
 		return out, nil
+		
 	case ASN1DER:
+		h := hashes.Hash(method.kind, data)
+		r, s, err := ecdsa.Sign(rand.Reader, key, h)
+		if err != nil {
+			return nil, errs.Wrap(ErrSignFailed, err)
+		}
 		out, err := asn1.Marshal(tuple{R: r, S: s})
 		if err != nil {
 			return nil, errs.Wrap(ErrSignFailed, err)
 		}
 		return out, nil
-	default:
-		return nil, ErrFormatUnsupported
+
+	case ASN1:
+		out, err := ecdsa.SignASN1(rand.Reader, key, data)
+		if err != nil {
+			return nil, errs.Wrap(ErrSignFailed, err)
+		}
+		return out, nil
 	}
+
+	return nil, ErrFormatUnsupported
 }
 
 // Verify checks an ECDSA signature over the given data using the provided

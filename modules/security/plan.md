@@ -4,9 +4,6 @@ certs: x.509
  - helpers para tls
  - agnostico de BD, HSM, etc
 
-
-signatures: Ed25519, ECDSA_P256_SHA256, RSASSA_PSS_SHA256
-
 # HS256 — Equivalencias
 
 | Nombre | Significado / Descripción |

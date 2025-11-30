@@ -13,11 +13,25 @@ func main() {
 	var key any
 	data := []byte("test data")
 
+	/*
+	 * HMAC with SHA256
+	 */
+
 	key = hmacs.HMAC_with_SHA256.GenerateKey()
 	digest := hmacs.HMAC_with_SHA256.Digest(key.(types.Bytes), data)
 	println(fmt.Sprintf("HMAC_with_SHA256 Digest - Hex: %s, Base64: %s", digest.ToHex(), digest.ToBase64Std()))
 	println(fmt.Sprintf("HMAC_with_SHA256 Validate: %v", hmacs.HMAC_with_SHA256.Validate(key.(types.Bytes), digest, data)))
 
+	/*
+	 * HMAC with SHA512
+	 */
+	digest = hmacs.HMAC_with_SHA512.Digest([]byte("abc123"), []byte("Guido Mauricio Mantilla Tarazona"))
+	println(fmt.Sprintf("HMAC_with_SHA512 Digest - Hex: %s, Base64: %s", digest.ToHex(), digest.ToBase64Std()))
+	println(fmt.Sprintf("HMAC_with_SHA512 Validate: %v", hmacs.HMAC_with_SHA512.Validate([]byte("abc123"), digest, []byte("Guido Mauricio Mantilla Tarazona"))))
+
+	/*
+	 * ECDSA with SHA256 over P256
+	 */
 	key, err := ecdsas.ECDSA_with_SHA256_over_P256.GenerateKey()
 	println(err)
 
@@ -28,6 +42,9 @@ func main() {
 	println(err)
 	println(fmt.Sprintf("ECDSA_with_SHA256_over_P256 Verify: %v", verify))
 
+	/*
+	 * ECDSA with SHA512 over P521
+	 */
 	key, err = ecdsas.ECDSA_with_SHA512_over_P521.GenerateKey()
 	println(err)
 
