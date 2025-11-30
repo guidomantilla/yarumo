@@ -1,4 +1,4 @@
-package ecdsas
+package rsapss
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	EcdsaNotFound = "ecdsa_function_not_found"
+	RsaPssNotFound = "rsa_pss_function_not_found"
 )
 
 var (
@@ -23,7 +23,7 @@ type Error struct {
 func (e *Error) Error() string {
 	assert.NotNil(e, "error is nil")
 	assert.NotNil(e.Err, "internal error is nil")
-	return fmt.Sprintf("ecdsa %s error: %s", e.Type, e.Err)
+	return fmt.Sprintf("rsa_pss %s error: %s", e.Type, e.Err)
 }
 
 //
@@ -31,16 +31,16 @@ func (e *Error) Error() string {
 var (
 	ErrMethodInvalid     = errors.New("method is invalid")
 	ErrKeyInvalid        = errors.New("key is invalid")
-	ErrSignatureInvalid  = errors.New("signature is invalid")
 	ErrSignFailed        = errors.New("sign failed")
-	ErrFormatUnsupported = errors.New("format unsupported")
+	ErrVerifyFailed      = errors.New("verify failed")
+	ErrKeySizeNotAllowed = errors.New("key size not allowed")
 )
 
 func ErrAlgorithmNotSupported(name string) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: EcdsaNotFound,
-			Err:  fmt.Errorf("ecdsa function %s not found", name),
+			Type: RsaPssNotFound,
+			Err:  fmt.Errorf("rsa_pss function %s not found", name),
 		},
 	}
 }

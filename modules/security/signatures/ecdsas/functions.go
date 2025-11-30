@@ -66,6 +66,7 @@ func Sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 
 	h := hashes.Hash(method.kind, data)
 	r, s, err := ecdsa.Sign(rand.Reader, key, h)
+	//ecdsa.SignASN1()
 	if err != nil {
 		return nil, errs.Wrap(ErrSignFailed, err)
 	}
@@ -156,6 +157,7 @@ func Verify(method *Method, key *ecdsa.PublicKey, signature types.Bytes, data ty
 
 	h := hashes.Hash(method.kind, data)
 	ok := ecdsa.Verify(key, h, r, s)
+	//ecdsa.VerifyASN1()
 	return ok, nil
 }
 
