@@ -2,7 +2,6 @@ package ecdsas
 
 import (
 	"crypto/ecdsa"
-	"crypto/elliptic"
 
 	"github.com/guidomantilla/yarumo/common/types"
 )
@@ -13,7 +12,7 @@ var (
 	_ VerifyFn = verify
 )
 
-type KeyFn func(curve elliptic.Curve) (*ecdsa.PrivateKey, error)
+type KeyFn func(method *Method) (*ecdsa.PrivateKey, error)
 
 type SignFn func(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format) (types.Bytes, error)
 

@@ -1,7 +1,7 @@
 package random
 
 import (
-	crand "crypto/rand"
+	"crypto/rand"
 	"math/big"
 	"strings"
 
@@ -20,18 +20,18 @@ const (
 
 // randInt is an indirection to crypto/rand.Int to allow error-path testing.
 // Tests may override this variable within the package to simulate failures.
-var randInt = crand.Int
+var randInt = rand.Int
 
 // Key returns cryptographically random bytes.
 func Key(size int) types.Bytes {
 	key := make([]byte, size)
-	_, _ = crand.Read(key)
+	_, _ = rand.Read(key)
 	return key
 }
 
 // Number returns a cryptographically random integer in [0, max).
 func Number(max int64) (int64, error) {
-	n, err := randInt(crand.Reader, big.NewInt(max))
+	n, err := randInt(rand.Reader, big.NewInt(max))
 	if err != nil {
 		return 0, err
 	}

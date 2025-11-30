@@ -2,7 +2,6 @@ package ecdsas
 
 import (
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"math/big"
 
@@ -11,8 +10,8 @@ import (
 	"github.com/guidomantilla/yarumo/common/types"
 )
 
-func key(curve elliptic.Curve) (*ecdsa.PrivateKey, error) {
-	return ecdsa.GenerateKey(curve, rand.Reader)
+func key(method *Method) (*ecdsa.PrivateKey, error) {
+	return ecdsa.GenerateKey(method.curve, rand.Reader)
 }
 
 type Format int

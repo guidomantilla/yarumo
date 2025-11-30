@@ -47,7 +47,7 @@ func (m *Method) GenerateKey() (*ecdsa.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.keyFn, "method keyFn is nil")
 
-	key, err := m.keyFn(m.curve)
+	key, err := m.keyFn(m)
 	if err != nil {
 		return nil, ErrKeyGeneration(err)
 	}

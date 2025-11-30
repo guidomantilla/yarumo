@@ -1,37 +1,61 @@
 package aesgcm
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"fmt"
-
 	"github.com/guidomantilla/yarumo/common/errs"
+	"github.com/guidomantilla/yarumo/common/random"
 	"github.com/guidomantilla/yarumo/common/types"
 )
 
-func Encrypt(method *Method, key types.Bytes, plaintext types.Bytes, aad types.Bytes) ([]byte, error) {
+func key(method *Method) types.Bytes {
+	return random.Key(method.keySize)
+}
+
+func encrypt(method *Method, key types.Bytes, data types.Bytes, aad types.Bytes) (types.Bytes, error) {
 	if method == nil {
-		return nil, nil
+		return nil, ErrMethodInvalid
 	}
 	if len(key) != method.keySize {
-		return nil, nil
+		return nil, ErrKeyInvalid
 	}
-	block, err := aes.NewCipher(key)
+
+	aead, err := method.kind(key, method.nonceSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
+		return nil, errs.Wrap(ErrCipherInitFailed, err)
 	}
 
-	aesGCM, err := cipher.NewGCMWithNonceSize(block, method.nonceSize)
+	nonce := random.Key(method.nonceSize)
+	ciphered := aead.Seal(nil, nonce, data, aad)
+
+	out := make([]byte, 0, len(nonce)+len(ciphered))
+	out = append(out, nonce...)
+	out = append(out, ciphered...)
+
+	return out, nil
+}
+
+func decrypt(method *Method, key types.Bytes, ciphered types.Bytes, aad types.Bytes) (types.Bytes, error) {
+	if method == nil {
+		return nil, ErrMethodInvalid
+	}
+	if len(key) != method.keySize {
+		return nil, ErrKeyInvalid
+	}
+	if len(ciphered) < method.nonceSize {
+		return nil, ErrCiphertextTooShort
+	}
+
+	aead, err := method.kind(key, method.nonceSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create GCM cipher: %w", err)
+		return nil, errs.Wrap(ErrCipherInitFailed, err)
 	}
 
-	nonce := make([]byte, method.nonceSize)
-	if _, err = rand.Read(nonce); err != nil {
-		return nil, errs.Wrap(nil, err)
+	nonce := ciphered[:method.nonceSize]
+	ciphered = ciphered[method.nonceSize:]
+
+	out, err := aead.Open(nil, nonce, ciphered, aad)
+	if err != nil {
+		return nil, errs.Wrap(ErrDecryptFailed, err)
 	}
 
-	ciphertext := aesGCM.Seal(nonce, nonce, plaintext, aad)
-	return ciphertext, nil
+	return out, nil
 }

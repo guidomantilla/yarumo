@@ -1,6 +1,7 @@
 package aesgcm
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/guidomantilla/yarumo/common/assert"
@@ -26,6 +27,16 @@ func (e *Error) Error() string {
 }
 
 //
+
+var (
+	ErrMethodInvalid      = errors.New("cipher method is invalid")
+	ErrKeyInvalid         = errors.New("cipher key is invalid")
+	ErrNonceInvalid       = errors.New("nonce generation failed")
+	ErrCipherInitFailed   = errors.New("cipher initialization failed")
+	ErrNonceMissing       = errors.New("nonce missing")
+	ErrCiphertextTooShort = errors.New("ciphertext too short")
+	ErrDecryptFailed      = errors.New("decrypt failed")
+)
 
 func ErrAlgorithmNotSupported(name string) error {
 	return &Error{

@@ -54,7 +54,7 @@ func (m *Method) GenerateKey() types.Bytes {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.keyFn, "method keyFn is nil")
 
-	return m.keyFn(m.keySize)
+	return m.keyFn(m)
 }
 
 // Digest computes the HMAC of data using this Method and the provided key.
