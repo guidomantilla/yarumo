@@ -42,7 +42,25 @@ func (m *Method) Name() string {
 	return m.name
 }
 
-// GenerateKey generates a new RSA private key.
+// GenerateKey generates a new RSA private key of the specified bit size.
+//
+// Parameters:
+//   - bits: the RSA modulus size in bits (commonly 2048, 3072, or 4096).
+//
+// Behavior:
+//   - Uses crypto/rand as the secure randomness source.
+//   - Invokes rsa.GenerateKey to create a new RSA private key.
+//   - The public key is included within the returned *rsa.PrivateKey.
+//
+// Returns:
+//   - A newly generated *rsa.PrivateKey.
+//   - An error if key generation fails or if an invalid bit size is provided.
+//
+// Notes:
+//   - Larger key sizes provide stronger security but are slower
+//     (especially for signing).
+//   - The function never panics.
+//   - Call key.PublicKey to access the associated public key.
 func (m *Method) GenerateKey(size int) (*rsa.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.keyFn, "method keyFn is nil")
@@ -58,29 +76,34 @@ func (m *Method) GenerateKey(size int) (*rsa.PrivateKey, error) {
 	return key, nil
 }
 
-// Sign creates an RSA-PSS signature over the given data using the specified
-// method and private key.
+// Sign produces an RSA-PSS signature over the provided data using the given
+// method configuration and RSA private key.
+//
+// Notes:it delegates to rsapss.SignFn. This is a function that takes an RSA-PSS Method specifying the hash function, allowed key sizes, and salt length policy.
 //
 // Parameters:
-//   - method: the RSA-PSS method descriptor, defining the hash function,
-//     allowed key sizes, and salt length requirements. Must not be nil.
-//   - key: RSA private key used to produce the signature. Must not be nil and
-//     its modulus size (in bits) must be included in method.allowedKeySizes.
+//   - key: RSA private key used to generate the signature.
 //   - data: the message to be signed.
 //
 // Behavior:
-//   - Validates the method and the RSA key size.
-//   - Hashes the data using the hash function defined by the method.
-//   - Produces an RSA-PSS signature using rsa.SignPSS with the method's
-//     configured salt length and hash function.
+//   - Returns an error if method or key are nil.
+//   - Validates that the RSA key size (key.N.BitLen()) is included in
+//     method.allowedKeySizes.
+//   - Hashes the input data using method.kind.
+//   - Uses rsa.SignPSS with the configured salt length and hash algorithm to
+//     produce a probabilistic RSA-PSS signature.
 //
 // Returns:
-//   - The generated signature as a byte slice.
-//   - An error if the method or key are invalid, or if signing fails.
+//   - A byte slice containing the RSA-PSS signature.
+//   - An error if signing fails or if the key size is not allowed.
 //
 // Notes:
-//   - RSA-PSS is the modern recommended scheme for RSA signatures (RFC 8017).
-//   - A failure to sign returns (nil, ErrSignFailed).
+//   - RSA-PSS is a modern, recommended signature scheme providing stronger
+//     security than older PKCS#1 v1.5 signatures.
+//   - Signature size is equal to the RSA modulus size.
+//   - The function never panics and never returns a partial signature.
+//   - Salt length policy (e.g., PSSSaltLengthEqualsHash) is controlled by
+//     method.saltLength.
 func (m *Method) Sign(key *rsa.PrivateKey, data types.Bytes) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.signFn, "method signFn is nil")
