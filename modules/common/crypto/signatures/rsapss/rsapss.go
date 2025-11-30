@@ -116,33 +116,46 @@ func (m *Method) Sign(key *rsa.PrivateKey, data types.Bytes) (types.Bytes, error
 	return signature, nil
 }
 
-// Verify checks an RSA-PSS signature over the given data using the specified
-// method and public key.
+// Verify checks an RSA-PSS signature over the provided data using the given
+// method configuration and RSA public key.
+//
+// Notes: it delegates to rsapss.VerifyFn. This is a function that takes an RSA-PSS Method specifying the hash function, allowed key sizes, and salt length policy.
 //
 // Parameters:
-//   - method: the RSA-PSS method descriptor, defining the hash function,
-//     allowed key sizes, and salt length. Must not be nil.
-//   - key: RSA public key used to verify the signature. Must not be nil and
-//     its modulus size (in bits) must be included in method.allowedKeySizes.
+//   - key: RSA public key used for verification.
 //   - signature: the RSA-PSS signature to verify.
 //   - data: the original message that was signed.
 //
 // Behavior:
-//   - Validates the method and RSA key size.
-//   - Hashes the data using the method's hash function.
-//   - Invokes rsa.VerifyPSS with the method's salt length and hash algorithm.
-//   - Returns (false, nil) if the signature is simply invalid.
-//   - Returns (false, err) for verification errors unrelated to signature validity.
+//
+//   - Returns an error if method or key are nil.
+//
+//   - Validates that the RSA key size (key.N.BitLen()) is included in
+//     method.allowedKeySizes.
+//
+//   - Hashes the input data using method.kind.
+//
+//   - Invokes rsa.VerifyPSS with the configured salt length and hash algorithm.
+//
+//   - Distinguishes between “invalid signature” and “internal error”:
+//
+//   - If rsa.VerifyPSS returns rsa.ErrVerification:
+//     → returns (false, nil).
+//
+//   - Otherwise:
+//     → wraps and returns the verification error.
 //
 // Returns:
 //   - (true, nil)  if the signature is valid.
 //   - (false, nil) if the signature is invalid.
-//   - (false, err) if the method or key are invalid, or if verification fails
-//     due to an internal error.
+//   - (false, err) if verification cannot be completed due to an error.
 //
 // Notes:
-//   - RSA-PSS is the recommended signature scheme according to RFC 8017.
-//   - The function distinguishes between "invalid signature" and actual errors.
+//   - RSA-PSS is a probabilistic signature scheme recommended by modern
+//     cryptographic standards.
+//   - Signature length must match the RSA modulus size.
+//   - The function never panics and always treats signature mismatch as a
+//     non-error condition.
 func (m *Method) Verify(key *rsa.PublicKey, signature types.Bytes, data types.Bytes) (bool, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.verifyFn, "method verifyFn is nil")

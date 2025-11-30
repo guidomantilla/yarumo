@@ -82,7 +82,7 @@ func (m *Method) GenerateKey() (types.Bytes, error) {
 // Digest computes an HMAC authentication tag over the provided data using
 // the given method and key.
 //
-// Notes:it delegates to hmacs.DigestFn. This is a function that takes an HMAC Method specifying the underlying hash function.
+// Notes: it delegates to hmacs.DigestFn. This is a function that takes an HMAC Method specifying the underlying hash function.
 //
 // Parameters:
 //   - key: the secret key used for HMAC (any length allowed by HMAC).
@@ -119,7 +119,7 @@ func (m *Method) Digest(key types.Bytes, data types.Bytes) (types.Bytes, error) 
 // Validate checks whether the provided HMAC digest matches the HMAC computed
 // over the given data using the specified method and key.
 //
-// Notes:it delegates to hmacs.ValidateFn. This is a function that takes an HMAC Method specifying the underlying hash function.
+// Notes: it delegates to hmacs.ValidateFn. This is a function that takes an HMAC Method specifying the underlying hash function.
 //
 // Parameters:
 //   - key: the secret key used for HMAC computation.
