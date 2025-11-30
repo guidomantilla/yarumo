@@ -1,8 +1,78 @@
-certs: x.509
- - parseo desde PEM/DER
- - validacion de cadenas
- - helpers para tls
- - agnostico de BD, HSM, etc
+certs: x.509 , PKCS#8 , PKCS#10 , PEM / DER
+sha256WithRSAEncryption
+sha384WithRSAEncryption
+sha512WithRSAEncryption
+RSASSA-PSS
+ecdsa-with-SHA256   (P-256)
+ecdsa-with-SHA384   (P-384)
+ecdsa-with-SHA512   (P-521)
+Ed25519
+
+
+✔ 1. Parsear y generar certificados X.509
+•	ParseCertificate([]byte)
+•	CreateCertificate(...)
+•	Marshal() → DER
+•	ToPEM()
+
+Formato:
+•	DER (binario)
+•	PEM (Base64)
+
+✔ 2. Parsear/generar claves privadas
+
+Para:
+
+RSA
+•	PKCS#1
+•	PKCS#8
+•	Encrypted PKCS#8
+
+ECDSA
+•	PKCS#8
+•	SEC1 private key (menos común)
+
+Ed25519
+•	PKCS#8 (único que se usa)
+
+
+✔ 3. Parsear/generar CSRs (PKCS#10)
+
+(Fundamental si generas certificados)
+•	ParseCertificateRequest
+•	CreateCertificateRequest
+
+Firmados con:
+•	RSA-PSS
+•	ECDSA
+•	Ed25519
+
+
+✔ ¿Qué extensiones X.509 tengo que manejar?
+
+Las más importantes:
+•	Basic Constraints (CA = true/false, pathLen)
+•	Key Usage
+•	Extended Key Usage
+•	TLS Server Auth
+•	TLS Client Auth
+•	Code Signing
+•	Email Protection
+•	Subject Alternative Name (SAN) ← obligatorio hoy
+•	Authority Key Identifier
+•	Subject Key Identifier
+•	CRL Distribution Points
+•	OCSP URLs
+•	Validity (NotBefore / NotAfter)
+
+Extensiones obligatorias
+•	SAN
+•	KeyUsage
+•	ExtendedKeyUsage
+•	BasicConstraints
+
+
+
 
 # HS256 — Equivalencias
 
@@ -290,10 +360,12 @@ cryptos: cifrado asimetrico y simetrico
  - Asimetrico: 
    - RSA-OAEP-SHA256
    - RSA-OAEP-SHA512
+   
    - ECDH_P256_HKDF_SHA256_AESGCM
    - ECDH_P521_HKDF_SHA512_AESGCM
    - ECDH_P256_HKDF_SHA256_CHACHA20POLY1305
    - ECDH_P521_HKDF_SHA512_CHACHA20POLY1305
+
    - X25519_HKDF_SHA256_AESGCM
    - X25519_HKDF_SHA256_CHACHA20POLY1305
    - X25519_HKDF_SHA512_AESGCM
