@@ -5,8 +5,8 @@ import (
 )
 
 var (
-	_ DigestFn   = Digest
-	_ ValidateFn = Validate
+	_ DigestFn   = digest
+	_ ValidateFn = validate
 )
 
 type DigestFn func(method *Method, key types.Bytes, data types.Bytes) (types.Bytes, error)

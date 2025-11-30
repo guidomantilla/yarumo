@@ -19,6 +19,15 @@ type Method struct {
 	keySize int
 }
 
+// NewMethod creates a new HMAC Method definition.
+//
+// Parameters:
+//   - name: a human-readable identifier for the method (e.g., "HMAC_with_SHA256").
+//   - kind: the crypto.Hash algorithm to use.
+//   - keySize: expected key size in bytes for key generation.
+//
+// It does not validate the availability of the provided hash at creation time;
+// availability is checked when Digest/Validate are called.
 func NewMethod(name string, kind crypto.Hash, keySize int) *Method {
 	return &Method{
 		name:    name,
@@ -27,68 +36,66 @@ func NewMethod(name string, kind crypto.Hash, keySize int) *Method {
 	}
 }
 
+// Name returns the method's configured name.
 func (m *Method) Name() string {
 	assert.NotNil(m, "method is nil")
 	return m.name
 }
 
-// GenerateKey generates a new random key for the HMAC algorithm.
+// GenerateKey generates a new random key suitable for the HMAC method.
+// The returned key length equals the method's configured key size.
 func (m *Method) GenerateKey() types.Bytes {
 	assert.NotNil(m, "method is nil")
 	return random.Key(m.keySize)
 }
 
-// Digest computes an HMAC over the given data using the specified hash
-// function and key.
+// Digest computes the HMAC of data using this Method and the provided key.
 //
 // Parameters:
-//   - hash: the hash function to use (e.g., crypto.SHA256). Must be available.
-//   - key: secret key used for HMAC.
+//   - key: secret key to initialize the HMAC.
 //   - data: message to authenticate.
 //
 // Behavior:
-//   - Asserts that the hash function is available.
-//   - Initializes an HMAC instance with the given key.
-//   - Writes the data into the HMAC.
-//   - Returns the final HMAC digest.
+//   - Verifies that the method and its hash are valid/available.
+//   - Initializes an HMAC with the method's hash and the provided key.
+//   - Writes the data and returns the computed digest.
 //
 // Returns:
-//   - The HMAC value as a byte slice.
-//
-// Notes:
-//   - The function never returns an error; it silently ignores Write errors.
-//   - Panics only if the hash function is not registered (via assert).
+//   - digest: the calculated HMAC.
+//   - error: wrapped with ErrDigest on failure. Possible causes include:
+//   - ErrMethodIsNil if the method is nil.
+//   - ErrHashNotAvailable if the hash is not available.
+//   - I/O style errors returned from the underlying Write.
 func (m *Method) Digest(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
-	digest, err := Digest(m, key, data)
+	digest, err := digest(m, key, data)
 	if err != nil {
 		return nil, ErrDigest(err)
 	}
 	return digest, nil
 }
 
-// Validate verifies an HMAC digest using the specified hash function and key.
+// Validate checks whether the provided digest matches the HMAC of data
+// computed with this Method and key.
 //
 // Parameters:
-//   - hash: the hash function used by the HMAC (e.g., crypto.SHA256). Must be available.
 //   - key: secret key used to compute the HMAC.
-//   - digest: the expected HMAC value to compare against.
-//   - data: message whose authenticity and integrity are being verified.
+//   - digest: expected HMAC to validate against.
+//   - data: message whose authenticity/integrity is being verified.
 //
 // Behavior:
-//   - Asserts that the hash function is available.
-//   - Recomputes the HMAC using Digest.
-//   - Uses hmac.Equal for constant-time comparison.
+//   - Verifies method and hash availability.
+//   - Recomputes the HMAC and compares using constant-time equality.
 //
 // Returns:
-//   - true if the digest matches the calculated HMAC.
-//   - false otherwise.
-//
-// Notes:
-//   - Panics only if the hash function is not registered (via assert).
+//   - ok: true if the digests are equal, false otherwise.
+//   - error: wrapped with ErrValidation on failure. Possible causes include:
+//   - ErrMethodIsNil if the method is nil.
+//   - ErrHashNotAvailable if the hash is not available.
+//   - Errors produced while recomputing the digest.
 func (m *Method) Validate(key types.Bytes, digest types.Bytes, data types.Bytes) (bool, error) {
 	assert.NotNil(m, "method is nil")
-	ok, err := Validate(m, key, digest, data)
+	ok, err := validate(m, key, digest, data)
 	if err != nil {
 		return false, ErrValidation(err)
 	}
