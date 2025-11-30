@@ -2,7 +2,6 @@ package ed25519
 
 import (
 	"crypto/ed25519"
-	"crypto/rand"
 
 	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/types"
@@ -13,11 +12,20 @@ var (
 )
 
 type Method struct {
-	name string
+	name     string
+	keyFn    KeyFn
+	signFn   SignFn
+	verifyFn VerifyFn
 }
 
-func NewMethod(name string) *Method {
-	return &Method{name: name}
+func NewMethod(name string, options ...Option) *Method {
+	opts := NewOptions(options...)
+	return &Method{
+		name:     name,
+		keyFn:    opts.keyFn,
+		signFn:   opts.signFn,
+		verifyFn: opts.verifyFn,
+	}
 }
 
 func (m *Method) Name() string {
@@ -28,10 +36,13 @@ func (m *Method) Name() string {
 // GenerateKey generates a new Ed25519 private key.
 func (m *Method) GenerateKey() (ed25519.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
-	_, key, err := ed25519.GenerateKey(rand.Reader)
+	assert.NotNil(m.keyFn, "method keyFn is nil")
+
+	_, key, err := m.keyFn()
 	if err != nil {
 		return nil, ErrKeyGeneration(err)
 	}
+
 	return key, nil
 }
 
@@ -59,10 +70,13 @@ func (m *Method) GenerateKey() (ed25519.PrivateKey, error) {
 //     (that is handled in Verify).
 func (m *Method) Sign(key *ed25519.PrivateKey, data types.Bytes) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
-	signature, err := Sign(m, key, data)
+	assert.NotNil(m.signFn, "method signFn is nil")
+
+	signature, err := m.signFn(m, key, data)
 	if err != nil {
 		return nil, ErrSigning(err)
 	}
+
 	return signature, nil
 }
 
@@ -92,9 +106,12 @@ func (m *Method) Sign(key *ed25519.PrivateKey, data types.Bytes) (types.Bytes, e
 //     (false, nil) in that case.
 func (m *Method) Verify(key *ed25519.PublicKey, signature, data types.Bytes) (bool, error) {
 	assert.NotNil(m, "method is nil")
-	ok, err := Verify(m, key, signature, data)
+	assert.NotNil(m.verifyFn, "method verifyFn is nil")
+
+	ok, err := m.verifyFn(m, key, signature, data)
 	if err != nil {
 		return false, ErrVerification(err)
 	}
+
 	return ok, nil
 }

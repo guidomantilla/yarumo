@@ -53,6 +53,7 @@ func (m *Method) Name() string {
 func (m *Method) GenerateKey() types.Bytes {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.keyFn, "method keyFn is nil")
+
 	return m.keyFn(m.keySize)
 }
 
@@ -76,10 +77,12 @@ func (m *Method) GenerateKey() types.Bytes {
 func (m *Method) Digest(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.digestFn, "method digestFn is nil")
+
 	digest, err := m.digestFn(m, key, data)
 	if err != nil {
 		return nil, ErrDigest(err)
 	}
+
 	return digest, nil
 }
 
@@ -104,9 +107,11 @@ func (m *Method) Digest(key types.Bytes, data types.Bytes) (types.Bytes, error) 
 func (m *Method) Validate(key types.Bytes, digest types.Bytes, data types.Bytes) (bool, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.validateFn, "method validateFn is nil")
+
 	ok, err := m.validateFn(m, key, digest, data)
 	if err != nil {
 		return false, ErrValidation(err)
 	}
+
 	return ok, nil
 }
