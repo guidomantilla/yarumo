@@ -30,6 +30,7 @@ func NewMethod(name string, kind crypto.Hash, saltLength int, allowedKeySizes ..
 		allowedKeySizes: allowedKeySizes,
 	}
 }
+
 func (m *Method) Name() string {
 	assert.NotNil(m, "method is nil")
 	return m.name

@@ -3,7 +3,7 @@ package main
 import (
 	"crypto"
 
-	"github.com/guidomantilla/yarumo/security/hashes"
+	"github.com/guidomantilla/yarumo/common/crypto/hashes"
 )
 
 func main() {

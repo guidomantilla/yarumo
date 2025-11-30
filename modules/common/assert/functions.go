@@ -3,8 +3,9 @@ package assert
 import (
 	"os"
 
-	"github.com/guidomantilla/yarumo/common/utils"
 	"github.com/rs/zerolog"
+
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 var logger = zerolog.New(os.Stderr).With().Timestamp().Logger()

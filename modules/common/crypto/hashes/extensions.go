@@ -1,11 +1,10 @@
 package hashes
 
 import (
-	"sync"
-
 	_ "crypto/sha256"
 	_ "crypto/sha3"
 	_ "crypto/sha512"
+	"sync"
 
 	_ "golang.org/x/crypto/blake2b"
 )

@@ -4,9 +4,9 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 
+	"github.com/guidomantilla/yarumo/common/crypto/signatures/ecdsas"
+	"github.com/guidomantilla/yarumo/common/crypto/signatures/hmacs"
 	"github.com/guidomantilla/yarumo/common/types"
-	"github.com/guidomantilla/yarumo/security/signatures/ecdsas"
-	"github.com/guidomantilla/yarumo/security/signatures/hmacs"
 )
 
 func main() {
