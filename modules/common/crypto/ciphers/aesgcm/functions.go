@@ -6,8 +6,11 @@ import (
 	"github.com/guidomantilla/yarumo/common/types"
 )
 
-func key(method *Method) types.Bytes {
-	return random.Key(method.keySize)
+func key(method *Method) (types.Bytes, error) {
+	if method == nil {
+		return nil, ErrMethodInvalid
+	}
+	return random.Key(method.keySize), nil
 }
 
 func encrypt(method *Method, key types.Bytes, data types.Bytes, aad types.Bytes) (types.Bytes, error) {

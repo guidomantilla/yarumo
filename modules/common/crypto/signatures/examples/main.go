@@ -17,7 +17,7 @@ func main() {
 	 * HMAC with SHA256
 	 */
 
-	key = hmacs.HMAC_with_SHA256.GenerateKey()
+	key, _ = hmacs.HMAC_with_SHA256.GenerateKey()
 	digest, _ := hmacs.HMAC_with_SHA256.Digest(key.(types.Bytes), data)
 	println(fmt.Sprintf("HMAC_with_SHA256 Digest - Hex: %s, Base64: %s", digest.ToHex(), digest.ToBase64Std()))
 	verify, _ := hmacs.HMAC_with_SHA256.Validate(key.(types.Bytes), digest, data)

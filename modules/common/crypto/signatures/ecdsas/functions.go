@@ -14,14 +14,15 @@ func key(method *Method) (*ecdsa.PrivateKey, error) {
 	return ecdsa.GenerateKey(method.curve, rand.Reader)
 }
 
+// Format represents the encoding used for ECDSA signatures produced/consumed by this package.
 type Format int
 
 const (
-	// RS Format => r || s
-	//
-	// Used in: JOSE / JWT / WebAuthn
+	// RS is a raw concatenation format: r || s (big-endian, zero-left padded to key size).
+	// Commonly used in JOSE/JWT and WebAuthn.
 	RS Format = iota
 
+	// ASN1 is the DER-encoded ASN.1 sequence format used by the standard library.
 	ASN1
 )
 
@@ -43,8 +44,8 @@ func sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 		if err != nil {
 			return nil, errs.Wrap(ErrSignFailed, err)
 		}
-		// We serialize the outputs (r and s) into big-endian byte arrays padded with zeros on the left to make sure the sizes work out.
-		// Output must be 2*keyBytes long.
+		// Serialize r and s into big-endian byte arrays padded with zeros on the left.
+		// Output must be 2*keyBytes long: first r, then s.
 		keyBytes := method.keySize
 		out := make([]byte, 2*keyBytes)
 		r.FillBytes(out[0:keyBytes]) // r is assigned to the first half of output.
