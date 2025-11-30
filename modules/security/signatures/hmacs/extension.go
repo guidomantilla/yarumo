@@ -13,6 +13,7 @@ var methods = map[string]Method{
 
 var lock = new(sync.RWMutex)
 
+// Register adds a new HMAC method to the registry.
 func Register(method Method) {
 	lock.Lock()
 	defer lock.Unlock()
@@ -20,6 +21,7 @@ func Register(method Method) {
 	methods[method.name] = method
 }
 
+// Get returns the HMAC method with the given name.
 func Get(name string) (*Method, error) {
 	lock.Lock()
 	defer lock.Unlock()
@@ -31,6 +33,7 @@ func Get(name string) (*Method, error) {
 	return &alg, nil
 }
 
+// Supported returns a list of all supported HMAC methods.
 func Supported() []Method {
 	lock.Lock()
 	defer lock.Unlock()
