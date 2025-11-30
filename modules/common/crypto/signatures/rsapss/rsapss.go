@@ -128,6 +128,6 @@ func (m *Method) Verify(key *rsa.PublicKey, signature types.Bytes, data types.By
 	if err != nil {
 		return false, ErrVerification(err)
 	}
-	
+
 	return ok, nil
 }

@@ -4,7 +4,6 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/rand"
 
 	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/types"
@@ -16,18 +15,25 @@ var (
 )
 
 type Method struct {
-	name    string
-	kind    crypto.Hash
-	keySize int
-	curve   elliptic.Curve
+	name     string
+	kind     crypto.Hash
+	keySize  int
+	curve    elliptic.Curve
+	keyFn    KeyFn
+	signFn   SignFn
+	verifyFn VerifyFn
 }
 
-func NewMethod(name string, kind crypto.Hash, keySize int, curve elliptic.Curve) *Method {
+func NewMethod(name string, kind crypto.Hash, keySize int, curve elliptic.Curve, options ...Option) *Method {
+	opts := NewOptions(options...)
 	return &Method{
-		name:    name,
-		kind:    kind,
-		keySize: keySize,
-		curve:   curve,
+		name:     name,
+		kind:     kind,
+		keySize:  keySize,
+		curve:    curve,
+		keyFn:    opts.keyFn,
+		signFn:   opts.signFn,
+		verifyFn: opts.verifyFn,
 	}
 }
 
@@ -39,10 +45,13 @@ func (m *Method) Name() string {
 // GenerateKey generates a new ECDSA private key.
 func (m *Method) GenerateKey() (*ecdsa.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
-	key, err := ecdsa.GenerateKey(m.curve, rand.Reader)
+	assert.NotNil(m.keyFn, "method keyFn is nil")
+
+	key, err := m.keyFn(m.curve)
 	if err != nil {
 		return nil, ErrKeyGeneration(err)
 	}
+
 	return key, nil
 }
 
@@ -78,10 +87,13 @@ func (m *Method) GenerateKey() (*ecdsa.PrivateKey, error) {
 // The function guarantees consistent output formatting and never panics.
 func (m *Method) Sign(key *ecdsa.PrivateKey, data types.Bytes, format Format) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
-	signature, err := Sign(m, key, data, format)
+	assert.NotNil(m.signFn, "method signFn is nil")
+
+	signature, err := m.signFn(m, key, data, format)
 	if err != nil {
 		return nil, ErrSigning(err)
 	}
+
 	return signature, nil
 }
 
@@ -120,9 +132,12 @@ func (m *Method) Sign(key *ecdsa.PrivateKey, data types.Bytes, format Format) (t
 // verification failure; it returns (false, nil) instead.
 func (m *Method) Verify(key *ecdsa.PublicKey, signature types.Bytes, data types.Bytes, format Format) (bool, error) {
 	assert.NotNil(m, "method is nil")
-	ok, err := Verify(m, key, signature, data, format)
+	assert.NotNil(m.verifyFn, "method verifyFn is nil")
+
+	ok, err := m.verifyFn(m, key, signature, data, format)
 	if err != nil {
 		return false, ErrVerification(err)
 	}
+
 	return ok, nil
 }
