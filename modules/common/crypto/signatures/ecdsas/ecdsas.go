@@ -42,7 +42,24 @@ func (m *Method) Name() string {
 	return m.name
 }
 
-// GenerateKey generates a new ECDSA private key.
+// GenerateKey generates a new ECDSA private key for the given method.
+//
+// Notes: It delegates to ecdsas.KeyFn. This is a function that takes an ECDSA Method specifying the elliptic curve to use.
+//
+// Parameters: none
+//
+// Behavior:
+//   - Returns an error if method is nil.
+//   - Invokes ecdsa.GenerateKey using the curve defined in method.curve.
+//   - Uses crypto/rand as the secure randomness source.
+//
+// Returns:
+//   - A newly generated *ecdsa.PrivateKey.
+//   - An error if key generation fails.
+//
+// Notes:
+//   - The key size and security level depend entirely on the selected curve.
+//   - This function never panics.
 func (m *Method) GenerateKey() (*ecdsa.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.keyFn, "method keyFn is nil")
@@ -56,35 +73,34 @@ func (m *Method) GenerateKey() (*ecdsa.PrivateKey, error) {
 }
 
 // Sign generates an ECDSA signature over the given data using the provided
-// method and private key.
+// method, private key, and output format.
+//
+// Notes:it delegates to ecdsas.SignFn.This is a function that takes an ECDSA Method specifying the elliptic curve, the hash function, and key size to use.
 //
 // Parameters:
-//   - method: cryptographic method defining the hash function, curve, and key size.
-//   - key: ECDSA private key used to produce the signature. Must not be nil and
-//     must use the same curve as method.curve.
+//   - key: ECDSA private key used to produce the signature.
 //   - data: message to be signed.
-//   - format: output signature format (RS or ASN1).
+//   - format: signature output format (RS or ASN1).
 //
 // Behavior:
 //   - Returns an error if method or key are nil.
-//   - Returns an error if the key's curve does not match the method's curve.
-//   - Computes the hash of data using the method's hash function.
-//   - For RS: calls ecdsa.Sign to obtain (r, s) and serializes r||s as
-//     fixed-size big-endian byte slices (2*keySize).
-//   - For ASN1: calls ecdsa.SignASN1 to produce a standard ASN.1 DER-encoded
-//     ECDSA signature.
+//   - Returns an error if the private key’s curve does not match method.curve.
+//   - Hashes the input data using method.kind.
+//   - For RS:
+//   - Produces (r, s) using ecdsa.Sign.
+//   - Serializes them as r||s, each big-endian and padded to method.keySize.
+//   - Output length is exactly 2*keySize.
+//   - For ASN1:
+//   - Produces a standard ASN.1 DER-encoded ECDSA signature via ecdsa.SignASN1.
 //
 // Returns:
-//   - A byte slice containing the encoded signature.
-//   - An error if signing fails or if the format is not supported.
+//   - A serialized ECDSA signature in the selected format.
+//   - An error if signing fails or if the format is unsupported.
 //
-// Possible errors:
-//   - ErrMethodInvalid
-//   - ErrKeyInvalid
-//   - ErrSignFailed
-//   - ErrFormatUnsupported
-//
-// The function guarantees consistent output formatting and never panics.
+// Notes:
+//   - RS format is commonly used in JOSE/JWT/WebAuthn.
+//   - ASN1 format matches Go’s standard library and X.509 expectations.
+//   - The function never panics.
 func (m *Method) Sign(key *ecdsa.PrivateKey, data types.Bytes, format Format) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.signFn, "method signFn is nil")
@@ -97,39 +113,37 @@ func (m *Method) Sign(key *ecdsa.PrivateKey, data types.Bytes, format Format) (t
 	return signature, nil
 }
 
-// Verify checks an ECDSA signature over the given data using the provided
-// method and public key.
+// Verify checks an ECDSA signature over the given data using the specified
+// method, public key, and signature format.
+//
+// Notes:it delegates to ecdsas.VerifyFn.This is a function that takes an ECDSA Method specifying the elliptic curve, the hash function, and key size to use.
 //
 // Parameters:
-//   - method: cryptographic method defining the hash function and curve.
-//   - key: ECDSA public key used for verification. Must not be nil and must
-//     use the same curve as method.curve.
-//   - signature: the signature to verify (in RS or ASN1 format).
+//   - key: ECDSA public key used for signature verification.
+//   - signature: the signature to verify.
 //   - data: the original message that was signed.
 //   - format: signature format (RS or ASN1).
 //
 // Behavior:
 //   - Returns an error if method or key are nil.
-//   - Returns an error if the key's curve does not match the method's curve.
-//   - Computes the hash of data using the method's hash function.
-//   - For RS: splits the signature into r||s using method.keySize and calls
-//     ecdsa.Verify.
-//   - For ASN1: calls ecdsa.VerifyASN1 with the hash and the ASN.1 DER-encoded
-//     signature.
+//   - Returns an error if the key’s curve does not match method.curve.
+//   - Hashes the input data using method.kind.
+//   - For RS:
+//   - Expects signature length == 2*keySize.
+//   - Splits signature into r||s (each padded big-endian integer).
+//   - Uses ecdsa.Verify to validate (r, s).
+//   - For ASN1:
+//   - Uses ecdsa.VerifyASN1 to validate a DER-encoded ASN.1 signature.
 //
 // Returns:
 //   - (true, nil)  if the signature is valid.
 //   - (false, nil) if the signature is invalid.
-//   - (false, err) if the signature format is invalid or incompatible.
+//   - (false, err) if the signature format is unsupported or the input is malformed.
 //
-// Possible errors:
-//   - ErrMethodInvalid
-//   - ErrKeyInvalid
-//   - ErrSignatureInvalid
-//   - ErrFormatUnsupported
-//
-// The function never panics and does not return an error for a simple
-// verification failure; it returns (false, nil) instead.
+// Notes:
+//   - RS format matches JOSE/JWT/WebAuthn conventions.
+//   - ASN1 format matches Go’s crypto/x509 expectations.
+//   - The function never panics and treats verification failure as a non-error.
 func (m *Method) Verify(key *ecdsa.PublicKey, signature types.Bytes, data types.Bytes, format Format) (bool, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.verifyFn, "method verifyFn is nil")
