@@ -10,7 +10,7 @@ var (
 	_ ValidateFn = validate
 )
 
-type KeyFn func(method *Method) types.Bytes
+type KeyFn func(method *Method) (types.Bytes, error)
 
 type DigestFn func(method *Method, key types.Bytes, data types.Bytes) (types.Bytes, error)
 

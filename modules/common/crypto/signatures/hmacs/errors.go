@@ -29,19 +29,24 @@ func (e *Error) Error() string {
 //
 
 var (
-	ErrMethodIsNil       = errors.New("method is nil")
-	ErrHashNotAvailable  = errors.New("hash not available")
-	ErrKeyIsNil          = errors.New("key is nil")
-	ErrKeyCurveIsInvalid = errors.New("key curve is invalid")
-	ErrSignatureInvalid  = errors.New("signature is invalid")
-	ErrSignFailed        = errors.New("sign failed")
-	ErrFormatUnsupported = errors.New("format unsupported")
-	ErrDigestFailed      = errors.New("digest failed")
-	ErrValidationFailed  = errors.New("validation failed")
+	ErrMethodIsNil         = errors.New("method is nil")
+	ErrHashNotAvailable    = errors.New("hash not available")
+	ErrKeyGenerationFailed = errors.New("key generation failed")
+	ErrDigestFailed        = errors.New("digest failed")
+	ErrValidationFailed    = errors.New("validation failed")
 )
 
 func ErrAlgorithmNotSupported(name string) error {
 	return fmt.Errorf("hmac function %s not found", name)
+}
+
+func ErrKeyGeneration(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: HmacMethod,
+			Err:  errors.Join(append(errs, ErrKeyGenerationFailed)...),
+		},
+	}
 }
 
 func ErrDigest(errs ...error) error {

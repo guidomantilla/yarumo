@@ -7,8 +7,11 @@ import (
 	"github.com/guidomantilla/yarumo/common/types"
 )
 
-func key(method *Method) types.Bytes {
-	return random.Key(method.keySize)
+func key(method *Method) (types.Bytes, error) {
+	if method == nil {
+		return nil, ErrMethodIsNil
+	}
+	return random.Key(method.keySize), nil
 }
 
 func digest(method *Method, key types.Bytes, data types.Bytes) (types.Bytes, error) {

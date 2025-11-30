@@ -50,11 +50,16 @@ func (m *Method) Name() string {
 
 // GenerateKey generates a new random key suitable for the HMAC method.
 // The returned key length equals the method's configured key size.
-func (m *Method) GenerateKey() types.Bytes {
+func (m *Method) GenerateKey() (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.keyFn, "method keyFn is nil")
 
-	return m.keyFn(m)
+	key, err := m.keyFn(m)
+	if err != nil {
+		return nil, ErrKeyGeneration(err)
+	}
+
+	return key, nil
 }
 
 // Digest computes the HMAC of data using this Method and the provided key.
