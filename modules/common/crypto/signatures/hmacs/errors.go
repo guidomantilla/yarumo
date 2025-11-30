@@ -1,6 +1,7 @@
 package hmacs
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/guidomantilla/yarumo/common/assert"
@@ -8,7 +9,7 @@ import (
 )
 
 const (
-	HmacNotFound = "hmac_function_not_found"
+	HmacMethod = "hmac_method"
 )
 
 var (
@@ -27,11 +28,36 @@ func (e *Error) Error() string {
 
 //
 
+var (
+	ErrMethodIsNil       = errors.New("method is nil")
+	ErrHashNotAvailable  = errors.New("hash not available")
+	ErrKeyIsNil          = errors.New("key is nil")
+	ErrKeyCurveIsInvalid = errors.New("key curve is invalid")
+	ErrSignatureInvalid  = errors.New("signature is invalid")
+	ErrSignFailed        = errors.New("sign failed")
+	ErrFormatUnsupported = errors.New("format unsupported")
+	ErrDigestFailed      = errors.New("digest failed")
+	ErrValidationFailed  = errors.New("validation failed")
+)
+
 func ErrAlgorithmNotSupported(name string) error {
+	return fmt.Errorf("hmac function %s not found", name)
+}
+
+func ErrDigest(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: HmacNotFound,
-			Err:  fmt.Errorf("hmac function %s not found", name),
+			Type: HmacMethod,
+			Err:  errors.Join(append(errs, ErrDigestFailed)...),
+		},
+	}
+}
+
+func ErrValidation(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: HmacMethod,
+			Err:  errors.Join(append(errs, ErrValidationFailed)...),
 		},
 	}
 }

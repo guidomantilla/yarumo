@@ -18,16 +18,18 @@ func main() {
 	 */
 
 	key = hmacs.HMAC_with_SHA256.GenerateKey()
-	digest := hmacs.HMAC_with_SHA256.Digest(key.(types.Bytes), data)
+	digest, _ := hmacs.HMAC_with_SHA256.Digest(key.(types.Bytes), data)
 	println(fmt.Sprintf("HMAC_with_SHA256 Digest - Hex: %s, Base64: %s", digest.ToHex(), digest.ToBase64Std()))
-	println(fmt.Sprintf("HMAC_with_SHA256 Validate: %v", hmacs.HMAC_with_SHA256.Validate(key.(types.Bytes), digest, data)))
+	verify, _ := hmacs.HMAC_with_SHA256.Validate(key.(types.Bytes), digest, data)
+	println(fmt.Sprintf("HMAC_with_SHA256 Validate: %v", verify))
 
 	/*
 	 * HMAC with SHA512
 	 */
-	digest = hmacs.HMAC_with_SHA512.Digest([]byte("abc123"), []byte("Guido Mauricio Mantilla Tarazona"))
+	digest, _ = hmacs.HMAC_with_SHA512.Digest([]byte("abc123"), []byte("Guido Mauricio Mantilla Tarazona"))
 	println(fmt.Sprintf("HMAC_with_SHA512 Digest - Hex: %s, Base64: %s", digest.ToHex(), digest.ToBase64Std()))
-	println(fmt.Sprintf("HMAC_with_SHA512 Validate: %v", hmacs.HMAC_with_SHA512.Validate([]byte("abc123"), digest, []byte("Guido Mauricio Mantilla Tarazona"))))
+	verify, _ = hmacs.HMAC_with_SHA512.Validate([]byte("abc123"), digest, []byte("Guido Mauricio Mantilla Tarazona"))
+	println(fmt.Sprintf("HMAC_with_SHA512 Validate: %v", verify))
 
 	/*
 	 * ECDSA with SHA256 over P256
@@ -38,7 +40,7 @@ func main() {
 	signature, err := ecdsas.ECDSA_with_SHA256_over_P256.Sign(key.(*ecdsa.PrivateKey), data, ecdsas.ASN1)
 	println(err)
 	println(fmt.Sprintf("ECDSA_with_SHA256_over_P256 Signature - Hex: %s, Base64: %s", signature.ToHex(), signature.ToBase64Std()))
-	verify, err := ecdsas.ECDSA_with_SHA256_over_P256.Verify(&key.(*ecdsa.PrivateKey).PublicKey, signature, data, ecdsas.ASN1)
+	verify, err = ecdsas.ECDSA_with_SHA256_over_P256.Verify(&key.(*ecdsa.PrivateKey).PublicKey, signature, data, ecdsas.ASN1)
 	println(err)
 	println(fmt.Sprintf("ECDSA_with_SHA256_over_P256 Verify: %v", verify))
 

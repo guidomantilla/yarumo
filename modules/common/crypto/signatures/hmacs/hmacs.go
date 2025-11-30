@@ -58,9 +58,13 @@ func (m *Method) GenerateKey() types.Bytes {
 // Notes:
 //   - The function never returns an error; it silently ignores Write errors.
 //   - Panics only if the hash function is not registered (via assert).
-func (m *Method) Digest(key types.Bytes, data types.Bytes) types.Bytes {
+func (m *Method) Digest(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
-	return Digest(m.kind, key, data)
+	digest, err := Digest(m, key, data)
+	if err != nil {
+		return nil, ErrDigest(err)
+	}
+	return digest, nil
 }
 
 // Validate verifies an HMAC digest using the specified hash function and key.
@@ -82,7 +86,11 @@ func (m *Method) Digest(key types.Bytes, data types.Bytes) types.Bytes {
 //
 // Notes:
 //   - Panics only if the hash function is not registered (via assert).
-func (m *Method) Validate(key types.Bytes, digest types.Bytes, data types.Bytes) bool {
+func (m *Method) Validate(key types.Bytes, digest types.Bytes, data types.Bytes) (bool, error) {
 	assert.NotNil(m, "method is nil")
-	return Validate(m.kind, key, digest, data)
+	ok, err := Validate(m, key, digest, data)
+	if err != nil {
+		return false, ErrValidation(err)
+	}
+	return ok, nil
 }

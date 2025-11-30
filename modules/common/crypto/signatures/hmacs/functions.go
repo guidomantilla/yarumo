@@ -1,10 +1,8 @@
 package hmacs
 
 import (
-	"crypto"
 	"crypto/hmac"
 
-	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/types"
 )
 
@@ -28,11 +26,22 @@ import (
 // Notes:
 //   - The function never returns an error; it silently ignores Write errors.
 //   - Panics only if the hash function is not registered (via assert).
-func Digest(hash crypto.Hash, key types.Bytes, data types.Bytes) types.Bytes {
-	assert.True(hash.Available(), "hash function not available. call crypto.RegisterHash(...)")
-	h := hmac.New(hash.New, key)
-	_, _ = h.Write(data)
-	return h.Sum(nil)
+func Digest(method *Method, key types.Bytes, data types.Bytes) (types.Bytes, error) {
+	if method == nil {
+		return nil, ErrMethodIsNil
+	}
+	if !method.kind.Available() {
+		return nil, ErrHashNotAvailable
+	}
+
+	h := hmac.New(method.kind.New, key)
+	_, err := h.Write(data)
+	if err != nil {
+		return nil, err
+	}
+
+	out := h.Sum(nil)
+	return out, nil
 }
 
 // Validate verifies an HMAC digest using the specified hash function and key.
@@ -54,8 +63,17 @@ func Digest(hash crypto.Hash, key types.Bytes, data types.Bytes) types.Bytes {
 //
 // Notes:
 //   - Panics only if the hash function is not registered (via assert).
-func Validate(hash crypto.Hash, key types.Bytes, digest types.Bytes, data types.Bytes) bool {
-	assert.True(hash.Available(), "hash function not available. call crypto.RegisterHash(...)")
-	calculated := Digest(hash, key, data)
-	return hmac.Equal(digest, calculated)
+func Validate(method *Method, key types.Bytes, digest types.Bytes, data types.Bytes) (bool, error) {
+	if method == nil {
+		return false, ErrMethodIsNil
+	}
+	if !method.kind.Available() {
+		return false, ErrHashNotAvailable
+	}
+	calculated, err := Digest(method, key, data)
+	if err != nil {
+		return false, err
+	}
+	ok := hmac.Equal(digest, calculated)
+	return ok, nil
 }
