@@ -48,8 +48,25 @@ func (m *Method) Name() string {
 	return m.name
 }
 
-// GenerateKey generates a new random key suitable for the HMAC method.
-// The returned key length equals the method's configured key size.
+// GenerateKey generates a new random symmetric key for the given method.
+//
+// Notes: It delegates to hmacs.KeyFn. This is a function that takes an HMAC Method specifying the required key size.
+//
+// Parameters: none
+//
+// Behavior:
+//   - Returns an error if method is nil.
+//   - Uses random.Key to generate a cryptographically secure key of
+//     exactly method.keySize bytes.
+//
+// Returns:
+//   - A newly generated key as a byte slice.
+//   - An error if the method is invalid.
+//
+// Notes:
+//   - This is intended for symmetric algorithms (AES, ChaCha20, etc.).
+//   - The function never panics and never returns a partial key.
+//   - The caller is responsible for securely storing the key.
 func (m *Method) GenerateKey() (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.keyFn, "method keyFn is nil")
@@ -62,23 +79,31 @@ func (m *Method) GenerateKey() (types.Bytes, error) {
 	return key, nil
 }
 
-// Digest computes the HMAC of data using this Method and the provided key.
+// Digest computes an HMAC authentication tag over the provided data using
+// the given method and key.
+//
+// Notes:it delegates to hmacs.DigestFn. This is a function that takes an HMAC Method specifying the underlying hash function.
 //
 // Parameters:
-//   - key: secret key to initialize the HMAC.
-//   - data: message to authenticate.
+//   - key: the secret key used for HMAC (any length allowed by HMAC).
+//   - data: the message to authenticate.
 //
 // Behavior:
-//   - Verifies that the method and its hash are valid/available.
-//   - Initializes an HMAC with the method's hash and the provided key.
-//   - Writes the data and returns the computed digest.
+//   - Returns an error if method is nil.
+//   - Returns an error if the underlying hash function is not available
+//     (method.kind.Available() == false).
+//   - Creates a new HMAC instance using method.kind.New and the provided key.
+//   - Writes the input data into the HMAC.
+//   - Produces the final authentication tag via h.Sum(nil).
 //
 // Returns:
-//   - digest: the calculated HMAC.
-//   - error: wrapped with ErrDigest on failure. Possible causes include:
-//   - ErrMethodIsNil if the method is nil.
-//   - ErrHashNotAvailable if the hash is not available.
-//   - I/O style errors returned from the underlying Write.
+//   - A byte slice containing the HMAC tag.
+//   - An error if writing to the HMAC fails (extremely rare).
+//
+// Notes:
+//   - HMAC does not encrypt data; it provides integrity and authenticity.
+//   - The output size depends on the hash function (e.g., SHA-256 → 32 bytes).
+//   - The function never panics and never returns a partial digest.
 func (m *Method) Digest(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.digestFn, "method digestFn is nil")
@@ -91,24 +116,34 @@ func (m *Method) Digest(key types.Bytes, data types.Bytes) (types.Bytes, error) 
 	return digest, nil
 }
 
-// Validate checks whether the provided digest matches the HMAC of data
-// computed with this Method and key.
+// Validate checks whether the provided HMAC digest matches the HMAC computed
+// over the given data using the specified method and key.
+//
+// Notes:it delegates to hmacs.ValidateFn. This is a function that takes an HMAC Method specifying the underlying hash function.
 //
 // Parameters:
-//   - key: secret key used to compute the HMAC.
-//   - digest: expected HMAC to validate against.
-//   - data: message whose authenticity/integrity is being verified.
+//   - key: the secret key used for HMAC computation.
+//   - digest_: the expected HMAC tag to compare against.
+//   - data: the message that should match the provided digest.
 //
 // Behavior:
-//   - Verifies method and hash availability.
-//   - Recomputes the HMAC and compares using constant-time equality.
+//   - Returns an error if method is nil.
+//   - Returns an error if the underlying hash function is not available
+//     (method.kind.Available() == false).
+//   - Recomputes the HMAC tag for the provided data and key using digest().
+//   - Compares the expected digest with the computed one using hmac.Equal,
+//     which provides constant-time comparison.
 //
 // Returns:
-//   - ok: true if the digests are equal, false otherwise.
-//   - error: wrapped with ErrValidation on failure. Possible causes include:
-//   - ErrMethodIsNil if the method is nil.
-//   - ErrHashNotAvailable if the hash is not available.
-//   - Errors produced while recomputing the digest.
+//   - (true, nil)  if the digest matches.
+//   - (false, nil) if the digest does not match.
+//   - (false, err) if HMAC computation fails.
+//
+// Notes:
+//   - This function provides integrity/authenticity verification only;
+//     it does not check for freshness or prevent replay attacks.
+//   - Uses constant-time comparison to avoid timing side-channel leaks.
+//   - Never panics and never exposes partial HMAC data.
 func (m *Method) Validate(key types.Bytes, digest types.Bytes, data types.Bytes) (bool, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.validateFn, "method validateFn is nil")

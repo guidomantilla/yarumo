@@ -75,7 +75,7 @@ func (m *Method) GenerateKey() (*ecdsa.PrivateKey, error) {
 // Sign generates an ECDSA signature over the given data using the provided
 // method, private key, and output format.
 //
-// Notes:it delegates to ecdsas.SignFn.This is a function that takes an ECDSA Method specifying the elliptic curve, the hash function, and key size to use.
+// Notes:it delegates to ecdsas.SignFn. This is a function that takes an ECDSA Method specifying the elliptic curve, the hash function, and key size to use.
 //
 // Parameters:
 //   - key: ECDSA private key used to produce the signature.
@@ -116,7 +116,7 @@ func (m *Method) Sign(key *ecdsa.PrivateKey, data types.Bytes, format Format) (t
 // Verify checks an ECDSA signature over the given data using the specified
 // method, public key, and signature format.
 //
-// Notes:it delegates to ecdsas.VerifyFn.This is a function that takes an ECDSA Method specifying the elliptic curve, the hash function, and key size to use.
+// Notes:it delegates to ecdsas.VerifyFn. This is a function that takes an ECDSA Method specifying the elliptic curve, the hash function, and key size to use.
 //
 // Parameters:
 //   - key: ECDSA public key used for signature verification.

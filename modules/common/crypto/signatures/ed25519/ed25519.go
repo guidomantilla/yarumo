@@ -37,6 +37,8 @@ func (m *Method) Name() string {
 //
 // Notes:it delegates to ed25519.KeyFn.
 //
+// Parameters: none
+//
 // Behavior:
 //   - Uses crypto/rand as a secure randomness source.
 //   - Invokes ed25519.GenerateKey to produce a 32-byte public key and
@@ -67,10 +69,9 @@ func (m *Method) GenerateKey() (ed25519.PrivateKey, error) {
 // Sign produces an Ed25519 signature over the provided data using the given
 // method and private key.
 //
-// Notes:it delegates to ed25519.SignFn.This is a function that takes an Ed25519 Method (currently unused but validated).
+// Notes:it delegates to ed25519.SignFn. This is a function that takes an Ed25519 Method (currently unused but validated).
 //
 // Parameters:
-//   - method: Ed25519 method configuration (currently unused but validated).
 //   - key: Ed25519 private key used to generate the signature.
 //   - data: the message to be signed.
 //
@@ -103,10 +104,9 @@ func (m *Method) Sign(key *ed25519.PrivateKey, data types.Bytes) (types.Bytes, e
 // Verify checks an Ed25519 signature over the given data using the provided
 // method and public key.
 //
-// Notes:it delegates to ed25519.VerifyFn.This is a function that takes an Ed25519 Method (currently unused but validated).
+// Notes:it delegates to ed25519.VerifyFn. This is a function that takes an Ed25519 Method (currently unused but validated).
 //
 // Parameters:
-//   - method: Ed25519 method configuration (validated but otherwise unused).
 //   - key: Ed25519 public key used for verification.
 //   - signature: the 64-byte Ed25519 signature to validate.
 //   - data: the original message that was signed.
