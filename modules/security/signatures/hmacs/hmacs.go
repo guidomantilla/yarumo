@@ -32,7 +32,7 @@ func (m *Method) Name() string {
 	return m.name
 }
 
-// GenerateKey returns a random key of the method's key size'
+// GenerateKey generates a new random key for the HMAC algorithm.
 func (m *Method) GenerateKey() types.Bytes {
 	assert.NotNil(m, "method is nil")
 	return random.Key(m.keySize)

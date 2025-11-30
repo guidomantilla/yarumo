@@ -36,6 +36,7 @@ func (m *Method) Name() string {
 	return m.name
 }
 
+// GenerateKey generates a new ECDSA private key.
 func (m *Method) GenerateKey() (*ecdsa.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
 	return ecdsa.GenerateKey(m.curve, rand.Reader)
