@@ -36,13 +36,13 @@ import (
 //   - A failure to sign returns (nil, ErrSignFailed).
 func Sign(method *Method, key *rsa.PrivateKey, data types.Bytes) (types.Bytes, error) {
 	if method == nil {
-		return nil, ErrMethodInvalid
+		return nil, ErrMethodIsNil
 	}
 	if key == nil {
-		return nil, ErrKeyInvalid
+		return nil, ErrKeyIsNil
 	}
 	if utils.NotIn(key.N.BitLen(), method.allowedKeySizes...) {
-		return nil, ErrKeyInvalid
+		return nil, ErrKeyLengthIsInvalid
 	}
 
 	h := hashes.Hash(method.kind, data)
@@ -85,13 +85,13 @@ func Sign(method *Method, key *rsa.PrivateKey, data types.Bytes) (types.Bytes, e
 //   - The function distinguishes between "invalid signature" and actual errors.
 func Verify(method *Method, key *rsa.PublicKey, signature types.Bytes, data types.Bytes) (bool, error) {
 	if method == nil {
-		return false, ErrMethodInvalid
+		return false, ErrMethodIsNil
 	}
 	if key == nil {
-		return false, ErrKeyInvalid
+		return false, ErrKeyIsNil
 	}
 	if utils.NotIn(key.N.BitLen(), method.allowedKeySizes...) {
-		return false, ErrKeyInvalid
+		return false, ErrKeyLengthIsInvalid
 	}
 
 	h := hashes.Hash(method.kind, data)

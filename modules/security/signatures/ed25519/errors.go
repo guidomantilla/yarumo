@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Ed25519NotFound = "ed25519_function_not_found"
+	Ed25519Method = "ed25519_method"
 )
 
 var (
@@ -29,16 +29,42 @@ func (e *Error) Error() string {
 //
 
 var (
-	ErrMethodInvalid    = errors.New("method is invalid")
-	ErrKeyInvalid       = errors.New("key is invalid")
-	ErrSignatureInvalid = errors.New("signature is invalid")
+	ErrMethodIsNil            = errors.New("method is nil")
+	ErrKeyIsNil               = errors.New("key is nil")
+	ErrKeyLengthIsInvalid     = errors.New("key length is invalid")
+	ErrSignatureLengthInvalid = errors.New("signature length is invalid")
+	ErrKeyGenerationFailed    = errors.New("key generation failed")
+	ErrSigningFailed          = errors.New("signing failed")
+	ErrVerificationFailed     = errors.New("verification failed")
 )
 
 func ErrAlgorithmNotSupported(name string) error {
+	return fmt.Errorf("ed25519 function %s not found", name)
+}
+
+func ErrKeyGeneration(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: Ed25519NotFound,
-			Err:  fmt.Errorf("ed25519 function %s not found", name),
+			Type: Ed25519Method,
+			Err:  errors.Join(append(errs, ErrKeyGenerationFailed)...),
+		},
+	}
+}
+
+func ErrSigning(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: Ed25519Method,
+			Err:  errors.Join(append(errs, ErrSigningFailed)...),
+		},
+	}
+}
+
+func ErrVerification(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: Ed25519Method,
+			Err:  errors.Join(append(errs, ErrVerificationFailed)...),
 		},
 	}
 }

@@ -30,13 +30,13 @@ import (
 //     (that is handled in Verify).
 func Sign(method *Method, key *ed25519.PrivateKey, data types.Bytes) (types.Bytes, error) {
 	if method == nil {
-		return nil, ErrMethodInvalid
+		return nil, ErrMethodIsNil
 	}
 	if key == nil {
-		return nil, ErrKeyInvalid
+		return nil, ErrKeyIsNil
 	}
 	if len(*key) != ed25519.PrivateKeySize {
-		return nil, ErrKeyInvalid
+		return nil, ErrKeyLengthIsInvalid
 	}
 
 	out := ed25519.Sign(*key, data)
@@ -69,16 +69,16 @@ func Sign(method *Method, key *ed25519.PrivateKey, data types.Bytes) (types.Byte
 //     (false, nil) in that case.
 func Verify(method *Method, key *ed25519.PublicKey, signature, data types.Bytes) (bool, error) {
 	if method == nil {
-		return false, ErrMethodInvalid
+		return false, ErrMethodIsNil
 	}
 	if key == nil {
-		return false, ErrKeyInvalid
+		return false, ErrKeyIsNil
 	}
 	if len(*key) != ed25519.PrivateKeySize {
-		return false, ErrKeyInvalid
+		return false, ErrKeyLengthIsInvalid
 	}
 	if len(signature) != ed25519.SignatureSize {
-		return false, ErrSignatureInvalid
+		return false, ErrSignatureLengthInvalid
 	}
 
 	ok := ed25519.Verify(*key, data, signature)

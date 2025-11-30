@@ -39,7 +39,11 @@ func (m *Method) Name() string {
 // GenerateKey generates a new ECDSA private key.
 func (m *Method) GenerateKey() (*ecdsa.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
-	return ecdsa.GenerateKey(m.curve, rand.Reader)
+	key, err := ecdsa.GenerateKey(m.curve, rand.Reader)
+	if err != nil {
+		return nil, ErrKeyGeneration(err)
+	}
+	return key, nil
 }
 
 // Sign generates an ECDSA signature over the given data using the provided
@@ -74,7 +78,11 @@ func (m *Method) GenerateKey() (*ecdsa.PrivateKey, error) {
 // The function guarantees consistent output formatting and never panics.
 func (m *Method) Sign(key *ecdsa.PrivateKey, data types.Bytes, format Format) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
-	return Sign(m, key, data, format)
+	signature, err := Sign(m, key, data, format)
+	if err != nil {
+		return nil, ErrSigning(err)
+	}
+	return signature, nil
 }
 
 // Verify checks an ECDSA signature over the given data using the provided
@@ -112,5 +120,9 @@ func (m *Method) Sign(key *ecdsa.PrivateKey, data types.Bytes, format Format) (t
 // verification failure; it returns (false, nil) instead.
 func (m *Method) Verify(key *ecdsa.PublicKey, signature types.Bytes, data types.Bytes, format Format) (bool, error) {
 	assert.NotNil(m, "method is nil")
-	return Verify(m, key, signature, data, format)
+	ok, err := Verify(m, key, signature, data, format)
+	if err != nil {
+		return false, ErrVerification(err)
+	}
+	return ok, nil
 }

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	EcdsaNotFound = "ecdsa_function_not_found"
+	EcdsaMethod = "ecdsa_method"
 )
 
 var (
@@ -29,18 +29,44 @@ func (e *Error) Error() string {
 //
 
 var (
-	ErrMethodInvalid     = errors.New("method is invalid")
-	ErrKeyInvalid        = errors.New("key is invalid")
-	ErrSignatureInvalid  = errors.New("signature is invalid")
-	ErrSignFailed        = errors.New("sign failed")
-	ErrFormatUnsupported = errors.New("format unsupported")
+	ErrMethodIsNil         = errors.New("method is nil")
+	ErrKeyIsNil            = errors.New("key is nil")
+	ErrKeyCurveIsInvalid   = errors.New("key curve is invalid")
+	ErrSignatureInvalid    = errors.New("signature is invalid")
+	ErrSignFailed          = errors.New("sign failed")
+	ErrFormatUnsupported   = errors.New("format unsupported")
+	ErrKeyGenerationFailed = errors.New("key generation failed")
+	ErrSigningFailed       = errors.New("signing failed")
+	ErrVerificationFailed  = errors.New("verification failed")
 )
 
 func ErrAlgorithmNotSupported(name string) error {
+	return fmt.Errorf("ecdsa function %s not found", name)
+}
+
+func ErrKeyGeneration(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: EcdsaNotFound,
-			Err:  fmt.Errorf("ecdsa function %s not found", name),
+			Type: EcdsaMethod,
+			Err:  errors.Join(append(errs, ErrKeyGenerationFailed)...),
+		},
+	}
+}
+
+func ErrSigning(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: EcdsaMethod,
+			Err:  errors.Join(append(errs, ErrSigningFailed)...),
+		},
+	}
+}
+
+func ErrVerification(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: EcdsaMethod,
+			Err:  errors.Join(append(errs, ErrVerificationFailed)...),
 		},
 	}
 }

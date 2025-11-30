@@ -145,7 +145,8 @@ func (c *client) waitForLimiter(ctx context.Context) error {
 		}
 	}
 
-	if err := c.limiter.Wait(waitCtx); err != nil {
+	err := c.limiter.Wait(waitCtx)
+	if err != nil {
 		return cerrs.Wrap(ErrRateLimiterExceeded, err)
 	}
 

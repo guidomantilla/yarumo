@@ -30,7 +30,7 @@ func (m *Method) GenerateKey() (ed25519.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
 	_, key, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		return nil, err
+		return nil, ErrKeyGeneration(err)
 	}
 	return key, nil
 }
@@ -59,7 +59,11 @@ func (m *Method) GenerateKey() (ed25519.PrivateKey, error) {
 //     (that is handled in Verify).
 func (m *Method) Sign(key *ed25519.PrivateKey, data types.Bytes) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
-	return Sign(m, key, data)
+	signature, err := Sign(m, key, data)
+	if err != nil {
+		return nil, ErrSigning(err)
+	}
+	return signature, nil
 }
 
 // Verify checks an Ed25519 signature over the given data using the provided
@@ -88,5 +92,9 @@ func (m *Method) Sign(key *ed25519.PrivateKey, data types.Bytes) (types.Bytes, e
 //     (false, nil) in that case.
 func (m *Method) Verify(key *ed25519.PublicKey, signature, data types.Bytes) (bool, error) {
 	assert.NotNil(m, "method is nil")
-	return Verify(m, key, signature, data)
+	ok, err := Verify(m, key, signature, data)
+	if err != nil {
+		return false, ErrVerification(err)
+	}
+	return ok, nil
 }

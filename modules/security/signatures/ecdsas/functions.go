@@ -53,13 +53,13 @@ const (
 // The function guarantees consistent output formatting and never panics.
 func Sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format) (types.Bytes, error) {
 	if method == nil {
-		return nil, ErrMethodInvalid
+		return nil, ErrMethodIsNil
 	}
 	if key == nil {
-		return nil, ErrKeyInvalid
+		return nil, ErrKeyIsNil
 	}
 	if key.Curve != method.curve {
-		return nil, ErrKeyInvalid
+		return nil, ErrKeyCurveIsInvalid
 	}
 
 	h := hashes.Hash(method.kind, data)
@@ -123,13 +123,13 @@ func Sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 // verification failure; it returns (false, nil) instead.
 func Verify(method *Method, key *ecdsa.PublicKey, signature types.Bytes, data types.Bytes, format Format) (bool, error) {
 	if method == nil {
-		return false, ErrMethodInvalid
+		return false, ErrMethodIsNil
 	}
 	if key == nil {
-		return false, ErrKeyInvalid
+		return false, ErrKeyIsNil
 	}
 	if key.Curve != method.curve {
-		return false, ErrKeyInvalid
+		return false, ErrKeyCurveIsInvalid
 	}
 
 	h := hashes.Hash(method.kind, data)

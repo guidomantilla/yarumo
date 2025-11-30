@@ -26,10 +26,5 @@ func (e *Error) Error() string {
 }
 
 func ErrUIDFunctionNotFound(name string) error {
-	return &Error{
-		TypedError: cerrs.TypedError{
-			Type: UIDNotFound,
-			Err:  fmt.Errorf("uid function %s not found", name),
-		},
-	}
+	return fmt.Errorf("uid function %s not found", name)
 }

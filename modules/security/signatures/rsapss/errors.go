@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	RsaPssNotFound = "rsa_pss_function_not_found"
+	RsaPssMethod = "rsa_pss_method"
 )
 
 var (
@@ -29,18 +29,44 @@ func (e *Error) Error() string {
 //
 
 var (
-	ErrMethodInvalid     = errors.New("method is invalid")
-	ErrKeyInvalid        = errors.New("key is invalid")
-	ErrSignFailed        = errors.New("sign failed")
-	ErrVerifyFailed      = errors.New("verify failed")
-	ErrKeySizeNotAllowed = errors.New("key size not allowed")
+	ErrMethodIsNil         = errors.New("method is nil")
+	ErrKeyIsNil            = errors.New("key is nil")
+	ErrKeyLengthIsInvalid  = errors.New("key length is invalid")
+	ErrSignFailed          = errors.New("sign failed")
+	ErrVerifyFailed        = errors.New("verify failed")
+	ErrKeySizeNotAllowed   = errors.New("key size not allowed")
+	ErrKeyGenerationFailed = errors.New("key generation failed")
+	ErrSigningFailed       = errors.New("signing failed")
+	ErrVerificationFailed  = errors.New("verification failed")
 )
 
 func ErrAlgorithmNotSupported(name string) error {
+	return fmt.Errorf("rsa_pss function %s not found", name)
+}
+
+func ErrKeyGeneration(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: RsaPssNotFound,
-			Err:  fmt.Errorf("rsa_pss function %s not found", name),
+			Type: RsaPssMethod,
+			Err:  errors.Join(append(errs, ErrKeyGenerationFailed)...),
+		},
+	}
+}
+
+func ErrSigning(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: RsaPssMethod,
+			Err:  errors.Join(append(errs, ErrSigningFailed)...),
+		},
+	}
+}
+
+func ErrVerification(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: RsaPssMethod,
+			Err:  errors.Join(append(errs, ErrVerificationFailed)...),
 		},
 	}
 }

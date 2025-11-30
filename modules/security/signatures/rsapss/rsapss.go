@@ -39,9 +39,13 @@ func (m *Method) Name() string {
 func (m *Method) GenerateKey(size int) (*rsa.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
 	if utils.NotIn(size, m.allowedKeySizes...) {
-		return nil, ErrKeySizeNotAllowed
+		return nil, ErrKeyGeneration(ErrKeySizeNotAllowed)
 	}
-	return rsa.GenerateKey(rand.Reader, size)
+	key, err := rsa.GenerateKey(rand.Reader, size)
+	if err != nil {
+		return nil, ErrKeyGeneration(err)
+	}
+	return key, nil
 }
 
 // Sign creates an RSA-PSS signature over the given data using the specified
@@ -69,7 +73,11 @@ func (m *Method) GenerateKey(size int) (*rsa.PrivateKey, error) {
 //   - A failure to sign returns (nil, ErrSignFailed).
 func (m *Method) Sign(key *rsa.PrivateKey, data types.Bytes) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
-	return Sign(m, key, data)
+	signature, err := Sign(m, key, data)
+	if err != nil {
+		return nil, ErrSigning(err)
+	}
+	return signature, nil
 }
 
 // Verify checks an RSA-PSS signature over the given data using the specified
@@ -101,5 +109,9 @@ func (m *Method) Sign(key *rsa.PrivateKey, data types.Bytes) (types.Bytes, error
 //   - The function distinguishes between "invalid signature" and actual errors.
 func (m *Method) Verify(key *rsa.PublicKey, signature types.Bytes, data types.Bytes) (bool, error) {
 	assert.NotNil(m, "method is nil")
-	return Verify(m, key, signature, data)
+	ok, err := Verify(m, key, signature, data)
+	if err != nil {
+		return false, ErrVerification(err)
+	}
+	return ok, nil
 }
