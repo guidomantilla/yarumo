@@ -3,7 +3,6 @@ package ecdsas
 import (
 	"crypto/ecdsa"
 	"crypto/rand"
-	"encoding/asn1"
 	"math/big"
 
 	"github.com/guidomantilla/yarumo/common/errs"
@@ -18,11 +17,6 @@ const (
 	//
 	// Used in: JOSE / JWT / WebAuthn
 	RS Format = iota
-
-	// ASN1DER Format => SEQUENCE { r INTEGER, s INTEGER }
-	//
-	// Used in: X.509 / OpenSSL
-	ASN1DER
 
 	ASN1
 )
@@ -81,21 +75,10 @@ func Sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 		r.FillBytes(out[0:keyBytes]) // r is assigned to the first half of output.
 		s.FillBytes(out[keyBytes:])  // s is assigned to the second half of output.
 		return out, nil
-		
-	case ASN1DER:
-		h := hashes.Hash(method.kind, data)
-		r, s, err := ecdsa.Sign(rand.Reader, key, h)
-		if err != nil {
-			return nil, errs.Wrap(ErrSignFailed, err)
-		}
-		out, err := asn1.Marshal(tuple{R: r, S: s})
-		if err != nil {
-			return nil, errs.Wrap(ErrSignFailed, err)
-		}
-		return out, nil
 
 	case ASN1:
-		out, err := ecdsa.SignASN1(rand.Reader, key, data)
+		h := hashes.Hash(method.kind, data)
+		out, err := ecdsa.SignASN1(rand.Reader, key, h)
 		if err != nil {
 			return nil, errs.Wrap(ErrSignFailed, err)
 		}
@@ -155,26 +138,14 @@ func Verify(method *Method, key *ecdsa.PublicKey, signature types.Bytes, data ty
 		}
 		r = new(big.Int).SetBytes(signature[0:keyBytes])
 		s = new(big.Int).SetBytes(signature[keyBytes:])
-	case ASN1DER:
-		var sig tuple
-		_, err := asn1.Unmarshal(signature, &sig)
-		if err != nil {
-			return false, ErrSignatureInvalid
-		}
-		if sig.R == nil || sig.S == nil {
-			return false, ErrSignatureInvalid
-		}
-		r, s = sig.R, sig.S
-	default:
-		return false, ErrFormatUnsupported
+		h := hashes.Hash(method.kind, data)
+		ok := ecdsa.Verify(key, h, r, s)
+		return ok, nil
+	case ASN1:
+		h := hashes.Hash(method.kind, data)
+		ok := ecdsa.VerifyASN1(key, h, signature)
+		return ok, nil
 	}
 
-	h := hashes.Hash(method.kind, data)
-	ok := ecdsa.Verify(key, h, r, s)
-	//ecdsa.VerifyASN1()
-	return ok, nil
-}
-
-type tuple struct {
-	R, S *big.Int
+	return false, ErrFormatUnsupported
 }

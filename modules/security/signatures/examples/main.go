@@ -35,10 +35,10 @@ func main() {
 	key, err := ecdsas.ECDSA_with_SHA256_over_P256.GenerateKey()
 	println(err)
 
-	signature, err := ecdsas.ECDSA_with_SHA256_over_P256.Sign(key.(*ecdsa.PrivateKey), data, ecdsas.ASN1DER)
+	signature, err := ecdsas.ECDSA_with_SHA256_over_P256.Sign(key.(*ecdsa.PrivateKey), data, ecdsas.ASN1)
 	println(err)
 	println(fmt.Sprintf("ECDSA_with_SHA256_over_P256 Signature - Hex: %s, Base64: %s", signature.ToHex(), signature.ToBase64Std()))
-	verify, err := ecdsas.ECDSA_with_SHA256_over_P256.Verify(&key.(*ecdsa.PrivateKey).PublicKey, signature, data, ecdsas.ASN1DER)
+	verify, err := ecdsas.ECDSA_with_SHA256_over_P256.Verify(&key.(*ecdsa.PrivateKey).PublicKey, signature, data, ecdsas.ASN1)
 	println(err)
 	println(fmt.Sprintf("ECDSA_with_SHA256_over_P256 Verify: %v", verify))
 
