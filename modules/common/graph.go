@@ -4,6 +4,7 @@ import (
 	_ "github.com/guidomantilla/yarumo/common/assert"
 	_ "github.com/guidomantilla/yarumo/common/cast"
 	_ "github.com/guidomantilla/yarumo/common/constraints"
+	_ "github.com/guidomantilla/yarumo/common/crypto/ciphers/aead"
 	_ "github.com/guidomantilla/yarumo/common/crypto/hashes"
 	_ "github.com/guidomantilla/yarumo/common/crypto/signatures/ecdsas"
 	_ "github.com/guidomantilla/yarumo/common/crypto/signatures/ed25519"
