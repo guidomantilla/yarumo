@@ -35,12 +35,12 @@ func Digest(hash crypto.Hash, key types.Bytes, data types.Bytes) types.Bytes {
 	return h.Sum(nil)
 }
 
-// Validate verifies an HMAC signature using the specified hash function and key.
+// Validate verifies an HMAC digest using the specified hash function and key.
 //
 // Parameters:
 //   - hash: the hash function used by the HMAC (e.g., crypto.SHA256). Must be available.
 //   - key: secret key used to compute the HMAC.
-//   - signature: the expected HMAC value to compare against.
+//   - digest: the expected HMAC value to compare against.
 //   - data: message whose authenticity and integrity are being verified.
 //
 // Behavior:
@@ -49,13 +49,13 @@ func Digest(hash crypto.Hash, key types.Bytes, data types.Bytes) types.Bytes {
 //   - Uses hmac.Equal for constant-time comparison.
 //
 // Returns:
-//   - true if the signature matches the calculated HMAC.
+//   - true if the digest matches the calculated HMAC.
 //   - false otherwise.
 //
 // Notes:
 //   - Panics only if the hash function is not registered (via assert).
-func Validate(hash crypto.Hash, key types.Bytes, signature types.Bytes, data types.Bytes) bool {
+func Validate(hash crypto.Hash, key types.Bytes, digest types.Bytes, data types.Bytes) bool {
 	assert.True(hash.Available(), "hash function not available. call crypto.RegisterHash(...)")
 	calculated := Digest(hash, key, data)
-	return hmac.Equal(signature, calculated)
+	return hmac.Equal(digest, calculated)
 }

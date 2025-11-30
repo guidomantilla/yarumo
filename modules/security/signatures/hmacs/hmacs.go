@@ -63,12 +63,12 @@ func (m *Method) Digest(key types.Bytes, data types.Bytes) types.Bytes {
 	return Digest(m.kind, key, data)
 }
 
-// Validate verifies an HMAC signature using the specified hash function and key.
+// Validate verifies an HMAC digest using the specified hash function and key.
 //
 // Parameters:
 //   - hash: the hash function used by the HMAC (e.g., crypto.SHA256). Must be available.
 //   - key: secret key used to compute the HMAC.
-//   - signature: the expected HMAC value to compare against.
+//   - digest: the expected HMAC value to compare against.
 //   - data: message whose authenticity and integrity are being verified.
 //
 // Behavior:
@@ -77,12 +77,12 @@ func (m *Method) Digest(key types.Bytes, data types.Bytes) types.Bytes {
 //   - Uses hmac.Equal for constant-time comparison.
 //
 // Returns:
-//   - true if the signature matches the calculated HMAC.
+//   - true if the digest matches the calculated HMAC.
 //   - false otherwise.
 //
 // Notes:
 //   - Panics only if the hash function is not registered (via assert).
-func (m *Method) Validate(key types.Bytes, signature types.Bytes, data types.Bytes) bool {
+func (m *Method) Validate(key types.Bytes, digest types.Bytes, data types.Bytes) bool {
 	assert.NotNil(m, "method is nil")
-	return Validate(m.kind, key, signature, data)
+	return Validate(m.kind, key, digest, data)
 }
