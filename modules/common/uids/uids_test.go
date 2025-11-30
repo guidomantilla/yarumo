@@ -1,7 +1,6 @@
 package uids
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -136,25 +135,9 @@ func TestGetByName_Unknown(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error for unknown name")
 	}
-	var ue *Error
-	if !errors.As(err, &ue) || ue == nil {
-		t.Fatalf("error is not *UIDError: %T", err)
+	// Ajustado: ahora ErrUIDFunctionNotFound devuelve un error simple (fmt.Errorf)
+	expected := "uid function " + unknown + " not found"
+	if got := err.Error(); got != expected {
+		t.Fatalf("error message = %q, want %q", got, expected)
 	}
-	if ue.Type != UIDNotFound {
-		t.Fatalf("UIDError.Type = %q, want %q", ue.Type, UIDNotFound)
-	}
-	// message should include the provided name per ErrUIDFunctionNotFound
-	if msg := ue.Error(); msg == "" || !contains(msg, unknown) {
-		t.Fatalf("UIDError message %q does not contain %q", msg, unknown)
-	}
-}
-
-// small helper to avoid importing strings just for Contains in this file
-func contains(s, substr string) bool {
-	for i := 0; i+len(substr) <= len(s); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
