@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	RSASSA_PSS_SHA256 = NewMethod("RSASSA_PSS_SHA256", crypto.SHA256, rsa.PSSSaltLengthEqualsHash, []int{2048, 3072, 4096})
-	RSASSA_PSS_SHA512 = NewMethod("RSASSA_PSS_SHA512", crypto.SHA512, rsa.PSSSaltLengthEqualsHash, []int{3072, 4096})
+	RSASSA_PSS_using_SHA256 = NewMethod("RSASSA_PSS_using_SHA256", crypto.SHA256, rsa.PSSSaltLengthEqualsHash, []int{2048, 3072, 4096})
+	RSASSA_PSS_using_SHA512 = NewMethod("RSASSA_PSS_using_SHA512", crypto.SHA512, rsa.PSSSaltLengthEqualsHash, []int{3072, 4096})
 )
 
 type Method struct {

@@ -7,8 +7,8 @@ import (
 var (
 	AES_128_GCM        = NewMethod("AES_128_GCM", 16, 12, internal.AESGCM)
 	AES_256_GCM        = NewMethod("AES_256_GCM", 32, 12, internal.AESGCM)
-	CHACHA20_POLY1305  = NewMethod("CHACHA20_POLY1305", 32, 12, internal.ChaCha20Poly1305)
-	XCHACHA20_POLY1305 = NewMethod("XCHACHA20_POLY1305", 32, 24, internal.XChaCha20Poly1305)
+	CHACHA20_POLY1305  = NewMethod("ChaCha20-Poly1305", 32, 12, internal.ChaCha20Poly1305)
+	XCHACHA20_POLY1305 = NewMethod("XChaCha20-Poly1305", 32, 24, internal.XChaCha20Poly1305)
 )
 
 type Method struct {

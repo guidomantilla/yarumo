@@ -5,8 +5,8 @@ import (
 )
 
 var methods = map[string]Method{
-	RSASSA_PSS_SHA256.name: *RSASSA_PSS_SHA256,
-	RSASSA_PSS_SHA512.name: *RSASSA_PSS_SHA512,
+	RSASSA_PSS_using_SHA256.name: *RSASSA_PSS_using_SHA256,
+	RSASSA_PSS_using_SHA512.name: *RSASSA_PSS_using_SHA512,
 }
 
 var lock = new(sync.RWMutex)
