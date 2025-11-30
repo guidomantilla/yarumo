@@ -2,7 +2,6 @@ package rsapss
 
 import (
 	"crypto"
-	"crypto/rand"
 	"crypto/rsa"
 
 	"github.com/guidomantilla/yarumo/common/assert"
@@ -20,6 +19,9 @@ type Method struct {
 	kind            crypto.Hash
 	saltLength      int
 	allowedKeySizes []int
+	keyFn           KeyFn
+	signFn          SignFn
+	verifyFn        VerifyFn
 }
 
 func NewMethod(name string, kind crypto.Hash, saltLength int, allowedKeySizes ...int) *Method {
@@ -28,6 +30,9 @@ func NewMethod(name string, kind crypto.Hash, saltLength int, allowedKeySizes ..
 		kind:            kind,
 		saltLength:      saltLength,
 		allowedKeySizes: allowedKeySizes,
+		keyFn:           key,
+		signFn:          sign,
+		verifyFn:        verify,
 	}
 }
 
@@ -39,10 +44,11 @@ func (m *Method) Name() string {
 // GenerateKey generates a new RSA private key.
 func (m *Method) GenerateKey(size int) (*rsa.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
+	assert.NotNil(m.keyFn, "method keyFn is nil")
 	if utils.NotIn(size, m.allowedKeySizes...) {
 		return nil, ErrKeyGeneration(ErrKeySizeNotAllowed)
 	}
-	key, err := rsa.GenerateKey(rand.Reader, size)
+	key, err := m.keyFn(size)
 	if err != nil {
 		return nil, ErrKeyGeneration(err)
 	}
@@ -74,7 +80,8 @@ func (m *Method) GenerateKey(size int) (*rsa.PrivateKey, error) {
 //   - A failure to sign returns (nil, ErrSignFailed).
 func (m *Method) Sign(key *rsa.PrivateKey, data types.Bytes) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
-	signature, err := Sign(m, key, data)
+	assert.NotNil(m.signFn, "method signFn is nil")
+	signature, err := m.signFn(m, key, data)
 	if err != nil {
 		return nil, ErrSigning(err)
 	}
@@ -110,7 +117,8 @@ func (m *Method) Sign(key *rsa.PrivateKey, data types.Bytes) (types.Bytes, error
 //   - The function distinguishes between "invalid signature" and actual errors.
 func (m *Method) Verify(key *rsa.PublicKey, signature types.Bytes, data types.Bytes) (bool, error) {
 	assert.NotNil(m, "method is nil")
-	ok, err := Verify(m, key, signature, data)
+	assert.NotNil(m.verifyFn, "method verifyFn is nil")
+	ok, err := m.verifyFn(m, key, signature, data)
 	if err != nil {
 		return false, ErrVerification(err)
 	}

@@ -3,8 +3,13 @@ package hmacs
 import (
 	"crypto/hmac"
 
+	"github.com/guidomantilla/yarumo/common/random"
 	"github.com/guidomantilla/yarumo/common/types"
 )
+
+func key(size int) types.Bytes {
+	return random.Key(size)
+}
 
 func digest(method *Method, key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	if method == nil {

@@ -4,7 +4,6 @@ import (
 	"crypto"
 
 	"github.com/guidomantilla/yarumo/common/assert"
-	"github.com/guidomantilla/yarumo/common/random"
 	"github.com/guidomantilla/yarumo/common/types"
 )
 
@@ -14,9 +13,12 @@ var (
 )
 
 type Method struct {
-	name    string
-	kind    crypto.Hash
-	keySize int
+	name       string
+	kind       crypto.Hash
+	keySize    int
+	keyFn      KeyFn
+	digestFn   DigestFn
+	validateFn ValidateFn
 }
 
 // NewMethod creates a new HMAC Method definition.
@@ -28,11 +30,15 @@ type Method struct {
 //
 // It does not validate the availability of the provided hash at creation time;
 // availability is checked when Digest/Validate are called.
-func NewMethod(name string, kind crypto.Hash, keySize int) *Method {
+func NewMethod(name string, kind crypto.Hash, keySize int, options ...Option) *Method {
+	opts := NewOptions(options...)
 	return &Method{
-		name:    name,
-		kind:    kind,
-		keySize: keySize,
+		name:       name,
+		kind:       kind,
+		keySize:    keySize,
+		keyFn:      opts.keyFn,
+		digestFn:   opts.digestFn,
+		validateFn: opts.validateFn,
 	}
 }
 
@@ -46,7 +52,8 @@ func (m *Method) Name() string {
 // The returned key length equals the method's configured key size.
 func (m *Method) GenerateKey() types.Bytes {
 	assert.NotNil(m, "method is nil")
-	return random.Key(m.keySize)
+	assert.NotNil(m.keyFn, "method keyFn is nil")
+	return m.keyFn(m.keySize)
 }
 
 // Digest computes the HMAC of data using this Method and the provided key.
@@ -68,7 +75,8 @@ func (m *Method) GenerateKey() types.Bytes {
 //   - I/O style errors returned from the underlying Write.
 func (m *Method) Digest(key types.Bytes, data types.Bytes) (types.Bytes, error) {
 	assert.NotNil(m, "method is nil")
-	digest, err := digest(m, key, data)
+	assert.NotNil(m.digestFn, "method digestFn is nil")
+	digest, err := m.digestFn(m, key, data)
 	if err != nil {
 		return nil, ErrDigest(err)
 	}
@@ -95,7 +103,8 @@ func (m *Method) Digest(key types.Bytes, data types.Bytes) (types.Bytes, error) 
 //   - Errors produced while recomputing the digest.
 func (m *Method) Validate(key types.Bytes, digest types.Bytes, data types.Bytes) (bool, error) {
 	assert.NotNil(m, "method is nil")
-	ok, err := validate(m, key, digest, data)
+	assert.NotNil(m.validateFn, "method validateFn is nil")
+	ok, err := m.validateFn(m, key, digest, data)
 	if err != nil {
 		return false, ErrValidation(err)
 	}
