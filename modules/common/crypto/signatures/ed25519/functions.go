@@ -33,7 +33,7 @@ func verify(method *Method, key *ed25519.PublicKey, signature, data types.Bytes)
 	if key == nil {
 		return false, ErrKeyIsNil
 	}
-	if len(*key) != ed25519.PrivateKeySize {
+	if len(*key) != ed25519.PublicKeySize {
 		return false, ErrKeyLengthIsInvalid
 	}
 	if len(signature) != ed25519.SignatureSize {
