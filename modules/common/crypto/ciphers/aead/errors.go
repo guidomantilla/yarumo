@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	AeadNotFound = "aead_function_not_found"
+	AeadMethod = "aead_method"
 )
 
 var (
@@ -29,13 +29,44 @@ func (e *Error) Error() string {
 //
 
 var (
-	ErrMethodInvalid      = errors.New("cipher method is invalid")
-	ErrKeyInvalid         = errors.New("cipher key is invalid")
-	ErrCipherInitFailed   = errors.New("cipher initialization failed")
-	ErrCiphertextTooShort = errors.New("ciphertext too short")
-	ErrDecryptFailed      = errors.New("decrypt failed")
+	ErrMethodInvalid       = errors.New("cipher method is invalid")
+	ErrKeyInvalid          = errors.New("cipher key is invalid")
+	ErrCipherInitFailed    = errors.New("cipher initialization failed")
+	ErrCiphertextTooShort  = errors.New("ciphertext too short")
+	ErrKeySizeInvalid      = errors.New("key size is invalid")
+	ErrNonceSizeInvalid    = errors.New("nonce size is invalid")
+	ErrKeyGenerationFailed = errors.New("key generation failed")
+	ErrEncryptFailed       = errors.New("encrypt failed")
+	ErrDecryptFailed       = errors.New("decrypt failed")
 )
 
 func ErrAlgorithmNotSupported(name string) error {
 	return fmt.Errorf("aead function %s not found", name)
+}
+
+func ErrKeyGeneration(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: AeadMethod,
+			Err:  errors.Join(append(errs, ErrKeyGenerationFailed)...),
+		},
+	}
+}
+
+func ErrEncryption(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: AeadMethod,
+			Err:  errors.Join(append(errs, ErrEncryptFailed)...),
+		},
+	}
+}
+
+func ErrDecryption(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: AeadMethod,
+			Err:  errors.Join(append(errs, ErrDecryptFailed)...),
+		},
+	}
 }

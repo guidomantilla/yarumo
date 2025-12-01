@@ -4,12 +4,20 @@ import (
 	"github.com/guidomantilla/yarumo/common/errs"
 	"github.com/guidomantilla/yarumo/common/random"
 	"github.com/guidomantilla/yarumo/common/types"
+	"github.com/guidomantilla/yarumo/common/utils"
 )
 
 func key(method *Method) (types.Bytes, error) {
 	if method == nil {
 		return nil, ErrMethodInvalid
 	}
+	if utils.NotIn(method.keySize, 16, 32) {
+		return nil, ErrKeySizeInvalid
+	}
+	if utils.NotIn(method.nonceSize, 12, 24) {
+		return nil, ErrNonceSizeInvalid
+	}
+
 	return random.Key(method.keySize), nil
 }
 

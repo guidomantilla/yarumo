@@ -17,23 +17,29 @@ var (
 )
 
 type Method struct {
-	name string
-	kind crypto.Hash
+	name   string
+	kind   crypto.Hash
+	hashFn HashFn
 }
 
-func NewMethod(name string, kind crypto.Hash) *Method {
+func NewMethod(name string, kind crypto.Hash, options ...Option) *Method {
+	opts := NewOptions(options...)
 	return &Method{
-		name: name,
-		kind: kind,
+		name:   name,
+		kind:   kind,
+		hashFn: opts.hashFn,
 	}
 }
 
 func (m *Method) Name() string {
 	assert.NotNil(m, "method is nil")
+
 	return m.name
 }
 
 // Hash computes the digest of the given data using the specified hash function.
+//
+// Notes: It delegates to hashes.HashFn. This is a function that takes a crypto.Hash identifier (e.g., crypto.SHA256). Must be available.
 //
 // Parameters:
 //   - hash: a crypto.Hash identifier (e.g., crypto.SHA256). Must be available;
@@ -56,5 +62,7 @@ func (m *Method) Name() string {
 //     function is not registered.
 func (m *Method) Hash(data types.Bytes) types.Bytes {
 	assert.NotNil(m, "method is nil")
-	return Hash(m.kind, data)
+	assert.NotNil(m.hashFn, "method hashFn is nil")
+
+	return m.hashFn(m.kind, data)
 }

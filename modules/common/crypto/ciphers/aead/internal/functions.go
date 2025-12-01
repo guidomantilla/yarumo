@@ -4,8 +4,9 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 
-	"github.com/guidomantilla/yarumo/common/types"
 	"golang.org/x/crypto/chacha20poly1305"
+
+	"github.com/guidomantilla/yarumo/common/types"
 )
 
 func AESGCM(key types.Bytes, nonceSize int) (cipher.AEAD, error) {
