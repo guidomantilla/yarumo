@@ -162,7 +162,7 @@ import (
     "crypto/rand"
     "crypto/rsa"
 
-    pss "github.com/guidomantilla/yarumo/modules/security/signatures/rsapss"
+    pss "github.com/guidomantilla/yarumo/modules/security/signers/rsapss"
 )
 
 func main() {

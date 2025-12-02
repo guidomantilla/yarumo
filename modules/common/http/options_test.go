@@ -191,7 +191,7 @@ func TestOptions_RetryAndLimiter(t *testing.T) {
 		t.Fatalf("limiterBurst should remain 0 when rate is Inf; got %d", o3.limiterBurst)
 	}
 
-	// Silence unused import warning for retry package in case signatures change
+	// Silence unused import warning for retry package in case signers change
 	var _ retry.Option
 }
 

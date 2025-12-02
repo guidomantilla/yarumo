@@ -171,7 +171,7 @@ package main
 import (
     "fmt"
 
-    hmacs "github.com/guidomantilla/yarumo/modules/security/signatures/hmacs"
+    hmacs "github.com/guidomantilla/yarumo/modules/security/signers/hmacs"
 )
 
 func main() {
@@ -195,7 +195,7 @@ import (
     "crypto"
     "fmt"
 
-    hmacs "github.com/guidomantilla/yarumo/modules/security/signatures/hmacs"
+    hmacs "github.com/guidomantilla/yarumo/modules/security/signers/hmacs"
 )
 
 func main() {

@@ -124,7 +124,7 @@ func (m *Method) Sign(key *ed25519.PrivateKey, data types.Bytes) (types.Bytes, e
 //   - (false, err) if the input is malformed.
 //
 // Notes:
-//   - Ed25519 uses deterministic signatures and verifies over the raw message
+//   - Ed25519 uses deterministic signers and verifies over the raw message
 //     (no pre-hashing).
 //   - The function never panics and treats a failed verification as a non-error.
 func (m *Method) Verify(key *ed25519.PublicKey, signature, data types.Bytes) (bool, error) {

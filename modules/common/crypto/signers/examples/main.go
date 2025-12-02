@@ -4,8 +4,8 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 
-	"github.com/guidomantilla/yarumo/common/crypto/signatures/ecdsas"
-	"github.com/guidomantilla/yarumo/common/crypto/signatures/hmacs"
+	"github.com/guidomantilla/yarumo/common/crypto/signers/ecdsas"
+	"github.com/guidomantilla/yarumo/common/crypto/signers/hmacs"
 	"github.com/guidomantilla/yarumo/common/types"
 )
 

@@ -152,7 +152,7 @@ import (
     cryped "crypto/ed25519"
     "crypto/rand"
 
-    edsig "github.com/guidomantilla/yarumo/modules/security/signatures/ed25519"
+    edsig "github.com/guidomantilla/yarumo/modules/security/signers/ed25519"
 )
 
 func main() {

@@ -14,7 +14,7 @@ func key(method *Method) (*ecdsa.PrivateKey, error) {
 	return ecdsa.GenerateKey(method.curve, rand.Reader)
 }
 
-// Format represents the encoding used for ECDSA signatures produced/consumed by this package.
+// Format represents the encoding used for ECDSA signers produced/consumed by this package.
 type Format int
 
 const (

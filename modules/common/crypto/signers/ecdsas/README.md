@@ -165,7 +165,7 @@ import (
     "crypto/elliptic"
     "crypto/rand"
 
-    sig "github.com/guidomantilla/yarumo/modules/security/signatures/ecdsas"
+    sig "github.com/guidomantilla/yarumo/modules/security/signers/ecdsas"
 )
 
 func main() {

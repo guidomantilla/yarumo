@@ -99,7 +99,7 @@ func (m *Method) GenerateKey(size int) (*rsa.PrivateKey, error) {
 //
 // Notes:
 //   - RSA-PSS is a modern, recommended signature scheme providing stronger
-//     security than older PKCS#1 v1.5 signatures.
+//     security than older PKCS#1 v1.5 signers.
 //   - Signature size is equal to the RSA modulus size.
 //   - The function never panics and never returns a partial signature.
 //   - Salt length policy (e.g., PSSSaltLengthEqualsHash) is controlled by
