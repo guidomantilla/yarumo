@@ -14,7 +14,9 @@ import (
 )
 
 var (
-	DefaultClient = NewClient()
+	DEFAULT_CLIENT = NewClient()
+	NOOP_CLIENT    = &PluggableClient{DoFn: NoopDo}
+	ERROR_CLIENT   = &PluggableClient{DoFn: ErrorDo}
 )
 
 /*
@@ -154,16 +156,16 @@ func (c *client) waitForLimiter(ctx context.Context) error {
 }
 
 /*
- * Fake implementation
+ * Pluggable implementation
  */
 
-type FakeClient struct {
-	DoFn      DoFn
-	LimiterOn bool
-	RetrierOn bool
+type PluggableClient struct {
+	DoFn             DoFn
+	LimiterEnabledFn LimiterEnabledFn
+	RetrierEnabledFn RetrierEnabledFn
 }
 
-func (c *FakeClient) Do(req *http.Request) (*http.Response, error) {
+func (c *PluggableClient) Do(req *http.Request) (*http.Response, error) {
 	assert.NotNil(c, "client is nil")
 	assert.NotNil(c.DoFn, "DoFn is nil")
 
@@ -174,12 +176,22 @@ func (c *FakeClient) Do(req *http.Request) (*http.Response, error) {
 	return c.DoFn(req)
 }
 
-func (c *FakeClient) LimiterEnabled() bool {
+func (c *PluggableClient) LimiterEnabled() bool {
 	assert.NotNil(c, "client is nil")
-	return c.LimiterOn
+
+	if c.LimiterEnabledFn == nil {
+		return false
+	}
+
+	return c.LimiterEnabledFn()
 }
 
-func (c *FakeClient) RetrierEnabled() bool {
+func (c *PluggableClient) RetrierEnabled() bool {
 	assert.NotNil(c, "client is nil")
-	return c.RetrierOn
+
+	if c.RetrierEnabledFn == nil {
+		return false
+	}
+
+	return c.RetrierEnabledFn()
 }

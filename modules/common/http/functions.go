@@ -1,7 +1,9 @@
 package http
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"net"
 	"net/http"
 
@@ -9,6 +11,7 @@ import (
 )
 
 var (
+	_ DoFn              = ErrorDo
 	_ DoFn              = NoopDo
 	_ retry.RetryIfFunc = NoopRetryIf
 	_ retry.OnRetryFunc = NoopRetryHook
@@ -18,7 +21,17 @@ var (
 	_ retry.RetryIfFunc = RetryIfHttpError
 	_ RetryOnResponseFn = RetryOn5xxAnd429Response
 
-	_ DoFn = DefaultClient.Do
+	_ DoFn             = DEFAULT_CLIENT.Do
+	_ LimiterEnabledFn = DEFAULT_CLIENT.LimiterEnabled
+	_ RetrierEnabledFn = DEFAULT_CLIENT.RetrierEnabled
+
+	_ DoFn             = NOOP_CLIENT.Do
+	_ LimiterEnabledFn = NOOP_CLIENT.LimiterEnabled
+	_ RetrierEnabledFn = NOOP_CLIENT.RetrierEnabled
+
+	_ DoFn             = ERROR_CLIENT.Do
+	_ LimiterEnabledFn = ERROR_CLIENT.LimiterEnabled
+	_ RetrierEnabledFn = ERROR_CLIENT.RetrierEnabled
 )
 
 // Types
@@ -26,6 +39,10 @@ var (
 type RetryOnResponseFn func(res *http.Response) bool
 
 type DoFn func(req *http.Request) (*http.Response, error)
+
+type LimiterEnabledFn func() bool
+
+type RetrierEnabledFn func() bool
 
 // Noop
 
@@ -48,6 +65,19 @@ func NoopRetryHook(n uint, err error) {
 }
 
 func NoopDo(req *http.Request) (*http.Response, error) {
+	// no-op: explicitly touch params to generate coverage statements
+	_ = req
+	res := &http.Response{
+		StatusCode: http.StatusNoContent,
+		Body:       io.NopCloser(bytes.NewReader(nil)),
+		Header:     make(http.Header),
+	}
+	return res, nil
+}
+
+// Err
+
+func ErrorDo(req *http.Request) (*http.Response, error) {
 	// no-op: explicitly touch params to generate coverage statements
 	_ = req
 	return nil, ErrDo()
@@ -87,5 +117,5 @@ func RetryIfHttpError(err error) bool {
 }
 
 func Do(req *http.Request) (*http.Response, error) {
-	return DefaultClient.Do(req)
+	return DEFAULT_CLIENT.Do(req)
 }
