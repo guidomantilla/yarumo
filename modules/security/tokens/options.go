@@ -21,8 +21,8 @@ type Options struct {
 }
 
 func NewOptions(opts ...Option) *Options {
-	signingKey := random.Key(64) // for HS512
-	cipherKey := random.Key(32)  // for AES-256
+	signingKey := random.Bytes(64) // for HS512
+	cipherKey := random.Bytes(32)  // for AES-256
 
 	options := &Options{
 		issuer:        "",
