@@ -3,7 +3,7 @@ package random
 import "github.com/guidomantilla/yarumo/common/types"
 
 var (
-	_ KeyFn    = Key
+	_ BytesFn  = Bytes
 	_ NumberFn = Number
 	_ StringFn = String
 	_ TextFn   = TextLower
@@ -15,7 +15,7 @@ var (
 	_ TextFn   = TextAll
 )
 
-type KeyFn func(size int) types.Bytes
+type BytesFn func(size int) types.Bytes
 
 type NumberFn func(max int64) (int64, error)
 

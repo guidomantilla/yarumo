@@ -15,11 +15,11 @@ func withRandInt(temp func(reader io.Reader, max *big.Int) (*big.Int, error), fn
 	fn()
 }
 
-func TestKey_Size(t *testing.T) {
+func TestBytes_Size(t *testing.T) {
 	for _, n := range []int{0, 1, 16, 64} {
-		b := Key(n)
+		b := Bytes(n)
 		if len(b) != n {
-			t.Fatalf("expected key length %d, got %d", n, len(b))
+			t.Fatalf("expected Bytes length %d, got %d", n, len(b))
 		}
 	}
 }

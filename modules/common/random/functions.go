@@ -22,8 +22,8 @@ const (
 // Tests may override this variable within the package to simulate failures.
 var randInt = rand.Int
 
-// Key returns cryptographically random bytes.
-func Key(size int) types.Bytes {
+// Bytes return cryptographically random bytes.
+func Bytes(size int) types.Bytes {
 	key := make([]byte, size)
 	_, _ = rand.Read(key)
 	return key
