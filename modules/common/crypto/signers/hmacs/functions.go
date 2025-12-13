@@ -11,7 +11,7 @@ func key(method *Method) (types.Bytes, error) {
 	if method == nil {
 		return nil, ErrMethodIsNil
 	}
-	return random.Key(method.keySize), nil
+	return random.Bytes(method.keySize), nil
 }
 
 func digest(method *Method, key types.Bytes, data types.Bytes) (types.Bytes, error) {

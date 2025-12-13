@@ -56,7 +56,7 @@ func (m *Method) Name() string {
 //
 // Behavior:
 //   - Returns an error if method is nil.
-//   - Uses random.Key to generate a cryptographically secure key of
+//   - Uses random.Bytes to generate a cryptographically secure key of
 //     exactly method.keySize bytes.
 //
 // Returns:

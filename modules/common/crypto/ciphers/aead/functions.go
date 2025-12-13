@@ -18,7 +18,7 @@ func key(method *Method) (types.Bytes, error) {
 		return nil, ErrNonceSizeInvalid
 	}
 
-	return random.Key(method.keySize), nil
+	return random.Bytes(method.keySize), nil
 }
 
 func encrypt(method *Method, key types.Bytes, data types.Bytes, aad types.Bytes) (types.Bytes, error) {
@@ -34,7 +34,7 @@ func encrypt(method *Method, key types.Bytes, data types.Bytes, aad types.Bytes)
 		return nil, errs.Wrap(ErrCipherInitFailed, err)
 	}
 
-	nonce := random.Key(method.nonceSize)
+	nonce := random.Bytes(method.nonceSize)
 	ciphered := aead.Seal(nil, nonce, data, aad)
 
 	out := make([]byte, 0, len(nonce)+len(ciphered))
