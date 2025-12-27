@@ -9,8 +9,6 @@ import (
 	jwt "github.com/golang-jsonwebtoken/jsonwebtoken/v5"
 	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/guidomantilla/yarumo/common/utils"
-
-	"github.com/guidomantilla/yarumo/security/cryptos"
 )
 
 type opaqueGenerator struct {
