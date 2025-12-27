@@ -9,6 +9,7 @@ install:
 	cd tools && go get -tool github.com/kisielk/godepgraph@latest
 
 tidy:
+	cd tools               && go mod tidy
 	cd internal/deprecated && go mod tidy
 	cd internal/examples   && go mod tidy
 	#cd internal/dlocal    && go mod tidy
@@ -25,7 +26,7 @@ generate: graph
 	cd modules/servers  && go generate ./...
 
 graph:
-	godepgraph -s ./modules/common 	 | dot -Tpng -o ./docs/img/common.png
+	go tool godepgraph -s ./modules/common 	 | dot -Tpng -o ./docs/img/common.png
 	godepgraph -s ./modules/maths 	 | dot -Tpng -o ./docs/img/maths.png
 	#godepgraph -s ./modules/security | dot -Tpng -o ./docs/img/security.png
 	godepgraph -s ./modules/servers  | dot -Tpng -o ./docs/img/servers.png
