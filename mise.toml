@@ -1,7 +1,2 @@
 [tools]
 go = "1.25.5"
-
-[env]
-DB_NAME = "ltk-postgres"
-DB_HOST = "localhost"
-DB_PORT = "5433"
