@@ -12,11 +12,6 @@ tool (
 )
 
 require (
-	github.com/Knetic/govaluate v3.0.0+incompatible
-	github.com/brianvoe/gofakeit v3.18.0+incompatible
-)
-
-require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect
 	4d63.com/gochecknoglobals v0.2.2 // indirect
 	codeberg.org/chavacava/garif v0.2.0 // indirect
