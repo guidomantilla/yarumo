@@ -1,7 +1,18 @@
-.PHONY: phony
+.PHONY: phony verify-tools
+
+verify-tools:
+	@command -v go >/dev/null 2>&1 || { echo >&2 "go is not installed. Install it from https://golang.org/doc/install"; exit 1; }
+	@go tool goimports-reviser -version >/dev/null 2>&1 || { echo >&2 "goimports-reviser is not installed. Run 'make install'"; exit 1; }
+	@go tool golangci-lint --version >/dev/null 2>&1 || { echo >&2 "golangci-lint is not installed. Run 'make install'"; exit 1; }
+	@go tool godepgraph --help >/dev/null 2>&1 || { echo >&2 "godepgraph is not installed. Run 'make install'"; exit 1; }
+	@command -v dot >/dev/null 2>&1 || { echo >&2 "dot is not installed. Install it with: brew install graphviz (or your package manager)"; exit 1; }
+	@go tool go-test-coverage --version >/dev/null 2>&1 || { echo >&2 "go-test-coverage is not installed. Run 'make install'"; exit 1; }
+	@echo "All tools are installed."
+
 phony-goal: ; @echo $@
 
 install:
+	brw
 	cd tools && go get -tool github.com/incu6us/goimports-reviser/v3@latest
 	cd tools && go get -tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	cd tools && go get -tool go.uber.org/mock/mockgen@latest
@@ -25,20 +36,20 @@ generate: graph
 	#cd modules/security && go generate ./...
 	cd modules/servers  && go generate ./...
 
-graph:
+graph: verify-tools
 	go tool godepgraph -s ./modules/common 	 | dot -Tpng -o ./docs/img/common.png
-	godepgraph -s ./modules/maths 	 | dot -Tpng -o ./docs/img/maths.png
-	#godepgraph -s ./modules/security | dot -Tpng -o ./docs/img/security.png
-	godepgraph -s ./modules/servers  | dot -Tpng -o ./docs/img/servers.png
+	go tool godepgraph -s ./modules/maths 	 | dot -Tpng -o ./docs/img/maths.png
+	#go tool godepgraph -s ./modules/security | dot -Tpng -o ./docs/img/security.png
+	go tool godepgraph -s ./modules/servers  | dot -Tpng -o ./docs/img/servers.png
 
 imports:
-	cd internal/deprecated && goimports-reviser -rm-unused -set-alias -format -recursive .
-	cd internal/examples   && goimports-reviser -rm-unused -set-alias -format -recursive .
-	#cd internal/dlocal    && goimports-reviser -rm-unused -set-alias -format -recursive .
-	cd modules/common      && goimports-reviser -rm-unused -set-alias -format -recursive .
-	cd modules/maths       && goimports-reviser -rm-unused -set-alias -format -recursive .
-	#cd modules/security    && goimports-reviser -rm-unused -set-alias -format -recursive .
-	cd modules/servers     && goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd internal/deprecated && go tool goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd internal/examples   && go tool goimports-reviser -rm-unused -set-alias -format -recursive .
+	#cd internal/dlocal    && go tool goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/common      && go tool goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/maths       && go tool goimports-reviser -rm-unused -set-alias -format -recursive .
+	#cd modules/security    && go tool goimports-reviser -rm-unused -set-alias -format -recursive .
+	cd modules/servers     && go tool goimports-reviser -rm-unused -set-alias -format -recursive .
 
 format:
 	cd internal/deprecated && go fmt ./...
@@ -56,10 +67,10 @@ vet:
 	cd modules/servers  && go vet ./...
 
 lint:
-	cd modules/common   && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
-	cd modules/maths    && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
-	#cd modules/security && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
-	cd modules/servers  && golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
+	cd modules/common   && go tool golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
+	cd modules/maths    && go tool golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
+	#cd modules/security && go tool golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
+	cd modules/servers  && go tool golangci-lint run --max-issues-per-linter 0 --max-same-issues 0 ./...
 
 test:
 	cd modules/common   && go test -covermode atomic -coverprofile .reports/coverage.out ./...
@@ -68,12 +79,12 @@ test:
 	#cd modules/servers  && go test -covermode atomic -coverprofile .reports/coverage.out ./...
 
 coverage: test
-	cd modules/common   && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
-	#cd modules/maths    && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
+	cd modules/common   && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go tool go-test-coverage --config=.testcoverage.yml || true
+	#cd modules/maths    && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go tool go-test-coverage --config=.testcoverage.yml || true
 	#cd modules/security && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
-	#cd modules/servers  && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go-test-coverage --config=.testcoverage.yml || true
+	#cd modules/servers  && go tool cover -html=.reports/coverage.out -o .reports/coverage.html && $(COVERAGE_BADGE) && go tool go-test-coverage --config=.testcoverage.yml || true
 
-check: tidy generate imports format vet lint coverage
+check: verify-tools tidy generate imports format vet lint coverage
 
 build: check
 
