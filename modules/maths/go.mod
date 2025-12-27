@@ -1,6 +1,6 @@
 module github.com/guidomantilla/yarumo/maths
 
-go 1.25.2
+go 1.25.5
 
 replace github.com/guidomantilla/yarumo/common => ../common
 
