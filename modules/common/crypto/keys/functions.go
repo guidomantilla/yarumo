@@ -7,9 +7,10 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 
+	"golang.org/x/crypto/hkdf"
+
 	"github.com/guidomantilla/yarumo/common/random"
 	"github.com/guidomantilla/yarumo/common/types"
-	"golang.org/x/crypto/hkdf"
 )
 
 func Key(size int) (types.Bytes, error) {
