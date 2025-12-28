@@ -1,39 +1,57 @@
 package v1
 
 import (
+	"context"
+	"sync/atomic"
+
 	"github.com/DataDog/datadog-go/v5/statsd"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
 
-type StopFn func()
+type StopFn func(ctx context.Context)
 
-func Trace(opts ...tracer.StartOption) StopFn {
+func Observe(ctx context.Context, options ...Option) StopFn {
+	opts := NewOptions(options...)
+
+	stopTracer := Trace(ctx, opts.tracerOptions...)
+	stopProfiler := Profile(ctx, opts.profilerOptions...)
+	stopMetrics := Metrics(ctx, opts.metricsAddr, opts.metricsOptions...)
+
+	stopFn := func(ctx context.Context) {
+		stopTracer(ctx)
+		stopProfiler(ctx)
+		stopMetrics(ctx)
+	}
+	return stopFn
+}
+
+func Trace(ctx context.Context, opts ...tracer.StartOption) StopFn {
 	tracer.Start(opts...)
-	stopFn := func() {
+	stopFn := func(ctx context.Context) {
 		tracer.Stop()
 	}
 	return stopFn
 }
 
-func Profile(opts ...profiler.Option) StopFn {
+func Profile(ctx context.Context, opts ...profiler.Option) StopFn {
 	err := profiler.Start(opts...)
 	if err != nil {
 		log.Fatal().Err(err).Str("stage", "startup").Str("component", "datadog profiler").Msg("error starting profiler")
 	}
-	stopFn := func() {
+	stopFn := func(ctx context.Context) {
 		profiler.Stop()
 	}
 	return stopFn
 }
 
-func Metrics(addr string, opts ...statsd.Option) (*statsd.Client, StopFn) {
+func Metrics(ctx context.Context, addr string, opts ...statsd.Option) StopFn {
 	statsd, err := statsd.New(addr, opts...)
 	if err != nil {
 		log.Fatal().Err(err).Str("stage", "startup").Str("component", "datadog metrics").Msg("error starting metrics client")
 	}
-	stopFn := func() {
+	stopFn := func(ctx context.Context) {
 		err := statsd.Flush()
 		if err != nil {
 			log.Error().Err(err).Str("stage", "shut down").Str("component", "datadog metrics").Msg("error flushing metrics client")
@@ -43,5 +61,17 @@ func Metrics(addr string, opts ...statsd.Option) (*statsd.Client, StopFn) {
 			log.Error().Err(err).Str("stage", "shut down").Str("component", "datadog metrics").Msg("error closing metrics client")
 		}
 	}
-	return statsd, stopFn
+	instance.Store(statsd)
+	return stopFn
+}
+
+/*
+
+ */
+
+var instance atomic.Value
+
+func GetMetricsClient() *statsd.Client {
+	v := instance.Load()
+	return v.(*statsd.Client)
 }

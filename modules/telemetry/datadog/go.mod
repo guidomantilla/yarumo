@@ -1,4 +1,4 @@
-module github.com/guidomantilla/yarumo/observability/datadog
+module github.com/guidomantilla/yarumo/telemetry/datadog
 
 go 1.25.5
 
