@@ -34,7 +34,11 @@ func Metrics(addr string, opts ...statsd.Option) (*statsd.Client, StopFn) {
 		log.Fatal().Err(err).Str("stage", "startup").Str("component", "datadog metrics").Msg("error starting metrics client")
 	}
 	stopFn := func() {
-		err := statsd.Close()
+		err := statsd.Flush()
+		if err != nil {
+			log.Error().Err(err).Str("stage", "shut down").Str("component", "datadog metrics").Msg("error flushing metrics client")
+		}
+		err = statsd.Close()
 		if err != nil {
 			log.Error().Err(err).Str("stage", "shut down").Str("component", "datadog metrics").Msg("error closing metrics client")
 		}
