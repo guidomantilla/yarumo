@@ -32,9 +32,11 @@ func TestPrettyExplain_Simple(t *testing.T) {
 	if !strings.Contains(out, "=>") {
 		t.Fatalf("expected implication to appear in explanation; got:\n%s", out)
 	}
+
 	if !strings.Contains(out, "both true") && !strings.Contains(out, "at least one true") {
 		t.Fatalf("expected a summary message in explanation; got:\n%s", out)
 	}
+
 	if !strings.Contains(out, "fact: A=true") {
 		t.Fatalf("expected leaf facts to appear; got:\n%s", out)
 	}
@@ -57,8 +59,10 @@ func TestPrettyExplainTo_WriterDeterministic(t *testing.T) {
 	}
 
 	want := engine.PrettyExplain(why)
+
 	var buf bytes.Buffer
 	engine.PrettyExplainTo(&buf, why)
+
 	got := buf.String()
 	if got != want {
 		t.Fatalf("PrettyExplainTo mismatch with PrettyExplain\n--- want ---\n%s\n--- got ---\n%s", want, got)

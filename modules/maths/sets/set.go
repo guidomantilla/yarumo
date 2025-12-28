@@ -13,6 +13,7 @@ func New[T comparable](items ...T) Set[T] {
 	for _, item := range items {
 		s.Add(item)
 	}
+
 	return s
 }
 
@@ -27,6 +28,7 @@ func (s *Set[T]) Get(item T) (T, bool) {
 	if !ok {
 		return pointer.Zero[T](), false
 	}
+
 	return item, true
 }
 
@@ -52,5 +54,6 @@ func (s *Set[T]) Elements() []T {
 	for item := range s.elements {
 		result = append(result, item)
 	}
+
 	return result
 }

@@ -15,17 +15,20 @@ func AxiomPairing[T comparable](x, y T) Set[T] {
 	s := New[T]()
 	s.Add(x)
 	s.Add(y)
+
 	return s
 }
 
 // AxiomUnion verifica que ⋃S contiene todos los elementos de los subconjuntos de S
 func AxiomUnion[T comparable](sets []Set[T]) Set[T] {
 	union := New[T]()
+
 	for _, s := range sets {
 		for _, e := range s.Elements() {
 			union.Add(e)
 		}
 	}
+
 	return union
 }
 
@@ -48,6 +51,7 @@ func CommutativeIntersection[T comparable](a, b Set[T]) bool {
 func AssociativeUnion[T comparable](a, b, c Set[T]) bool {
 	left := Union(Union(a, b), c)
 	right := Union(a, Union(b, c))
+
 	return Equal(left, right)
 }
 
@@ -55,6 +59,7 @@ func AssociativeUnion[T comparable](a, b, c Set[T]) bool {
 func DistributiveIntersectionOverUnion[T comparable](a, b, c Set[T]) bool {
 	left := Intersection(a, Union(b, c))
 	right := Union(Intersection(a, b), Intersection(a, c))
+
 	return Equal(left, right)
 }
 
@@ -67,6 +72,7 @@ func DoubleComplement[T comparable](u, a Set[T]) bool {
 func DeMorganUnion[T comparable](u, a, b Set[T]) bool {
 	left := Complement(u, Union(a, b))
 	right := Intersection(Complement(u, a), Complement(u, b))
+
 	return Equal(left, right)
 }
 
@@ -74,5 +80,6 @@ func DeMorganUnion[T comparable](u, a, b Set[T]) bool {
 func DeMorganIntersection[T comparable](u, a, b Set[T]) bool {
 	left := Complement(u, Intersection(a, b))
 	right := Union(Complement(u, a), Complement(u, b))
+
 	return Equal(left, right)
 }

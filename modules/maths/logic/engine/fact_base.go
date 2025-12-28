@@ -1,5 +1,7 @@
 package engine
 
+import "maps"
+
 import p "github.com/guidomantilla/yarumo/maths/logic/props"
 
 // FactBase stores boolean facts.
@@ -16,7 +18,5 @@ func (fb FactBase) Retract(v p.Var) { delete(fb, v) }
 
 // Merge incorporates facts from another FactBase.
 func (fb FactBase) Merge(other FactBase) {
-	for k, v := range other {
-		fb[k] = v
-	}
+	maps.Copy(fb, other)
 }

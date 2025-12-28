@@ -11,6 +11,7 @@ func Entails(KB []p.Formula, phi p.Formula) bool {
 	target := p.AndF{L: andAll(KB), R: p.NotF{F: phi}}
 	// Optionally simplify before satisfiability check
 	simpl := p.Simplify(target)
+
 	return !p.IsSatisfiable(simpl)
 }
 
@@ -26,6 +27,7 @@ func EntailsWithCounterModel(KB []p.Formula, phi p.Formula) (bool, sat.Assignmen
 		// Fallback: just return boolean entailment, no model
 		return !p.IsSatisfiable(target), nil
 	}
+
 	ok, asg := sat.DPLL(cnf, nil)
 	if ok {
 		// Satisfiable: entailment does not hold; return countermodel
@@ -40,9 +42,11 @@ func andAll(fs []p.Formula) p.Formula {
 	if len(fs) == 0 {
 		return p.TrueF{}
 	}
+
 	acc := fs[0]
 	for i := 1; i < len(fs); i++ {
 		acc = p.AndF{L: acc, R: fs[i]}
 	}
+
 	return acc
 }

@@ -1,6 +1,9 @@
 package sets
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // Function representa una función f: A → B
 type Function[A comparable, B comparable] struct {
@@ -20,6 +23,7 @@ func (f *Function[A, B]) Set(a A, b B) {
 			f.rel.Remove(p.First, p.Second)
 		}
 	}
+
 	f.rel.Add(a, b)
 }
 
@@ -30,7 +34,9 @@ func (f *Function[A, B]) Get(a A) (B, bool) {
 			return p.Second, true
 		}
 	}
+
 	var zero B
+
 	return zero, false
 }
 
@@ -50,6 +56,7 @@ func (f *Function[A, B]) Image(a A) Set[B] {
 	if b, ok := f.Get(a); ok {
 		image.Add(b)
 	}
+
 	return image
 }
 
@@ -78,10 +85,13 @@ func (f *FunctionFromSet[A, B]) Set(a A, b B) error {
 	if !f.domainSet.Contains(a) {
 		return fmt.Errorf("a = %v not in domain", a)
 	}
+
 	if !f.codomainSet.Contains(b) {
 		return fmt.Errorf("b = %v not in codomain", b)
 	}
+
 	f.function.Set(a, b)
+
 	return nil
 }
 
@@ -97,6 +107,7 @@ func (f *FunctionFromSet[A, B]) IsTotal() bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -105,28 +116,34 @@ func (f *FunctionFromSet[A, B]) IsTotal() bool {
 // f(a₁) = f(a₂) ⇒ a₁ = a₂
 func (f *FunctionFromSet[A, B]) IsInjective() bool {
 	inverse := make(map[B]A)
+
 	for _, a := range f.domainSet.Elements() {
 		b, ok := f.function.Get(a)
 		if !ok {
 			continue
 		}
+
 		if prevA, seen := inverse[b]; seen && prevA != a {
 			return false
 		}
+
 		inverse[b] = a
 	}
+
 	return true
 }
 
 // IsSurjective checks if the function is surjective, meaning that for every b ∈ codomainSet, there exists at least one a ∈ domainSet such that f(a) = b.
 func (f *FunctionFromSet[A, B]) IsSurjective() bool {
 	seen := New[B]()
+
 	for _, a := range f.domainSet.Elements() {
 		b, ok := f.function.Get(a)
 		if ok {
 			seen.Add(b)
 		}
 	}
+
 	return IsSubset(f.codomainSet, seen)
 }
 
@@ -138,7 +155,7 @@ func (f *FunctionFromSet[A, B]) IsBijective() bool {
 // Inverse returns f⁻¹: B → A, if f is Bijective
 func (f *FunctionFromSet[A, B]) Inverse() (*FunctionFromSet[B, A], error) {
 	if !f.IsBijective() {
-		return nil, fmt.Errorf("function is not bijective")
+		return nil, errors.New("function is not bijective")
 	}
 
 	inverse := NewFunctionFromSet[B, A](f.codomainSet, f.domainSet)
@@ -146,9 +163,11 @@ func (f *FunctionFromSet[A, B]) Inverse() (*FunctionFromSet[B, A], error) {
 	for _, a := range f.domainSet.Elements() {
 		b, ok := f.Get(a)
 		if !ok {
-			return nil, fmt.Errorf("function is not total")
+			return nil, errors.New("function is not total")
 		}
-		if err := inverse.Set(b, a); err != nil {
+
+		err := inverse.Set(b, a)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -163,11 +182,13 @@ func (f *FunctionFromSet[A, B]) IsLeftInverse(inv *FunctionFromSet[B, A]) bool {
 		if !ok1 {
 			return false
 		}
+
 		a2, ok2 := inv.Get(b)
 		if !ok2 || a2 != a {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -178,11 +199,13 @@ func (f *FunctionFromSet[A, B]) IsRightInverse(inv *FunctionFromSet[B, A]) bool 
 		if !ok1 {
 			return false
 		}
+
 		b2, ok2 := f.Get(a)
 		if !ok2 || b2 != b {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -193,7 +216,7 @@ func (f *FunctionFromSet[A, B]) IsRightInverse(inv *FunctionFromSet[B, A]) bool 
 // Compose takes f: A → B and g: B → C and returns g∘f: A → C
 func Compose[A comparable, B comparable, C comparable](f *FunctionFromSet[A, B], g *FunctionFromSet[B, C]) (*FunctionFromSet[A, C], error) {
 	if !IsSubset(f.codomainSet, g.domainSet) {
-		return nil, fmt.Errorf("codomain of f is not contained in domain of g")
+		return nil, errors.New("codomain of f is not contained in domain of g")
 	}
 
 	composed := NewFunctionFromSet[A, C](f.domainSet, g.codomainSet)
@@ -202,11 +225,14 @@ func Compose[A comparable, B comparable, C comparable](f *FunctionFromSet[A, B],
 		if !ok1 {
 			return nil, fmt.Errorf("f is not total on %v", a)
 		}
+
 		c, ok2 := g.Get(b)
 		if !ok2 {
 			return nil, fmt.Errorf("g is not defined at %v", b)
 		}
-		if err := composed.Set(a, c); err != nil {
+
+		err := composed.Set(a, c)
+		if err != nil {
 			return nil, err
 		}
 	}

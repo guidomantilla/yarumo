@@ -63,6 +63,7 @@ func TestEngine_NoFire(t *testing.T) {
 	if ok {
 		t.Fatalf("expected C to be false without B")
 	}
+
 	_ = why
 }
 
@@ -83,16 +84,19 @@ func TestEngine_ChainingAndIdempotence(t *testing.T) {
 	if len(fired1) == 0 {
 		t.Fatalf("expected first pass to fire at least one rule")
 	}
+
 	fired2 := eng.FireOnce()
 	// After first pass, additional passes may still fire remaining downstream rules.
 	// Run until convergence with a small loop.
 	total := append([]string{}, fired1...)
 	total = append(total, fired2...)
-	for i := 0; i < 5; i++ {
+
+	for range 5 {
 		step := eng.FireOnce()
 		if len(step) == 0 {
 			break
 		}
+
 		total = append(total, step...)
 	}
 
@@ -122,6 +126,7 @@ func TestEngine_ImplAndIffPatterns(t *testing.T) {
 
 	// Case 1: X true implies Y should be derived.
 	eng.Assert(p.Var("X"))
+
 	_ = eng.RunToFixpoint(3)
 	if val, _ := eng.Facts.Get(p.Var("Y")); !val {
 		t.Fatalf("expected Y to be true due to implication rule")
@@ -132,6 +137,7 @@ func TestEngine_ImplAndIffPatterns(t *testing.T) {
 
 	// Case 2: Q true should derive P (via iff1)
 	eng.Assert(p.Var("Q"))
+
 	_ = eng.RunToFixpoint(3)
 	if val, _ := eng.Facts.Get(p.Var("P")); !val {
 		t.Fatalf("expected P to be true due to IFF rule with Then=P")
@@ -140,6 +146,7 @@ func TestEngine_ImplAndIffPatterns(t *testing.T) {
 	// Case 3: P true should derive Q (via iff2)
 	eng = engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 	eng.Assert(p.Var("P"))
+
 	_ = eng.RunToFixpoint(3)
 	if val, _ := eng.Facts.Get(p.Var("Q")); !val {
 		t.Fatalf("expected Q to be true due to IFF rule with Then=Q")
@@ -156,6 +163,7 @@ func TestEngine_MaxItersAndLoopGuard(t *testing.T) {
 	eng := engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 
 	eng.Assert(p.Var("A"))
+
 	fired := eng.RunToFixpoint(1) // limit to 1 iteration deliberately
 	if len(fired) == 0 {
 		t.Fatalf("expected at least one rule to fire in first iteration")
@@ -175,6 +183,7 @@ func TestEngine_RetractAndReAssert(t *testing.T) {
 
 	eng.Assert(p.Var("A"))
 	eng.Assert(p.Var("B"))
+
 	_ = eng.RunToFixpoint(2)
 	if val, _ := eng.Facts.Get(p.Var("C")); !val {
 		t.Fatalf("expected C to be true after A&B")
@@ -182,6 +191,7 @@ func TestEngine_RetractAndReAssert(t *testing.T) {
 
 	// Retract B and verify C is not automatically retracted (MVP semantics: monotonic facts)
 	eng.Retract(p.Var("B"))
+
 	if val, _ := eng.Facts.Get(p.Var("C")); !val {
 		t.Fatalf("expected C to remain true (monotonic accumulation in MVP)")
 	}
@@ -190,6 +200,7 @@ func TestEngine_RetractAndReAssert(t *testing.T) {
 	eng = engine.Engine{Facts: engine.FactBase{}, Rules: rules}
 	eng.Assert(p.Var("A"))
 	eng.Assert(p.Var("B"))
+
 	_ = eng.RunToFixpoint(2)
 	if val, _ := eng.Facts.Get(p.Var("C")); !val {
 		t.Fatalf("expected C to be true in fresh engine after A&B")
@@ -209,6 +220,7 @@ func TestEngine_QueryCompositeFormula(t *testing.T) {
 
 	// Query a composite goal: (D | E) & C
 	goal := parser.MustParse("(D | E) & C")
+
 	ok, why := eng.Query(goal)
 	if !ok || why == nil {
 		t.Fatalf("expected composite goal to be true with explanation")

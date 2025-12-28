@@ -13,7 +13,9 @@ func PrettyExplainTo(w io.Writer, e *Explain) {
 		_, _ = io.WriteString(w, "<nil>\n")
 		return
 	}
+
 	var walk func(n *Explain, indent string)
+
 	walk = func(n *Explain, indent string) {
 		label := n.ID
 		if label == "" {
@@ -25,6 +27,7 @@ func PrettyExplainTo(w io.Writer, e *Explain) {
 		} else {
 			_, _ = io.WriteString(w, fmt.Sprintf("%s- %s = %v\n", indent, label, n.Value))
 		}
+
 		for _, k := range n.Kids { // stable order: as stored
 			walk(k, indent+"  ")
 		}

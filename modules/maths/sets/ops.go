@@ -6,31 +6,37 @@ func Union[T comparable](a, b Set[T]) Set[T] {
 	for _, x := range a.Elements() {
 		result.Add(x)
 	}
+
 	for _, y := range b.Elements() {
 		result.Add(y)
 	}
+
 	return result
 }
 
 // Intersection returns A ∩ B: elements that are in both A and B
 func Intersection[T comparable](a, b Set[T]) Set[T] {
 	result := New[T]()
+
 	for _, x := range a.Elements() {
 		if b.Contains(x) {
 			result.Add(x)
 		}
 	}
+
 	return result
 }
 
 // Difference returns A \ B: elements in A that are not in B
 func Difference[T comparable](a, b Set[T]) Set[T] {
 	result := New[T]()
+
 	for _, x := range a.Elements() {
 		if !b.Contains(x) {
 			result.Add(x)
 		}
 	}
+
 	return result
 }
 
@@ -44,34 +50,43 @@ func Equal[T comparable](a, b Set[T]) bool {
 	if a.Cardinality() != b.Cardinality() {
 		return false
 	}
+
 	for _, x := range a.Elements() {
 		if !b.Contains(x) {
 			return false
 		}
 	}
+
 	return true
 }
 
 // Subsets return all subsets of A with exactly k elements
 func Subsets[T comparable](A Set[T], k int) []Set[T] {
 	elements := A.Elements()
-	var result []Set[T]
-	var comb []T
+
+	var (
+		result []Set[T]
+		comb   []T
+	)
 
 	var backtrack func(start int)
+
 	backtrack = func(start int) {
 		if len(comb) == k {
 			result = append(result, New(comb...))
 			return
 		}
+
 		for i := start; i < len(elements); i++ {
 			comb = append(comb, elements[i])
 			backtrack(i + 1)
+
 			comb = comb[:len(comb)-1]
 		}
 	}
 
 	backtrack(0)
+
 	return result
 }
 
@@ -82,6 +97,7 @@ func IsSubset[T comparable](a, b Set[T]) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -105,7 +121,7 @@ sets/
 ├── set.go                 → definición de Set[T]
 ├── ops.go                 → unión, intersección, diferencia, igualdad, subconjuntos
 ├── universe.go            → universo y complemento con validación
-├── product.go             → producto cartesiano
+├── product.go             → production cartesiano
 ├── power.go               → conjunto potencia
 ├── relation.go            → relaciones binarias y propiedades
 ├── function.go            → funciones, composición, inyecciones, etc.

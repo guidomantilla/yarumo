@@ -8,6 +8,7 @@ use (
 	./internal/temporal/courses/edu-102-go-code
 	./modules/common
 	./modules/maths
+	./modules/observability/datadog
 	./modules/security
 	./modules/servers
 	./tools

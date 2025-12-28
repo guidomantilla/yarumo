@@ -7,13 +7,16 @@ import (
 // ParseWith parses input using the provided options.
 func ParseWith(input string, opts ParseOptions) (p.Formula, error) {
 	parser := newParserWithOptions(input, opts)
+
 	f, err := parser.parse()
 	if err != nil {
 		return nil, err
 	}
+
 	if parser.cur.typ != tEOF {
 		return nil, newParseError(parser.cur.pos, "extra input after expression")
 	}
+
 	return p.Simplify(f), nil
 }
 
@@ -28,5 +31,6 @@ func MustParse(input string) p.Formula {
 	if err != nil {
 		panic(err)
 	}
+
 	return f
 }

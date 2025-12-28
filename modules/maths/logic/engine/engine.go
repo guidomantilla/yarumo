@@ -15,6 +15,7 @@ func (e *Engine) Assert(v p.Var) {
 	if e.Facts == nil {
 		e.Facts = FactBase{}
 	}
+
 	e.Facts[v] = true
 }
 
@@ -30,6 +31,7 @@ func (e *Engine) FireOnce() (fired []string) {
 	if e.Facts == nil {
 		e.Facts = FactBase{}
 	}
+
 	for _, r := range e.Rules {
 		if shouldFire(r, e.Facts) {
 			// Fire: set Then to true if it wasn't already true
@@ -39,6 +41,7 @@ func (e *Engine) FireOnce() (fired []string) {
 			}
 		}
 	}
+
 	return fired
 }
 
@@ -57,10 +60,12 @@ func shouldFire(r Rule, facts FactBase) bool {
 		if isVarEqual(w.L, r.then) {
 			return w.R.Eval(p.Fact(facts))
 		}
+
 		if isVarEqual(w.R, r.then) {
 			return w.L.Eval(p.Fact(facts))
 		}
 	}
+
 	return r.when.Eval(p.Fact(facts))
 }
 
@@ -81,13 +86,16 @@ func (e *Engine) RunToFixpoint(maxIters int) (fired []string) {
 	if maxIters <= 0 {
 		maxIters = 1
 	}
-	for iter := 0; iter < maxIters; iter++ {
+
+	for range maxIters {
 		step := e.FireOnce()
 		if len(step) == 0 {
 			break
 		}
+
 		fired = append(fired, step...)
 	}
+
 	return fired
 }
 
@@ -98,5 +106,6 @@ func (e *Engine) RunToFixpoint(maxIters int) (fired []string) {
 func (e *Engine) Query(goal p.Formula) (bool, *Explain) {
 	seen := make(map[p.Var]bool)
 	exp, val := explainWithRules(goal, e.Facts, e.Rules, seen)
+
 	return val, exp
 }

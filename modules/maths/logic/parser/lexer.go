@@ -16,8 +16,10 @@ func (l *lexer) next() rune {
 	if l.i >= len(l.s) {
 		return 0
 	}
+
 	r, w := utf8.DecodeRuneInString(l.s[l.i:])
 	l.i += w
+
 	return r
 }
 
@@ -25,7 +27,9 @@ func (l *lexer) peek() rune {
 	if l.i >= len(l.s) {
 		return 0
 	}
+
 	r, _ := utf8.DecodeRuneInString(l.s[l.i:])
+
 	return r
 }
 
@@ -57,6 +61,7 @@ func (l *lexer) scan() token {
 				return token{typ: tIFF, lit: "<->", pos: pos}
 			}
 		}
+
 		if len(l.s)-l.i >= 2 {
 			s2 := l.s[l.i : l.i+2]
 			switch s2 {
@@ -77,6 +82,7 @@ func (l *lexer) scan() token {
 			l.i += 3
 			return token{typ: tIFF, lit: "<=>", pos: pos}
 		}
+
 		if len(l.s)-l.i >= 2 && l.s[l.i:l.i+2] == "=>" {
 			l.i += 2
 			return token{typ: tIMPL, lit: "=>", pos: pos}
@@ -101,6 +107,7 @@ func (l *lexer) scan() token {
 		l.next()
 		return token{typ: tRP, lit: ")", pos: pos}
 	}
+
 	if !l.strict {
 		switch ch {
 		case '¬':
@@ -130,8 +137,10 @@ func (l *lexer) scan() token {
 				l.next()
 				continue
 			}
+
 			break
 		}
+
 		lit := l.s[start:l.i]
 		if !l.strict {
 			up := strings.ToUpper(lit)
@@ -152,10 +161,12 @@ func (l *lexer) scan() token {
 				return token{typ: tFALSE, lit: lit, pos: pos}
 			}
 		}
+
 		return token{typ: tID, lit: lit, pos: pos}
 	}
 
 	// 5) Unknown char: emit ILLEGAL token and consume one rune
 	bad := l.next()
+
 	return token{typ: tILLEGAL, lit: string(bad), pos: pos}
 }

@@ -18,6 +18,7 @@ func TestRulesYAML_RoundTrip(t *testing.T) {
 	if err := engine.SaveRulesYAML(&buf, rules); err != nil {
 		t.Fatalf("save rules yaml: %v", err)
 	}
+
 	first := buf.String()
 	if !strings.Contains(first, "version: v1") {
 		t.Fatalf("expected version v1 in yaml, got: %s", first)
@@ -28,9 +29,11 @@ func TestRulesYAML_RoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load rules yaml: %v", err)
 	}
+
 	if len(gotRules) != len(rules) {
 		t.Fatalf("rule count mismatch: got %d want %d", len(gotRules), len(rules))
 	}
+
 	for i := range rules {
 		if !rules[i].Equals(gotRules[i]) {
 			t.Fatalf("rule %d mismatch after yaml round-trip", i)
@@ -42,6 +45,7 @@ func TestRulesYAML_RoundTrip(t *testing.T) {
 	if err := engine.SaveRulesYAML(&buf2, gotRules); err != nil {
 		t.Fatalf("save rules yaml 2: %v", err)
 	}
+
 	second := buf2.String()
 	if first != second {
 		// yaml.Encoder should be deterministic given the same struct values and field order

@@ -55,7 +55,7 @@ type IffF struct{ L, R Formula }
 
 type GroupF struct{ Inner Formula }
 
-func (f NotF) String() string { return fmt.Sprintf("!%s", f.F.String()) }
+func (f NotF) String() string { return "!" + f.F.String() }
 
 func (f AndF) String() string { return fmt.Sprintf("(%s & %s)", f.L.String(), f.R.String()) }
 

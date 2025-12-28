@@ -30,10 +30,12 @@ func TestPrettyExplain_Golden(t *testing.T) {
 
 	out := engine.PrettyExplain(why)
 	goldenPath := filepath.Join("testdata", "pretty_explain_D.golden")
+
 	b, err := os.ReadFile(goldenPath)
 	if err != nil {
 		t.Fatalf("read golden file: %v", err)
 	}
+
 	golden := string(b)
 	if out != golden {
 		t.Fatalf("PrettyExplain output mismatch with golden file.\n--- got ---\n%s\n--- want (golden) ---\n%s", out, golden)

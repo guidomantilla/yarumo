@@ -7,13 +7,16 @@ func NewPowerSet[T comparable](a Set[T]) *PowerSet[T] {
 
 	ps := &PowerSet[T]{subsets: make(map[string]Set[T])}
 
-	for i := 0; i < (1 << n); i++ {
+	m := 1 << n
+	for i := range m {
 		sub := New[T]()
-		for j := 0; j < n; j++ {
+
+		for j := range n {
 			if i&(1<<j) != 0 {
 				sub.Add(elements[j])
 			}
 		}
+
 		ps.Add(sub)
 	}
 
@@ -35,6 +38,7 @@ func (ps *PowerSet[T]) Add(sub Set[T]) {
 func (ps *PowerSet[T]) Get(sub Set[T]) (Set[T], bool) {
 	key := SerializeSet(sub)
 	s, ok := ps.subsets[key]
+
 	return s, ok
 }
 
@@ -42,6 +46,7 @@ func (ps *PowerSet[T]) Get(sub Set[T]) (Set[T], bool) {
 func (ps *PowerSet[T]) Contains(sub Set[T]) bool {
 	key := SerializeSet(sub)
 	_, ok := ps.subsets[key]
+
 	return ok
 }
 
@@ -56,28 +61,33 @@ func (ps *PowerSet[T]) Elements() []Set[T] {
 	for _, s := range ps.subsets {
 		result = append(result, s)
 	}
+
 	return result
 }
 
 // FilterByCardinality returns a new PowerSet containing only subsets with exactly k elements.
 func (ps *PowerSet[T]) FilterByCardinality(k int) *PowerSet[T] {
 	filtered := &PowerSet[T]{subsets: make(map[string]Set[T])}
+
 	for _, subset := range ps.Elements() {
 		if subset.Cardinality() == k {
 			filtered.Add(subset)
 		}
 	}
+
 	return filtered
 }
 
 // FilterByRange returns a new PowerSet containing only subsets with a cardinality within the specified range [min, max].
 func (ps *PowerSet[T]) FilterByRange(min, max int) *PowerSet[T] {
 	filtered := &PowerSet[T]{subsets: make(map[string]Set[T])}
+
 	for _, subset := range ps.Elements() {
 		card := subset.Cardinality()
 		if card >= min && card <= max {
 			filtered.Add(subset)
 		}
 	}
+
 	return filtered
 }

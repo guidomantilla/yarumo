@@ -10,6 +10,8 @@ func Solver(f p.Formula) (bool, bool) {
 	if err != nil {
 		return false, false
 	}
+
 	ok, _ := DPLL(cnf, nil)
+
 	return true, ok
 }

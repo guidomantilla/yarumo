@@ -1,6 +1,8 @@
 package sat
 
 import (
+	"maps"
+
 	p "github.com/guidomantilla/yarumo/maths/logic/props"
 )
 
@@ -17,20 +19,24 @@ func DPLL(cnf CNF, asg Assignment) (bool, Assignment) {
 		if unit, ok := findUnitClause(cnf); ok {
 			asg[unit.Var] = !unit.Neg
 			cnf, _ = assign(cnf, unit)
+
 			continue
 		}
 		// 2) Pure literal elimination
 		if pure, ok := findPureLiteral(cnf); ok {
 			asg[pure.Var] = !pure.Neg
 			cnf, _ = assign(cnf, pure)
+
 			continue
 		}
+
 		break
 	}
 
 	if len(cnf) == 0 {
 		return true, asg
 	}
+
 	if hasEmptyClause(cnf) {
 		return false, nil
 	}
@@ -50,6 +56,7 @@ func DPLL(cnf CNF, asg Assignment) (bool, Assignment) {
 		asg2[lit.Var] = lit.Neg
 		return true, asg2
 	}
+
 	return false, nil
 }
 
@@ -58,15 +65,18 @@ func DPLL(cnf CNF, asg Assignment) (bool, Assignment) {
 func assign(cnf CNF, lit Lit) (CNF, bool) {
 	out := make(CNF, 0, len(cnf))
 	satisfied := false
+
 	for _, c := range cnf {
 		if clauseHasLit(c, lit) {
 			satisfied = true
 			continue // clause satisfied, drop it
 		}
+
 		neg := lit.Negated()
 		c2 := removeLit(c, neg)
 		out = append(out, c2)
 	}
+
 	return out, satisfied
 }
 
@@ -76,16 +86,18 @@ func clauseHasLit(c Clause, l Lit) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
 func removeLit(c Clause, l Lit) Clause {
 	out := c[:0]
 	for _, x := range c {
-		if !(x.Var == l.Var && x.Neg == l.Neg) {
+		if x.Var != l.Var || x.Neg != l.Neg {
 			out = append(out, x)
 		}
 	}
+
 	return out
 }
 
@@ -95,6 +107,7 @@ func hasEmptyClause(cnf CNF) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -104,12 +117,14 @@ func findUnitClause(cnf CNF) (Lit, bool) {
 			return c[0], true
 		}
 	}
+
 	return Lit{}, false
 }
 
 func findPureLiteral(cnf CNF) (Lit, bool) {
 	seenPos := map[p.Var]bool{}
 	seenNeg := map[p.Var]bool{}
+
 	for _, c := range cnf {
 		for _, l := range c {
 			if l.Neg {
@@ -119,21 +134,25 @@ func findPureLiteral(cnf CNF) (Lit, bool) {
 			}
 		}
 	}
+
 	for v := range seenPos {
 		if !seenNeg[v] {
 			return Lit{Var: v, Neg: false}, true
 		}
 	}
+
 	for v := range seenNeg {
 		if !seenPos[v] {
 			return Lit{Var: v, Neg: true}, true
 		}
 	}
+
 	return Lit{}, false
 }
 
 func chooseLiteral(cnf CNF) Lit {
 	bestIdx := -1
+
 	bestLen := int(^uint(0) >> 1)
 	for i, c := range cnf {
 		if len(c) < bestLen && len(c) > 0 {
@@ -141,14 +160,17 @@ func chooseLiteral(cnf CNF) Lit {
 			bestIdx = i
 		}
 	}
+
 	if bestIdx >= 0 && len(cnf[bestIdx]) > 0 {
 		return cnf[bestIdx][0]
 	}
+
 	for _, c := range cnf {
 		if len(c) > 0 {
 			return c[0]
 		}
 	}
+
 	return Lit{}
 }
 
@@ -159,14 +181,14 @@ func copyCNF(cnf CNF) CNF {
 		copy(cc, c)
 		out[i] = cc
 	}
+
 	return out
 }
 
 func copyAsg(a Assignment) Assignment {
 	b := make(Assignment, len(a))
-	for k, v := range a {
-		b[k] = v
-	}
+	maps.Copy(b, a)
+
 	return b
 }
 
@@ -176,8 +198,10 @@ func removeTautologies(cnf CNF) CNF {
 		if isTautologyClause(c) {
 			continue
 		}
+
 		out = append(out, c)
 	}
+
 	return out
 }
 
@@ -190,12 +214,15 @@ func isTautologyClause(c Clause) bool {
 		} else {
 			st.pos = true
 		}
+
 		m[l.Var] = st
 	}
+
 	for _, st := range m {
 		if st.pos && st.neg {
 			return true
 		}
 	}
+
 	return false
 }

@@ -6,6 +6,7 @@ package engine
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/guidomantilla/yarumo/maths/logic/parser"
@@ -56,6 +57,7 @@ func ToDTO(e *Explain) ExplainDTO {
 	if e == nil {
 		return ExplainDTO{}
 	}
+
 	d := ExplainDTO{Expr: e.Expr, Value: e.Value, Why: e.Why}
 	if len(e.Kids) > 0 {
 		d.Kids = make([]ExplainDTO, len(e.Kids))
@@ -63,6 +65,7 @@ func ToDTO(e *Explain) ExplainDTO {
 			d.Kids[i] = ToDTO(k)
 		}
 	}
+
 	return d
 }
 
@@ -75,6 +78,7 @@ func FromDTO(d ExplainDTO) *Explain {
 			e.Kids[i] = FromDTO(kd)
 		}
 	}
+
 	return e
 }
 
@@ -88,13 +92,16 @@ func RuleFromDTO(d RuleDTO) (Rule, error) {
 	if d.Version != dtoVersionV1 && d.Version != "" {
 		return Rule{}, fmt.Errorf("unsupported rule version: %s", d.Version)
 	}
+
 	f, err := parser.Parse(d.When)
 	if err != nil {
 		return Rule{}, err
 	}
+
 	if d.Then == "" {
-		return Rule{}, fmt.Errorf("missing 'then' var name")
+		return Rule{}, errors.New("missing 'then' var name")
 	}
+
 	return Rule{id: d.ID, when: f, then: p.Var(d.Then)}, nil
 }
 
@@ -104,6 +111,7 @@ func RulesToDTO(rules []Rule) RuleSetDTO {
 	for i, r := range rules {
 		out.Rules[i] = RuleToDTO(r)
 	}
+
 	return out
 }
 
@@ -112,14 +120,17 @@ func RulesFromDTO(set RuleSetDTO) ([]Rule, error) {
 	if set.Version != dtoVersionV1 && set.Version != "" {
 		return nil, fmt.Errorf("unsupported ruleset version: %s", set.Version)
 	}
+
 	out := make([]Rule, len(set.Rules))
 	for i, d := range set.Rules {
 		var err error
+
 		out[i], err = RuleFromDTO(d)
 		if err != nil {
 			return nil, fmt.Errorf("rule %d: %w", i, err)
 		}
 	}
+
 	return out, nil
 }
 
@@ -130,5 +141,6 @@ func normalizeJSON(v any) (string, error) { //nolint:unused
 	if err != nil {
 		return "", err
 	}
+
 	return string(b), nil
 }

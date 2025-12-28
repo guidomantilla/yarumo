@@ -12,6 +12,7 @@ import (
 
 func mustEq(t *testing.T, a, b p.Formula) {
 	t.Helper()
+
 	if !p.Equivalent(a, b) {
 		t.Fatalf("expected equivalent formulas, got:\n  a: %s\n  b: %s", a.String(), b.String())
 	}
@@ -19,6 +20,7 @@ func mustEq(t *testing.T, a, b p.Formula) {
 
 func mustNeq(t *testing.T, a, b p.Formula) {
 	t.Helper()
+
 	if p.Equivalent(a, b) {
 		t.Fatalf("expected non-equivalent formulas, but they are equivalent:\n  a: %s\n  b: %s", a.String(), b.String())
 	}
@@ -32,6 +34,7 @@ func TestExampleParseAndEval(t *testing.T) {
 		p.Var("B"): true,
 		p.Var("C"): false,
 	}
+
 	fmt.Println(f.String())
 	fmt.Println(f.Eval(facts))
 	// Output:
@@ -112,13 +115,12 @@ func TestTruthTableAndFailCases(t *testing.T) {
 
 	fails := p.FailCases(f)
 	fmt.Println("fails:", len(fails))
+
 	if len(fails) > 0 {
 		// Show first 3 failing assignments (if any)
-		limit := 3
-		if len(fails) < limit {
-			limit = len(fails)
-		}
-		for i := 0; i < limit; i++ {
+		limit := min(len(fails), 3)
+
+		for i := range limit {
 			fmt.Println("fail:", fails[i])
 		}
 	}
@@ -163,6 +165,7 @@ func TestParserRoundTrip(t *testing.T) {
 	p1 := f.String()
 	f2 := parser.MustParse(p1)
 	p2 := f2.String()
+
 	fmt.Println("p1:", p1)
 	fmt.Println("p2:", p2)
 }

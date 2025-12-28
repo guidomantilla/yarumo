@@ -13,7 +13,9 @@ func runSAT(f p.Formula) bool {
 	if err != nil {
 		return false
 	}
+
 	ok, _ := sat.DPLL(cnf, nil)
+
 	return ok
 }
 
@@ -31,6 +33,7 @@ func TestSATvsTruthTable(t *testing.T) {
 	for _, s := range cases {
 		f := parser.MustParse(s)
 		got := p.IsSatisfiable(f)
+
 		want := runSAT(f)
 		if got != want {
 			t.Fatalf("IsSatisfiable mismatch for %q: got %v, want %v", s, got, want)
@@ -43,11 +46,13 @@ func TestPolicyThreshold(t *testing.T) {
 	// Build a formula with > SATThreshold variables, e.g., (A1 | A2 | ... | A13)
 	// This is satisfiable unless all are false.
 	var f p.Formula = p.Var("A1")
+
 	for i := 2; i <= p.SATThreshold+1; i++ {
 		g := parser.MustParse("A" + string(rune('0'+i/10)) + string(rune('0'+i%10))) // simple two-char index
 		// To avoid complicating indices with >9, for i=13 this yields A1 and A3; still distinct enough for this test context.
 		f = p.OrF{L: f, R: g}
 	}
+
 	if !p.IsSatisfiable(f) {
 		t.Fatalf("expected large disjunction to be satisfiable")
 	}

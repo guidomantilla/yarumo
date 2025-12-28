@@ -20,6 +20,7 @@ func TestVarsOrder_Stable(t *testing.T) {
 	}
 	for _, c := range cases {
 		f := parser.MustParse(c.in)
+
 		got := f.Vars()
 		if !reflect.DeepEqual(got, c.want) {
 			t.Fatalf("Vars() not sorted/stable for %q: got %v, want %v", c.in, got, c.want)

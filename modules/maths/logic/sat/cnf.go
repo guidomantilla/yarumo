@@ -11,6 +11,7 @@ import (
 func FromFormulaToCNF(f p.Formula) (CNF, error) {
 	f = p.Simplify(f)
 	cnfF := p.ToCNF(f)
+
 	return toClauses(cnfF)
 }
 
@@ -23,21 +24,25 @@ func toClauses(f p.Formula) (CNF, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		r, err := toClauses(x.R)
 		if err != nil {
 			return nil, err
 		}
+
 		return append(l, r...), nil
 	case p.OrF:
 		cl, err := flattenOr(x)
 		if err != nil {
 			return nil, err
 		}
+
 		return CNF{cl}, nil
 	case p.NotF:
 		if v, ok := x.F.(p.Var); ok {
 			return CNF{Clause{{Var: v, Neg: true}}}, nil
 		}
+
 		return nil, fmt.Errorf("NOT inner is not a Var in CNF: %T", x.F)
 	case p.Var:
 		return CNF{Clause{{Var: x, Neg: false}}}, nil
@@ -62,15 +67,18 @@ func flattenOr(f p.Formula) (Clause, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		r, err := flattenOr(x.R)
 		if err != nil {
 			return nil, err
 		}
+
 		return append(l, r...), nil
 	case p.NotF:
 		if v, ok := x.F.(p.Var); ok {
 			return Clause{{Var: v, Neg: true}}, nil
 		}
+
 		return nil, fmt.Errorf("NOT inner is not a Var in clause: %T", x.F)
 	case p.Var:
 		return Clause{{Var: x, Neg: false}}, nil

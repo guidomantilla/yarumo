@@ -10,7 +10,9 @@ import (
 // helper to assert equivalence between a synonym expression and a canonical expression
 func mustEqParse(t *testing.T, syn, canon string) {
 	t.Helper()
+
 	fs := parser.MustParse(syn)
+
 	fc := parser.MustParse(canon)
 	if !p.Equivalent(fs, fc) {
 		t.Fatalf("not equivalent: syn=%q -> %s, canon=%q -> %s", syn, fs.String(), canon, fc.String())
@@ -54,6 +56,7 @@ func TestParserSynonyms_TrueFalseLiterals(t *testing.T) {
 	if fTrue.String() != "⊤" {
 		t.Fatalf("TRUE should parse to ⊤, got %q", fTrue.String())
 	}
+
 	fFalse := parser.MustParse("FALSE")
 	if fFalse.String() != "⊥" {
 		t.Fatalf("FALSE should parse to ⊥, got %q", fFalse.String())
@@ -73,9 +76,11 @@ func TestParser_StrictModeDisallowsSynonyms(t *testing.T) {
 	if _, err := parser.ParseWith("A AND B", parser.ParseOptions{Strict: true}); err == nil {
 		t.Fatalf("expected error in strict mode for 'A AND B'")
 	}
+
 	if _, err := parser.ParseWith("A && B", parser.ParseOptions{Strict: true}); err == nil {
 		t.Fatalf("expected error in strict mode for 'A && B'")
 	}
+
 	if _, err := parser.ParseWith("A ∧ B", parser.ParseOptions{Strict: true}); err == nil {
 		t.Fatalf("expected error in strict mode for 'A ∧ B'")
 	}
@@ -88,6 +93,7 @@ func TestParser_StrictModeDisallowsSynonyms(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error parsing 'TRUE' in strict mode: %v", err)
 	}
+
 	if g.String() != "TRUE" {
 		t.Fatalf("in strict mode, TRUE should be parsed as identifier, got %q", g.String())
 	}

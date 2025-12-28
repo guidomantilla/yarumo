@@ -16,6 +16,7 @@ func (e *ParseError) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
+
 	return fmt.Sprintf("parse error at byte %d (col %d): %s", e.Pos, e.Col, e.Msg)
 }
 

@@ -12,6 +12,7 @@ func SliceToStrings[T comparable](items []T) []string {
 	for i, v := range items {
 		out[i] = fmt.Sprintf("%v", v)
 	}
+
 	return out
 }
 
@@ -23,12 +24,15 @@ func SerializePairSet[A comparable, B comparable](a A, b B) string {
 // SerializeTupleSet creates a unique string representation of a tuple.
 func SerializeTupleSet[T comparable](tuple []T) string {
 	var sb strings.Builder
+
 	for i, v := range tuple {
 		if i > 0 {
 			sb.WriteString("|")
 		}
+
 		sb.WriteString(fmt.Sprintf("%v", v))
 	}
+
 	return sb.String()
 }
 
@@ -37,5 +41,6 @@ func SerializeSet[T comparable](s Set[T]) string {
 	elements := s.Elements()
 	serialized := SliceToStrings(elements)
 	slices.Sort(serialized)
+
 	return fmt.Sprintf("[%s]", strings.Join(serialized, ","))
 }

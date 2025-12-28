@@ -20,6 +20,7 @@ func (r *Relation[A, B]) Add(a A, b B) {
 func (r *Relation[A, B]) Get(a A, b B) (Pair[A, B], bool) {
 	key := SerializePairSet(a, b)
 	pair, exists := r.pairs.pairs[key]
+
 	return pair, exists
 }
 
@@ -50,6 +51,7 @@ func (r *Relation[A, B]) Domain() Set[A] {
 	for _, p := range r.pairs.Elements() {
 		domain.Add(p.First)
 	}
+
 	return domain
 }
 
@@ -59,17 +61,20 @@ func (r *Relation[A, B]) Codomain() Set[B] {
 	for _, p := range r.pairs.Elements() {
 		codomain.Add(p.Second)
 	}
+
 	return codomain
 }
 
 // Image return the set of all elements b ∈ B such that (a, b) ∈ R for a given a ∈ A
 func (r *Relation[A, B]) Image(a A) Set[B] {
 	image := New[B]()
+
 	for _, p := range r.pairs.Elements() {
 		if p.First == a {
 			image.Add(p.Second)
 		}
 	}
+
 	return image
 }
 

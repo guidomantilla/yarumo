@@ -20,6 +20,7 @@ type Explain struct {
 func PrettyExplain(e *Explain) string {
 	var sb strings.Builder
 	PrettyExplainTo(&sb, e)
+
 	return sb.String()
 }
 
@@ -45,14 +46,18 @@ func explainWithRules(f p.Formula, facts FactBase, rules []Rule, seen map[p.Var]
 				ante, av := explainWithRules(r.when, facts, rules, seen)
 				// Leaf for the fact itself
 				leaf := &Explain{Expr: x.String(), Value: true, Why: fmt.Sprintf("fact: %s=true", x)}
+
 				why := "rule fired"
 				if !av {
 					why = "implication holds"
 				}
+
 				return &Explain{Expr: imp.String(), Value: true, Why: why, Kids: []*Explain{ante, leaf}}, true
 			}
 		}
+
 		why := fmt.Sprintf("fact: %s=%v", x.String(), val)
+
 		return &Explain{Expr: x.String(), Value: val, Why: why}, val
 	case p.NotF:
 		kid, v := explainWithRules(x.F, facts, rules, seen)
@@ -61,6 +66,7 @@ func explainWithRules(f p.Formula, facts FactBase, rules []Rule, seen map[p.Var]
 		l, lv := explainWithRules(x.L, facts, rules, seen)
 		r, rv := explainWithRules(x.R, facts, rules, seen)
 		val := lv && rv
+
 		why := "both true"
 		if !lv && !rv {
 			why = "both false"
@@ -69,33 +75,40 @@ func explainWithRules(f p.Formula, facts FactBase, rules []Rule, seen map[p.Var]
 		} else if !rv {
 			why = "right false"
 		}
+
 		return &Explain{Expr: x.String(), Value: val, Why: why, Kids: []*Explain{l, r}}, val
 	case p.OrF:
 		l, lv := explainWithRules(x.L, facts, rules, seen)
 		r, rv := explainWithRules(x.R, facts, rules, seen)
 		val := lv || rv
+
 		why := "at least one true"
 		if !lv && !rv {
 			why = "both false"
 		}
+
 		return &Explain{Expr: x.String(), Value: val, Why: why, Kids: []*Explain{l, r}}, val
 	case p.ImplF:
 		l, lv := explainWithRules(x.L, facts, rules, seen)
 		r, rv := explainWithRules(x.R, facts, rules, seen)
 		val := (!lv) || rv
+
 		why := "implication holds"
 		if lv && !rv {
 			why = "left true and right false"
 		}
+
 		return &Explain{Expr: x.String(), Value: val, Why: why, Kids: []*Explain{l, r}}, val
 	case p.IffF:
 		l, lv := explainWithRules(x.L, facts, rules, seen)
 		r, rv := explainWithRules(x.R, facts, rules, seen)
 		val := lv == rv
+
 		why := "both equal"
 		if lv != rv {
 			why = "different truth values"
 		}
+
 		return &Explain{Expr: x.String(), Value: val, Why: why, Kids: []*Explain{l, r}}, val
 	case p.GroupF:
 		kid, v := explainWithRules(x.Inner, facts, rules, seen)
@@ -114,5 +127,6 @@ func findSupportingRule(v p.Var, facts FactBase, rules []Rule) (*Rule, bool) {
 			return r, true
 		}
 	}
+
 	return nil, false
 }

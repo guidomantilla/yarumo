@@ -3,11 +3,13 @@ package sets
 // CartesianProduct returns the Cartesian product of two sets A and B: A × B
 func CartesianProduct[A comparable, B comparable](a Set[A], b Set[B]) *PairSet[A, B] {
 	result := &PairSet[A, B]{pairs: make(map[string]Pair[A, B])}
+
 	for _, x := range a.Elements() {
 		for _, y := range b.Elements() {
 			result.Add(Pair[A, B]{First: x, Second: y})
 		}
 	}
+
 	return result
 }
 
@@ -36,6 +38,7 @@ func (ps *PairSet[A, B]) Add(pair Pair[A, B]) {
 func (ps *PairSet[A, B]) Get(first A, second B) (Pair[A, B], bool) {
 	key := SerializePairSet(first, second)
 	pair, exists := ps.pairs[key]
+
 	return pair, exists
 }
 
@@ -56,6 +59,7 @@ func (ps *PairSet[A, B]) Elements() []Pair[A, B] {
 	for _, pair := range ps.pairs {
 		result = append(result, pair)
 	}
+
 	return result
 }
 
@@ -75,17 +79,20 @@ func CartesianPower[T comparable](a Set[T], n int) *TupleSet[T] {
 	elements := a.Elements()
 
 	var build func(prefix []T, depth int)
+
 	build = func(prefix []T, depth int) {
 		if depth == 0 {
 			result.Add(prefix)
 			return
 		}
+
 		for _, x := range elements {
 			build(append(prefix, x), depth-1)
 		}
 	}
 
 	build([]T{}, n)
+
 	return result
 }
 
@@ -107,6 +114,7 @@ func (ts *TupleSet[T]) Add(tuple []T) {
 // Get retrieves a specific tuple from the set by its elements.
 func (ts *TupleSet[T]) Get(tuple []T) ([]T, bool) {
 	key := SerializeTupleSet(tuple)
+
 	t, exists := ts.tuples[key]
 	if !exists {
 		return nil, false
@@ -114,6 +122,7 @@ func (ts *TupleSet[T]) Get(tuple []T) ([]T, bool) {
 	// Return a copy of the tuple to avoid external modifications
 	cpy := make([]T, len(t))
 	copy(cpy, t)
+
 	return cpy, true
 }
 
@@ -134,5 +143,6 @@ func (ts *TupleSet[T]) Elements() [][]T {
 	for _, t := range ts.tuples {
 		out = append(out, t)
 	}
+
 	return out
 }

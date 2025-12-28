@@ -47,6 +47,7 @@ func ToCNF(f Formula) Formula {
 		return AndF{L: ToCNF(x.L), R: ToCNF(x.R)}
 	case OrF:
 		l, lok := x.L.(AndF)
+
 		r, rok := x.R.(AndF)
 		switch {
 		case lok:
@@ -69,6 +70,7 @@ func ToDNF(f Formula) Formula {
 		return OrF{L: ToDNF(x.L), R: ToDNF(x.R)}
 	case AndF:
 		l, lok := x.L.(OrF)
+
 		r, rok := x.R.(OrF)
 		switch {
 		case lok:
@@ -86,11 +88,13 @@ func ToDNF(f Formula) Formula {
 // Simplify reduces a formula applying simple algebraic rules until no change.
 func Simplify(f Formula) Formula {
 	prev := Formula(nil)
+
 	cur := simplifyOnce(f)
 	for !structuralEqual(cur, prev) {
 		prev = cur
 		cur = simplifyOnce(cur)
 	}
+
 	return cur
 }
 
@@ -114,101 +118,130 @@ func simplifyOnce(f Formula) Formula {
 		}
 	case AndF:
 		L := Simplify(x.L)
+
 		R := Simplify(x.R)
 		if isFalse(L) || isFalse(R) {
 			return FalseF{}
 		}
+
 		if isTrue(L) {
 			return R
 		}
+
 		if isTrue(R) {
 			return L
 		}
+
 		if structuralEqual(L, R) {
 			return L
 		}
+
 		if isNegationOf(L, R) || isNegationOf(R, L) {
 			return FalseF{}
 		}
+
 		if rOr, ok := R.(OrF); ok {
 			if structuralEqual(L, rOr.L) || structuralEqual(L, rOr.R) {
 				return L
 			}
 		}
+
 		if lOr, ok := L.(OrF); ok {
 			if structuralEqual(R, lOr.L) || structuralEqual(R, lOr.R) {
 				return R
 			}
 		}
+
 		return AndF{L: L, R: R}
 	case OrF:
 		L := Simplify(x.L)
+
 		R := Simplify(x.R)
 		if isTrue(L) || isTrue(R) {
 			return TrueF{}
 		}
+
 		if isFalse(L) {
 			return R
 		}
+
 		if isFalse(R) {
 			return L
 		}
+
 		if structuralEqual(L, R) {
 			return L
 		}
+
 		if isNegationOf(L, R) || isNegationOf(R, L) {
 			return TrueF{}
 		}
+
 		if rAnd, ok := R.(AndF); ok {
 			if structuralEqual(L, rAnd.L) || structuralEqual(L, rAnd.R) {
 				return L
 			}
 		}
+
 		if lAnd, ok := L.(AndF); ok {
 			if structuralEqual(R, lAnd.L) || structuralEqual(R, lAnd.R) {
 				return R
 			}
 		}
+
 		return OrF{L: L, R: R}
 	case ImplF:
 		L := Simplify(x.L)
 		R := Simplify(x.R)
+
 		if isFalse(L) {
 			return TrueF{}
 		}
+
 		if isTrue(L) {
 			return R
 		}
+
 		if isTrue(R) {
 			return TrueF{}
 		}
+
 		if isFalse(R) {
 			return NotF{F: L}
 		}
+
 		if structuralEqual(L, R) {
 			return TrueF{}
 		}
+
 		return ImplF{L: L, R: R}
 	case IffF:
 		L := Simplify(x.L)
+
 		R := Simplify(x.R)
 		if structuralEqual(L, R) {
 			return TrueF{}
 		}
+
 		if isTrue(L) {
 			return R
 		}
+
 		if isTrue(R) {
 			return L
 		}
+
 		if isFalse(L) {
 			return NotF{F: R}
 		}
+
 		if isFalse(R) {
 			return NotF{F: L}
 		}
+
 		return IffF{L: L, R: R}
 	}
+
 	return f
 }
 
@@ -221,6 +254,7 @@ func isNegationOf(a, b Formula) bool {
 	if !ok {
 		return false
 	}
+
 	return structuralEqual(na.F, b)
 }
 
@@ -228,9 +262,11 @@ func structuralEqual(a, b Formula) bool {
 	if a == nil && b == nil {
 		return true
 	}
+
 	if a == nil || b == nil {
 		return false
 	}
+
 	switch x := a.(type) {
 	case Var:
 		y, ok := b.(Var)

@@ -12,11 +12,15 @@ import (
 // LoadRulesJSON reads a RuleSetDTO from r and parses it into engine Rules.
 func LoadRulesJSON(r io.Reader) ([]Rule, error) {
 	var set RuleSetDTO
+
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
-	if err := dec.Decode(&set); err != nil {
+
+	err := dec.Decode(&set)
+	if err != nil {
 		return nil, fmt.Errorf("decode rules JSON: %w", err)
 	}
+
 	return RulesFromDTO(set)
 }
 
@@ -25,6 +29,7 @@ func SaveRulesJSON(w io.Writer, rules []Rule) error {
 	set := RulesToDTO(rules)
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
+
 	return enc.Encode(set)
 }
 
@@ -38,17 +43,22 @@ func EncodeRuleJSON(w io.Writer, r Rule) error {
 	d := RuleToDTO(r)
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
+
 	return enc.Encode(d)
 }
 
 // DecodeRuleJSON decodes a single RuleDTO and parses it to a Rule.
 func DecodeRuleJSON(rdr io.Reader) (Rule, error) {
 	var d RuleDTO
+
 	dec := json.NewDecoder(rdr)
 	dec.DisallowUnknownFields()
-	if err := dec.Decode(&d); err != nil {
+
+	err := dec.Decode(&d)
+	if err != nil {
 		return Rule{}, fmt.Errorf("decode rule JSON: %w", err)
 	}
+
 	return RuleFromDTO(d)
 }
 
@@ -59,13 +69,17 @@ func LoadFactsJSON(r io.Reader) (FactBase, error) {
 	m := map[string]bool{}
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
-	if err := dec.Decode(&m); err != nil {
+
+	err := dec.Decode(&m)
+	if err != nil {
 		return nil, fmt.Errorf("decode facts JSON: %w", err)
 	}
+
 	fb := FactBase{}
 	for k, v := range m {
 		fb[p.Var(k)] = v
 	}
+
 	return fb, nil
 }
 
@@ -75,8 +89,10 @@ func SaveFactsJSON(w io.Writer, facts FactBase) error {
 	for k, v := range facts {
 		m[string(k)] = v
 	}
+
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
+
 	return enc.Encode(m)
 }
 
@@ -90,10 +106,13 @@ func NewRulesFromStrings(specs []struct{ ID, When, Then string }) ([]Rule, error
 		if err != nil {
 			return nil, fmt.Errorf("parse rule %d: %w", i, err)
 		}
+
 		if s.Then == "" {
 			return nil, fmt.Errorf("rule %d: empty Then", i)
 		}
+
 		out[i] = Rule{id: s.ID, when: f, then: p.Var(s.Then)}
 	}
+
 	return out, nil
 }
