@@ -29,6 +29,7 @@ tidy:
 	cd modules/common && go mod tidy
 	cd modules/maths && go mod tidy
 	cd modules/telemetry/datadog && go mod tidy
+	cd modules/telemetry/otel && go mod tidy
 	#cd modules/security && go mod tidy
 	cd modules/servers && go mod tidy
 	go work sync
