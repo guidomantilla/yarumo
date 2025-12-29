@@ -24,22 +24,22 @@ func noopStop(ctx context.Context) {}
 
 func Observe(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
 
-	stopTracer, err := Trace(ctx, conn, options...)
+	stopTracer, err := Tracer(ctx, conn, options...)
 	if err != nil {
 		return noopStop, err
 	}
 
-	stopMetrics, err := Measure(ctx, conn, options...)
+	stopMetrics, err := Meter(ctx, conn, options...)
 	if err != nil {
 		return noopStop, err
 	}
 
-	stopProfiler, err := Profile(ctx, conn, options...)
+	stopProfiler, err := Profiler(ctx, conn, options...)
 	if err != nil {
 		return noopStop, err
 	}
 
-	stopLogger, err := Log(ctx, conn, options...)
+	stopLogger, err := Logger(ctx, conn, options...)
 	if err != nil {
 		return noopStop, err
 	}
@@ -53,21 +53,21 @@ func Observe(ctx context.Context, conn *grpc.ClientConn, options ...Option) (Sto
 	return stopFn, nil
 }
 
-func Trace(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
+func Tracer(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
 	opts := NewOptions(options...)
 
-	opts.tracePropagators = append(opts.tracePropagators, propagation.TraceContext{}, propagation.Baggage{})
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(opts.tracePropagators...))
+	opts.tracerPropagators = append(opts.tracerPropagators, propagation.TraceContext{}, propagation.Baggage{})
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(opts.tracerPropagators...))
 
-	opts.traceExporterOptions = append(opts.traceExporterOptions, otlptracegrpc.WithGRPCConn(conn))
-	exporter, err := otlptracegrpc.New(ctx, opts.traceExporterOptions...)
+	opts.tracerExporterOptions = append(opts.tracerExporterOptions, otlptracegrpc.WithGRPCConn(conn))
+	exporter, err := otlptracegrpc.New(ctx, opts.tracerExporterOptions...)
 	if err != nil {
 		log.Error().Err(err).Str("stage", "startup").Str("component", "otel tracer").Msg("error starting tracer")
 		return noopStop, fmt.Errorf("error starting otel tracer: %w", err)
 	}
 
-	opts.traceProviderOptions = append(opts.traceProviderOptions, sdktrace.WithBatcher(exporter))
-	tracerProvider := sdktrace.NewTracerProvider(opts.traceProviderOptions...)
+	opts.tracerProviderOptions = append(opts.tracerProviderOptions, sdktrace.WithBatcher(exporter))
+	tracerProvider := sdktrace.NewTracerProvider(opts.tracerProviderOptions...)
 
 	otel.SetTracerProvider(tracerProvider)
 
@@ -81,50 +81,49 @@ func Trace(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopF
 	return stopFn, nil
 }
 
-func Profile(_ context.Context, _ *grpc.ClientConn, options ...Option) (StopFn, error) {
-	opts := NewOptions(options...)
-
-	opts.profileOptions = append(opts.profileOptions, runtimemetrics.WithMinimumReadMemStatsInterval(opts.profileInternal))
-	err := runtimemetrics.Start(opts.profileOptions...)
-	if err != nil {
-		log.Error().Err(err).Str("stage", "startup").Str("component", "otel profiler").Msg("error starting err")
-		return noopStop, fmt.Errorf("error starting otel profiler: %w", err)
-	}
-
-	// No-op stop: runtime metrics no exponen Stop()
+func Profiler(_ context.Context, _ *grpc.ClientConn, _ ...Option) (StopFn, error) {
 	return noopStop, nil
 }
 
-func Measure(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
+func Meter(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
 	opts := NewOptions(options...)
 
-	opts.metricExporterOptions = append(opts.metricExporterOptions, otlpmetricgrpc.WithGRPCConn(conn))
-	exporter, err := otlpmetricgrpc.New(ctx, opts.metricExporterOptions...)
+	opts.meterExporterOptions = append(opts.meterExporterOptions, otlpmetricgrpc.WithGRPCConn(conn))
+	exporter, err := otlpmetricgrpc.New(ctx, opts.meterExporterOptions...)
 	if err != nil {
-		log.Error().Err(err).Str("stage", "startup").Str("component", "otel metrics").Msg("error starting metrics")
-		return noopStop, fmt.Errorf("error starting otel metrics: %w", err)
+		log.Error().Err(err).Str("stage", "startup").Str("component", "otel meter").Msg("error starting meter")
+		return noopStop, fmt.Errorf("error starting otel meter: %w", err)
 	}
 
-	opts.metricProviderOptions = append(opts.metricProviderOptions, sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(opts.metricInterval))))
-	meterProvider := sdkmetric.NewMeterProvider(opts.metricProviderOptions...)
+	opts.meterProviderOptions = append(opts.meterProviderOptions, sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(opts.meterInterval))))
+	meterProvider := sdkmetric.NewMeterProvider(opts.meterProviderOptions...)
 
 	otel.SetMeterProvider(meterProvider)
+
+	if opts.meterRuntimeMetricsEnabled {
+		opts.meterRuntimeMetricsOptions = append(opts.meterRuntimeMetricsOptions, runtimemetrics.WithMinimumReadMemStatsInterval(opts.meterRuntimeMetricsInterval))
+		err = runtimemetrics.Start(opts.meterRuntimeMetricsOptions...)
+		if err != nil {
+			log.Error().Err(err).Str("stage", "startup").Str("component", "otel meter").Msg("error starting meter")
+			return noopStop, fmt.Errorf("error starting otel meter: %w", err)
+		}
+	}
 
 	stopFn := func(ctx context.Context) {
 		err := meterProvider.Shutdown(ctx)
 		if err != nil {
-			log.Error().Err(err).Str("stage", "shut down").Str("component", "otel metrics").Msg("error shutting down metrics")
+			log.Error().Err(err).Str("stage", "shut down").Str("component", "otel meter").Msg("error shutting down meter")
 		}
 	}
 
 	return stopFn, nil
 }
 
-func Log(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
+func Logger(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
 	opts := NewOptions(options...)
 
-	opts.logExporterOptions = append(opts.logExporterOptions, otlploggrpc.WithGRPCConn(conn))
-	exporter, err := otlploggrpc.New(ctx, opts.logExporterOptions...)
+	opts.loggerExporterOptions = append(opts.loggerExporterOptions, otlploggrpc.WithGRPCConn(conn))
+	exporter, err := otlploggrpc.New(ctx, opts.loggerExporterOptions...)
 	if err != nil {
 		log.Error().Err(err).Str("stage", "startup").Str("component", "otel logger").Msg("error starting logger")
 		return noopStop, fmt.Errorf("error starting otel logger: %w", err)
@@ -134,8 +133,8 @@ func Log(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn,
 	 *	sdklog.WithProcessor(sdklog.NewSimpleProcessor(exporter)), 	// for dev
 	 *	sdklog.WithProcessor(sdklog.NewBatchProcessor(exp)),  		// for prod
 	 */
-	opts.logProviderOptions = append(opts.logProviderOptions, sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)))
-	loggerProvider := sdklog.NewLoggerProvider(opts.logProviderOptions...)
+	opts.loggerProviderOptions = append(opts.loggerProviderOptions, sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)))
+	loggerProvider := sdklog.NewLoggerProvider(opts.loggerProviderOptions...)
 
 	global.SetLoggerProvider(loggerProvider)
 

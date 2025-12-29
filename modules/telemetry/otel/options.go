@@ -16,30 +16,32 @@ import (
 type Option func(opts *Options)
 
 type Options struct {
-	tracePropagators      []propagation.TextMapPropagator
-	traceExporterOptions  []otlptracegrpc.Option
-	traceProviderOptions  []sdktrace.TracerProviderOption
-	profileOptions        []runtimemetrics.Option
-	profileInternal       time.Duration
-	metricExporterOptions []otlpmetricgrpc.Option
-	metricProviderOptions []sdkmetric.Option
-	metricInterval        time.Duration
-	logExporterOptions    []otlploggrpc.Option
-	logProviderOptions    []sdklog.LoggerProviderOption
+	tracerPropagators           []propagation.TextMapPropagator
+	tracerExporterOptions       []otlptracegrpc.Option
+	tracerProviderOptions       []sdktrace.TracerProviderOption
+	meterExporterOptions        []otlpmetricgrpc.Option
+	meterProviderOptions        []sdkmetric.Option
+	meterInterval               time.Duration
+	meterRuntimeMetricsEnabled  bool
+	meterRuntimeMetricsInterval time.Duration
+	meterRuntimeMetricsOptions  []runtimemetrics.Option
+	loggerExporterOptions       []otlploggrpc.Option
+	loggerProviderOptions       []sdklog.LoggerProviderOption
 }
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		tracePropagators:      []propagation.TextMapPropagator{},
-		traceExporterOptions:  []otlptracegrpc.Option{},
-		traceProviderOptions:  []sdktrace.TracerProviderOption{},
-		profileInternal:       runtimemetrics.DefaultMinimumReadMemStatsInterval,
-		profileOptions:        []runtimemetrics.Option{},
-		metricExporterOptions: []otlpmetricgrpc.Option{},
-		metricProviderOptions: []sdkmetric.Option{},
-		metricInterval:        time.Millisecond * 60000,
-		logExporterOptions:    []otlploggrpc.Option{},
-		logProviderOptions:    []sdklog.LoggerProviderOption{},
+		tracerPropagators:           []propagation.TextMapPropagator{},
+		tracerExporterOptions:       []otlptracegrpc.Option{},
+		tracerProviderOptions:       []sdktrace.TracerProviderOption{},
+		meterExporterOptions:        []otlpmetricgrpc.Option{},
+		meterProviderOptions:        []sdkmetric.Option{},
+		meterInterval:               time.Millisecond * 60000,
+		meterRuntimeMetricsEnabled:  false,
+		meterRuntimeMetricsInterval: runtimemetrics.DefaultMinimumReadMemStatsInterval,
+		meterRuntimeMetricsOptions:  []runtimemetrics.Option{},
+		loggerExporterOptions:       []otlploggrpc.Option{},
+		loggerProviderOptions:       []sdklog.LoggerProviderOption{},
 	}
 	for _, opt := range opts {
 		opt(options)
@@ -47,62 +49,68 @@ func NewOptions(opts ...Option) *Options {
 	return options
 }
 
-func WithTracePropagators(propagators ...propagation.TextMapPropagator) Option {
+func WithTracerPropagators(propagators ...propagation.TextMapPropagator) Option {
 	return func(opts *Options) {
-		opts.tracePropagators = propagators
+		opts.tracerPropagators = propagators
 	}
 }
 
-func WithTraceExporterOptions(exporterOptions ...otlptracegrpc.Option) Option {
+func WithTracerExporterOptions(options ...otlptracegrpc.Option) Option {
 	return func(opts *Options) {
-		opts.traceExporterOptions = exporterOptions
+		opts.tracerExporterOptions = options
 	}
 }
 
-func WithTraceProviderOptions(providerOptions ...sdktrace.TracerProviderOption) Option {
+func WithTracerProviderOptions(options ...sdktrace.TracerProviderOption) Option {
 	return func(opts *Options) {
-		opts.traceProviderOptions = providerOptions
+		opts.tracerProviderOptions = options
 	}
 }
 
-func WithProfileOptions(profileOptions ...runtimemetrics.Option) Option {
+func WithMeterExporterOptions(options ...otlpmetricgrpc.Option) Option {
 	return func(opts *Options) {
-		opts.profileOptions = profileOptions
+		opts.meterExporterOptions = options
 	}
 }
 
-func WithProfileInternal(profileInternal time.Duration) Option {
+func WithMeterProviderOptions(options ...sdkmetric.Option) Option {
 	return func(opts *Options) {
-		opts.profileInternal = profileInternal
+		opts.meterProviderOptions = options
 	}
 }
 
-func WithMetricExporterOptions(exporterOptions ...otlpmetricgrpc.Option) Option {
+func WithMeterInterval(interval time.Duration) Option {
 	return func(opts *Options) {
-		opts.metricExporterOptions = exporterOptions
+		opts.meterInterval = interval
 	}
 }
 
-func WithMetricProviderOptions(providerOptions ...sdkmetric.Option) Option {
+func WithMeterRuntimeMetricsEnabled(enabled bool) Option {
 	return func(opts *Options) {
-		opts.metricProviderOptions = providerOptions
+		opts.meterRuntimeMetricsEnabled = enabled
 	}
 }
 
-func WithMetricInterval(metricInterval time.Duration) Option {
+func WithMeterRuntimeMetricsInterval(interval time.Duration) Option {
 	return func(opts *Options) {
-		opts.metricInterval = metricInterval
+		opts.meterRuntimeMetricsInterval = interval
 	}
 }
 
-func WithLogExporterOptions(exporterOptions ...otlploggrpc.Option) Option {
+func WithMeterRuntimeMetricsOptions(options ...runtimemetrics.Option) Option {
 	return func(opts *Options) {
-		opts.logExporterOptions = exporterOptions
+		opts.meterRuntimeMetricsOptions = options
 	}
 }
 
-func WithLogProviderOptions(providerOptions ...sdklog.LoggerProviderOption) Option {
+func WithLoggerExporterOptions(options ...otlploggrpc.Option) Option {
 	return func(opts *Options) {
-		opts.logProviderOptions = providerOptions
+		opts.loggerExporterOptions = options
+	}
+}
+
+func WithLoggerProviderOptions(options ...sdklog.LoggerProviderOption) Option {
+	return func(opts *Options) {
+		opts.loggerProviderOptions = options
 	}
 }
