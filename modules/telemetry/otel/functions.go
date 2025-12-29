@@ -15,31 +15,30 @@ import (
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"google.golang.org/grpc"
 )
 
 type StopFn func(ctx context.Context)
 
 func noopStop(ctx context.Context) {}
 
-func Observe(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
+func Observe(ctx context.Context, options ...Option) (StopFn, error) {
 
-	stopTracer, err := Tracer(ctx, conn, options...)
+	stopTracer, err := Tracer(ctx, options...)
 	if err != nil {
 		return noopStop, err
 	}
 
-	stopMetrics, err := Meter(ctx, conn, options...)
+	stopMetrics, err := Meter(ctx, options...)
 	if err != nil {
 		return noopStop, err
 	}
 
-	stopProfiler, err := Profiler(ctx, conn, options...)
+	stopProfiler, err := Profiler(ctx, options...)
 	if err != nil {
 		return noopStop, err
 	}
 
-	stopLogger, err := Logger(ctx, conn, options...)
+	stopLogger, err := Logger(ctx, options...)
 	if err != nil {
 		return noopStop, err
 	}
@@ -53,13 +52,17 @@ func Observe(ctx context.Context, conn *grpc.ClientConn, options ...Option) (Sto
 	return stopFn, nil
 }
 
-func Tracer(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
+func Tracer(ctx context.Context, options ...Option) (StopFn, error) {
 	opts := NewOptions(options...)
 
 	opts.tracerPropagators = append(opts.tracerPropagators, propagation.TraceContext{}, propagation.Baggage{})
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(opts.tracerPropagators...))
 
-	opts.tracerExporterOptions = append(opts.tracerExporterOptions, otlptracegrpc.WithGRPCConn(conn))
+	if opts.secure {
+		opts.tracerExporterOptions = append(opts.tracerExporterOptions, otlptracegrpc.WithEndpoint(opts.endpoint))
+	} else {
+		opts.tracerExporterOptions = append(opts.tracerExporterOptions, otlptracegrpc.WithEndpoint(opts.endpoint), otlptracegrpc.WithInsecure())
+	}
 	exporter, err := otlptracegrpc.New(ctx, opts.tracerExporterOptions...)
 	if err != nil {
 		log.Error().Err(err).Str("stage", "startup").Str("component", "otel tracer").Msg("error starting tracer")
@@ -81,14 +84,18 @@ func Tracer(ctx context.Context, conn *grpc.ClientConn, options ...Option) (Stop
 	return stopFn, nil
 }
 
-func Profiler(_ context.Context, _ *grpc.ClientConn, _ ...Option) (StopFn, error) {
+func Profiler(_ context.Context, _ ...Option) (StopFn, error) {
 	return noopStop, nil
 }
 
-func Meter(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
+func Meter(ctx context.Context, options ...Option) (StopFn, error) {
 	opts := NewOptions(options...)
 
-	opts.meterExporterOptions = append(opts.meterExporterOptions, otlpmetricgrpc.WithGRPCConn(conn))
+	if opts.secure {
+		opts.meterExporterOptions = append(opts.meterExporterOptions, otlpmetricgrpc.WithEndpoint(opts.endpoint))
+	} else {
+		opts.meterExporterOptions = append(opts.meterExporterOptions, otlpmetricgrpc.WithEndpoint(opts.endpoint), otlpmetricgrpc.WithInsecure())
+	}
 	exporter, err := otlpmetricgrpc.New(ctx, opts.meterExporterOptions...)
 	if err != nil {
 		log.Error().Err(err).Str("stage", "startup").Str("component", "otel meter").Msg("error starting meter")
@@ -119,10 +126,14 @@ func Meter(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopF
 	return stopFn, nil
 }
 
-func Logger(ctx context.Context, conn *grpc.ClientConn, options ...Option) (StopFn, error) {
+func Logger(ctx context.Context, options ...Option) (StopFn, error) {
 	opts := NewOptions(options...)
 
-	opts.loggerExporterOptions = append(opts.loggerExporterOptions, otlploggrpc.WithGRPCConn(conn))
+	if opts.secure {
+		opts.loggerExporterOptions = append(opts.loggerExporterOptions, otlploggrpc.WithEndpoint(opts.endpoint))
+	} else {
+		opts.loggerExporterOptions = append(opts.loggerExporterOptions, otlploggrpc.WithEndpoint(opts.endpoint), otlploggrpc.WithInsecure())
+	}
 	exporter, err := otlploggrpc.New(ctx, opts.loggerExporterOptions...)
 	if err != nil {
 		log.Error().Err(err).Str("stage", "startup").Str("component", "otel logger").Msg("error starting logger")
@@ -133,7 +144,7 @@ func Logger(ctx context.Context, conn *grpc.ClientConn, options ...Option) (Stop
 	 *	sdklog.WithProcessor(sdklog.NewSimpleProcessor(exporter)), 	// for dev
 	 *	sdklog.WithProcessor(sdklog.NewBatchProcessor(exp)),  		// for prod
 	 */
-	opts.loggerProviderOptions = append(opts.loggerProviderOptions, sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)))
+	opts.loggerProviderOptions = append(opts.loggerProviderOptions, sdklog.WithProcessor(sdklog.NewSimpleProcessor(exporter)))
 	loggerProvider := sdklog.NewLoggerProvider(opts.loggerProviderOptions...)
 
 	global.SetLoggerProvider(loggerProvider)

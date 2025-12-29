@@ -16,6 +16,8 @@ import (
 type Option func(opts *Options)
 
 type Options struct {
+	endpoint                    string
+	secure                      bool
 	tracerPropagators           []propagation.TextMapPropagator
 	tracerExporterOptions       []otlptracegrpc.Option
 	tracerProviderOptions       []sdktrace.TracerProviderOption
@@ -31,6 +33,8 @@ type Options struct {
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
+		endpoint:                    "localhost:4317",
+		secure:                      true,
 		tracerPropagators:           []propagation.TextMapPropagator{},
 		tracerExporterOptions:       []otlptracegrpc.Option{},
 		tracerProviderOptions:       []sdktrace.TracerProviderOption{},
@@ -47,6 +51,18 @@ func NewOptions(opts ...Option) *Options {
 		opt(options)
 	}
 	return options
+}
+
+func WithEndpoint(endpoint string) Option {
+	return func(opts *Options) {
+		opts.endpoint = endpoint
+	}
+}
+
+func WithInsecure() Option {
+	return func(opts *Options) {
+		opts.secure = false
+	}
 }
 
 func WithTracerPropagators(propagators ...propagation.TextMapPropagator) Option {
