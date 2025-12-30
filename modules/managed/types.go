@@ -38,8 +38,6 @@ type ErrChan chan<- error
 
 type StopFn func(ctx context.Context, timeout time.Duration)
 
-type BuildFn[T any] func(ctx context.Context, component Component[T], errChan ErrChan) (StopFn, error)
-
 type Component[T any] struct {
 	name     string
 	internal T
