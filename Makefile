@@ -27,6 +27,7 @@ tidy:
 	cd internal/examples && go mod tidy
 	#cd internal/dlocal && go mod tidy
 	cd modules/common && go mod tidy
+	cd modules/managed && go mod tidy
 	cd modules/maths && go mod tidy
 	cd modules/telemetry/datadog && go mod tidy
 	cd modules/telemetry/otel && go mod tidy

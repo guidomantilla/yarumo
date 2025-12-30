@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
@@ -18,6 +19,7 @@ type Option func(opts *Options)
 type Options struct {
 	endpoint                    string
 	secure                      bool
+	resource                    *resource.Resource
 	tracerPropagators           []propagation.TextMapPropagator
 	tracerExporterOptions       []otlptracegrpc.Option
 	tracerProviderOptions       []sdktrace.TracerProviderOption
@@ -35,6 +37,7 @@ func NewOptions(opts ...Option) *Options {
 	options := &Options{
 		endpoint:                    "localhost:4317",
 		secure:                      true,
+		resource:                    &resource.Resource{},
 		tracerPropagators:           []propagation.TextMapPropagator{},
 		tracerExporterOptions:       []otlptracegrpc.Option{},
 		tracerProviderOptions:       []sdktrace.TracerProviderOption{},
@@ -62,6 +65,12 @@ func WithEndpoint(endpoint string) Option {
 func WithInsecure() Option {
 	return func(opts *Options) {
 		opts.secure = false
+	}
+}
+
+func WithResource(resource *resource.Resource) Option {
+	return func(opts *Options) {
+		opts.resource = resource
 	}
 }
 
