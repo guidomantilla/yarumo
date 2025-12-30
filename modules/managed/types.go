@@ -13,6 +13,12 @@ type Daemon interface {
 	Done() <-chan struct{}
 }
 
+type HttpServer interface {
+	ListenAndServe() error
+	ListenAndServeTLS(certFile string, keyFile string) error
+	Stop(ctx context.Context) error
+}
+
 //
 
 type BaseDaemon interface {
@@ -26,12 +32,6 @@ type CronDaemon interface {
 type GrpcServer interface {
 	HttpServer
 	RegisterService(desc *grpc.ServiceDesc, impl any)
-}
-
-type HttpServer interface {
-	ListenAndServe() error
-	ListenAndServeTLS(certFile string, keyFile string) error
-	Stop(ctx context.Context) error
 }
 
 type ErrChan chan<- error
