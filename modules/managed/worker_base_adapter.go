@@ -5,22 +5,22 @@ import (
 	"sync"
 )
 
-type baseDaemon struct {
+type baseWorker struct {
 	done chan struct{}
 	once sync.Once
 }
 
-func NewBaseDaemon() BaseDaemon {
-	return &baseDaemon{
+func NewBaseWorker() BaseWorker {
+	return &baseWorker{
 		done: make(chan struct{}),
 	}
 }
 
-func (b *baseDaemon) Start() error {
+func (b *baseWorker) Start(_ context.Context) error {
 	return nil
 }
 
-func (b *baseDaemon) Stop(ctx context.Context) error {
+func (b *baseWorker) Stop(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -29,6 +29,6 @@ func (b *baseDaemon) Stop(ctx context.Context) error {
 		return nil
 	}
 }
-func (b *baseDaemon) Done() <-chan struct{} {
+func (b *baseWorker) Done() <-chan struct{} {
 	return b.done
 }

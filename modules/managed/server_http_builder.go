@@ -4,39 +4,39 @@ import (
 	"context"
 	"time"
 
+	commonhttp "github.com/guidomantilla/yarumo/common/http"
+
 	"github.com/rs/zerolog/log"
 )
 
-func BuildBaseServer(ctx context.Context, name string, _ any, errChan ErrChan) (Component[BaseDaemon], StopFn, error) {
+func BuildHttpServer(ctx context.Context, name string, internal commonhttp.Server, errChan ErrChan) (Component[HttpServer], StopFn, error) {
 	log.Ctx(ctx).Info().Str("stage", "startup").Str("component", name).Msg("starting up")
 
-	base := Component[BaseDaemon]{name: name, internal: NewBaseDaemon()}
+	httpServer := Component[HttpServer]{name: name, internal: NewHttpServer(internal)}
 
 	stopFn := func(ctx context.Context, timeout time.Duration) {
 		log.Ctx(ctx).Info().Str("stage", "shut down").Str("component", name).Msg("stopping")
 		defer log.Ctx(ctx).Info().Str("stage", "shut down").Str("component", name).Msg("stopped")
 
-		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
-		defer cancel()
+		timeoutCtx, cancelTimeoutFn := context.WithTimeout(ctx, timeout)
+		defer cancelTimeoutFn()
 
-		err := base.internal.Stop(timeoutCtx)
+		err := httpServer.internal.Stop(timeoutCtx)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Str("stage", "shut down").Str("component", name).Msg("shutdown failed")
 		}
 	}
 
 	go func() {
-		err := base.internal.Start()
+		err := httpServer.internal.ListenAndServe(ctx)
 		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Str("stage", "runtime").Str("component", name).Msg("failed to listen or serve")
 			select {
 			case errChan <- err:
 			default:
 			}
-			return
 		}
-
-		<-base.internal.Done()
 	}()
 
-	return base, stopFn, nil
+	return httpServer, stopFn, nil
 }

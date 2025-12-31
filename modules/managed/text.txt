@@ -1,0 +1,11 @@
+
+managed
+    workers
+    servers
+    consumers
+        kafka
+        rabbitmq
+        nats
+    pollers
+    resources
+

@@ -7,25 +7,25 @@ import (
 	commoncron "github.com/guidomantilla/yarumo/common/cron"
 )
 
-type cronAdapter struct {
+type cronWorker struct {
 	c    commoncron.Scheduler
 	done chan struct{}
 	once sync.Once
 }
 
-func NewCronDaemon(c commoncron.Scheduler) CronDaemon {
-	return &cronAdapter{
+func NewCronWorker(c commoncron.Scheduler) CronWorker {
+	return &cronWorker{
 		c:    c,
 		done: make(chan struct{}),
 	}
 }
 
-func (c *cronAdapter) Start() error {
+func (c *cronWorker) Start(_ context.Context) error {
 	c.c.Start()
 	return nil
 }
 
-func (c *cronAdapter) Stop(ctx context.Context) error {
+func (c *cronWorker) Stop(ctx context.Context) error {
 	stopCtx := c.c.Stop()
 	select {
 	case <-stopCtx.Done():
@@ -36,6 +36,6 @@ func (c *cronAdapter) Stop(ctx context.Context) error {
 	}
 }
 
-func (c *cronAdapter) Done() <-chan struct{} {
+func (c *cronWorker) Done() <-chan struct{} {
 	return c.done
 }

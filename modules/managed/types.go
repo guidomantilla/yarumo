@@ -9,26 +9,26 @@ import (
 	commonhttp "github.com/guidomantilla/yarumo/common/http"
 )
 
-type Daemon interface {
-	Start() error
+type Worker interface {
+	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
 	Done() <-chan struct{}
 }
 
 type HttpServer interface {
-	ListenAndServe() error
-	ListenAndServeTLS(certFile string, keyFile string) error
+	ListenAndServe(ctx context.Context) error
+	ListenAndServeTLS(ctx context.Context, certFile string, keyFile string) error
 	Stop(ctx context.Context) error
 }
 
 //
 
-type BaseDaemon interface {
-	Daemon
+type BaseWorker interface {
+	Worker
 }
 
-type CronDaemon interface {
-	Daemon
+type CronWorker interface {
+	Worker
 }
 
 type GrpcServer interface {
@@ -48,8 +48,8 @@ type Component[T any] struct {
 var (
 	_ BuildFn[commongrpc.Server, GrpcServer]    = BuildGrpcServer
 	_ BuildFn[commonhttp.Server, HttpServer]    = BuildHttpServer
-	_ BuildFn[commoncron.Scheduler, CronDaemon] = BuildCronServer
-	_ BuildFn[any, BaseDaemon]                  = BuildBaseServer
+	_ BuildFn[commoncron.Scheduler, CronWorker] = BuildCronWorker
+	_ BuildFn[any, BaseWorker]                  = BuildBaseWorker
 )
 
 type BuildFn[I any, C any] func(ctx context.Context, name string, internal I, errChan ErrChan) (Component[C], StopFn, error)

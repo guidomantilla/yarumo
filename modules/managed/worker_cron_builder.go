@@ -4,39 +4,41 @@ import (
 	"context"
 	"time"
 
-	commonhttp "github.com/guidomantilla/yarumo/common/http"
-
 	"github.com/rs/zerolog/log"
+
+	commoncron "github.com/guidomantilla/yarumo/common/cron"
 )
 
-func BuildHttpServer(ctx context.Context, name string, internal commonhttp.Server, errChan ErrChan) (Component[HttpServer], StopFn, error) {
+func BuildCronWorker(ctx context.Context, name string, internal commoncron.Scheduler, errChan ErrChan) (Component[CronWorker], StopFn, error) {
 	log.Ctx(ctx).Info().Str("stage", "startup").Str("component", name).Msg("starting up")
 
-	httpServer := Component[HttpServer]{name: name, internal: NewHttpServer(internal)}
+	cronServer := Component[CronWorker]{name: name, internal: NewCronWorker(internal)}
 
 	stopFn := func(ctx context.Context, timeout time.Duration) {
 		log.Ctx(ctx).Info().Str("stage", "shut down").Str("component", name).Msg("stopping")
 		defer log.Ctx(ctx).Info().Str("stage", "shut down").Str("component", name).Msg("stopped")
 
-		timeoutCtx, cancelTimeoutFn := context.WithTimeout(ctx, timeout)
-		defer cancelTimeoutFn()
+		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
 
-		err := httpServer.internal.Stop(timeoutCtx)
+		err := cronServer.internal.Stop(timeoutCtx)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Str("stage", "shut down").Str("component", name).Msg("shutdown failed")
 		}
 	}
 
 	go func() {
-		err := httpServer.internal.ListenAndServe()
+		err := cronServer.internal.Start(ctx)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Str("stage", "runtime").Str("component", name).Msg("failed to listen or serve")
+			log.Ctx(ctx).Error().Err(err).Str("stage", "startup").Str("component", name).Msg("failed to start")
 			select {
 			case errChan <- err:
 			default:
 			}
+			return
 		}
+		<-cronServer.internal.Done()
 	}()
 
-	return httpServer, stopFn, nil
+	return cronServer, stopFn, nil
 }

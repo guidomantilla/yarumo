@@ -19,7 +19,7 @@ func NewHttpServer(h commonhttp.Server) HttpServer {
 	}
 }
 
-func (h *httpAdapter) ListenAndServe() error {
+func (h *httpAdapter) ListenAndServe(_ context.Context) error {
 	err := h.h.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("listen or serve error: %w", err)
@@ -28,7 +28,7 @@ func (h *httpAdapter) ListenAndServe() error {
 	return nil
 }
 
-func (h *httpAdapter) ListenAndServeTLS(certFile string, keyFile string) error {
+func (h *httpAdapter) ListenAndServeTLS(_ context.Context, certFile string, keyFile string) error {
 	err := h.h.ListenAndServeTLS(certFile, keyFile)
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("listen or serve (tls) error: %w", err)

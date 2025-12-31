@@ -28,7 +28,7 @@ func BuildGrpcServer(ctx context.Context, name string, internal commongrpc.Serve
 	}
 
 	go func() {
-		err := grpcServer.internal.ListenAndServe()
+		err := grpcServer.internal.ListenAndServe(ctx)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Str("stage", "startup").Str("component", name).Msg("failed to listen or serve")
 			select {

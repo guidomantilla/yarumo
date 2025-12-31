@@ -23,7 +23,7 @@ func NewGrpcServer(g commongrpc.Server, network string) GrpcServer {
 	}
 }
 
-func (g *grpcAdapter) ListenAndServe() error {
+func (g *grpcAdapter) ListenAndServe(_ context.Context) error {
 	listener, err := net.Listen(g.network, g.g.Address())
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func (g *grpcAdapter) ListenAndServe() error {
 	return nil
 }
 
-func (g *grpcAdapter) ListenAndServeTLS(_ string, _ string) error {
+func (g *grpcAdapter) ListenAndServeTLS(_ context.Context, _ string, _ string) error {
 	return errors.New("not implemented")
 }
 

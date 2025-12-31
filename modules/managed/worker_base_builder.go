@@ -5,14 +5,12 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-
-	commoncron "github.com/guidomantilla/yarumo/common/cron"
 )
 
-func BuildCronServer(ctx context.Context, name string, internal commoncron.Scheduler, errChan ErrChan) (Component[CronDaemon], StopFn, error) {
+func BuildBaseWorker(ctx context.Context, name string, _ any, errChan ErrChan) (Component[BaseWorker], StopFn, error) {
 	log.Ctx(ctx).Info().Str("stage", "startup").Str("component", name).Msg("starting up")
 
-	cronServer := Component[CronDaemon]{name: name, internal: NewCronDaemon(internal)}
+	base := Component[BaseWorker]{name: name, internal: NewBaseWorker()}
 
 	stopFn := func(ctx context.Context, timeout time.Duration) {
 		log.Ctx(ctx).Info().Str("stage", "shut down").Str("component", name).Msg("stopping")
@@ -21,24 +19,24 @@ func BuildCronServer(ctx context.Context, name string, internal commoncron.Sched
 		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		err := cronServer.internal.Stop(timeoutCtx)
+		err := base.internal.Stop(timeoutCtx)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Str("stage", "shut down").Str("component", name).Msg("shutdown failed")
 		}
 	}
 
 	go func() {
-		err := cronServer.internal.Start()
+		err := base.internal.Start(ctx)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Str("stage", "startup").Str("component", name).Msg("failed to start")
 			select {
 			case errChan <- err:
 			default:
 			}
 			return
 		}
-		<-cronServer.internal.Done()
+
+		<-base.internal.Done()
 	}()
 
-	return cronServer, stopFn, nil
+	return base, stopFn, nil
 }
