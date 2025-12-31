@@ -5,13 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	commonhttp "github.com/guidomantilla/yarumo/common/http"
 )
 
 type httpAdapter struct {
-	h *http.Server
+	h commonhttp.Server
 }
 
-func NewHttpServer(h *http.Server) HttpServer {
+func NewHttpServer(h commonhttp.Server) HttpServer {
 	return &httpAdapter{
 		h: h,
 	}

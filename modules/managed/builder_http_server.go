@@ -2,13 +2,14 @@ package managed
 
 import (
 	"context"
-	"net/http"
 	"time"
+
+	commonhttp "github.com/guidomantilla/yarumo/common/http"
 
 	"github.com/rs/zerolog/log"
 )
 
-func BuildHttpServer(ctx context.Context, name string, internal *http.Server, errChan ErrChan) (Component[HttpServer], StopFn, error) {
+func BuildHttpServer(ctx context.Context, name string, internal commonhttp.Server, errChan ErrChan) (Component[HttpServer], StopFn, error) {
 	log.Ctx(ctx).Info().Str("stage", "startup").Str("component", name).Msg("starting up")
 
 	httpServer := Component[HttpServer]{name: name, internal: NewHttpServer(internal)}
