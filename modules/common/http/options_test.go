@@ -21,17 +21,17 @@ func TestNewOptions_DefaultsAndClone(t *testing.T) {
 	}
 
 	// Defaults
-	if o.timeout != 30*time.Second {
-		t.Fatalf("default timeout = %v, want %v", o.timeout, 30*time.Second)
+	if o.clientTimeout != 30*time.Second {
+		t.Fatalf("default timeout = %v, want %v", o.clientTimeout, 30*time.Second)
 	}
-	if o.attempts != 1 {
-		t.Fatalf("default attempts = %d, want 1", o.attempts)
+	if o.clientAttempts != 1 {
+		t.Fatalf("default attempts = %d, want 1", o.clientAttempts)
 	}
-	if o.limiterRate != rate.Inf {
-		t.Fatalf("default limiterRate = %v, want %v", o.limiterRate, rate.Inf)
+	if o.clientLimiterRate != rate.Inf {
+		t.Fatalf("default clientLimiterRate = %v, want %v", o.clientLimiterRate, rate.Inf)
 	}
-	if o.limiterBurst != 0 {
-		t.Fatalf("default limiterBurst = %d, want 0", o.limiterBurst)
+	if o.clientLimiterBurst != 0 {
+		t.Fatalf("default clientLimiterBurst = %d, want 0", o.clientLimiterBurst)
 	}
 
 	// Transport should be a clone of the default one when timeout is non-zero
@@ -40,9 +40,9 @@ func TestNewOptions_DefaultsAndClone(t *testing.T) {
 	if !ok {
 		t.Fatalf("stdhttp.DefaultTransport is not *http.Transport")
 	}
-	gotTr, ok := o.transport.(*stdhttp.Transport)
+	gotTr, ok := o.clientTransport.(*stdhttp.Transport)
 	if !ok {
-		t.Fatalf("options.transport is not *http.Transport: %T", o.transport)
+		t.Fatalf("options.transport is not *http.Transport: %T", o.clientTransport)
 	}
 	if gotTr == defTr {
 		t.Fatalf("transport must be a cloned instance, got same pointer")
@@ -69,14 +69,14 @@ func TestNewOptions_TimeoutAlignmentCapsTransport(t *testing.T) {
 	timeout := 500 * time.Millisecond
 
 	o := NewOptions(
-		WithTransport(orig),
-		WithTimeout(timeout),
+		WithClientTransport(orig),
+		WithClientTimeout(timeout),
 	)
 
 	// Ensure we got a clone and different instance
-	gotTr, ok := o.transport.(*stdhttp.Transport)
+	gotTr, ok := o.clientTransport.(*stdhttp.Transport)
 	if !ok {
-		t.Fatalf("options.transport is not *http.Transport: %T", o.transport)
+		t.Fatalf("options.transport is not *http.Transport: %T", o.clientTransport)
 	}
 	if gotTr == orig {
 		t.Fatalf("transport was not cloned; same pointer returned")
@@ -102,38 +102,38 @@ func TestNewOptions_TimeoutAlignmentCapsTransport(t *testing.T) {
 func TestNewOptions_CustomNonTransportKeepsRoundTripper(t *testing.T) {
 	d := dummyRT{}
 	o := NewOptions(
-		WithTransport(d),
-		WithTimeout(2*time.Second), // alignment should not clone since not *Transport
+		WithClientTransport(d),
+		WithClientTimeout(2*time.Second), // alignment should not clone since not *Transport
 	)
-	if o.transport != d {
+	if o.clientTransport != d {
 		t.Fatalf("expected custom RoundTripper to be kept as-is")
 	}
 }
 
 func TestOptionsSetters_AttemptsTimeoutTransportNil(t *testing.T) {
 	// WithAttempts: only if >1
-	o1 := NewOptions(WithAttempts(1))
-	if o1.attempts != 1 {
-		t.Fatalf("WithAttempts(1) should not change default; got %d", o1.attempts)
+	o1 := NewOptions(WithClientAttempts(1))
+	if o1.clientAttempts != 1 {
+		t.Fatalf("WithAttempts(1) should not change default; got %d", o1.clientAttempts)
 	}
-	o2 := NewOptions(WithAttempts(5))
-	if o2.attempts != 5 {
-		t.Fatalf("WithAttempts(5) not applied; got %d", o2.attempts)
+	o2 := NewOptions(WithClientAttempts(5))
+	if o2.clientAttempts != 5 {
+		t.Fatalf("WithAttempts(5) not applied; got %d", o2.clientAttempts)
 	}
 
 	// WithTimeout: only if >0
-	o3 := NewOptions(WithTimeout(0))
-	if o3.timeout != 30*time.Second {
-		t.Fatalf("WithTimeout(0) should keep default; got %v", o3.timeout)
+	o3 := NewOptions(WithClientTimeout(0))
+	if o3.clientTimeout != 30*time.Second {
+		t.Fatalf("WithTimeout(0) should keep default; got %v", o3.clientTimeout)
 	}
-	o4 := NewOptions(WithTimeout(123 * time.Millisecond))
-	if o4.timeout != 123*time.Millisecond {
-		t.Fatalf("WithTimeout positive not applied; got %v", o4.timeout)
+	o4 := NewOptions(WithClientTimeout(123 * time.Millisecond))
+	if o4.clientTimeout != 123*time.Millisecond {
+		t.Fatalf("WithTimeout positive not applied; got %v", o4.clientTimeout)
 	}
 
 	// WithTransport(nil) is ignored; should stay at default transport (cloned)
-	o5 := NewOptions(WithTransport(nil))
-	if _, ok := o5.transport.(*stdhttp.Transport); !ok {
+	o5 := NewOptions(WithClientTransport(nil))
+	if _, ok := o5.clientTransport.(*stdhttp.Transport); !ok {
 		t.Fatalf("WithTransport(nil) should keep default *http.Transport")
 	}
 }
@@ -146,49 +146,49 @@ func TestOptions_RetryAndLimiter(t *testing.T) {
 
 	// Finite limiter rate without burst triggers hardening (burst normalized to 1)
 	o := NewOptions(
-		WithRetryIf(retryIf),
-		WithRetryHook(retryHook),
-		WithLimiterRate(10), // finite
+		WithClientRetryIf(retryIf),
+		WithClientRetryHook(retryHook),
+		WithClientLimiterRate(10), // finite
 		// no burst provided -> should be normalized to 1
 	)
 
 	// Exercise the stored funcs to ensure assignment
-	if got := o.retryIf(nil); got != true {
+	if got := o.clientRetryIf(nil); got != true {
 		t.Fatalf("retryIf not set or unexpected behavior; got %v", got)
 	}
-	o.retryHook(0, nil)
+	o.clientRetryHook(0, nil)
 	if !calledHook {
 		t.Fatalf("retryHook not set or not invoked")
 	}
 
-	if o.limiterRate != rate.Limit(10) {
-		t.Fatalf("limiterRate = %v, want %v", o.limiterRate, rate.Limit(10))
+	if o.clientLimiterRate != rate.Limit(10) {
+		t.Fatalf("clientLimiterRate = %v, want %v", o.clientLimiterRate, rate.Limit(10))
 	}
-	if o.limiterBurst != 1 {
-		t.Fatalf("limiterBurst hardening failed: got %d, want 1", o.limiterBurst)
+	if o.clientLimiterBurst != 1 {
+		t.Fatalf("clientLimiterBurst hardening failed: got %d, want 1", o.clientLimiterBurst)
 	}
 
 	// When burst > 0, it must be preserved
 	o2 := NewOptions(
-		WithLimiterRate(5),
-		WithLimiterBurst(7),
+		WithClientLimiterRate(5),
+		WithClientLimiterBurst(7),
 	)
-	if o2.limiterRate != rate.Limit(5) {
-		t.Fatalf("limiterRate = %v, want %v", o2.limiterRate, rate.Limit(5))
+	if o2.clientLimiterRate != rate.Limit(5) {
+		t.Fatalf("clientLimiterRate = %v, want %v", o2.clientLimiterRate, rate.Limit(5))
 	}
-	if o2.limiterBurst != 7 {
-		t.Fatalf("limiterBurst should be preserved when >0; got %d", o2.limiterBurst)
+	if o2.clientLimiterBurst != 7 {
+		t.Fatalf("clientLimiterBurst should be preserved when >0; got %d", o2.clientLimiterBurst)
 	}
 
 	// Passing Inf must keep default rate and not trigger hardening
 	o3 := NewOptions(
-		WithLimiterRate(float64(rate.Inf)),
+		WithClientLimiterRate(float64(rate.Inf)),
 	)
-	if o3.limiterRate != rate.Inf {
-		t.Fatalf("limiterRate with Inf should remain Inf; got %v", o3.limiterRate)
+	if o3.clientLimiterRate != rate.Inf {
+		t.Fatalf("clientLimiterRate with Inf should remain Inf; got %v", o3.clientLimiterRate)
 	}
-	if o3.limiterBurst != 0 {
-		t.Fatalf("limiterBurst should remain 0 when rate is Inf; got %d", o3.limiterBurst)
+	if o3.clientLimiterBurst != 0 {
+		t.Fatalf("clientLimiterBurst should remain 0 when rate is Inf; got %d", o3.clientLimiterBurst)
 	}
 
 	// Silence unused import warning for retry package in case signers change
@@ -201,10 +201,10 @@ func TestOptions_WithRetryOnResponse_SetAndIgnoreNil(t *testing.T) {
 
 	// nil should be ignored; non-nil should be applied
 	o := NewOptions(
-		WithRetryOnResponse(nil),
-		WithRetryOnResponse(RetryOnResponseFn(fn)),
+		WithClientRetryOnResponse(nil),
+		WithClientRetryOnResponse(RetryOnResponseFn(fn)),
 	)
-	if !o.retryOnResponse(&stdhttp.Response{StatusCode: 200}) || !called {
+	if !o.clientRetryOnResponse(&stdhttp.Response{StatusCode: 200}) || !called {
 		t.Fatalf("retryOnResponse not set or not invoked")
 	}
 }

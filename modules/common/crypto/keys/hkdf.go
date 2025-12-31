@@ -1,5 +1,6 @@
 package keys
 
+/*
 var (
 	AES_KEY = {name, keysize,allowedKeySizes{16 ,32}}
 	CHACHA20_KEY = {name, keysize,allowedKeySizes{32}}
@@ -11,3 +12,4 @@ var (
 	HKDF_SHA256 = NewMethod("HKDF-SHA256", crypto.SHA256)
 	HKDF_SHA512 = NewMethod("HKDF-SHA512", crypto.SHA512)
 )
+*/

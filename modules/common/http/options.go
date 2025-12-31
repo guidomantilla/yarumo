@@ -1,6 +1,7 @@
 package http
 
 import (
+	"crypto/tls"
 	"net/http"
 	"time"
 
@@ -21,6 +22,13 @@ type Options struct {
 	clientRetryOnResponse RetryOnResponseFn
 	clientLimiterRate     rate.Limit
 	clientLimiterBurst    uint
+
+	serverReadHeaderTimeout time.Duration
+	serverReadTimeout       time.Duration
+	serverWriteTimeout      time.Duration
+	serverIdleTimeout       time.Duration
+	serverMaxHeaderBytes    int
+	serverTLSConfig         *tls.Config
 }
 
 func NewOptions(opts ...Option) *Options {
@@ -33,36 +41,55 @@ func NewOptions(opts ...Option) *Options {
 		clientRetryOnResponse: NoopRetryOnResponse,
 		clientLimiterRate:     rate.Inf, // unlimited - same as not having a limiter
 		clientLimiterBurst:    0,        // unlimited - same as not having a limiter
+
+		serverReadHeaderTimeout: 5 * time.Second,
+		serverReadTimeout:       15 * time.Second,
+		serverWriteTimeout:      15 * time.Second,
+		serverIdleTimeout:       60 * time.Second,
+		serverMaxHeaderBytes:    1 << 20, // 1 MiB
+		serverTLSConfig:         nil,
 	}
 
 	for _, opt := range opts {
 		opt(options)
 	}
 
-	// Hardening: if limiter is enabled (finite rate) and burst <= 0, normalize to a minimal safe burst of 1 to avoid over-restrictive behavior.
-	mustHarden := options.clientLimiterRate != rate.Inf && options.clientLimiterBurst <= 0
-	if mustHarden {
-		options.clientLimiterBurst = 1
+	// client configuration
+	{
+		// Hardening: if limiter is enabled (finite rate) and burst <= 0, normalize to a minimal safe burst of 1 to avoid over-restrictive behavior.
+		mustHarden := options.clientLimiterRate != rate.Inf && options.clientLimiterBurst <= 0
+		if mustHarden {
+			options.clientLimiterBurst = 1
+		}
+
+		// Timeout alignment: cap selected transport timeouts so they do not exceed the client-level timeout.
+		// We only cap non-zero values (0 means no timeout for that hop), and we do not mutate the original transport instance.
+		if utils.NotEmpty(options.clientTimeout) {
+			t, ok := options.clientTransport.(*http.Transport)
+			if ok {
+				clone := t.Clone()
+				clone.TLSHandshakeTimeout = utils.Ternary(clone.TLSHandshakeTimeout > 0 && clone.TLSHandshakeTimeout > options.clientTimeout, options.clientTimeout, clone.TLSHandshakeTimeout)
+				clone.ResponseHeaderTimeout = utils.Ternary(clone.ResponseHeaderTimeout > 0 && clone.ResponseHeaderTimeout > options.clientTimeout, options.clientTimeout, clone.ResponseHeaderTimeout)
+				clone.ExpectContinueTimeout = utils.Ternary(clone.ExpectContinueTimeout > 0 && clone.ExpectContinueTimeout > options.clientTimeout, options.clientTimeout, clone.ExpectContinueTimeout)
+
+				// Note: DialContext timeout cannot be reliably capped here without replacing the dialer/function. We intentionally avoid overriding
+				// DialContext to preserve custom transport.
+				options.clientTransport = clone
+			}
+		}
 	}
 
-	// Timeout alignment: cap selected transport timeouts so they do not exceed the client-level timeout.
-	// We only cap non-zero values (0 means no timeout for that hop), and we do not mutate the original transport instance.
-	if utils.NotEmpty(options.clientTimeout) {
-		t, ok := options.clientTransport.(*http.Transport)
-		if ok {
-			clone := t.Clone()
-			clone.TLSHandshakeTimeout = utils.Ternary(clone.TLSHandshakeTimeout > 0 && clone.TLSHandshakeTimeout > options.clientTimeout, options.clientTimeout, clone.TLSHandshakeTimeout)
-			clone.ResponseHeaderTimeout = utils.Ternary(clone.ResponseHeaderTimeout > 0 && clone.ResponseHeaderTimeout > options.clientTimeout, options.clientTimeout, clone.ResponseHeaderTimeout)
-			clone.ExpectContinueTimeout = utils.Ternary(clone.ExpectContinueTimeout > 0 && clone.ExpectContinueTimeout > options.clientTimeout, options.clientTimeout, clone.ExpectContinueTimeout)
-
-			// Note: DialContext timeout cannot be reliably capped here without replacing the dialer/function. We intentionally avoid overriding
-			// DialContext to preserve custom transport.
-			options.clientTransport = clone
-		}
+	// server configuration
+	{
+		// Nothing to do here yet
 	}
 
 	return options
 }
+
+/*
+ * Client configuration
+ */
 
 func WithClientTimeout(clientTimeout time.Duration) Option {
 	return func(opts *Options) {
@@ -124,6 +151,58 @@ func WithClientLimiterBurst(clientLimiterBurst uint) Option {
 	return func(opts *Options) {
 		if clientLimiterBurst > 0 {
 			opts.clientLimiterBurst = clientLimiterBurst
+		}
+	}
+}
+
+/*
+ * Server configuration
+ */
+
+func WithServerReadHeaderTimeout(serverReadHeaderTimeout time.Duration) Option {
+	return func(opts *Options) {
+		if serverReadHeaderTimeout > 0 {
+			opts.serverReadHeaderTimeout = serverReadHeaderTimeout
+		}
+	}
+}
+
+func WithServerReadTimeout(serverReadTimeout time.Duration) Option {
+	return func(opts *Options) {
+		if serverReadTimeout > 0 {
+			opts.serverReadTimeout = serverReadTimeout
+		}
+	}
+}
+
+func WithServerWriteTimeout(serverWriteTimeout time.Duration) Option {
+	return func(opts *Options) {
+		if serverWriteTimeout > 0 {
+			opts.serverWriteTimeout = serverWriteTimeout
+		}
+	}
+}
+
+func WithServerIdleTimeout(serverIdleTimeout time.Duration) Option {
+	return func(opts *Options) {
+		if serverIdleTimeout > 0 {
+			opts.serverIdleTimeout = serverIdleTimeout
+		}
+	}
+}
+
+func WithServerMaxHeaderBytes(serverMaxHeaderBytes int) Option {
+	return func(opts *Options) {
+		if serverMaxHeaderBytes > 0 {
+			opts.serverMaxHeaderBytes = serverMaxHeaderBytes
+		}
+	}
+}
+
+func WithServerTLSConfig(serverTLSConfig *tls.Config) Option {
+	return func(opts *Options) {
+		if serverTLSConfig != nil {
+			opts.serverTLSConfig = serverTLSConfig
 		}
 	}
 }
