@@ -109,6 +109,7 @@ endef
 ##
 update-dependencies:
 	cd modules/common && go get -u ./... && go get -t -u ./... && go mod tidy
+	cd modules/config && go get -u ./... && go get -t -u ./... && go mod tidy
 	cd modules/managed && go get -u ./... && go get -t -u ./... && go mod tidy
 	cd modules/maths && go get -u ./... && go get -t -u ./... && go mod tidy
     #cd modules/security && go mod tidy
