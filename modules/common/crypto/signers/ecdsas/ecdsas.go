@@ -26,6 +26,7 @@ type Method struct {
 
 func NewMethod(name string, kind crypto.Hash, keySize int, curve elliptic.Curve, options ...Option) *Method {
 	opts := NewOptions(options...)
+
 	return &Method{
 		name:     name,
 		kind:     kind,

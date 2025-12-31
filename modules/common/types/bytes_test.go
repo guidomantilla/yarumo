@@ -47,15 +47,19 @@ func TestBytes_Encodings(t *testing.T) {
 			if got := tt.in.ToHex(); got != tt.hex {
 				t.Fatalf("ToHex() = %q, want %q", got, tt.hex)
 			}
+
 			if got := tt.in.ToBase64Std(); got != tt.b64Std {
 				t.Fatalf("ToBase64Std() = %q, want %q", got, tt.b64Std)
 			}
+
 			if got := tt.in.ToBase64RawStd(); got != tt.b64RawStd {
 				t.Fatalf("ToBase64RawStd() = %q, want %q", got, tt.b64RawStd)
 			}
+
 			if got := tt.in.ToBase64Url(); got != tt.b64URL {
 				t.Fatalf("ToBase64Url() = %q, want %q", got, tt.b64URL)
 			}
+
 			if got := tt.in.ToBase64RawUrl(); got != tt.b64RawURL {
 				t.Fatalf("ToBase64RawUrl() = %q, want %q", got, tt.b64RawURL)
 			}

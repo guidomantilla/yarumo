@@ -11,9 +11,11 @@ func key(method *Method) (types.Bytes, error) {
 	if method == nil {
 		return nil, ErrMethodInvalid
 	}
+
 	if utils.NotIn(method.keySize, 16, 32) {
 		return nil, ErrKeySizeInvalid
 	}
+
 	if utils.NotIn(method.nonceSize, 12, 24) {
 		return nil, ErrNonceSizeInvalid
 	}
@@ -25,6 +27,7 @@ func encrypt(method *Method, key types.Bytes, data types.Bytes, aad types.Bytes)
 	if method == nil {
 		return nil, ErrMethodInvalid
 	}
+
 	if len(key) != method.keySize {
 		return nil, ErrKeyInvalid
 	}
@@ -48,9 +51,11 @@ func decrypt(method *Method, key types.Bytes, ciphered types.Bytes, aad types.By
 	if method == nil {
 		return nil, ErrMethodInvalid
 	}
+
 	if len(key) != method.keySize {
 		return nil, ErrKeyInvalid
 	}
+
 	if len(ciphered) < method.nonceSize {
 		return nil, ErrCiphertextTooShort
 	}

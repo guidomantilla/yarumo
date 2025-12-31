@@ -22,6 +22,7 @@ type Error struct {
 func (e *Error) Error() string {
 	assert.NotNil(e, "error is nil")
 	assert.NotNil(e.Err, "internal error is nil")
+
 	return fmt.Sprintf("uid %s error: %s", e.Type, e.Err)
 }
 

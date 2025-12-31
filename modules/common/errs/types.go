@@ -14,6 +14,7 @@ type TypedError struct {
 func (e *TypedError) Error() string {
 	assert.NotNil(e, "error is nil")
 	assert.NotNil(e.Err, "internal error is nil")
+
 	return fmt.Sprintf("%s error: %s", e.Type, e.Err)
 }
 

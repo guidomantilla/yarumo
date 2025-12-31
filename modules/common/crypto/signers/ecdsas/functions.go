@@ -30,14 +30,17 @@ func sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 	if method == nil {
 		return nil, ErrMethodIsNil
 	}
+
 	if key == nil {
 		return nil, ErrKeyIsNil
 	}
+
 	if key.Curve != method.curve {
 		return nil, ErrKeyCurveIsInvalid
 	}
 
 	h := hashes.Hash(method.kind, data)
+
 	switch format {
 	case RS:
 		r, s, err := ecdsa.Sign(rand.Reader, key, h)
@@ -50,6 +53,7 @@ func sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 		out := make([]byte, 2*keyBytes)
 		r.FillBytes(out[0:keyBytes]) // r is assigned to the first half of output.
 		s.FillBytes(out[keyBytes:])  // s is assigned to the second half of output.
+
 		return out, nil
 
 	case ASN1:
@@ -57,6 +61,7 @@ func sign(method *Method, key *ecdsa.PrivateKey, data types.Bytes, format Format
 		if err != nil {
 			return nil, errs.Wrap(ErrSignFailed, err)
 		}
+
 		return out, nil
 	}
 
@@ -67,23 +72,28 @@ func verify(method *Method, key *ecdsa.PublicKey, signature types.Bytes, data ty
 	if method == nil {
 		return false, ErrMethodIsNil
 	}
+
 	if key == nil {
 		return false, ErrKeyIsNil
 	}
+
 	if key.Curve != method.curve {
 		return false, ErrKeyCurveIsInvalid
 	}
 
 	h := hashes.Hash(method.kind, data)
+
 	switch format {
 	case RS:
 		keyBytes := method.keySize
 		if len(signature) != 2*keyBytes {
 			return false, ErrSignatureInvalid
 		}
+
 		r := new(big.Int).SetBytes(signature[0:keyBytes])
 		s := new(big.Int).SetBytes(signature[keyBytes:])
 		ok := ecdsa.Verify(key, h, r, s)
+
 		return ok, nil
 	case ASN1:
 		ok := ecdsa.VerifyASN1(key, h, signature)

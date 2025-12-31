@@ -11,7 +11,9 @@ import (
 func withRandInt(temp func(reader io.Reader, max *big.Int) (*big.Int, error), fn func()) {
 	orig := randInt
 	randInt = temp
+
 	defer func() { randInt = orig }()
+
 	fn()
 }
 
@@ -30,6 +32,7 @@ func TestNumber_Normal(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
+
 		if n < 0 || n >= max {
 			t.Fatalf("number out of range: %d not in [0,%d)", n, max)
 		}
@@ -52,6 +55,7 @@ func TestString_EmptyInputs(t *testing.T) {
 	if err != nil || s != "" {
 		t.Fatalf("expected empty string and nil error, got %q, %v", s, err)
 	}
+
 	s, err = String(5, "")
 	if err != nil || s != "" {
 		t.Fatalf("expected empty string and nil error, got %q, %v", s, err)
@@ -83,6 +87,7 @@ func containsAll(set string, s string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -92,6 +97,7 @@ func stringsContainsRune(set string, r rune) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -114,9 +120,11 @@ func TestTextHelpers(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: unexpected error: %v", tc.name, err)
 		}
+
 		if len(got) != 32 {
 			t.Fatalf("%s: expected length 32, got %d", tc.name, len(got))
 		}
+
 		if !containsAll(tc.set, got) {
 			t.Fatalf("%s: generated string contains characters outside the set", tc.name)
 		}

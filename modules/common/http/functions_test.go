@@ -27,7 +27,8 @@ func TestNoopRetryOnResponse_AlwaysFalse(t *testing.T) {
 	if got := NoopRetryOnResponse(nil); got {
 		t.Fatalf("NoopRetryOnResponse(nil) = %v, want false", got)
 	}
-	if got := NoopRetryOnResponse(&http.Response{StatusCode: 200}); got {
+
+	if got := NoopRetryOnResponse(&http.Response{StatusCode: http.StatusOK}); got {
 		t.Fatalf("NoopRetryOnResponse(res) = %v, want false", got)
 	}
 }
@@ -39,12 +40,12 @@ func TestRetryOn5xxAnd429Response(t *testing.T) {
 		want bool
 	}{
 		{"nil", nil, false},
-		{"200", &http.Response{StatusCode: 200}, false},
-		{"400", &http.Response{StatusCode: 400}, false},
+		{"200", &http.Response{StatusCode: http.StatusOK}, false},
+		{"400", &http.Response{StatusCode: http.StatusBadRequest}, false},
 		{"499", &http.Response{StatusCode: 499}, false},
 		{"429", &http.Response{StatusCode: http.StatusTooManyRequests}, true},
-		{"500", &http.Response{StatusCode: 500}, true},
-		{"503", &http.Response{StatusCode: 503}, true},
+		{"500", &http.Response{StatusCode: http.StatusInternalServerError}, true},
+		{"503", &http.Response{StatusCode: http.StatusServiceUnavailable}, true},
 		{"599", &http.Response{StatusCode: 599}, true},
 	}
 	for _, tc := range cases {
@@ -98,6 +99,7 @@ func TestNoopDo_ReturnsErrDoRequestFailed(t *testing.T) {
 	if res != nil {
 		t.Fatalf("NoopDo returned non-nil response: %+v", res)
 	}
+
 	if err == nil || !errors.Is(err, ErrHttpRequestFailed) {
 		t.Fatalf("NoopDo error = %v, want wrapping ErrHttpRequestFailed", err)
 	}
@@ -106,6 +108,7 @@ func TestNoopDo_ReturnsErrDoRequestFailed(t *testing.T) {
 func TestDo_UsesDefaultClientTransport(t *testing.T) {
 	// Swap the default client's transport with a success round tripper and ensure Do delegates.
 	oldTransport := http.DefaultTransport
+
 	t.Cleanup(func() { http.DefaultTransport = oldTransport })
 
 	http.DefaultTransport = successRT{body: ""}
@@ -115,12 +118,14 @@ func TestDo_UsesDefaultClientTransport(t *testing.T) {
 		t.Fatalf("new request: %v", err)
 	}
 
-	res, err := Do(req) // nolint:gosec
+	res, err := Do(req) //nolint:gosec
 	if err != nil {
 		t.Fatalf("Do returned error: %v", err)
 	}
-	if res == nil || res.StatusCode != 200 {
+
+	if res == nil || res.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected response: %+v", res)
 	}
+
 	_ = res.Body.Close()
 }

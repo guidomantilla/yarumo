@@ -19,6 +19,7 @@ func TestOptions_DefaultsAndOverride(t *testing.T) {
 	}
 	opts = NewOptions(WithDoFn(do))
 	_, _ = opts.DoFn((&http.Request{})) // nil-safe route not used, but call anyway
+
 	if !called {
 		t.Fatalf("WithDoFn did not override DoFn")
 	}

@@ -13,10 +13,12 @@ func TestHTTPError_ErrorFormatting_NonNil(t *testing.T) {
 	e := &Error{TypedError: cerrs.TypedError{Type: RequestType, Err: inner}}
 
 	got := e.Error()
+
 	wantPrefix := "http request " + RequestType + " error: "
 	if !strings.HasPrefix(got, wantPrefix) {
 		t.Fatalf("Error() prefix = %q, want prefix %q", got, wantPrefix)
 	}
+
 	if !strings.Contains(got, "boom") {
 		t.Fatalf("Error() should contain inner error message; got %q", got)
 	}
@@ -26,7 +28,8 @@ func TestHTTPError_NilInner_UnwrapIsNilAndNoErrorCall(t *testing.T) {
 	// Do not call Error() because current implementation fatals on nil inner.
 	// Still, Unwrap should be nil via the embedded TypedError.
 	e := &Error{TypedError: cerrs.TypedError{Type: RequestType}}
-	if u := errors.Unwrap(e); u != nil {
+	u := errors.Unwrap(e)
+	if u != nil {
 		t.Fatalf("errors.Unwrap(e) = %v, want nil", u)
 	}
 }
@@ -45,6 +48,7 @@ func TestErrDoCall_JoinAndType(t *testing.T) {
 	if !errors.As(err, &he) || he == nil {
 		t.Fatalf("errors.As to *Error failed: %T", err)
 	}
+
 	if he.Type != RequestType {
 		t.Fatalf("Type = %q, want %q", he.Type, RequestType)
 	}
@@ -68,7 +72,8 @@ func TestErrDoCall_NoArgs_ErrHttpRequestFailedInner(t *testing.T) {
 	}
 
 	// Unwrap should be nil because TypedError.Err is ErrHttpRequestFailed
-	if u := errors.Unwrap(err); !errors.Is(u, ErrHttpRequestFailed) {
+	u := errors.Unwrap(err)
+	if !errors.Is(u, ErrHttpRequestFailed) {
 		t.Fatalf("errors.Unwrap() = %v, want nil", u)
 	}
 
@@ -86,6 +91,7 @@ func TestSentinelErrors(t *testing.T) {
 func TestStatusCodeError_Error_NonNil(t *testing.T) {
 	e := &StatusCodeError{StatusCode: 503}
 	got := e.Error()
+
 	want := "http retryable status code: 503"
 	if got != want {
 		t.Fatalf("StatusCodeError.Error() = %q, want %q", got, want)

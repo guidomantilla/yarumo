@@ -11,6 +11,7 @@ import (
 
 func main() {
 	var key any
+
 	data := []byte("test data")
 
 	/*
@@ -56,5 +57,4 @@ func main() {
 	verify, err = ecdsas.ECDSA_with_SHA512_over_P521.Verify(&key.(*ecdsa.PrivateKey).PublicKey, signature, data, ecdsas.RS)
 	println(err)
 	println(fmt.Sprintf("ECDSA_with_SHA512_over_P521 Verify: %v", verify))
-
 }

@@ -1,6 +1,6 @@
 // Package http provides a small wrapper around the standard *http.Client and *http.Server.
 //
-// This custom implementation/extention of *http.Client optionally adds rate limiting and retry capabilities while keeping
+// This custom implementation/extension of *http.Client optionally adds rate limiting and retry capabilities while keeping
 // full API compatibility through a minimal Client interface.
 //
 // Timeouts alignment:
@@ -13,7 +13,7 @@
 // Responsibility: the caller must close res.Body when err == nil.
 // Concurrency: implementations must be safe for concurrent use by multiple goroutines.
 //
-// This custom implementation/extention of *http.Server ??
+// This custom implementation/extension of *http.Server ??
 package http
 
 import (

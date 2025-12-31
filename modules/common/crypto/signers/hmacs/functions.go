@@ -11,6 +11,7 @@ func key(method *Method) (types.Bytes, error) {
 	if method == nil {
 		return nil, ErrMethodIsNil
 	}
+
 	return random.Bytes(method.keySize), nil
 }
 
@@ -18,17 +19,20 @@ func digest(method *Method, key types.Bytes, data types.Bytes) (types.Bytes, err
 	if method == nil {
 		return nil, ErrMethodIsNil
 	}
+
 	if !method.kind.Available() {
 		return nil, ErrHashNotAvailable
 	}
 
 	h := hmac.New(method.kind.New, key)
+
 	_, err := h.Write(data)
 	if err != nil {
 		return nil, err
 	}
 
 	out := h.Sum(nil)
+
 	return out, nil
 }
 
@@ -36,6 +40,7 @@ func validate(method *Method, key types.Bytes, digest_ types.Bytes, data types.B
 	if method == nil {
 		return false, ErrMethodIsNil
 	}
+
 	if !method.kind.Available() {
 		return false, ErrHashNotAvailable
 	}
@@ -46,5 +51,6 @@ func validate(method *Method, key types.Bytes, digest_ types.Bytes, data types.B
 	}
 
 	ok := hmac.Equal(digest_, calculated)
+
 	return ok, nil
 }

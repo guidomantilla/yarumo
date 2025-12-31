@@ -8,6 +8,7 @@ import (
 
 func NewServer(ctx context.Context, host string, port string, handler http.Handler, options ...Option) Server {
 	opts := NewOptions(options...)
+
 	return &http.Server{
 		BaseContext: func(net.Listener) context.Context {
 			return ctx

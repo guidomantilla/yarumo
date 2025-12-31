@@ -12,10 +12,12 @@ import (
 // startTCPServer starts a local TCP server and returns the listener and its address string.
 func startTCPServer(t *testing.T) (net.Listener, string) {
 	t.Helper()
+
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatalf("failed to start tcp server: %v", err)
 	}
+
 	addr := ln.Addr().String()
 
 	// Accept a single connection in the background to satisfy Dial and then keep it open until test ends.
@@ -34,7 +36,9 @@ func startTCPServer(t *testing.T) (net.Listener, string) {
 func TestConfigure_DefaultInvalidLevel(t *testing.T) {
 	// Ensure to clean viper state and restore global level afterward
 	viper.Reset()
+
 	prev := zerolog.GlobalLevel()
+
 	t.Cleanup(func() {
 		zerolog.SetGlobalLevel(prev)
 		viper.Reset()
@@ -53,7 +57,9 @@ func TestConfigure_DefaultInvalidLevel(t *testing.T) {
 
 func TestConfigure_DebugModeWithNameVersion(t *testing.T) {
 	viper.Reset()
+
 	prev := zerolog.GlobalLevel()
+
 	t.Cleanup(func() {
 		zerolog.SetGlobalLevel(prev)
 		viper.Reset()
@@ -74,7 +80,9 @@ func TestConfigure_DebugModeWithNameVersion(t *testing.T) {
 
 func TestConfigure_WithLogstashAddress(t *testing.T) {
 	viper.Reset()
+
 	prev := zerolog.GlobalLevel()
+
 	t.Cleanup(func() {
 		zerolog.SetGlobalLevel(prev)
 		viper.Reset()

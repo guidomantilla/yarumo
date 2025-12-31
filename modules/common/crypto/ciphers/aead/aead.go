@@ -25,6 +25,7 @@ type Method struct {
 
 func NewMethod(name string, keySize, nonceSize int, kind AeadFn, options ...Option) *Method {
 	opts := NewOptions(options...)
+
 	return &Method{
 		name:      name,
 		keySize:   keySize,

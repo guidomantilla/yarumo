@@ -72,6 +72,7 @@ func NoopDo(req *http.Request) (*http.Response, error) {
 		Body:       io.NopCloser(bytes.NewReader(nil)),
 		Header:     make(http.Header),
 	}
+
 	return res, nil
 }
 
@@ -89,12 +90,15 @@ func RetryOn5xxAnd429Response(res *http.Response) bool {
 	if res == nil {
 		return false
 	}
+
 	if res.StatusCode == http.StatusTooManyRequests {
 		return true
 	}
+
 	if res.StatusCode >= 500 && res.StatusCode <= 599 {
 		return true
 	}
+
 	return false
 }
 

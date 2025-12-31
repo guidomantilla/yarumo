@@ -11,6 +11,7 @@ func IsNil(x any) bool {
 	if x == nil {
 		return true
 	}
+
 	v := reflect.ValueOf(x)
 	switch v.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.Slice, reflect.Array, reflect.Interface:
@@ -32,11 +33,13 @@ func IsEmpty(x any) bool {
 	}
 
 	val := reflect.ValueOf(x)
+
 	kind := val.Kind()
 	if kind == reflect.Ptr {
 		if val.IsNil() {
 			return true
 		}
+
 		val = val.Elem()
 	}
 
@@ -58,6 +61,7 @@ func IsPointer(v any) bool {
 	if IsNil(v) {
 		return false
 	}
+
 	return reflect.ValueOf(v).Kind() == reflect.Ptr
 }
 
@@ -103,6 +107,7 @@ func ToSlicePtr[T any](collection []T) []*T {
 	for i := range collection {
 		result[i] = &collection[i]
 	}
+
 	return result
 }
 
@@ -113,6 +118,7 @@ func FromSlicePtr[T any](collection []*T) []T {
 		if x == nil {
 			return Zero[T]()
 		}
+
 		return *x
 	})
 }
@@ -133,10 +139,12 @@ func IsType(v any, typeName string) bool {
 	if v == nil {
 		return false
 	}
+
 	if IsPointer(v) {
 		v = reflect.ValueOf(v).Elem().Interface()
 		return reflect.TypeOf(v).String() == typeName
 	}
+
 	return reflect.TypeOf(v).String() == typeName
 }
 
@@ -187,6 +195,7 @@ func IsMap(x any) bool {
 	if x == nil {
 		return false
 	}
+
 	val := reflect.ValueOf(x)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()

@@ -2,6 +2,7 @@ package uids
 
 import (
 	"errors"
+	"maps"
 	"strings"
 	"testing"
 )
@@ -9,31 +10,31 @@ import (
 // helper to snapshot and restore the global methods map for isolation
 func snapshotMethods() map[string]UID {
 	cp := make(map[string]UID, len(methods))
-	for k, v := range methods {
-		cp[k] = v
-	}
+	maps.Copy(cp, methods)
+
 	return cp
 }
 
 func restoreMethods(m map[string]UID) {
 	// replace the global map with the snapshot
 	methods = make(map[string]UID, len(m))
-	for k, v := range m {
-		methods[k] = v
-	}
+	maps.Copy(methods, m)
 }
 
 func TestNewUID_Name_Generate(t *testing.T) {
 	const expected = "fixed-id"
+
 	fn := func() string { return expected }
 
 	uid := NewUID("TEST", fn)
 	if uid == nil {
 		t.Fatalf("NewUID returned nil")
 	}
+
 	if uid.Name() != "TEST" {
 		t.Fatalf("Name() = %q, want %q", uid.Name(), "TEST")
 	}
+
 	if got := uid.Generate(); got != expected {
 		t.Fatalf("Generate() = %q, want %q", got, expected)
 	}
@@ -71,6 +72,7 @@ func TestGetSupportedAndRegister(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get(UUIDv4) error: %v", err)
 	}
+
 	if uid == nil || uid.Name() != "UUIDv4" {
 		t.Fatalf("Get(UUIDv4) returned wrong UID: %+v", uid)
 	}
@@ -80,6 +82,7 @@ func TestGetSupportedAndRegister(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error for unknown UID name")
 	}
+
 	var e *Error
 	if !errors.As(err, &e) {
 		t.Fatalf("expected *Error, got %T", err)
@@ -94,6 +97,7 @@ func TestGetSupportedAndRegister(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get(TESTID) error: %v", err)
 	}
+
 	if got == nil || got.Generate() != "xyz" {
 		t.Fatalf("retrieved UID not working, got: %+v, gen: %q", got, got.Generate())
 	}
@@ -101,12 +105,14 @@ func TestGetSupportedAndRegister(t *testing.T) {
 	// Ensure Supported includes the new one
 	list := Supported()
 	found := false
+
 	for _, u := range list {
 		if u.name == "TESTID" {
 			found = true
 			break
 		}
 	}
+
 	if !found {
 		t.Fatalf("Supported() does not include TESTID")
 	}

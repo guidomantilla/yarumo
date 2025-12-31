@@ -26,6 +26,7 @@ var randInt = rand.Int
 func Bytes(size int) types.Bytes {
 	key := make([]byte, size)
 	_, _ = rand.Read(key)
+
 	return key
 }
 
@@ -35,6 +36,7 @@ func Number(max int64) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return n.Int64(), nil
 }
 
@@ -50,11 +52,12 @@ func String(size int, charset string) (string, error) {
 	var out strings.Builder
 	out.Grow(size)
 
-	for i := 0; i < size; i++ {
+	for range size {
 		random, err := Number(charsetLen)
 		if err != nil {
 			return "", err
 		}
+
 		out.WriteRune(charsetRunes[random])
 	}
 

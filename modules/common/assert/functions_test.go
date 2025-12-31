@@ -46,6 +46,7 @@ var testSink *logSink
 // helper to check that provided text is present in the sink
 func mustContain(t *testing.T, want string) {
 	t.Helper()
+
 	got := testSink.String()
 	if !strings.Contains(got, want) {
 		t.Fatalf("expected log to contain %q, got: %s", want, got)
@@ -55,6 +56,7 @@ func mustContain(t *testing.T, want string) {
 // helper to ensure that no logs were written
 func mustBeEmpty(t *testing.T) {
 	t.Helper()
+
 	if s := testSink.String(); s != "" {
 		t.Fatalf("expected no logs, got: %s", s)
 	}
@@ -69,6 +71,7 @@ func TestAssertions_LogBehavior(t *testing.T) {
 	testSink.Reset()
 	func() {
 		defer func() { _ = recover() }()
+
 		NotEmpty("", "empty error")
 	}()
 	mustContain(t, "empty error")
@@ -81,6 +84,7 @@ func TestAssertions_LogBehavior(t *testing.T) {
 	testSink.Reset()
 	func() {
 		defer func() { _ = recover() }()
+
 		NotNil(nil, "nil error")
 	}()
 	mustContain(t, "nil error")
@@ -93,6 +97,7 @@ func TestAssertions_LogBehavior(t *testing.T) {
 	testSink.Reset()
 	func() {
 		defer func() { _ = recover() }()
+
 		Equal(10, 11, "equal error")
 	}()
 	mustContain(t, "equal error")
@@ -105,6 +110,7 @@ func TestAssertions_LogBehavior(t *testing.T) {
 	testSink.Reset()
 	func() {
 		defer func() { _ = recover() }()
+
 		NotEqual(10, 10, "not equal error")
 	}()
 	mustContain(t, "not equal error")
@@ -117,6 +123,7 @@ func TestAssertions_LogBehavior(t *testing.T) {
 	testSink.Reset()
 	func() {
 		defer func() { _ = recover() }()
+
 		True(false, "true error")
 	}()
 	mustContain(t, "true error")
@@ -129,6 +136,7 @@ func TestAssertions_LogBehavior(t *testing.T) {
 	testSink.Reset()
 	func() {
 		defer func() { _ = recover() }()
+
 		False(true, "false error")
 	}()
 	mustContain(t, "false error")

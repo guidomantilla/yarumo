@@ -13,18 +13,20 @@ import (
 )
 
 func Configure(name string, version string) zerolog.Logger {
-
 	writers := []io.Writer{os.Stderr}
+
 	if viper.IsSet("LOGSTASH_ADDRESS") {
 		conn, err := net.Dial("tcp", viper.GetString("LOGSTASH_ADDRESS"))
 		if err == nil {
 			writers = append(writers, conn)
 		}
 	}
+
 	logger := zerolog.New(zerolog.MultiLevelWriter(writers...)).With()
 	if utils.NotEmpty(name) {
 		logger = logger.Str("name", name)
 	}
+
 	if utils.NotEmpty(version) {
 		logger = logger.Str("version", version)
 	}
@@ -38,6 +40,7 @@ func Configure(name string, version string) zerolog.Logger {
 	if err != nil {
 		level = zerolog.InfoLevel
 	}
+
 	if level >= zerolog.TraceLevel && level < zerolog.Disabled {
 		zerolog.SetGlobalLevel(level)
 	}
@@ -54,5 +57,6 @@ func Configure(name string, version string) zerolog.Logger {
 	// zerolog.FloatingPointPrecision = precision
 
 	log.Logger = logger.Timestamp().Logger()
+
 	return log.Logger
 }

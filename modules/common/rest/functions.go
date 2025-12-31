@@ -23,12 +23,14 @@ func Call[T any](ctx context.Context, spec *RequestSpec, options ...Option) (*Re
 	}
 
 	opts := NewOptions(options...)
+
 	req, err := spec.Build(ctx)
 	if err != nil {
 		return nil, ErrCall(err)
 	}
 
 	start := time.Now()
+
 	resp, err := opts.DoFn(req)
 	if err != nil {
 		return nil, ErrCall(err)
@@ -68,6 +70,7 @@ func isJSONMediaType(mediaType string) bool {
 	if utils.Equal(mediaType, "application/json") {
 		return true
 	}
+
 	return strings.HasSuffix(mediaType, "+json")
 }
 
@@ -102,6 +105,7 @@ func decodeResponseBody[T any](body []byte, statusCode int, contentType string) 
 		if err != nil {
 			return zero, err
 		}
+
 		return decoded, nil
 	}
 

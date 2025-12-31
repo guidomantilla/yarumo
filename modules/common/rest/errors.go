@@ -24,6 +24,7 @@ type Error struct {
 func (e *Error) Error() string {
 	assert.NotNil(e, "error is nil")
 	assert.NotNil(e.Err, "internal error is nil")
+
 	return fmt.Sprintf("rest request %s error: %s", e.Type, e.Err)
 }
 
@@ -46,6 +47,7 @@ type DecodeResponseError[T any] struct {
 func (e *DecodeResponseError[T]) Error() string {
 	assert.NotNil(e, "error is nil")
 	assert.NotNil(e.T, "type is nil")
+
 	return fmt.Sprintf("content type %s not supported for type  %T", e.ContentType, e.T)
 }
 

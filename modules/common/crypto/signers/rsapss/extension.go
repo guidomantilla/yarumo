@@ -26,6 +26,7 @@ func Get(name string) (*Method, error) {
 	if !ok {
 		return nil, ErrAlgorithmNotSupported(name)
 	}
+
 	return &alg, nil
 }
 
@@ -37,5 +38,6 @@ func Supported() []Method {
 	for _, method := range methods {
 		list = append(list, method)
 	}
+
 	return list
 }

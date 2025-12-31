@@ -11,9 +11,11 @@ func TestNewOptions_Defaults(t *testing.T) {
 	if o == nil {
 		t.Fatalf("NewOptions returned nil")
 	}
+
 	if o.charset != AllCharset {
 		t.Fatalf("default charset = %q, want %q", o.charset, AllCharset)
 	}
+
 	if o.lang != language.English {
 		t.Fatalf("default language = %v, want %v", o.lang, language.English)
 	}
@@ -48,6 +50,7 @@ func TestCombinedOptions_OrderAndCoexistence(t *testing.T) {
 	if o.charset != "UTF-8" {
 		t.Fatalf("combined: charset = %q, want %q", o.charset, "UTF-8")
 	}
+
 	if o.lang != language.German {
 		t.Fatalf("combined: language = %v, want %v", o.lang, language.German)
 	}

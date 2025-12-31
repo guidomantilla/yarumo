@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	data := []byte("test data")
 
 	hash := hashes.BLAKE2b_256.Hash(data)
@@ -21,5 +20,4 @@ func main() {
 	hash = hashes.Hash(10000, nil)
 	println(hash.ToHex())
 	println(hash.ToBase64Std())
-
 }

@@ -15,7 +15,7 @@ func TestErrorFormatting(t *testing.T) {
 }
 
 func TestHTTPErrorFormatting(t *testing.T) {
-	he := &HTTPError{StatusCode: 418, Status: http.StatusText(418)}
+	he := &HTTPError{StatusCode: 418, Status: http.StatusText(http.StatusTeapot)}
 	if !strings.Contains(he.Error(), "unexpected status code 418") {
 		t.Fatalf("unexpected http error string: %s", he.Error())
 	}
@@ -24,6 +24,7 @@ func TestHTTPErrorFormatting(t *testing.T) {
 func TestDecodeResponseErrorFormatting(t *testing.T) {
 	// Use a non-pointer generic type to satisfy assert.NotNil(e.T)
 	de := &DecodeResponseError[sample]{ContentType: "text/plain", T: sample{}}
+
 	s := de.Error()
 	if !strings.Contains(s, "content type text/plain not supported") {
 		t.Fatalf("unexpected decode error string: %s", s)

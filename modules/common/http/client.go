@@ -28,6 +28,7 @@ var (
 // It is safe to use concurrently.
 type client struct {
 	http.Client
+
 	attempts        uint
 	retryIf         retry.RetryIfFunc
 	retryHook       retry.OnRetryFunc
@@ -42,6 +43,7 @@ type client struct {
 // If limiterRate is finite and limiterBurst <= 0, it is normalized to burst=1.
 func NewClient(options ...Option) Client {
 	opts := NewOptions(options...)
+
 	return &client{
 		Client: http.Client{
 			Timeout:   opts.clientTimeout,
@@ -50,7 +52,7 @@ func NewClient(options ...Option) Client {
 		attempts:        opts.clientAttempts,
 		retryIf:         opts.clientRetryIf,
 		retryHook:       opts.clientRetryHook,
-		limiter:         rate.NewLimiter(opts.clientLimiterRate, int(opts.clientLimiterRate)), //nolint:gosec // disable G115
+		limiter:         rate.NewLimiter(opts.clientLimiterRate, int(opts.clientLimiterRate)),
 		retryOnResponse: opts.clientRetryOnResponse,
 	}
 }
@@ -93,6 +95,7 @@ func (c *client) Do(req *http.Request) (*http.Response, error) {
 			if err != nil {
 				return nil, ErrDo(ErrHttpGetBodyFailed, err)
 			}
+
 			clonedReq.Body = rc
 		}
 
@@ -137,11 +140,14 @@ func (c *client) waitForLimiter(ctx context.Context) error {
 
 	// Bound the limiter wait by the effective deadline, which is the minimum between req.Context() deadline and the client timeout.
 	waitCtx := ctx
+
 	if c.Timeout > 0 {
 		clientDeadline := time.Now().Add(c.Timeout)
+
 		deadline, ok := waitCtx.Deadline()
 		if !ok || clientDeadline.Before(deadline) {
 			var cancel context.CancelFunc
+
 			waitCtx, cancel = context.WithDeadline(waitCtx, clientDeadline)
 			defer cancel()
 		}

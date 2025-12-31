@@ -32,6 +32,7 @@ type Method struct {
 // availability is checked when Digest/Validate are called.
 func NewMethod(name string, kind crypto.Hash, keySize int, options ...Option) *Method {
 	opts := NewOptions(options...)
+
 	return &Method{
 		name:       name,
 		kind:       kind,

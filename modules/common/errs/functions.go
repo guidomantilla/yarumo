@@ -13,6 +13,7 @@ import (
 func As[T error](err error) (T, bool) {
 	target := pointer.Zero[T]()
 	ok := errors.As(err, &target)
+
 	return target, ok
 }
 
@@ -38,36 +39,46 @@ func Wrap(errs ...error) error {
 	if joined == nil {
 		return nil
 	}
+
 	return joined
 }
 
 // Unwrap returns a slice of errors by recursively unwrapping the provided error.
 func Unwrap(err error) []error {
 	seen := map[error]struct{}{}
+
 	var out []error
 
 	var walk func(error)
+
 	walk = func(err error) {
 		if utils.Nil(err) {
 			return
 		}
+
 		if _, ok := seen[err]; ok {
 			return
 		}
+
 		seen[err] = struct{}{}
 
-		switch e := err.(type) {
-		case interface{ Unwrap() []error }:
-			for _, inner := range e.Unwrap() {
-				walk(inner)
+		{
+			var e interface{ Unwrap() []error }
+			var e1 interface{ Unwrap() error }
+			switch {
+			case errors.As(err, &e):
+				for _, inner := range e.Unwrap() {
+					walk(inner)
+				}
+			case errors.As(err, &e1):
+				walk(e1.Unwrap())
+			default:
+				out = append(out, err)
 			}
-		case interface{ Unwrap() error }:
-			walk(e.Unwrap())
-		default:
-			out = append(out, err)
 		}
 	}
 	walk(err)
+
 	return out
 }
 
@@ -77,6 +88,7 @@ func ErrorMessages(err error) []string {
 	for _, e := range Unwrap(err) {
 		msgs = append(msgs, e.Error())
 	}
+
 	return msgs
 }
 
@@ -87,6 +99,7 @@ func HasErrorMessage(err error, substr string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -98,6 +111,7 @@ func AsErrorInfo(err error) []ErrorInfo {
 
 	for _, e := range Unwrap(err) {
 		typ := reflect.TypeOf(e)
+
 		typeName := "<nil>"
 		if typ != nil {
 			typeName = typ.String()

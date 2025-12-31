@@ -26,6 +26,7 @@ type Method struct {
 
 func NewMethod(name string, kind crypto.Hash, saltLength int, allowedKeySizes []int, options ...Option) *Method {
 	opts := NewOptions(options...)
+
 	return &Method{
 		name:            name,
 		kind:            kind,
@@ -64,6 +65,7 @@ func (m *Method) Name() string {
 func (m *Method) GenerateKey(size int) (*rsa.PrivateKey, error) {
 	assert.NotNil(m, "method is nil")
 	assert.NotNil(m.keyFn, "method keyFn is nil")
+
 	if utils.NotIn(size, m.allowedKeySizes...) {
 		return nil, ErrKeyGeneration(ErrKeySizeNotAllowed)
 	}

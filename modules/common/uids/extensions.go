@@ -35,6 +35,7 @@ func Get(name string) (*UID, error) {
 	if !ok {
 		return nil, ErrAlgorithmNotSupported(name)
 	}
+
 	return &alg, nil
 }
 
@@ -46,5 +47,6 @@ func Supported() []UID {
 	for _, uid := range methods {
 		list = append(list, uid)
 	}
+
 	return list
 }

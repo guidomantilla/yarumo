@@ -23,6 +23,7 @@ type Error struct {
 func (e *Error) Error() string {
 	assert.NotNil(e, "error is nil")
 	assert.NotNil(e.Err, "internal error is nil")
+
 	return fmt.Sprintf("rsa_pss %s error: %s", e.Type, e.Err)
 }
 

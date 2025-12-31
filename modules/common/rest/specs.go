@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/guidomantilla/yarumo/common/assert"
@@ -48,6 +48,7 @@ func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 	if spec.Headers == nil {
 		spec.Headers = make(map[string]string)
 	}
+
 	_, ok := spec.Headers["Accept"]
 	if !ok {
 		spec.Headers["Accept"] = "application/json"
@@ -55,16 +56,21 @@ func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 
 	// Process body
 
-	var err error
-	var body io.Reader
+	var (
+		err  error
+		body io.Reader
+	)
+
 	if spec.Body != nil {
 		spec.RawBody, err = json.Marshal(spec.Body)
 		if err != nil {
 			return nil, err
 		}
+
 		body = bytes.NewReader(spec.RawBody)
 
-		spec.Headers["Content-Length"] = fmt.Sprintf("%d", len(spec.RawBody))
+		spec.Headers["Content-Length"] = strconv.Itoa(len(spec.RawBody))
+
 		_, ok := spec.Headers["Content-Type"]
 		if !ok {
 			spec.Headers["Content-Type"] = "application/json"
@@ -83,11 +89,13 @@ func (spec *RequestSpec) Build(ctx context.Context) (*http.Request, error) {
 	}
 
 	q := u.Query()
+
 	for k, vals := range spec.QueryParams {
 		for _, v := range vals {
 			q.Add(k, v)
 		}
 	}
+
 	u.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, spec.Method, u.String(), body)

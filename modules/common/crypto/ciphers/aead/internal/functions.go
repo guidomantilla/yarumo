@@ -14,6 +14,7 @@ func AESGCM(key types.Bytes, nonceSize int) (cipher.AEAD, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return cipher.NewGCMWithNonceSize(block, nonceSize)
 }
 

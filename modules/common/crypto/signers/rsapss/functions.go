@@ -19,14 +19,17 @@ func sign(method *Method, key *rsa.PrivateKey, data types.Bytes) (types.Bytes, e
 	if method == nil {
 		return nil, ErrMethodIsNil
 	}
+
 	if key == nil {
 		return nil, ErrKeyIsNil
 	}
+
 	if utils.NotIn(key.N.BitLen(), method.allowedKeySizes...) {
 		return nil, ErrKeyLengthIsInvalid
 	}
 
 	h := hashes.Hash(method.kind, data)
+
 	out, err := rsa.SignPSS(rand.Reader, key, method.kind, h, &rsa.PSSOptions{
 		SaltLength: method.saltLength,
 		Hash:       method.kind,
@@ -34,6 +37,7 @@ func sign(method *Method, key *rsa.PrivateKey, data types.Bytes) (types.Bytes, e
 	if err != nil {
 		return nil, errs.Wrap(ErrSignFailed, err)
 	}
+
 	return out, nil
 }
 
@@ -41,14 +45,17 @@ func verify(method *Method, key *rsa.PublicKey, signature types.Bytes, data type
 	if method == nil {
 		return false, ErrMethodIsNil
 	}
+
 	if key == nil {
 		return false, ErrKeyIsNil
 	}
+
 	if utils.NotIn(key.N.BitLen(), method.allowedKeySizes...) {
 		return false, ErrKeyLengthIsInvalid
 	}
 
 	h := hashes.Hash(method.kind, data)
+
 	err := rsa.VerifyPSS(key, method.kind, h, signature, &rsa.PSSOptions{
 		SaltLength: method.saltLength,
 		Hash:       method.kind,
@@ -57,6 +64,7 @@ func verify(method *Method, key *rsa.PublicKey, signature types.Bytes, data type
 		if errors.Is(err, rsa.ErrVerification) {
 			return false, nil
 		}
+
 		return false, errs.Wrap(ErrVerifyFailed, err)
 	}
 

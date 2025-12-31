@@ -20,6 +20,7 @@ type Method struct {
 
 func NewMethod(name string, options ...Option) *Method {
 	opts := NewOptions(options...)
+
 	return &Method{
 		name:     name,
 		keyFn:    opts.keyFn,

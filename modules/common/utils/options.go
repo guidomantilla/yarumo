@@ -27,7 +27,6 @@ func WithCharset(charset string) Option {
 		if NotEmpty(charset) {
 			opts.charset = charset
 		}
-
 	}
 }
 

@@ -11,18 +11,22 @@ func sameMultiset[T comparable](a, b []T) bool {
 	if len(a) != len(b) {
 		return false
 	}
+
 	m := make(map[T]int, len(a))
 	for _, v := range a {
 		m[v]++
 	}
+
 	for _, v := range b {
 		m[v]--
 	}
+
 	for _, c := range m {
 		if c != 0 {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -30,6 +34,7 @@ func TestTernaryAndCoalesceAndEquality(t *testing.T) {
 	if got := Ternary(true, 1, 2); got != 1 {
 		t.Fatalf("Ternary true branch = %v", got)
 	}
+
 	if got := Ternary(false, 1, 2); got != 2 {
 		t.Fatalf("Ternary false branch = %v", got)
 	}
@@ -37,6 +42,7 @@ func TestTernaryAndCoalesceAndEquality(t *testing.T) {
 	if got := Coalesce[int](); got != 0 {
 		t.Fatalf("Coalesce() = %v, want 0", got)
 	}
+
 	if got := Coalesce(0, 0, 3, 4); got != 3 {
 		t.Fatalf("Coalesce non-empty = %v", got)
 	}
@@ -44,6 +50,7 @@ func TestTernaryAndCoalesceAndEquality(t *testing.T) {
 	if !Equal("a", "a") || NotEqual("a", "a") {
 		t.Fatalf("Equal/NotEqual mismatch for equal values")
 	}
+
 	if Equal("a", "b") || !NotEqual("a", "b") {
 		t.Fatalf("Equal/NotEqual mismatch for different values")
 	}
@@ -54,6 +61,7 @@ func TestNilAndEmptyPredicates(t *testing.T) {
 	if !Nil(p) || Nil(10) {
 		t.Fatalf("Nil predicate failed")
 	}
+
 	if NotNil(p) || !NotNil(10) {
 		t.Fatalf("NotNil predicate failed")
 	}
@@ -70,6 +78,7 @@ func TestNilAndEmptyPredicates(t *testing.T) {
 	if !Empty("") || Empty("x") {
 		t.Fatalf("Empty on strings mismatch")
 	}
+
 	if !NotEmpty("x") || NotEmpty("") {
 		t.Fatalf("NotEmpty on strings mismatch")
 	}
@@ -77,6 +86,7 @@ func TestNilAndEmptyPredicates(t *testing.T) {
 	if Empty("x", "") {
 		t.Fatalf("Empty with mixed non-empty should be false")
 	}
+
 	if NotEmpty("x", "", "y") {
 		t.Fatalf("NotEmpty with an empty element should be false")
 	}
@@ -100,6 +110,7 @@ func TestRandomStringAndSubstringAndChunkString(t *testing.T) {
 	// Use uint overflow trick to get non-empty branch
 	// For a string of size n, offset := size + ^uint(0) => size-1
 	var maxU = ^uint(0)
+
 	str := "hello"
 	got := Substring(str, maxU, 2)
 	// should start at last rune (o), and length will be clamped to 1
@@ -111,13 +122,17 @@ func TestRandomStringAndSubstringAndChunkString(t *testing.T) {
 	if !reflect.DeepEqual(ChunkString("", 0), []string{""}) {
 		t.Fatalf("ChunkString empty/zero size")
 	}
+
 	if !reflect.DeepEqual(ChunkString("", 3), []string{""}) {
 		t.Fatalf("ChunkString empty string")
 	}
+
 	if !reflect.DeepEqual(ChunkString("abc", 5), []string{"abc"}) {
 		t.Fatalf("ChunkString size>=len")
 	}
+
 	chunks := ChunkString("abcdef", 2)
+
 	want := []string{"ab", "cd", "ef"}
 	if !reflect.DeepEqual(chunks, want) {
 		t.Fatalf("ChunkString got %v want %v", chunks, want)
@@ -134,15 +149,19 @@ func TestCaseAndWordsFunctions(t *testing.T) {
 	if got := Capitalize("hELLO"); got != "Hello" {
 		t.Fatalf("Capitalize = %q", got)
 	}
+
 	if got := PascalCase("hello-world_user42"); got != "HelloWorldUser42" {
 		t.Fatalf("PascalCase = %q", got)
 	}
+
 	if got := CamelCase("hello_world user42"); got != "helloWorldUser42" {
 		t.Fatalf("CamelCase = %q", got)
 	}
+
 	if got := KebabCase("HelloWorld User42"); got != "hello-world-user-42" {
 		t.Fatalf("KebabCase = %q", got)
 	}
+
 	if got := SnakeCase("HelloWorld User42"); got != "hello_world_user_42" {
 		t.Fatalf("SnakeCase = %q", got)
 	}
@@ -150,6 +169,7 @@ func TestCaseAndWordsFunctions(t *testing.T) {
 
 func TestSliceFiltersAndCountsAndMaps(t *testing.T) {
 	var empty []int
+
 	got := FilterBy(Copy(empty), func(x int) bool {
 		return false
 	})
@@ -159,13 +179,16 @@ func TestSliceFiltersAndCountsAndMaps(t *testing.T) {
 
 	nums := []int{1, 2, 3, 4, 5}
 	even := func(x int) bool { return x%2 == 0 }
+
 	got = FilterBy(Copy(nums), even)
 	if !reflect.DeepEqual(got, []int{2, 4}) {
 		t.Fatalf("FilterBy result %v", got)
 	}
+
 	if Count(nums) != 5 {
 		t.Fatalf("Count = %d", Count(nums))
 	}
+
 	if CountBy(nums, even) != 2 {
 		t.Fatalf("CountBy even = %d", CountBy(nums, even))
 	}
@@ -174,6 +197,7 @@ func TestSliceFiltersAndCountsAndMaps(t *testing.T) {
 	if m["a"] != 2 || m["b"] != 1 {
 		t.Fatalf("ToMap counts = %v", m)
 	}
+
 	m2 := ToMapBy([]int{1, 2, 3, 4}, even)
 	if len(m2) != 2 || m2[2] != 1 || m2[4] != 1 {
 		t.Fatalf("ToMapBy even = %v", m2)
@@ -182,27 +206,35 @@ func TestSliceFiltersAndCountsAndMaps(t *testing.T) {
 	if In(2, empty...) != false || In(2, 1, 2, 3) != true || In(9, 1, 2, 3) != false {
 		t.Fatalf("In failed")
 	}
+
 	if NotIn(2, 1, 2) != false || NotIn(9, 1, 2) != true {
 		t.Fatalf("NotIn failed")
 	}
+
 	if Every([]int{1, 2}, empty...) != false {
 		t.Fatalf("Every failed")
 	}
+
 	if Every([]int{1, 2}, 1, 2, 3) != true {
 		t.Fatalf("Every failed")
 	}
+
 	if Every([]int{1, 4}, 1, 2, 3) != false {
 		t.Fatalf("Every false case failed")
 	}
+
 	if Some([]int{4, 2}, empty...) != false {
 		t.Fatalf("Some true failed")
 	}
+
 	if Some([]int{4, 2}, 1, 2, 3) != true {
 		t.Fatalf("Some true failed")
 	}
+
 	if Some([]int{4, 5}, 1, 2, 3) != false {
 		t.Fatalf("Some false failed")
 	}
+
 	if None([]int{4, 5}, 1, 2, 3) != true {
 		t.Fatalf("None true failed")
 	}
@@ -210,14 +242,17 @@ func TestSliceFiltersAndCountsAndMaps(t *testing.T) {
 	// Union/Intersection/Difference
 	a := []int{1, 2, 2}
 	b := []int{2, 3}
+
 	u := Union(a, b)
 	if !sameMultiset(u, []int{1, 2, 3}) {
 		t.Fatalf("Union = %v", u)
 	}
+
 	inter := Intersection(a, b)
 	if !sameMultiset(inter, []int{2}) {
 		t.Fatalf("Intersection = %v", inter)
 	}
+
 	l, r := Difference(a, b)
 	if !sameMultiset(l, []int{1}) || !sameMultiset(r, []int{3}) {
 		t.Fatalf("Difference = %v %v", l, r)
@@ -228,10 +263,12 @@ func TestMapByCopyReverseShuffleDeduplicateSort(t *testing.T) {
 	// Map and MapBy
 	src := []int{1, 2, 3}
 	double := func(x int) int { return x * 2 }
+
 	got := Map(src, double)
 	if !reflect.DeepEqual(got, []int{2, 4, 6}) {
 		t.Fatalf("Map = %v", got)
 	}
+
 	keepOdd := func(x int) bool { return x%2 == 1 }
 	got2 := MapBy(src, double, keepOdd)
 	// positions not kept remain zero value (0)
@@ -243,6 +280,7 @@ func TestMapByCopyReverseShuffleDeduplicateSort(t *testing.T) {
 	if Copy[int](nil) != nil {
 		t.Fatalf("Copy(nil) should be nil slice")
 	}
+
 	cp := Copy(src)
 	if &cp[0] == &src[0] || !reflect.DeepEqual(cp, src) {
 		t.Fatalf("Copy did not copy properly")
@@ -267,10 +305,12 @@ func TestMapByCopyReverseShuffleDeduplicateSort(t *testing.T) {
 
 	// Deduplicate
 	du := []int{1, 2, 2, 3, 1}
+
 	de := Deduplicate(du)
 	if !sameMultiset(de, []int{1, 2, 3}) {
 		t.Fatalf("Deduplicate = %v", de)
 	}
+
 	if len(Deduplicate([]int{1})) != 1 {
 		t.Fatalf("Deduplicate len<2 path failed")
 	}
@@ -287,6 +327,7 @@ func TestChunkDeletePopPushMinMax(t *testing.T) {
 	if res := Chunk([]int{1, 2, 3, 4, 5}, 2); !reflect.DeepEqual(res, [][]int{{1, 2}, {3, 4}, {5}}) {
 		t.Fatalf("Chunk = %v", res)
 	}
+
 	if res := Chunk([]int{1, 2}, 0); len(res) != 0 {
 		t.Fatalf("Chunk size<=0 must be empty, got %v", res)
 	}
@@ -296,12 +337,15 @@ func TestChunkDeletePopPushMinMax(t *testing.T) {
 	if out := Delete(-1, empty); out != nil {
 		t.Fatalf("Delete invalid index should return nil slice")
 	}
+
 	if out := Delete(-1, []int{1, 2}); out != nil {
 		t.Fatalf("Delete invalid index should return nil slice")
 	}
+
 	if out := Delete(5, []int{1, 2}); out != nil {
 		t.Fatalf("Delete oob should return nil slice")
 	}
+
 	if out := Delete(1, []int{1, 2, 3}); !reflect.DeepEqual(out, []int{1, 3}) {
 		t.Fatalf("Delete valid = %v", out)
 	}
@@ -309,18 +353,23 @@ func TestChunkDeletePopPushMinMax(t *testing.T) {
 	if out := DeleteRange(-1, 1, empty); out != nil {
 		t.Fatalf("Delete invalid index should return nil slice")
 	}
+
 	if out := DeleteRange(-1, 1, []int{1, 2}); out != nil {
 		t.Fatalf("DeleteRange invalid start -> nil")
 	}
+
 	if out := DeleteRange(0, 5, []int{1, 2}); out != nil {
 		t.Fatalf("DeleteRange invalid end -> nil")
 	}
+
 	if out := DeleteRange(2, 1, []int{1, 2}); out != nil {
 		t.Fatalf("DeleteRange start>end -> nil")
 	}
+
 	if out := DeleteRange(2, 1, []int{1, 2, 3}); out != nil {
 		t.Fatalf("DeleteRange start>end -> nil")
 	}
+
 	if out := DeleteRange(1, 2, []int{1, 2, 3, 4}); !reflect.DeepEqual(out, []int{1, 4}) {
 		t.Fatalf("DeleteRange valid = %v", out)
 	}
@@ -330,10 +379,12 @@ func TestChunkDeletePopPushMinMax(t *testing.T) {
 	if !reflect.DeepEqual(pushed, []int{1, 2}) {
 		t.Fatalf("Push = %v", pushed)
 	}
+
 	v, rest := Pop([]int{7, 8})
 	if v != 8 || !reflect.DeepEqual(rest, []int{7}) {
 		t.Fatalf("Pop = %v, %v", v, rest)
 	}
+
 	v2, rest2 := Pop([]int{})
 	if v2 != 0 || rest2 != nil {
 		t.Fatalf("Pop empty = %v, %v", v2, rest2)
@@ -343,12 +394,15 @@ func TestChunkDeletePopPushMinMax(t *testing.T) {
 	if Max([]int{}) != 0 || Min([]int{}) != 0 {
 		t.Fatalf("Min/Max empty should be zero values")
 	}
+
 	if Max([]int{2, 9, 3}) != 9 {
 		t.Fatalf("Max failed")
 	}
+
 	if Min([]int{2, 9, 3}) != 2 {
 		t.Fatalf("Min failed")
 	}
+
 	if Min([]int{2, 9, 3, 1}) != 1 {
 		t.Fatalf("Min failed")
 	}

@@ -15,6 +15,7 @@ import (
 // trackingBody implements io.ReadCloser and lets us assert Close() was called.
 type trackingBody struct {
 	bytes.Reader
+
 	closed *bool
 }
 
@@ -22,6 +23,7 @@ func (tb *trackingBody) Close() error {
 	if tb.closed != nil {
 		*tb.closed = true
 	}
+
 	return nil
 }
 
@@ -36,6 +38,7 @@ func (rt successRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
 	if rt.body != "" {
 		rc.Body = io.NopCloser(bytes.NewBufferString(rt.body))
 	}
+
 	return &rc, nil
 }
 
@@ -77,16 +80,19 @@ func (rt *flakyRT) RoundTrip(*stdhttp.Request) (*stdhttp.Response, error) {
 	if rt.n <= rt.failCount {
 		return nil, context.DeadlineExceeded
 	}
+
 	return &stdhttp.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewBufferString("ok"))}, nil
 }
 
 // newRequest creates a minimal GET request with the provided context.
 func newRequest(t *testing.T, ctx context.Context) *stdhttp.Request {
 	t.Helper()
+
 	req, err := stdhttp.NewRequestWithContext(ctx, stdhttp.MethodGet, "http://example.com", nil)
 	if err != nil {
 		t.Fatalf("new request: %v", err)
 	}
+
 	return req
 }
 
@@ -113,13 +119,16 @@ func TestClient_Do_Success_NoLimiter_NoRetry(t *testing.T) {
 	)
 
 	req := newRequest(t, context.Background())
+
 	res, err := c.Do(req)
 	if err != nil {
 		t.Fatalf("Do returned error: %v", err)
 	}
-	if res == nil || res.StatusCode != 200 {
+
+	if res == nil || res.StatusCode != stdhttp.StatusOK {
 		t.Fatalf("unexpected response: %+v", res)
 	}
+
 	_ = res.Body.Close()
 }
 
@@ -134,6 +143,7 @@ func TestClient_Do_ErrorWithResponse_ClosesBodyAndWraps(t *testing.T) {
 	)
 
 	req := newRequest(t, context.Background())
+
 	res, err := c.Do(req)
 	if err == nil {
 		t.Fatalf("expected error, got nil and res=%+v", res)
@@ -148,6 +158,7 @@ func TestClient_Do_RetryOnResponse_ClosesBodyAndReturnsStatusCodeError(t *testin
 	// Transport returns 503 with a real body and no error; WithClientRetryOnResponse should
 	// trigger close and make Do return an error wrapping *StatusCodeError.
 	var wasClosed bool
+
 	c := NewClient(
 		WithClientTransport(retryOnResponseRT{closed: &wasClosed}),
 		WithClientAttempts(1),
@@ -155,14 +166,17 @@ func TestClient_Do_RetryOnResponse_ClosesBodyAndReturnsStatusCodeError(t *testin
 	)
 
 	req := newRequest(t, context.Background())
+
 	res, err := c.Do(req)
 	if err == nil {
 		t.Fatalf("expected error, got nil and res=%+v", res)
 	}
+
 	var scErr *StatusCodeError
-	if !errors.As(err, &scErr) || scErr == nil || scErr.StatusCode != 503 {
+	if !errors.As(err, &scErr) || scErr == nil || scErr.StatusCode != stdhttp.StatusServiceUnavailable {
 		t.Fatalf("expected *StatusCodeError{503}, got %v", err)
 	}
+
 	if !wasClosed {
 		t.Fatalf("response body was not closed when retryOnResponse triggered")
 	}
@@ -173,10 +187,12 @@ func TestClient_Do_ErrorOnly_Wraps(t *testing.T) {
 		WithClientTransport(errRT{err: context.Canceled}),
 	)
 	req := newRequest(t, context.Background())
+
 	res, err := c.Do(req)
 	if err == nil {
 		t.Fatalf("expected error, got nil and res=%+v", res)
 	}
+
 	if !errors.Is(err, ErrHttpRequestFailed) {
 		t.Fatalf("error does not wrap ErrHttpRequestFailed: %v", err)
 	}
@@ -184,7 +200,9 @@ func TestClient_Do_ErrorOnly_Wraps(t *testing.T) {
 
 func TestClient_Do_Retry_SucceedsAfterFailures(t *testing.T) {
 	fl := &flakyRT{failCount: 2}
+
 	var hookCalls int
+
 	c := NewClient(
 		WithClientTransport(fl),
 		WithClientAttempts(3),
@@ -193,13 +211,16 @@ func TestClient_Do_Retry_SucceedsAfterFailures(t *testing.T) {
 	)
 
 	req := newRequest(t, context.Background())
+
 	res, err := c.Do(req)
 	if err != nil {
 		t.Fatalf("Do with retries failed: %v", err)
 	}
-	if res == nil || res.StatusCode != 200 {
+
+	if res == nil || res.StatusCode != stdhttp.StatusOK {
 		t.Fatalf("unexpected response: %+v", res)
 	}
+
 	if hookCalls == 0 {
 		t.Fatalf("retry hook not called")
 	}
@@ -219,6 +240,7 @@ func TestClient_waitForLimiter_DeadlineFromClientTimeout(t *testing.T) {
 	_ = cc.limiter.Wait(context.Background())
 
 	req := newRequest(t, context.Background())
+
 	_, err := c.Do(req)
 	if err == nil {
 		t.Fatalf("expected rate limiter error, got nil")
@@ -242,11 +264,14 @@ func TestClient_waitForLimiter_DeadlineFromRequestCtxEarlier(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
+
 	req := newRequest(t, ctx)
+
 	_, err := c.Do(req)
 	if err == nil {
 		t.Fatalf("expected error due to request context deadline, got nil")
 	}
+
 	if !errors.Is(err, ErrRateLimiterExceeded) {
 		t.Fatalf("expected ErrRateLimiterExceeded wrapping, got %v", err)
 	}
@@ -276,6 +301,7 @@ func TestClient_Do_NonReplayableBody(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error, got nil and res=%+v", res)
 	}
+
 	if !errors.Is(err, ErrHttpNonReplayableBody) {
 		t.Fatalf("error does not wrap ErrHttpNonReplayableBody: %v", err)
 	}
@@ -295,6 +321,7 @@ func TestClient_Do_GetBodyFailure(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error, got nil and res=%+v", res)
 	}
+
 	if !errors.Is(err, ErrHttpGetBodyFailed) {
 		t.Fatalf("error does not wrap ErrHttpGetBodyFailed: %v", err)
 	}
@@ -320,9 +347,11 @@ func TestClient_Do_ReplayableBody_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if res == nil || res.StatusCode != 200 {
+
+	if res == nil || res.StatusCode != stdhttp.StatusOK {
 		t.Fatalf("unexpected response: %+v", res)
 	}
+
 	_ = res.Body.Close()
 }
 
@@ -343,13 +372,16 @@ func TestNewPluggableClient_DoAndFlags(t *testing.T) {
 
 	// Exercise Do path
 	req := newRequest(t, context.Background())
+
 	res, err := fc.Do(req)
 	if err != nil {
 		t.Fatalf("fake Do returned error: %v", err)
 	}
-	if res == nil || res.StatusCode != 204 {
+
+	if res == nil || res.StatusCode != stdhttp.StatusNoContent {
 		t.Fatalf("unexpected response: %+v", res)
 	}
+
 	if !called {
 		t.Fatalf("fake DoFunc was not invoked")
 	}
@@ -365,10 +397,12 @@ func TestNewPluggableClient_DoAndFlags(t *testing.T) {
 
 func TestClient_Do_RequestNil(t *testing.T) {
 	c := NewClient()
+
 	res, err := c.Do(nil)
 	if err == nil {
 		t.Fatalf("expected error for nil request, got res=%+v", res)
 	}
+
 	if !errors.Is(err, ErrHttpRequestNil) {
 		t.Fatalf("error does not wrap ErrHttpRequestNil: %v", err)
 	}
@@ -376,8 +410,10 @@ func TestClient_Do_RequestNil(t *testing.T) {
 
 func TestClient_waitForLimiter_ContextNil(t *testing.T) {
 	c := NewClient()
+
 	cc := c.(*client)
-	if err := cc.waitForLimiter(nil); err == nil || !errors.Is(err, ErrContextNil) {
+	err := cc.waitForLimiter(nil)
+	if err == nil || !errors.Is(err, ErrContextNil) {
 		t.Fatalf("expected ErrContextNil, got %v", err)
 	}
 }
@@ -385,9 +421,11 @@ func TestClient_waitForLimiter_ContextNil(t *testing.T) {
 func TestClient_waitForLimiter_DisabledLimiter_NoWait(t *testing.T) {
 	// By default limiter is disabled (rate.Inf). Method should return nil immediately.
 	c := NewClient()
+
 	cc := c.(*client)
 	if !cc.LimiterEnabled() {
-		if err := cc.waitForLimiter(context.Background()); err != nil {
+		err := cc.waitForLimiter(context.Background())
+		if err != nil {
 			t.Fatalf("waitForLimiter should return nil when limiter disabled; got %v", err)
 		}
 	} else {
@@ -403,10 +441,12 @@ func TestPluggableClient_Do_RequestNil(t *testing.T) {
 		LimiterEnabledFn: func() bool { return false },
 		RetrierEnabledFn: func() bool { return false },
 	}
+
 	res, err := fc.Do(nil)
 	if err == nil {
 		t.Fatalf("expected error for nil request, got res=%+v", res)
 	}
+
 	if !errors.Is(err, ErrHttpRequestNil) {
 		t.Fatalf("error does not wrap ErrHttpRequestNil: %v", err)
 	}

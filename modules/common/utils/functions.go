@@ -19,6 +19,7 @@ func Ternary[T any](condition bool, trueValue T, falseValue T) T {
 	if condition {
 		return trueValue
 	}
+
 	return falseValue
 }
 
@@ -29,6 +30,7 @@ func Coalesce[T any](values ...T) T {
 			return value
 		}
 	}
+
 	return pointer.Zero[T]()
 }
 
@@ -56,33 +58,18 @@ func NotNil(x any) bool {
 
 // Empty checks if all values are empty.
 func Empty(x ...any) bool {
-
-	for _, v := range x {
-		if pointer.IsNotEmpty(v) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(x, pointer.IsNotEmpty)
 }
 
 // NotEmpty checks if a value is not empty.
 func NotEmpty(x ...any) bool {
-
-	for _, v := range x {
-		if pointer.IsEmpty(v) {
-			return false
-		}
-	}
-
-	return true
+	return !slices.ContainsFunc(x, pointer.IsEmpty)
 }
 
 //
 
 // RandomString return a random string.
 func RandomString(length int, opts ...Option) string {
-
 	options := NewOptions(opts...)
 	if length <= 0 || len(options.charset) == 0 {
 		return ""
@@ -92,6 +79,7 @@ func RandomString(length int, opts ...Option) string {
 	for i := range b {
 		b[i] = options.charset[rand.IntN(len(options.charset))] //nolint:gosec
 	}
+
 	return string(b)
 }
 
@@ -128,17 +116,22 @@ func ChunkString(str string, size int) []string {
 	}
 
 	var chunks = make([]string, 0, ((len(str)-1)/size)+1)
+
 	currentLen := 0
 	currentStart := 0
+
 	for i := range str {
 		if currentLen == size {
 			chunks = append(chunks, str[currentStart:i])
 			currentLen = 0
 			currentStart = i
 		}
+
 		currentLen++
 	}
+
 	chunks = append(chunks, str[currentStart:])
+
 	return chunks
 }
 
@@ -157,7 +150,9 @@ var (
 func Words(str string) []string {
 	str = splitWordReg.ReplaceAllString(str, `$1$3$5$7 $2$4$6$8$9`)
 	str = splitNumberLetterReg.ReplaceAllString(str, "$1 $2")
+
 	var result strings.Builder
+
 	for _, r := range str {
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			result.WriteRune(r)
@@ -165,6 +160,7 @@ func Words(str string) []string {
 			result.WriteRune(' ')
 		}
 	}
+
 	return strings.Fields(result.String())
 }
 
@@ -174,6 +170,7 @@ func PascalCase(str string) string {
 	for i := range items {
 		items[i] = Capitalize(items[i])
 	}
+
 	return strings.Join(items, "")
 }
 
@@ -185,8 +182,10 @@ func CamelCase(str string) string {
 		if i > 0 {
 			item = Capitalize(item)
 		}
+
 		items[i] = item
 	}
+
 	return strings.Join(items, "")
 }
 
@@ -196,6 +195,7 @@ func KebabCase(str string) string {
 	for i := range items {
 		items[i] = strings.ToLower(items[i])
 	}
+
 	return strings.Join(items, "-")
 }
 
@@ -205,6 +205,7 @@ func SnakeCase(str string) string {
 	for i := range items {
 		items[i] = strings.ToLower(items[i])
 	}
+
 	return strings.Join(items, "_")
 }
 
@@ -217,12 +218,14 @@ func FilterBy[T constraints.Comparable](slice []T, keep FilterFn[T]) []T {
 	}
 
 	n := 0
+
 	for _, v := range slice {
 		if keep(v) {
 			slice[n] = v
 			n++
 		}
 	}
+
 	return slice[:n]
 }
 
@@ -241,17 +244,20 @@ func ToMap[T constraints.Comparable](slice []T) map[T]int {
 	trueFilter := func(x T) bool {
 		return true
 	}
+
 	return ToMapBy(slice, trueFilter)
 }
 
 // ToMapBy converts a slice to a map where the keys are the elements of the slice that satisfy a given predicate and the values are their counts.
 func ToMapBy[T constraints.Comparable](slice []T, keep FilterFn[T]) map[T]int {
 	result := make(map[T]int)
+
 	for _, v := range slice {
 		if keep(v) {
 			result[v]++
 		}
 	}
+
 	return result
 }
 
@@ -260,12 +266,8 @@ func In[T constraints.Comparable](value T, slice ...T) bool {
 	if len(slice) == 0 {
 		return false
 	}
-	for k := range slice {
-		if slice[k] == value {
-			return true
-		}
-	}
-	return false
+
+	return slices.Contains(slice, value)
 }
 
 // NotIn checks if a value does not exist in a slice.
@@ -278,11 +280,13 @@ func Every[T constraints.Comparable](values []T, slice ...T) bool {
 	if len(slice) == 0 {
 		return false
 	}
+
 	for _, v := range values {
 		if NotIn(v, slice...) {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -291,11 +295,13 @@ func Some[T constraints.Comparable](values []T, slice ...T) bool {
 	if len(slice) == 0 {
 		return false
 	}
+
 	for _, v := range values {
 		if In(v, slice...) {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -326,6 +332,7 @@ func Union[T constraints.Comparable](a []T, b []T) []T {
 // Intersection returns a slice containing elements that are present in both slices.
 func Intersection[T constraints.Comparable](a []T, b []T) []T {
 	var result []T
+
 	seen := map[T]struct{}{}
 
 	for i := range a {
@@ -343,8 +350,10 @@ func Intersection[T constraints.Comparable](a []T, b []T) []T {
 
 // Difference returns two slices: the first contains elements in a that are not in b, and the second contains elements in b that are not in a.
 func Difference[T constraints.Comparable](a []T, b []T) ([]T, []T) {
-	var left []T
-	var right []T
+	var (
+		left  []T
+		right []T
+	)
 
 	seenLeft := map[T]struct{}{}
 	seenRight := map[T]struct{}{}
@@ -377,6 +386,7 @@ func Map[T, U constraints.Comparable](slice []T, fn ItemMapFn[T, U]) []U {
 	trueFilter := func(x T) bool {
 		return true
 	}
+
 	return MapBy(slice, fn, trueFilter)
 }
 
@@ -388,6 +398,7 @@ func MapBy[T, U constraints.Comparable](slice []T, fn ItemMapFn[T, U], keep Filt
 			result[i] = fn(v)
 		}
 	}
+
 	return result
 }
 
@@ -399,6 +410,7 @@ func Copy[T constraints.Comparable](slice []T) []T {
 
 	s := make([]T, len(slice))
 	copy(s, slice)
+
 	return s
 }
 
@@ -430,10 +442,12 @@ func Deduplicate[T constraints.Comparable](slice []T) []T {
 	seen := make(map[T]struct{})
 
 	j := 0
+
 	for k := range slice {
 		if _, ok := seen[slice[k]]; ok {
 			continue
 		}
+
 		seen[slice[k]] = struct{}{}
 		slice[j] = slice[k]
 		j++
@@ -462,11 +476,9 @@ func Chunk[T constraints.Comparable](slice []T, size int) [][]T {
 
 	result := make([][]T, 0, chunksNum)
 
-	for i := 0; i < chunksNum; i++ {
-		last := (i + 1) * size
-		if last > len(slice) {
-			last = len(slice)
-		}
+	for i := range chunksNum {
+		last := min((i+1)*size, len(slice))
+
 		result = append(result, slice[i*size:last:last])
 	}
 
@@ -478,6 +490,7 @@ func Delete[T constraints.Comparable](idx int, slice []T) []T {
 	if len(slice) == 0 {
 		return pointer.Zero[[]T]()
 	}
+
 	if idx < 0 || idx > len(slice)-1 {
 		return pointer.Zero[[]T]()
 	}
@@ -593,6 +606,7 @@ func UniqueKeys[K constraints.Comparable, V any](keyValues ...map[K]V) []K {
 			if _, exists := seen[k]; exists {
 				continue
 			}
+
 			seen[k] = struct{}{}
 			result = append(result, k)
 		}
@@ -635,6 +649,7 @@ func UniqueValues[K constraints.Comparable, V constraints.Comparable](keyValues 
 			if _, exists := seen[val]; exists {
 				continue
 			}
+
 			seen[val] = struct{}{}
 			result = append(result, val)
 		}
@@ -646,22 +661,26 @@ func UniqueValues[K constraints.Comparable, V constraints.Comparable](keyValues 
 // PickByKeys returns a map containing only the key-value pairs from the original map where the keys are in the provided keys slice.
 func PickByKeys[K constraints.Comparable, V any](keyValues map[K]V, keys []K) map[K]V {
 	r := make(map[K]V)
+
 	for i := range keys {
 		if v, ok := keyValues[keys[i]]; ok {
 			r[keys[i]] = v
 		}
 	}
+
 	return r
 }
 
 // PickByValues returns a map containing only the key-value pairs from the original map where the values are in the provided values slice.
 func PickByValues[K constraints.Comparable, V constraints.Comparable](keyValues map[K]V, values []V) map[K]V {
 	r := make(map[K]V)
+
 	for k := range keyValues {
 		if In(keyValues[k], values...) {
 			r[k] = keyValues[k]
 		}
 	}
+
 	return r
 }
 
@@ -671,19 +690,23 @@ func OmitByKeys[K constraints.Comparable, V any](keyValues map[K]V, keys []K) ma
 	for k := range keyValues {
 		r[k] = keyValues[k]
 	}
+
 	for i := range keys {
 		delete(r, keys[i])
 	}
+
 	return r
 }
 
 // OmitByValues returns a map containing only the key-value pairs from the original map where the values are not in the provided values slice.
 func OmitByValues[K constraints.Comparable, V constraints.Comparable](keyValues map[K]V, values []V) map[K]V {
 	r := make(map[K]V)
+
 	for k := range keyValues {
 		if NotIn(keyValues[k], values...) {
 			r[k] = keyValues[k]
 		}
 	}
+
 	return r
 }
