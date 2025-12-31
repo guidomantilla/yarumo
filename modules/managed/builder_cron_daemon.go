@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog/log"
+
+	commoncron "github.com/guidomantilla/yarumo/common/cron"
 )
 
-func BuildCronServer(ctx context.Context, name string, internal *cron.Cron, errChan ErrChan) (Component[CronDaemon], StopFn, error) {
+func BuildCronServer(ctx context.Context, name string, internal commoncron.Scheduler, errChan ErrChan) (Component[CronDaemon], StopFn, error) {
 	log.Ctx(ctx).Info().Str("stage", "startup").Str("component", name).Msg("starting up")
 
 	cronServer := Component[CronDaemon]{name: name, internal: NewCronDaemon(internal)}

@@ -4,16 +4,16 @@ import (
 	"context"
 	"sync"
 
-	"github.com/robfig/cron/v3"
+	commoncron "github.com/guidomantilla/yarumo/common/cron"
 )
 
 type cronAdapter struct {
-	c    *cron.Cron
+	c    commoncron.Scheduler
 	done chan struct{}
 	once sync.Once
 }
 
-func NewCronDaemon(c *cron.Cron) CronDaemon {
+func NewCronDaemon(c commoncron.Scheduler) CronDaemon {
 	return &cronAdapter{
 		c:    c,
 		done: make(chan struct{}),

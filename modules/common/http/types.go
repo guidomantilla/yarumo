@@ -40,6 +40,7 @@ type Client interface {
 }
 
 type Server interface {
+	Address() string
 	ListenAndServe() error
 	ListenAndServeTLS(certFile string, keyFile string) error
 	Shutdown(ctx context.Context) error

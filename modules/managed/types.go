@@ -4,7 +4,9 @@ import (
 	"context"
 	"time"
 
-	"google.golang.org/grpc"
+	commoncron "github.com/guidomantilla/yarumo/common/cron"
+	commongrpc "github.com/guidomantilla/yarumo/common/grpc"
+	commonhttp "github.com/guidomantilla/yarumo/common/http"
 )
 
 type Daemon interface {
@@ -31,7 +33,6 @@ type CronDaemon interface {
 
 type GrpcServer interface {
 	HttpServer
-	RegisterService(desc *grpc.ServiceDesc, impl any)
 }
 
 type ErrChan chan<- error
@@ -43,3 +44,12 @@ type Component[T any] struct {
 	internal T
 	metadata map[string]any
 }
+
+var (
+	_ BuildFn[commongrpc.Server, GrpcServer]    = BuildGrpcServer
+	_ BuildFn[commonhttp.Server, HttpServer]    = BuildHttpServer
+	_ BuildFn[commoncron.Scheduler, CronDaemon] = BuildCronServer
+	_ BuildFn[any, BaseDaemon]                  = BuildBaseServer
+)
+
+type BuildFn[I any, C any] func(ctx context.Context, name string, internal I, errChan ErrChan) (Component[C], StopFn, error)

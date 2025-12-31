@@ -4,14 +4,15 @@ import (
 	"context"
 	"time"
 
+	commongrpc "github.com/guidomantilla/yarumo/common/grpc"
+
 	"github.com/rs/zerolog/log"
-	"google.golang.org/grpc"
 )
 
-func BuildGrpcServer(ctx context.Context, name string, address string, internal *grpc.Server, errChan ErrChan) (Component[GrpcServer], StopFn, error) {
+func BuildGrpcServer(ctx context.Context, name string, internal commongrpc.Server, errChan ErrChan) (Component[GrpcServer], StopFn, error) {
 	log.Ctx(ctx).Info().Str("stage", "startup").Str("component", name).Msg("starting up")
 
-	grpcServer := Component[GrpcServer]{name: name, internal: NewGrpcServer(internal, "tcp", address)}
+	grpcServer := Component[GrpcServer]{name: name, internal: NewGrpcServer(internal, "tcp")}
 
 	stopFn := func(ctx context.Context, timeout time.Duration) {
 		log.Ctx(ctx).Info().Str("stage", "shut down").Str("component", name).Msg("stopping")

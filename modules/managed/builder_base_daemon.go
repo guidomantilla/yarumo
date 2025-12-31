@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func BuildBaseServer(ctx context.Context, name string, errChan ErrChan) (Component[BaseDaemon], StopFn, error) {
+func BuildBaseServer(ctx context.Context, name string, _ any, errChan ErrChan) (Component[BaseDaemon], StopFn, error) {
 	log.Ctx(ctx).Info().Str("stage", "startup").Str("component", name).Msg("starting up")
 
 	base := Component[BaseDaemon]{name: name, internal: NewBaseDaemon()}

@@ -6,31 +6,25 @@ import (
 	"net"
 	"sync"
 
-	"google.golang.org/grpc"
+	commongrpc "github.com/guidomantilla/yarumo/common/grpc"
 )
 
 type grpcAdapter struct {
-	g        *grpc.Server
+	g        commongrpc.Server
 	network  string
-	address  string
 	listener net.Listener
 	mutex    sync.Mutex
 }
 
-func NewGrpcServer(g *grpc.Server, network string, address string) GrpcServer {
+func NewGrpcServer(g commongrpc.Server, network string) GrpcServer {
 	return &grpcAdapter{
 		g:       g,
 		network: network,
-		address: address,
 	}
 }
 
-func (g *grpcAdapter) RegisterService(desc *grpc.ServiceDesc, impl any) {
-	g.g.RegisterService(desc, impl)
-}
-
 func (g *grpcAdapter) ListenAndServe() error {
-	listener, err := net.Listen(g.network, g.address)
+	listener, err := net.Listen(g.network, g.g.Address())
 	if err != nil {
 		return err
 	}
