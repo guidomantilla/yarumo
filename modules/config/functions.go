@@ -43,8 +43,8 @@ func Default(ctx context.Context, name string, version string, env string) conte
 			logger = logger.Str("env", env)
 		}
 
-		debugMode := utils.Coalesce(viper.GetBool("DEBUG"), false)
-		if debugMode {
+		debug := utils.Coalesce(viper.GetBool("DEBUG"), false)
+		if debug {
 			logger = logger.Caller()
 		}
 
