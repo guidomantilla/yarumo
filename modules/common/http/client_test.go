@@ -100,7 +100,7 @@ func TestNewClientAndLimiterEnabled(t *testing.T) {
 	}
 
 	// Finite rate + burst -> enabled
-	c2 := NewClient(WithLimiterRate(5), WithLimiterBurst(2))
+	c2 := NewClient(WithClientLimiterRate(5), WithClientLimiterBurst(2))
 	if cc, ok := c2.(*client); !ok || !cc.LimiterEnabled() {
 		t.Fatalf("LimiterEnabled finite = false, want true")
 	}
@@ -108,8 +108,8 @@ func TestNewClientAndLimiterEnabled(t *testing.T) {
 
 func TestClient_Do_Success_NoLimiter_NoRetry(t *testing.T) {
 	c := NewClient(
-		WithTransport(successRT{body: "hello"}),
-		WithAttempts(1),
+		WithClientTransport(successRT{body: "hello"}),
+		WithClientAttempts(1),
 	)
 
 	req := newRequest(t, context.Background())
@@ -128,9 +128,9 @@ func TestClient_Do_ErrorWithResponse_ClosesBodyAndWraps(t *testing.T) {
 	// to force body-close branch and ErrDoCall wrapping.
 	// We also use a short timeout to avoid any coupling with limiter.
 	c := NewClient(
-		WithTransport(resAndErrRT{}),
-		WithTimeout(10*time.Millisecond),
-		WithLimiterRate(float64(^uint(0))), // disabled (Inf)
+		WithClientTransport(resAndErrRT{}),
+		WithClientTimeout(10*time.Millisecond),
+		WithClientLimiterRate(float64(^uint(0))), // disabled (Inf)
 	)
 
 	req := newRequest(t, context.Background())
@@ -145,13 +145,13 @@ func TestClient_Do_ErrorWithResponse_ClosesBodyAndWraps(t *testing.T) {
 }
 
 func TestClient_Do_RetryOnResponse_ClosesBodyAndReturnsStatusCodeError(t *testing.T) {
-	// Transport returns 503 with a real body and no error; WithRetryOnResponse should
+	// Transport returns 503 with a real body and no error; WithClientRetryOnResponse should
 	// trigger close and make Do return an error wrapping *StatusCodeError.
 	var wasClosed bool
 	c := NewClient(
-		WithTransport(retryOnResponseRT{closed: &wasClosed}),
-		WithAttempts(1),
-		WithRetryOnResponse(RetryOn5xxAnd429Response),
+		WithClientTransport(retryOnResponseRT{closed: &wasClosed}),
+		WithClientAttempts(1),
+		WithClientRetryOnResponse(RetryOn5xxAnd429Response),
 	)
 
 	req := newRequest(t, context.Background())
@@ -170,7 +170,7 @@ func TestClient_Do_RetryOnResponse_ClosesBodyAndReturnsStatusCodeError(t *testin
 
 func TestClient_Do_ErrorOnly_Wraps(t *testing.T) {
 	c := NewClient(
-		WithTransport(errRT{err: context.Canceled}),
+		WithClientTransport(errRT{err: context.Canceled}),
 	)
 	req := newRequest(t, context.Background())
 	res, err := c.Do(req)
@@ -186,10 +186,10 @@ func TestClient_Do_Retry_SucceedsAfterFailures(t *testing.T) {
 	fl := &flakyRT{failCount: 2}
 	var hookCalls int
 	c := NewClient(
-		WithTransport(fl),
-		WithAttempts(3),
-		WithRetryIf(func(err error) bool { return true }),
-		WithRetryHook(func(n uint, err error) { hookCalls++ }),
+		WithClientTransport(fl),
+		WithClientAttempts(3),
+		WithClientRetryIf(func(err error) bool { return true }),
+		WithClientRetryHook(func(n uint, err error) { hookCalls++ }),
 	)
 
 	req := newRequest(t, context.Background())
@@ -210,9 +210,9 @@ func TestClient_waitForLimiter_DeadlineFromClientTimeout(t *testing.T) {
 	// finite, we must pre-consume the initial token so that the next Wait blocks
 	// until the rate replenishes, which will exceed the tiny client timeout.
 	c := NewClient(
-		WithTransport(successRT{}),
-		WithTimeout(1*time.Millisecond),
-		WithLimiterRate(100), // 100/s but we'll pre-consume the first token
+		WithClientTransport(successRT{}),
+		WithClientTimeout(1*time.Millisecond),
+		WithClientLimiterRate(100), // 100/s but we'll pre-consume the first token
 	)
 	cc := c.(*client)
 	// Pre-consume the initial token so the next wait must block.
@@ -233,9 +233,9 @@ func TestClient_waitForLimiter_DeadlineFromRequestCtxEarlier(t *testing.T) {
 	// Client timeout longer, but the request context deadline is earlier; it should
 	// respect the earlier one and fail quickly when limiter has to wait.
 	c := NewClient(
-		WithTransport(successRT{}),
-		WithTimeout(250*time.Millisecond),
-		WithLimiterRate(100),
+		WithClientTransport(successRT{}),
+		WithClientTimeout(250*time.Millisecond),
+		WithClientLimiterRate(100),
 	)
 	cc := c.(*client)
 	_ = cc.limiter.Wait(context.Background()) // pre-consume first token
@@ -253,12 +253,12 @@ func TestClient_waitForLimiter_DeadlineFromRequestCtxEarlier(t *testing.T) {
 }
 
 func TestClient_RetrierEnabled(t *testing.T) {
-	c1 := NewClient(WithAttempts(1))
+	c1 := NewClient(WithClientAttempts(1))
 	if cc, ok := c1.(*client); !ok || cc.RetrierEnabled() {
 		t.Fatalf("RetrierEnabled attempts=1 = true, want false")
 	}
 
-	c2 := NewClient(WithAttempts(2))
+	c2 := NewClient(WithClientAttempts(2))
 	if cc, ok := c2.(*client); !ok || !cc.RetrierEnabled() {
 		t.Fatalf("RetrierEnabled attempts=2 = false, want true")
 	}
@@ -283,7 +283,7 @@ func TestClient_Do_NonReplayableBody(t *testing.T) {
 
 func TestClient_Do_GetBodyFailure(t *testing.T) {
 	// GetBody exists but returns an error; should wrap ErrHttpGetBodyFailed
-	c := NewClient(WithTransport(successRT{body: "ignored"}))
+	c := NewClient(WithClientTransport(successRT{body: "ignored"}))
 
 	req := newRequest(t, context.Background())
 	req.Body = io.NopCloser(bytes.NewBufferString("x"))
@@ -304,8 +304,8 @@ func TestClient_Do_ReplayableBody_Success(t *testing.T) {
 	// Body present and GetBody provided returning a fresh reader each time.
 	// This should pass and exercise the path that clones and resets the body.
 	c := NewClient(
-		WithTransport(successRT{body: "ok"}),
-		WithAttempts(1),
+		WithClientTransport(successRT{body: "ok"}),
+		WithClientAttempts(1),
 	)
 
 	req := newRequest(t, context.Background())
@@ -326,15 +326,15 @@ func TestClient_Do_ReplayableBody_Success(t *testing.T) {
 	_ = res.Body.Close()
 }
 
-func TestNewFakeClient_DoAndFlags(t *testing.T) {
+func TestNewPluggableClient_DoAndFlags(t *testing.T) {
 	called := false
-	fc := &FakeClient{
+	fc := &PluggableClient{
 		DoFn: func(req *stdhttp.Request) (*stdhttp.Response, error) {
 			called = true
 			return &stdhttp.Response{StatusCode: 204, Body: stdhttp.NoBody}, nil
 		},
-		LimiterOn: true,
-		RetrierOn: true,
+		LimiterEnabledFn: func() bool { return true },
+		RetrierEnabledFn: func() bool { return true },
 	}
 
 	if !fc.LimiterEnabled() || !fc.RetrierEnabled() {
@@ -355,8 +355,9 @@ func TestNewFakeClient_DoAndFlags(t *testing.T) {
 	}
 
 	// Also test flag false values
-	fc.LimiterOn = false
-	fc.RetrierOn = false
+	fc.LimiterEnabledFn = func() bool { return false }
+	fc.RetrierEnabledFn = func() bool { return false }
+
 	if fc.LimiterEnabled() || fc.RetrierEnabled() {
 		t.Fatalf("expected false from LimiterEnabled/RetrierEnabled with flags off")
 	}
@@ -394,13 +395,13 @@ func TestClient_waitForLimiter_DisabledLimiter_NoWait(t *testing.T) {
 	}
 }
 
-func TestFakeClient_Do_RequestNil(t *testing.T) {
-	fc := &FakeClient{
+func TestPluggableClient_Do_RequestNil(t *testing.T) {
+	fc := &PluggableClient{
 		DoFn: func(req *stdhttp.Request) (*stdhttp.Response, error) {
 			return &stdhttp.Response{StatusCode: 200, Body: stdhttp.NoBody}, nil
 		},
-		LimiterOn: false,
-		RetrierOn: false,
+		LimiterEnabledFn: func() bool { return false },
+		RetrierEnabledFn: func() bool { return false },
 	}
 	res, err := fc.Do(nil)
 	if err == nil {

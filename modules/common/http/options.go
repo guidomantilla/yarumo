@@ -13,26 +13,26 @@ import (
 type Option func(opts *Options)
 
 type Options struct {
-	timeout         time.Duration
-	transport       http.RoundTripper
-	attempts        uint
-	retryIf         retry.RetryIfFunc
-	retryHook       retry.OnRetryFunc
-	retryOnResponse RetryOnResponseFn
-	limiterRate     rate.Limit
-	limiterBurst    uint
+	clientTimeout         time.Duration
+	clientTransport       http.RoundTripper
+	clientAttempts        uint
+	clientRetryIf         retry.RetryIfFunc
+	clientRetryHook       retry.OnRetryFunc
+	clientRetryOnResponse RetryOnResponseFn
+	clientLimiterRate     rate.Limit
+	clientLimiterBurst    uint
 }
 
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		timeout:         30 * time.Second,
-		transport:       http.DefaultTransport,
-		attempts:        1,
-		retryIf:         NoopRetryIf,
-		retryHook:       NoopRetryHook,
-		retryOnResponse: NoopRetryOnResponse,
-		limiterRate:     rate.Inf, // unlimited - same as not having a limiter
-		limiterBurst:    0,        // unlimited - same as not having a limiter
+		clientTimeout:         30 * time.Second,
+		clientTransport:       http.DefaultTransport,
+		clientAttempts:        1,
+		clientRetryIf:         NoopRetryIf,
+		clientRetryHook:       NoopRetryHook,
+		clientRetryOnResponse: NoopRetryOnResponse,
+		clientLimiterRate:     rate.Inf, // unlimited - same as not having a limiter
+		clientLimiterBurst:    0,        // unlimited - same as not having a limiter
 	}
 
 	for _, opt := range opts {
@@ -40,90 +40,90 @@ func NewOptions(opts ...Option) *Options {
 	}
 
 	// Hardening: if limiter is enabled (finite rate) and burst <= 0, normalize to a minimal safe burst of 1 to avoid over-restrictive behavior.
-	mustHarden := options.limiterRate != rate.Inf && options.limiterBurst <= 0
+	mustHarden := options.clientLimiterRate != rate.Inf && options.clientLimiterBurst <= 0
 	if mustHarden {
-		options.limiterBurst = 1
+		options.clientLimiterBurst = 1
 	}
 
 	// Timeout alignment: cap selected transport timeouts so they do not exceed the client-level timeout.
 	// We only cap non-zero values (0 means no timeout for that hop), and we do not mutate the original transport instance.
-	if utils.NotEmpty(options.timeout) {
-		t, ok := options.transport.(*http.Transport)
+	if utils.NotEmpty(options.clientTimeout) {
+		t, ok := options.clientTransport.(*http.Transport)
 		if ok {
 			clone := t.Clone()
-			clone.TLSHandshakeTimeout = utils.Ternary(clone.TLSHandshakeTimeout > 0 && clone.TLSHandshakeTimeout > options.timeout, options.timeout, clone.TLSHandshakeTimeout)
-			clone.ResponseHeaderTimeout = utils.Ternary(clone.ResponseHeaderTimeout > 0 && clone.ResponseHeaderTimeout > options.timeout, options.timeout, clone.ResponseHeaderTimeout)
-			clone.ExpectContinueTimeout = utils.Ternary(clone.ExpectContinueTimeout > 0 && clone.ExpectContinueTimeout > options.timeout, options.timeout, clone.ExpectContinueTimeout)
+			clone.TLSHandshakeTimeout = utils.Ternary(clone.TLSHandshakeTimeout > 0 && clone.TLSHandshakeTimeout > options.clientTimeout, options.clientTimeout, clone.TLSHandshakeTimeout)
+			clone.ResponseHeaderTimeout = utils.Ternary(clone.ResponseHeaderTimeout > 0 && clone.ResponseHeaderTimeout > options.clientTimeout, options.clientTimeout, clone.ResponseHeaderTimeout)
+			clone.ExpectContinueTimeout = utils.Ternary(clone.ExpectContinueTimeout > 0 && clone.ExpectContinueTimeout > options.clientTimeout, options.clientTimeout, clone.ExpectContinueTimeout)
 
 			// Note: DialContext timeout cannot be reliably capped here without replacing the dialer/function. We intentionally avoid overriding
 			// DialContext to preserve custom transport.
-			options.transport = clone
+			options.clientTransport = clone
 		}
 	}
 
 	return options
 }
 
-func WithTimeout(timeout time.Duration) Option {
+func WithClientTimeout(clientTimeout time.Duration) Option {
 	return func(opts *Options) {
-		if timeout > 0 {
-			opts.timeout = timeout
+		if clientTimeout > 0 {
+			opts.clientTimeout = clientTimeout
 		}
 	}
 }
 
-func WithTransport(transport http.RoundTripper) Option {
+func WithClientTransport(clientTransport http.RoundTripper) Option {
 	return func(opts *Options) {
-		if transport != nil {
-			opts.transport = transport
+		if clientTransport != nil {
+			opts.clientTransport = clientTransport
 		}
 	}
 }
 
-func WithAttempts(attempts uint) Option {
+func WithClientAttempts(clientAttempts uint) Option {
 	return func(opts *Options) {
-		if attempts > 1 {
-			opts.attempts = attempts
+		if clientAttempts > 1 {
+			opts.clientAttempts = clientAttempts
 		}
 	}
 }
 
-func WithRetryIf(retryIf retry.RetryIfFunc) Option {
+func WithClientRetryIf(clientRetryIf retry.RetryIfFunc) Option {
 	return func(opts *Options) {
-		if retryIf != nil {
-			opts.retryIf = retryIf
+		if clientRetryIf != nil {
+			opts.clientRetryIf = clientRetryIf
 		}
 	}
 }
 
-func WithRetryHook(retryHook retry.OnRetryFunc) Option {
+func WithClientRetryHook(clientRetryHook retry.OnRetryFunc) Option {
 	return func(opts *Options) {
-		if retryHook != nil {
-			opts.retryHook = retryHook
+		if clientRetryHook != nil {
+			opts.clientRetryHook = clientRetryHook
 		}
 	}
 }
 
-func WithRetryOnResponse(retryOnResponse RetryOnResponseFn) Option {
+func WithClientRetryOnResponse(clientRetryOnResponse RetryOnResponseFn) Option {
 	return func(o *Options) {
-		if retryOnResponse != nil {
-			o.retryOnResponse = retryOnResponse
+		if clientRetryOnResponse != nil {
+			o.clientRetryOnResponse = clientRetryOnResponse
 		}
 	}
 }
 
-func WithLimiterRate(limiterRate float64) Option {
+func WithClientLimiterRate(clientLimiterRate float64) Option {
 	return func(opts *Options) {
-		if limiterRate != float64(rate.Inf) {
-			opts.limiterRate = rate.Limit(limiterRate)
+		if clientLimiterRate != float64(rate.Inf) {
+			opts.clientLimiterRate = rate.Limit(clientLimiterRate)
 		}
 	}
 }
 
-func WithLimiterBurst(burst uint) Option {
+func WithClientLimiterBurst(clientLimiterBurst uint) Option {
 	return func(opts *Options) {
-		if burst > 0 {
-			opts.limiterBurst = burst
+		if clientLimiterBurst > 0 {
+			opts.clientLimiterBurst = clientLimiterBurst
 		}
 	}
 }

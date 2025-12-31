@@ -16,7 +16,7 @@ import "net/http"
 
 var (
 	_ Client = (*client)(nil)
-	_ Client = (*FakeClient)(nil)
+	_ Client = (*PluggableClient)(nil)
 )
 
 // Client represents the minimal contract compatible with *http.Client.

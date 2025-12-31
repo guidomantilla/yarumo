@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"net/http"
+	_ "net/http/pprof"
 )
 
 type Daemon interface {

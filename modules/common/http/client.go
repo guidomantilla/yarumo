@@ -44,7 +44,7 @@ func NewClient(options ...Option) Client {
 	opts := NewOptions(options...)
 	return &client{
 		Client: http.Client{
-			Timeout:   opts.timeout,
+			Timeout:   opts.clientTimeout,
 			Transport: opts.transport,
 		},
 		attempts:        opts.attempts,
