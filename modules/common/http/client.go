@@ -45,13 +45,13 @@ func NewClient(options ...Option) Client {
 	return &client{
 		Client: http.Client{
 			Timeout:   opts.clientTimeout,
-			Transport: opts.transport,
+			Transport: opts.clientTransport,
 		},
-		attempts:        opts.attempts,
-		retryIf:         opts.retryIf,
-		retryHook:       opts.retryHook,
-		limiter:         rate.NewLimiter(opts.limiterRate, int(opts.limiterBurst)), //nolint:gosec // disable G115
-		retryOnResponse: opts.retryOnResponse,
+		attempts:        opts.clientAttempts,
+		retryIf:         opts.clientRetryIf,
+		retryHook:       opts.clientRetryHook,
+		limiter:         rate.NewLimiter(opts.clientLimiterRate, int(opts.clientLimiterRate)), //nolint:gosec // disable G115
+		retryOnResponse: opts.clientRetryOnResponse,
 	}
 }
 
