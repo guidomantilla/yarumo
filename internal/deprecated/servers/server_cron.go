@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/guidomantilla/yarumo/common/assert"
 	"github.com/qmdx00/lifecycle"
 	"github.com/rs/zerolog/log"
+
+	"github.com/guidomantilla/yarumo/common/assert"
 )
 
 type cronServer struct {

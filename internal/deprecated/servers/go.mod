@@ -1,8 +1,8 @@
-module github.com/guidomantilla/yarumo/servers
+module github.com/guidomantilla/yarumo/internal/deprecated/servers
 
 go 1.25.5
 
-replace github.com/guidomantilla/yarumo/common => ../common
+replace github.com/guidomantilla/yarumo/common => ../../../modules/common
 
 require (
 	github.com/guidomantilla/yarumo/common v0.0.0

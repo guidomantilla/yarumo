@@ -1,7 +1,8 @@
 go 1.25.5
 
 use (
-	./internal/deprecated
+	./internal/deprecated/logic
+	./internal/deprecated/servers
 	./internal/dlocal
 	./internal/examples
 	./internal/temporal/courses/edu-101-go-code
@@ -11,7 +12,6 @@ use (
 	./modules/managed
 	./modules/maths
 	./modules/security
-	./modules/servers
 	./modules/telemetry/otel
 	./tools
 )
