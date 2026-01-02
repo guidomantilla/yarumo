@@ -10,7 +10,7 @@ import (
 func BuildBaseWorker(ctx context.Context, name string, _ any, errChan ErrChan) (Component[BaseWorker], StopFn, error) {
 	log.Ctx(ctx).Info().Str("stage", "startup").Str("component", name).Msg("starting up")
 
-	base := Component[BaseWorker]{name: name, internal: NewBaseWorker()}
+	baseWorker := Component[BaseWorker]{name: name, internal: NewBaseWorker()}
 
 	stopFn := func(ctx context.Context, timeout time.Duration) {
 		log.Ctx(ctx).Info().Str("stage", "shut down").Str("component", name).Msg("stopping")
@@ -19,14 +19,14 @@ func BuildBaseWorker(ctx context.Context, name string, _ any, errChan ErrChan) (
 		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		err := base.internal.Stop(timeoutCtx)
+		err := baseWorker.internal.Stop(timeoutCtx)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Str("stage", "shut down").Str("component", name).Msg("shutdown failed")
 		}
 	}
 
 	go func() {
-		err := base.internal.Start(ctx)
+		err := baseWorker.internal.Start(ctx)
 		if err != nil {
 			select {
 			case errChan <- err:
@@ -35,8 +35,8 @@ func BuildBaseWorker(ctx context.Context, name string, _ any, errChan ErrChan) (
 			return
 		}
 
-		<-base.internal.Done()
+		<-baseWorker.internal.Done()
 	}()
 
-	return base, stopFn, nil
+	return baseWorker, stopFn, nil
 }

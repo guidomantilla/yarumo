@@ -2,6 +2,7 @@ package managed
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	commoncron "github.com/guidomantilla/yarumo/common/cron"
@@ -32,7 +33,7 @@ func (c *cronWorker) Stop(ctx context.Context) error {
 		c.once.Do(func() { close(c.done) })
 		return nil
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("shutdown timeout: %w", ctx.Err())
 	}
 }
 

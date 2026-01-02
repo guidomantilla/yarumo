@@ -31,6 +31,10 @@ type CronWorker interface {
 	Worker
 }
 
+type TraceFlightRecorderWorker interface {
+	Worker
+}
+
 type GrpcServer interface {
 	HttpServer
 }

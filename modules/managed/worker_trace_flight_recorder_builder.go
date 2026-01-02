@@ -6,13 +6,13 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	commoncron "github.com/guidomantilla/yarumo/common/cron"
+	"github.com/guidomantilla/yarumo/common/diagnostics"
 )
 
-func BuildCronWorker(ctx context.Context, name string, internal commoncron.Scheduler, errChan ErrChan) (Component[CronWorker], StopFn, error) {
+func BuildTraceFlightRecorderWorker(ctx context.Context, name string, fr diagnostics.TraceFlightRecorder, errChan ErrChan) (Component[TraceFlightRecorderWorker], StopFn, error) {
 	log.Ctx(ctx).Info().Str("stage", "startup").Str("component", name).Msg("starting up")
 
-	cronWorker := Component[CronWorker]{name: name, internal: NewCronWorker(internal)}
+	traceWorker := Component[TraceFlightRecorderWorker]{name: name, internal: NewTraceFlightRecorderWorker(fr)}
 
 	stopFn := func(ctx context.Context, timeout time.Duration) {
 		log.Ctx(ctx).Info().Str("stage", "shut down").Str("component", name).Msg("stopping")
@@ -21,14 +21,14 @@ func BuildCronWorker(ctx context.Context, name string, internal commoncron.Sched
 		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		err := cronWorker.internal.Stop(timeoutCtx)
+		err := traceWorker.internal.Stop(timeoutCtx)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Str("stage", "shut down").Str("component", name).Msg("shutdown failed")
 		}
 	}
 
 	go func() {
-		err := cronWorker.internal.Start(ctx)
+		err := traceWorker.internal.Start(ctx)
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Str("stage", "startup").Str("component", name).Msg("failed to start")
 			select {
@@ -37,8 +37,8 @@ func BuildCronWorker(ctx context.Context, name string, internal commoncron.Sched
 			}
 			return
 		}
-		<-cronWorker.internal.Done()
+		<-traceWorker.internal.Done()
 	}()
 
-	return cronWorker, stopFn, nil
+	return traceWorker, stopFn, nil
 }

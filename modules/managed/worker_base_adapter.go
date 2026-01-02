@@ -2,6 +2,7 @@ package managed
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -23,7 +24,7 @@ func (b *baseWorker) Start(_ context.Context) error {
 func (b *baseWorker) Stop(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return fmt.Errorf("shutdown timeout: %w", ctx.Err())
 	default:
 		b.once.Do(func() { close(b.done) })
 		return nil

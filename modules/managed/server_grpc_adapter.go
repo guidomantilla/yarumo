@@ -3,6 +3,7 @@ package managed
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"sync"
 
@@ -26,7 +27,7 @@ func NewGrpcServer(g commongrpc.Server, network string) GrpcServer {
 func (g *grpcAdapter) ListenAndServe(_ context.Context) error {
 	listener, err := net.Listen(g.network, g.g.Address())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to listen on %s %s: %w", g.network, g.g.Address(), err)
 	}
 
 	g.mutex.Lock()
@@ -35,7 +36,7 @@ func (g *grpcAdapter) ListenAndServe(_ context.Context) error {
 
 	err = g.g.Serve(listener)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to serve on %s %s: %w", g.network, g.g.Address(), err)
 	}
 
 	return nil
@@ -63,6 +64,6 @@ func (g *grpcAdapter) Stop(ctx context.Context) error {
 		g.mutex.Unlock()
 
 		g.g.Stop()
-		return ctx.Err()
+		return fmt.Errorf("shutdown timeout: %w", ctx.Err())
 	}
 }
