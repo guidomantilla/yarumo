@@ -1,0 +1,19 @@
+go 1.25.5
+
+use (
+	./internal/deprecated/passwords
+	./internal/deprecated/servers
+	./internal/dlocal
+	./internal/examples
+	./internal/inference
+	./internal/maths
+	./internal/temporal/courses/edu-101-go-code
+	./internal/temporal/courses/edu-102-go-code
+	./modules/common
+	./modules/config
+	./modules/inference
+	./modules/managed
+	./modules/maths
+	./modules/telemetry/otel
+	./tools
+)

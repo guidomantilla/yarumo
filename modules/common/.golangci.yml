@@ -1,0 +1,313 @@
+version: "2"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  default: all
+
+  disable:
+    - err113
+    - exhaustruct
+    - godot
+    - lll
+    - mnd
+    - nlreturn
+    - revive
+    - tagliatelle
+    - testpackage
+    - varnamelen
+    - whitespace
+    - wsl
+    - wsl_v5
+
+  settings:
+    depguard:
+      rules:
+        main:
+          list-mode: original
+          deny:
+            # ------------------------------------------------------------------------
+            # LOGGING
+            # ------------------------------------------------------------------------
+            - pkg: "^log$"
+              desc: "use log/slog instead of stdlib log"
+            - pkg: "github.com/sirupsen/logrus"
+              desc: "use log/slog instead of logrus"
+            - pkg: "go.uber.org/zap"
+              desc: "use log/slog instead of zap"
+            - pkg: "github.com/rs/zerolog"
+              desc: "use log/slog instead of zerolog"
+
+            # ------------------------------------------------------------------------
+            # INSECURE CRYPTO
+            # ------------------------------------------------------------------------
+            - pkg: "crypto/md5"
+              desc: "crypto/md5 is insecure. use crypto/sha256"
+            - pkg: "crypto/sha1"
+              desc: "crypto/sha1 is insecure. use crypto/sha256"
+            - pkg: "crypto/des"
+              desc: "crypto/des is insecure (56-bit key). use crypto/aes"
+            - pkg: "crypto/rc4"
+              desc: "crypto/rc4 is broken. use crypto/aes"
+
+            # ------------------------------------------------------------------------
+            # INSECURE RAND
+            # ------------------------------------------------------------------------
+            - pkg: "^math/rand$"
+              desc: "use math/rand/v2 or crypto/rand instead"
+
+            # ------------------------------------------------------------------------
+            # DEPRECATED IO
+            # ------------------------------------------------------------------------
+            - pkg: "io/ioutil"
+              desc: "ioutil is deprecated since Go 1.16"
+
+            # ------------------------------------------------------------------------
+            # LEGACY ERRORS
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/pkg/errors"
+              desc: "use errs.Wrap(sentinel, err) with a sentinel from errors.go"
+
+            # ------------------------------------------------------------------------
+            # OLD LIBRARIES
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/mitchellh/mapstructure"
+              desc: "avoid untyped mapping; prefer typed structs + json"
+            - pkg: "github.com/bitly/go-simplejson"
+              desc: "avoid dynamic JSON; use encoding/json or gjson"
+            - pkg: "github.com/dgrijalva/jwt-go"
+              desc: "abandoned; use github.com/golang-jwt/jwt instead"
+
+            # ------------------------------------------------------------------------
+            # FORBIDDEN PACKAGES
+            # ------------------------------------------------------------------------
+            - pkg: "net/http/pprof"
+              desc: "pprof should not be imported directly except in tools"
+            - pkg: "runtime/pprof"
+              desc: "prevent accidental CPU profiling in production code"
+            - pkg: "runtime/debug"
+              desc: "do not use ReadBuildInfo, SetGCPercent, etc. in prod"
+            - pkg: unsafe
+              desc: "unsafe must not be used outside low-level internal packages"
+
+            # ------------------------------------------------------------------------
+            # AVOID XML / GOB
+            # ------------------------------------------------------------------------
+            - pkg: encoding/xml
+              desc: "avoid XML if possible; prefer JSON or protobuf"
+            - pkg: encoding/gob
+              desc: "gob is insecure and non-portable; avoid using it"
+
+            # ------------------------------------------------------------------------
+            # CONFIGURATION
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/spf13/viper"
+              desc: "use centralized configuration (config module) instead of viper directly"
+
+            # ------------------------------------------------------------------------
+            # TESTING
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/stretchr/testify"
+              desc: "use t.Fatal/t.Fatalf instead of testify assertions"
+
+            # ------------------------------------------------------------------------
+            # DEPRECATED PROTOBUF
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/golang/protobuf"
+              desc: "use google.golang.org/protobuf instead (v1 API is deprecated)"
+
+            # ------------------------------------------------------------------------
+            # SYSTEM / DEBUG
+            # ------------------------------------------------------------------------
+            - pkg: debug/elf
+              desc: "debug/elf should not be used outside tools"
+            - pkg: debug/macho
+              desc: "debug/macho should not be used outside tools"
+
+    forbidigo:
+      forbid:
+        - pattern: ^(fmt\.Print(|f|ln)|fmt\.Fprint(|f|ln)|print|println)$
+          msg: "use the project logger (log/slog) instead of direct print statements"
+        - pattern: ^(os\.(Getenv|LookupEnv|Setenv|Unsetenv|ExpandEnv)|syscall\.Getenv)$
+          msg: "use centralized configuration instead of direct env access"
+        - pattern: ^fmt\.Errorf$
+          msg: "use errs.Wrap(sentinel, err) with a sentinel from errors.go instead of fmt.Errorf"
+
+    funlen:
+      lines: 220
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+    ireturn:
+      allow:
+        - anon
+        - error
+        - empty
+        - stdlib
+        - generic
+        - github\.com/guidomantilla/yarumo/common/cron\.Scheduler
+        - github\.com/guidomantilla/yarumo/common/diagnostics\.TraceFlightRecorder
+        - github\.com/guidomantilla/yarumo/common/grpc\.Server
+        - github\.com/guidomantilla/yarumo/common/http\.(Client|Server)
+        - github\.com/guidomantilla/yarumo/common/uids\.UID
+
+  exclusions:
+    rules:
+      # Exclude some linters from running on tests files.
+      - path: _test\.go
+        linters:
+          - cyclop
+          - dupl
+          - errcheck
+          - errchkjson
+          - errname
+          - forbidigo
+          - containedctx
+          - funlen
+          - gocognit
+          - gocyclo
+          - maintidx
+          - wrapcheck
+          - forcetypeassert
+      # errs/functions.go uses type switches on error interfaces intentionally;
+      # errors.As would traverse the chain and break cycle detection.
+      # cyclop: AsErrorInfo walk closure is 11 (limit 10); further extraction hurts readability.
+      - path: errs/functions\.go
+        linters:
+          - cyclop
+          - errorlint
+      # math/rand/v2 is acceptable for non-security purposes (random strings, shuffle)
+      - path: utils/functions\.go
+        linters:
+          - gosec
+      # cast package is a thin delegation layer; wrapping errors adds no value
+      - path: cast/functions\.go
+        linters:
+          - wrapcheck
+      # randInt package-level var is required for testing crypto/rand error paths
+      - path: random/functions\.go
+        linters:
+          - gochecknoglobals
+      # TestNumber and TestString cannot be parallel: they mock the package-level randInt
+      - path: random/functions_test\.go
+        linters:
+          - paralleltest
+          - tparallel
+      # log package globals (mu, current, osExit) are required for thread-safe singleton logger
+      - path: log/functions\.go
+        linters:
+          - gochecknoglobals
+          - ireturn
+      # log/slog globals are required for the default logger singleton
+      - path: log/slog/logger\.go
+        linters:
+          - gochecknoglobals
+      # fanout handler single-path returns error directly from interface method
+      - path: log/slog/handler_fanout\.go
+        linters:
+          - wrapcheck
+      # tracefr delegates directly to trace.FlightRecorder; wrapping errors adds no value
+      - path: diagnostics/trace\.go
+        linters:
+          - wrapcheck
+      # lifecycle tests cannot be parallel: only one trace.FlightRecorder can be active per process
+      - path: diagnostics/trace_test\.go
+        linters:
+          - paralleltest
+      # assert enabled atomic.Bool is required for runtime assertion toggling
+      # assert creates errors for logging, never returns them as domain errors
+      - path: assert/functions\.go
+        linters:
+          - gochecknoglobals
+          - forbidigo
+      # assert tests cannot be parallel: they modify global enabled flag and global logger
+      - path: assert/functions_test\.go
+        linters:
+          - paralleltest
+      # log/functions_test and log/slog/logger_test cannot be parallel: they mock global state
+      - path: log/functions_test\.go
+        linters:
+          - paralleltest
+      - path: log/slog/logger_test\.go
+        linters:
+          - paralleltest
+      # uids package-level singletons and registry are required for preconfigured defaults
+      - path: uids/(uids|extensions)\.go
+        linters:
+          - gochecknoglobals
+      # extensions_test.go cannot be parallel: tests modify the global methods registry
+      - path: uids/extensions_test\.go
+        linters:
+          - paralleltest
+      # errors.go files define factory functions that may use fmt.Errorf for contextual messages
+      - path: errors\.go
+        linters:
+          - forbidigo
+      # assert.NotNil does not accept context; Build receives ctx but the assert guards the receiver
+      - path: rest/specs\.go
+        linters:
+          - contextcheck
+      # interceptors return status.Errorf directly; context comes from gRPC framework
+      # recovery interceptors use named returns so defer can assign the error
+      - path: grpc/functions\.go
+        linters:
+          - wrapcheck
+          - contextcheck
+          - nonamedreturns
+      # server delegates directly to *grpc.Server; wrapping errors adds no value
+      - path: grpc/server\.go
+        linters:
+          - wrapcheck
+      # crypto subpackage globals: predefined methods, registry map, sync mutex, sentinel errors
+      - path: crypto/
+        linters:
+          - gochecknoglobals
+      # crypto examples use println for demonstration purposes
+      - path: crypto/.*/examples/
+        linters:
+          - forbidigo
+      # crypto private functions return errors that are wrapped by the Method caller
+      - path: crypto/.*/functions\.go
+        linters:
+          - wrapcheck
+      # extensions_test.go cannot be parallel: tests modify the global methods registry
+      - path: crypto/.*/extensions_test\.go
+        linters:
+          - paralleltest
+      # diagnostics/pprof.go intentionally imports net/http/pprof to register debug endpoints
+      - path: diagnostics/pprof\.go
+        linters:
+          - depguard
+      # sentinel errors and type compliance vars are package-level by design
+      - path: grpc/(errors|types)\.go
+        linters:
+          - gochecknoglobals
+      # NewOptions has 11 cyclomatic complexity (limit 10); extracting sub-functions hurts readability
+      - path: http/options\.go
+        linters:
+          - cyclop
+      # http client singletons (DefaultClient, NoopClient, ErrorClient) are required package-level vars
+      # gosec G107: client.Do executes requests with caller-provided URLs by design (not SSRF)
+      - path: http/client\.go
+        linters:
+          - gochecknoglobals
+          - contextcheck
+          - gosec
+          - wrapcheck
+      # server delegates directly to *http.Server; wrapping errors adds no value
+      # assert.NotNil does not accept context; Shutdown receives ctx but the assert guards the receiver
+      - path: http/server\.go
+        linters:
+          - wrapcheck
+          - contextcheck
+      # retry.DoWithData wraps errors internally; Do delegates to DefaultClient
+      - path: http/functions\.go
+        linters:
+          - wrapcheck
+      # sentinel errors and type compliance vars are package-level by design
+      - path: http/(errors|types)\.go
+        linters:
+          - gochecknoglobals
