@@ -1,0 +1,166 @@
+version: "2"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  default: all
+
+  disable:
+    - contextcheck
+    - err113
+    - exhaustruct
+    - gochecknoglobals
+    - gochecknoinits
+    - godot
+    - lll
+    - mnd
+    - revive
+    - tagalign
+    - tagliatelle
+    - varnamelen
+    - wsl
+    - wsl_v5
+    - nlreturn
+    - whitespace
+    - testpackage
+
+  exclusions:
+    rules:
+      - path: go.mod
+        linters:
+          - gomoddirectives
+      # Exclude some linters from running on tests files.
+      - path: _test\.go
+        linters:
+          - cyclop
+          - dupl
+          - dupword
+          - errcheck
+          - errchkjson
+          - forbidigo
+          - containedctx
+          - funlen
+          - gocognit
+          - gocyclo
+          - goconst
+          - perfsprint
+          - staticcheck
+          - unparam
+          - wrapcheck
+          - forcetypeassert
+          - maintidx
+
+  settings:
+    depguard:
+      rules:
+        main:
+          list-mode: original
+          deny:
+            # ------------------------------------------------------------------------
+            # LOGGING
+            # ------------------------------------------------------------------------
+            - pkg: "log"
+              desc: "use zerolog instead of stdlib log"
+            - pkg: "github.com/sirupsen/logrus"
+              desc: "use zerolog instead of stdlib log"
+            - pkg: "go.uber.org/zap"
+              desc: "use zerolog instead of stdlib log"
+
+            # ------------------------------------------------------------------------
+            # INSECURE CRYPTO
+            # ------------------------------------------------------------------------
+            - pkg: "crypto/md5"
+              desc: "crypto/md5 is insecure. use crypto/sha256"
+            - pkg: "crypto/sha1"
+              desc: "crypto/sha1 is insecure. use crypto/sha256"
+
+            # ------------------------------------------------------------------------
+            # INSECURE RAND
+            # ------------------------------------------------------------------------
+            - pkg: "^math/random$"
+              desc: "use math/random/v2 or crypto/random instead"
+
+            # ------------------------------------------------------------------------
+            # DEPRECATED IO
+            # ------------------------------------------------------------------------
+            - pkg: "io/ioutil"
+              desc: "ioutil is deprecated since Go 1.16"
+
+            # ------------------------------------------------------------------------
+            # LEGACY ERRORS
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/pkg/errors"
+              desc: "use standard package errors or fmt.Errorf with %w"
+
+            # ------------------------------------------------------------------------
+            # OLD LIBRARIES
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/mitchellh/mapstructure"
+              desc: "avoid untyped mapping; prefer typed structs + json"
+            - pkg: "github.com/bitly/go-simplejson"
+              desc: "avoid dynamic JSON; use encoding/json or gjson"
+
+            # ------------------------------------------------------------------------
+            # FORBIDDEN PACKAGES
+            # -------------------------------------------------------------------------
+            - pkg: "runtime/pprof"
+              desc: "prevent accidental CPU profiling in production code"
+            - pkg: "runtime/debug"
+              desc: "do not use ReadBuildInfo, SetGCPercent, etc. in prod"
+            - pkg: unsafe
+              desc: "unsafe must not be used outside low-level internal packages"
+
+            # ------------------------------------------------------------------------
+            # AVOID XML / GOB
+            # ------------------------------------------------------------------------
+            - pkg: encoding/xml
+              desc: "avoid XML if possible; prefer JSON or protobuf"
+            - pkg: encoding/gob
+              desc: "gob is insecure and non-portable; avoid using it"
+
+            # ------------------------------------------------------------------------
+            # SYSTEM / DEBUG
+            # ------------------------------------------------------------------------
+            - pkg: debug/elf
+              desc: "debug/elf should not be used outside tools"
+            - pkg: debug/macho
+              desc: "debug/macho should not be used outside tools"
+
+    forbidigo:
+      forbid:
+        - pattern: ^(fmt\.Print(|f|ln)|fmt\.Fprint(|f|ln)|print|println)$
+        - pattern: ^(os.Getenv|os.LookupEnv|os.Setenv|os.Unsetenv|os.ExpandEnv)$
+        - pattern: syscall.Getenv
+
+    wrapcheck:
+      ignore-package-globs:
+        - github.com/guidomantilla/yarumo/compute/engine/*
+        - github.com/guidomantilla/yarumo/compute/math/*
+        - github.com/guidomantilla/yarumo/common/expressions
+
+    funlen:
+      lines: 220
+
+    ireturn:
+      allow:
+        - anon
+        - error
+        - empty
+        - stdlib
+        - github.com/guidomantilla/yarumo/decisions/core/repository.Repository
+        - github.com/guidomantilla/yarumo/decisions/core/evaluate.CascadePipeline
+        - github.com/guidomantilla/yarumo/decisions/core/validate.Validator
+        - github.com/guidomantilla/yarumo/decisions/core/explain.Explainer
+        - github.com/guidomantilla/yarumo/decisions/core/explain.TableExplainer
+        - github.com/guidomantilla/yarumo/decisions/core/explain.ScorecardExplainer
+        - github.com/guidomantilla/yarumo/decisions/core/explain.TreeExplainer
+        - github.com/guidomantilla/yarumo/compute/engine/bayesian/network.Network
+        - github.com/guidomantilla/yarumo/compute/engine/bayesian/evidence.EvidenceBase
+        - github.com/guidomantilla/yarumo/compute/engine/deductive/rules.Rule
+        - github.com/guidomantilla/yarumo/compute/engine/fuzzy/variable.Variable
+        - github.com/guidomantilla/yarumo/compute/engine/fuzzy/rules.Rule
+        - github.com/guidomantilla/yarumo/compute/math/logic.Formula
+        - github.com/guidomantilla/yarumo/compute/math/fuzzy.MembershipFn
+        - github.com/guidomantilla/yarumo/common/expressions.Expr

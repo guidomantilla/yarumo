@@ -1,0 +1,26 @@
+package engine
+
+import (
+	_ "github.com/guidomantilla/yarumo/compute/engine/bayesian"
+	_ "github.com/guidomantilla/yarumo/compute/engine/bayesian/engine"
+	_ "github.com/guidomantilla/yarumo/compute/engine/bayesian/evidence"
+	_ "github.com/guidomantilla/yarumo/compute/engine/bayesian/explain"
+	_ "github.com/guidomantilla/yarumo/compute/engine/bayesian/network"
+	_ "github.com/guidomantilla/yarumo/compute/engine/causal"
+	_ "github.com/guidomantilla/yarumo/compute/engine/causal/engine"
+	_ "github.com/guidomantilla/yarumo/compute/engine/causal/explain"
+	_ "github.com/guidomantilla/yarumo/compute/engine/causal/model"
+	_ "github.com/guidomantilla/yarumo/compute/engine/deductive/engine"
+	_ "github.com/guidomantilla/yarumo/compute/engine/deductive/explain"
+	_ "github.com/guidomantilla/yarumo/compute/engine/deductive/facts"
+	_ "github.com/guidomantilla/yarumo/compute/engine/deductive/rules"
+	_ "github.com/guidomantilla/yarumo/compute/engine/fuzzy"
+	_ "github.com/guidomantilla/yarumo/compute/engine/fuzzy/engine"
+	_ "github.com/guidomantilla/yarumo/compute/engine/fuzzy/explain"
+	_ "github.com/guidomantilla/yarumo/compute/engine/fuzzy/rules"
+	_ "github.com/guidomantilla/yarumo/compute/engine/fuzzy/variable"
+	_ "github.com/guidomantilla/yarumo/compute/engine/mcdm"
+	_ "github.com/guidomantilla/yarumo/compute/engine/mcdm/ahp"
+	_ "github.com/guidomantilla/yarumo/compute/engine/mcdm/explain"
+	_ "github.com/guidomantilla/yarumo/compute/engine/mcdm/topsis"
+)

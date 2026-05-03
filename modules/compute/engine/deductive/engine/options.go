@@ -1,0 +1,57 @@
+package engine
+
+const (
+	defaultMaxIterations = 1000
+	defaultMaxDepth      = 100
+)
+
+// Options holds configuration for engine execution.
+type Options struct {
+	maxIterations int
+	maxDepth      int
+	strategy      Strategy
+}
+
+// Option is a functional option for configuring engine Options.
+type Option func(*Options)
+
+// NewOptions creates Options from the given functional options.
+func NewOptions(opts ...Option) Options {
+	o := Options{
+		maxIterations: defaultMaxIterations,
+		maxDepth:      defaultMaxDepth,
+	}
+
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	return o
+}
+
+// WithMaxIterations sets the maximum number of forward chaining iterations.
+func WithMaxIterations(n int) Option {
+	return func(o *Options) {
+		if n > 0 {
+			o.maxIterations = n
+		}
+	}
+}
+
+// WithMaxDepth sets the maximum recursion depth for backward chaining.
+func WithMaxDepth(n int) Option {
+	return func(o *Options) {
+		if n > 0 {
+			o.maxDepth = n
+		}
+	}
+}
+
+// WithStrategy sets the conflict resolution strategy.
+func WithStrategy(s Strategy) Option {
+	return func(o *Options) {
+		if s >= PriorityOrder && s <= FirstMatch {
+			o.strategy = s
+		}
+	}
+}

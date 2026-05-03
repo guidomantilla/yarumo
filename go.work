@@ -1,0 +1,21 @@
+go 1.25.5
+
+use (
+	./internal/deprecated/passwords
+	./internal/deprecated/servers
+	./internal/examples
+	./internal/temporal/courses/edu-101-go-code
+	./internal/temporal/courses/edu-102-go-code
+	./internal/tutorials/compute-engine
+	./internal/tutorials/compute-math
+	./modules/common
+	./modules/compute/engine
+	./modules/compute/math
+	./modules/compute/tests/acceptance
+	./modules/config
+	./modules/managed
+	./modules/telemetry/otel
+	./sdks/decisions/core
+	./sdks/decisions/examples
+	./tools
+)
