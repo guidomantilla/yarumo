@@ -13,10 +13,12 @@ func TestNewOptions(t *testing.T) {
 		if opts.funcs == nil {
 			t.Fatal("expected funcs to be initialized")
 		}
-		if _, ok := opts.funcs["len"]; !ok {
+		_, ok := opts.funcs["len"]
+		if !ok {
 			t.Fatal("expected len function in defaults")
 		}
-		if _, ok := opts.funcs["sum"]; !ok {
+		_, ok = opts.funcs["sum"]
+		if !ok {
 			t.Fatal("expected sum function in defaults")
 		}
 	})
@@ -25,7 +27,8 @@ func TestNewOptions(t *testing.T) {
 		t.Parallel()
 		custom := func(args ...any) (any, error) { return 42.0, nil }
 		opts := NewOptions(WithFunc("myFunc", custom))
-		if _, ok := opts.funcs["myFunc"]; !ok {
+		_, ok := opts.funcs["myFunc"]
+		if !ok {
 			t.Fatal("expected myFunc in options")
 		}
 	})
@@ -33,7 +36,8 @@ func TestNewOptions(t *testing.T) {
 	t.Run("WithFunc with nil does not add", func(t *testing.T) {
 		t.Parallel()
 		opts := NewOptions(WithFunc("bad", nil))
-		if _, ok := opts.funcs["bad"]; ok {
+		_, ok := opts.funcs["bad"]
+		if ok {
 			t.Fatal("nil function should not be registered")
 		}
 	})

@@ -13,7 +13,8 @@ func TestDefaultFuncs(t *testing.T) {
 		funcs := DefaultFuncs()
 		expected := []string{"len", "sum", "min", "max", "avg", "abs", "contains", "lower", "upper"}
 		for _, name := range expected {
-			if _, ok := funcs[name]; !ok {
+			_, ok := funcs[name]
+			if !ok {
 				t.Fatalf("expected function %s", name)
 			}
 		}
