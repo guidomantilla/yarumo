@@ -1,14 +1,16 @@
 package passwords
 
 import (
+	"strings"
 	"sync"
 )
 
 var methods = map[string]Method{
-	Argon2.name: *Argon2,
-	Bcrypt.name: *Bcrypt,
-	Pbkdf2.name: *Pbkdf2,
-	Scrypt.name: *Scrypt,
+	Argon2id.name: *Argon2id,
+	Argon2i.name:  *Argon2i,
+	Bcrypt.name:   *Bcrypt,
+	Pbkdf2.name:   *Pbkdf2,
+	Scrypt.name:   *Scrypt,
 }
 
 var lock = new(sync.RWMutex)
@@ -46,12 +48,24 @@ func Supported() []Method {
 }
 
 // ByPrefix returns the method matching the encoded password prefix.
+//
+// The legacy {argon2} prefix (used by pre-YA-0030 encodes) is treated as an
+// alias of {argon2id} so stored hashes continue to verify against the
+// renamed Argon2id method. The {argon2i} prefix routes to Argon2i. Direct
+// prefix matches always take precedence over the legacy alias.
 func ByPrefix(encodedPassword string) (*Method, error) {
 	lock.RLock()
 	defer lock.RUnlock()
 	for _, method := range methods {
 		if len(encodedPassword) > len(method.prefix) && encodedPassword[:len(method.prefix)] == method.prefix {
 			return &method, nil
+		}
+	}
+	// Legacy {argon2} prefix — route to Argon2id for backward compatibility
+	// with hashes produced before the YA-0030 rename.
+	if strings.HasPrefix(encodedPassword, Argon2PrefixKey) && len(encodedPassword) > len(Argon2PrefixKey) {
+		if alg, ok := methods[Argon2id.name]; ok {
+			return &alg, nil
 		}
 	}
 	return nil, ErrAlgorithmNotSupported(encodedPassword)

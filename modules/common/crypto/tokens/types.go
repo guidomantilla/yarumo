@@ -1,23 +1,25 @@
-// Package tokens provides JWT token generation and validation using both
-// symmetric (HMAC) and asymmetric (RSA, RSA-PSS, ECDSA, EdDSA) signing
-// methods.
+// Package tokens provides token generation and validation. Two distinct
+// flavors are supported:
 //
-// # Algorithm coverage
+//   - JWT signed tokens via the Algorithm enum, covering HMAC (HS256/384/512),
+//     RSASSA-PKCS1-v1_5 (RS256/384/512), RSASSA-PSS (PS256/384/512), ECDSA
+//     (ES256/384/512), and Ed25519 (EdDSA). The claims payload is transparent
+//     — anyone can base64-decode the body; only the signature protects
+//     integrity. Asymmetric variants require a real key pair via
+//     WithSigningKey / WithVerifyingKey; the signers/{rsassas, ecdsas, ed25519}
+//     subpackages provide GenerateKey helpers and PEM marshal/parse for the
+//     key types involved.
+//   - Opaque tokens via AEAD encryption (YA-0019). The entire claims payload
+//     is encrypted under a symmetric key, so nothing leaks to the client.
+//     The token is base64url(AEAD.Encrypt(key, json(claims), nil)) with the
+//     AEAD nonce prepended internally by the configured cipher.
 //
-// The package predefines templates for every JWS-standard algorithm
-// (RFC 7518) plus Ed25519 (RFC 8037):
-//
-//   - JWT_HS256 / JWT_HS384 / JWT_HS512 — HMAC over SHA-2.
-//   - JWT_RS256 / JWT_RS384 / JWT_RS512 — RSASSA-PKCS1-v1_5 over SHA-2.
-//   - JWT_PS256 / JWT_PS384 / JWT_PS512 — RSASSA-PSS over SHA-2.
-//   - JWT_ES256 / JWT_ES384 / JWT_ES512 — ECDSA over P-256/P-384/P-521.
-//   - JWT_EdDSA — Ed25519.
-//
-// The asymmetric variants (everything past HS512) require the caller to
-// supply a real key pair via WithSigningKey/WithVerifyingKey — the key
-// types come from crypto/rsa, crypto/ecdsa, and crypto/ed25519. The
-// signers/rsassas, signers/ecdsas, and signers/ed25519 sub-packages
-// provide GenerateKey helpers and PEM marshal/parse for these key types.
+// Both JWT and opaque methods are constructed with a single entry point —
+// NewMethod(name, Algorithm, options...). The Algorithm enum value is the
+// discriminator: HMAC and asymmetric variants belong to the JWT family;
+// AlgorithmOpaqueAESGCM and AlgorithmOpaqueXChaCha20Poly1305 belong to the
+// opaque family. Both flavors share the same Method struct, Generate/Validate
+// API, options pipeline, and registry.
 //
 // # Key management
 //
@@ -97,8 +99,9 @@ var (
 type Algorithm string
 
 // Supported Algorithm values. Keep names aligned with the JWS "alg" header
-// strings (RFC 7518) so the enum value can double as the registered JWT
-// algorithm identifier.
+// strings (RFC 7518) where applicable so the enum value can double as the
+// registered JWT algorithm identifier. Opaque algorithms use bespoke names
+// since they have no JWS analogue.
 const (
 	AlgorithmHS256 Algorithm = "HS256"
 	AlgorithmHS384 Algorithm = "HS384"
@@ -117,7 +120,23 @@ const (
 	AlgorithmES512 Algorithm = "ES512"
 
 	AlgorithmEdDSA Algorithm = "EdDSA"
+
+	AlgorithmOpaqueAESGCM            Algorithm = "OPAQUE_AES_GCM"
+	AlgorithmOpaqueXChaCha20Poly1305 Algorithm = "OPAQUE_XCHACHA20_POLY1305"
 )
+
+// isOpaque reports whether the algorithm belongs to the opaque (AEAD-encrypted)
+// family. The JWT family (HS256/384/512 and future asymmetric variants) returns
+// false. This is the package-internal discriminator used by generate and
+// validate to dispatch between the two implementations.
+func (a Algorithm) isOpaque() bool {
+	switch a {
+	case AlgorithmOpaqueAESGCM, AlgorithmOpaqueXChaCha20Poly1305:
+		return true
+	default:
+		return false
+	}
+}
 
 // Payload is a named type for token claims payload data.
 type Payload map[string]any

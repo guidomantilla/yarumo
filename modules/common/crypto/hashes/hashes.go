@@ -2,6 +2,7 @@ package hashes
 
 import (
 	"crypto"
+	"hash"
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	ctypes "github.com/guidomantilla/yarumo/common/types"
@@ -75,4 +76,35 @@ func (m *Method) Hash(data ctypes.Bytes) (ctypes.Bytes, error) {
 	}
 
 	return digest, nil
+}
+
+// NewHasher returns a new hash.Hash instance for this Method, enabling
+// io.Writer-style streaming digest computation. Callers feed input via
+// the returned hash.Hash's Write method (typically through io.Copy) and
+// obtain the final digest with Sum(nil).
+//
+// The streaming API is the idiomatic counterpart to Method.Hash: prefer it
+// for inputs that do not comfortably fit in memory (file uploads, log
+// streams, backup archives) or any time io.Reader composition is natural.
+//
+// NewHasher returns ErrDigest wrapping ErrHashFunctionUnavailable when the
+// underlying crypto.Hash driver was not registered (e.g. the caller did
+// not blank-import the implementation package). The error wrap-layer
+// matches Method.Hash: bare sentinels live in errors.go, the struct
+// method wraps via ErrDigest.
+//
+// Example:
+//
+//	h, err := chashes.SHA256.NewHasher()
+//	if err != nil { ... }
+//	if _, err := io.Copy(h, src); err != nil { ... }
+//	digest := h.Sum(nil)
+func (m *Method) NewHasher() (hash.Hash, error) {
+	cassert.NotNil(m, "method is nil")
+
+	if !m.kind.Available() {
+		return nil, ErrDigest(ErrHashFunctionUnavailable)
+	}
+
+	return m.kind.New(), nil
 }

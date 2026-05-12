@@ -1,4 +1,4 @@
-package passwords
+package hybrid
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-const textCodecTestName = "Argon2id"
+const textCodecTestName = "HPKE_X25519_HKDF_SHA256_AES_256_GCM"
 
 func TestMethod_MarshalText(t *testing.T) {
 	t.Parallel()
@@ -14,7 +14,7 @@ func TestMethod_MarshalText(t *testing.T) {
 	t.Run("returns the registry name", func(t *testing.T) {
 		t.Parallel()
 
-		data, err := Argon2id.MarshalText()
+		data, err := HPKE_X25519_HKDF_SHA256_AES_256_GCM.MarshalText()
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -72,8 +72,8 @@ func TestMethod_UnmarshalText(t *testing.T) {
 			t.Fatalf("expected *Error via errors.As, got %T", err)
 		}
 
-		if domErr.Type != PasswordMethod {
-			t.Fatalf("expected type %q, got %q", PasswordMethod, domErr.Type)
+		if domErr.Type != HybridMethod {
+			t.Fatalf("expected type %q, got %q", HybridMethod, domErr.Type)
 		}
 	})
 }
@@ -84,7 +84,7 @@ func TestMethod_TextCodec_RoundTrip(t *testing.T) {
 	t.Run("MarshalText then UnmarshalText preserves identity", func(t *testing.T) {
 		t.Parallel()
 
-		data, err := Argon2id.MarshalText()
+		data, err := HPKE_X25519_HKDF_SHA256_AES_256_GCM.MarshalText()
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -96,12 +96,20 @@ func TestMethod_TextCodec_RoundTrip(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got.Name() != Argon2id.Name() {
-			t.Fatalf("expected %q, got %q", Argon2id.Name(), got.Name())
+		if got.Name() != HPKE_X25519_HKDF_SHA256_AES_256_GCM.Name() {
+			t.Fatalf("expected %q, got %q", HPKE_X25519_HKDF_SHA256_AES_256_GCM.Name(), got.Name())
 		}
 
-		if got.prefix != Argon2id.prefix {
-			t.Fatalf("expected prefix %q, got %q", Argon2id.prefix, got.prefix)
+		if got.kemID != HPKE_X25519_HKDF_SHA256_AES_256_GCM.kemID {
+			t.Fatalf("expected kemID %v, got %v", HPKE_X25519_HKDF_SHA256_AES_256_GCM.kemID, got.kemID)
+		}
+
+		if got.kdfID != HPKE_X25519_HKDF_SHA256_AES_256_GCM.kdfID {
+			t.Fatalf("expected kdfID %v, got %v", HPKE_X25519_HKDF_SHA256_AES_256_GCM.kdfID, got.kdfID)
+		}
+
+		if got.aeadID != HPKE_X25519_HKDF_SHA256_AES_256_GCM.aeadID {
+			t.Fatalf("expected aeadID %v, got %v", HPKE_X25519_HKDF_SHA256_AES_256_GCM.aeadID, got.aeadID)
 		}
 	})
 }
@@ -113,17 +121,17 @@ func TestMethod_JSON_RoundTrip(t *testing.T) {
 		t.Parallel()
 
 		type Config struct {
-			Encoder *Method `json:"encoder"`
+			Cipher *Method `json:"cipher"`
 		}
 
-		in := Config{Encoder: Argon2id}
+		in := Config{Cipher: HPKE_X25519_HKDF_SHA256_AES_256_GCM}
 
 		raw, err := json.Marshal(in)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		const expected = `{"encoder":"Argon2id"}`
+		const expected = `{"cipher":"HPKE_X25519_HKDF_SHA256_AES_256_GCM"}`
 		if string(raw) != expected {
 			t.Fatalf("expected %q, got %q", expected, string(raw))
 		}
@@ -135,12 +143,12 @@ func TestMethod_JSON_RoundTrip(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if out.Encoder == nil {
-			t.Fatal("expected non-nil Encoder after unmarshal")
+		if out.Cipher == nil {
+			t.Fatal("expected non-nil Cipher after unmarshal")
 		}
 
-		if out.Encoder.Name() != textCodecTestName {
-			t.Fatalf("expected %q, got %q", textCodecTestName, out.Encoder.Name())
+		if out.Cipher.Name() != textCodecTestName {
+			t.Fatalf("expected %q, got %q", textCodecTestName, out.Cipher.Name())
 		}
 	})
 }

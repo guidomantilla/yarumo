@@ -20,6 +20,9 @@ var methods = map[string]Method{
 	JWT_ES512.name: *JWT_ES512,
 
 	JWT_EdDSA.name: *JWT_EdDSA,
+
+	OPAQUE_AES_256_GCM.name:        *OPAQUE_AES_256_GCM,
+	OPAQUE_XCHACHA20_POLY1305.name: *OPAQUE_XCHACHA20_POLY1305,
 }
 
 var lock = new(sync.RWMutex)

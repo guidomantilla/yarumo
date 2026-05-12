@@ -7,6 +7,7 @@ import (
 	_ "github.com/guidomantilla/yarumo/common/cron"
 	_ "github.com/guidomantilla/yarumo/common/crypto/certs"
 	_ "github.com/guidomantilla/yarumo/common/crypto/ciphers/aead"
+	_ "github.com/guidomantilla/yarumo/common/crypto/ciphers/hybrid"
 	_ "github.com/guidomantilla/yarumo/common/crypto/ciphers/rsaoaep"
 	_ "github.com/guidomantilla/yarumo/common/crypto/hashes"
 	_ "github.com/guidomantilla/yarumo/common/crypto/kdfs"

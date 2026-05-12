@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"crypto"
 	"fmt"
+	"io"
 	"log"
 
 	chashes "github.com/guidomantilla/yarumo/common/crypto/hashes"
@@ -22,6 +24,9 @@ func main() {
 
 	// Listing all supported methods
 	listSupported()
+
+	// Streaming digest via NewHasher (io.Writer integration)
+	hashStreamExample(data)
 }
 
 // predefinedMethods demonstrates direct use of every predefined hash method.
@@ -111,5 +116,37 @@ func listSupported() {
 		fmt.Printf("  - %s\n", m.Name())
 	}
 
+	fmt.Println()
+}
+
+// hashStreamExample demonstrates the streaming hash API. Method.NewHasher
+// returns Go's standard hash.Hash so callers can feed any io.Reader through
+// io.Copy without materialising the entire payload in memory.
+func hashStreamExample(data []byte) {
+	fmt.Println("=== Streaming Hash (NewHasher + io.Copy) ===")
+
+	h, err := chashes.SHA256.NewHasher()
+	if err != nil {
+		log.Fatalf("NewHasher failed: %v", err)
+	}
+
+	src := bytes.NewReader(data)
+
+	n, err := io.Copy(h, src)
+	if err != nil {
+		log.Fatalf("io.Copy failed: %v", err)
+	}
+
+	digest := h.Sum(nil)
+
+	// Compare against the one-shot Hash for the same input.
+	oneShot, err := chashes.SHA256.Hash(data)
+	if err != nil {
+		log.Fatalf("Hash failed: %v", err)
+	}
+
+	fmt.Printf("Streamed %d bytes through SHA256.NewHasher\n", n)
+	fmt.Printf("Streaming digest (hex): %x\n", digest)
+	fmt.Printf("One-shot  digest (hex): %x\n", oneShot)
 	fmt.Println()
 }

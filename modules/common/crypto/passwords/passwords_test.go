@@ -57,8 +57,8 @@ func TestMethod_Name(t *testing.T) {
 	t.Run("returns method name", func(t *testing.T) {
 		t.Parallel()
 
-		if Argon2.Name() != "Argon2" {
-			t.Fatalf("expected 'Argon2', got %q", Argon2.Name())
+		if Argon2id.Name() != "Argon2id" {
+			t.Fatalf("expected 'Argon2id', got %q", Argon2id.Name())
 		}
 		if Bcrypt.Name() != "Bcrypt" {
 			t.Fatalf("expected 'Bcrypt', got %q", Bcrypt.Name())

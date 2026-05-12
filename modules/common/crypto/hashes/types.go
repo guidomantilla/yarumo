@@ -16,6 +16,23 @@
 // the time of the call. Custom methods registered via Register after config
 // load will not resolve here; callers that need late-bound lookup should
 // call Get(name) directly.
+//
+// # Streaming
+//
+// Method.NewHasher returns Go's standard hash.Hash so callers can compute
+// digests over arbitrary io.Reader / io.Writer sources without materialising
+// the entire input in memory. The returned hash.Hash composes directly with
+// io.Copy:
+//
+//	h, err := chashes.SHA256.NewHasher()
+//	if err != nil { ... }
+//	if _, err := io.Copy(h, src); err != nil { ... }
+//	digest := h.Sum(nil)
+//
+// Use the streaming API for multi-megabyte inputs (file uploads, log
+// streams, backup archives) or any time io.Reader composition is natural.
+// Method.Hash remains the right choice for short byte buffers already in
+// memory.
 package hashes
 
 import (

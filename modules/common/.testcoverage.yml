@@ -31,11 +31,14 @@ threshold:
 # The first rule from this list that matches a file or package is going to apply
 # a new threshold to it. If a project has multiple rules that match the same path,
 # override rules should be listed in order from specific to more general rules.
-# override:
-#  # Increase the coverage threshold to 100% for `foo` package
-#  # (default is 80, as configured above in this example)
-#  - threshold: 98.8
-#    path: ^errs
+override:
+  # crypto/ciphers/hybrid/functions.go wraps circl/hpke; the uncovered
+  # branches are error paths from third-party APIs (KEM scheme errors,
+  # rand.Reader failures, NewSender/NewReceiver returning nil error in the
+  # current circl release) that are not reachable from unit tests without
+  # forking the dependency.
+  - threshold: 85
+    path: ^crypto/ciphers/hybrid/functions\.go$
 
 # Holds regexp rules which will exclude matched files or packages
 # from coverage statistics
@@ -44,6 +47,7 @@ exclude:
   paths:
     - ^crypto/certs/examples/main.go
     - ^crypto/ciphers/examples/main.go
+    - ^crypto/ciphers/hybrid/examples/main.go
     - ^crypto/hashes/examples/main.go
     - ^crypto/kdfs/examples/main.go
     - ^crypto/passwords/examples/main.go
