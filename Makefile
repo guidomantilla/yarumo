@@ -4,7 +4,7 @@ MODULES := modules/common modules/config modules/managed modules/telemetry/otel
 MODULES += modules/compute/math modules/compute/engine modules/compute/tests/acceptance
 MODULES += sdks/decisions/core
 ENABLE_INTERNAL := false
-INTERNAL := internal/deprecated/passwords internal/deprecated/servers internal/examples
+INTERNAL := internal/examples
 INTERNAL += internal/temporal/courses/edu-101-go-code internal/temporal/courses/edu-102-go-code
 
 verify-tools:
