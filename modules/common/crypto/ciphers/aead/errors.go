@@ -42,6 +42,8 @@ var (
 	ErrKeyGenerationFailed = errors.New("key generation failed")
 	ErrEncryptFailed       = errors.New("encrypt failed")
 	ErrDecryptFailed       = errors.New("decrypt failed")
+	ErrStreamSrcNil        = errors.New("aead stream src is nil")
+	ErrStreamDstNil        = errors.New("aead stream dst is nil")
 )
 
 // ErrAlgorithmNotSupported returns an error indicating the named AEAD algorithm is not registered.

@@ -32,6 +32,7 @@ func (e *Error) Error() string {
 
 // Sentinel errors for password operations.
 var (
+	ErrMethodIsNil           = errors.New("method is nil")
 	ErrRawPasswordEmpty      = errors.New("raw password is empty")
 	ErrEncodedPasswordEmpty  = errors.New("encoded password is empty")
 	ErrEncodedPasswordFormat = errors.New("encoded password format not allowed")

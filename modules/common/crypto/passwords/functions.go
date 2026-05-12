@@ -45,6 +45,9 @@ type scryptDecoded struct {
 }
 
 func encode(method *Method, rawPassword string) (string, error) {
+	if method == nil {
+		return "", ErrMethodIsNil
+	}
 
 	if cutils.Empty(rawPassword) {
 		return "", ErrRawPasswordEmpty
@@ -67,6 +70,9 @@ func encode(method *Method, rawPassword string) (string, error) {
 }
 
 func verify(method *Method, encodedPassword string, rawPassword string) (bool, error) {
+	if method == nil {
+		return false, ErrMethodIsNil
+	}
 
 	if cutils.Empty(rawPassword) {
 		return false, ErrRawPasswordEmpty
@@ -93,6 +99,9 @@ func verify(method *Method, encodedPassword string, rawPassword string) (bool, e
 }
 
 func upgradeNeeded(method *Method, encodedPassword string) (bool, error) {
+	if method == nil {
+		return false, ErrMethodIsNil
+	}
 
 	if cutils.Empty(encodedPassword) {
 		return false, ErrEncodedPasswordEmpty
