@@ -16,6 +16,10 @@ func main() {
 }
 
 // predefinedMethods demonstrates generating and validating tokens with all predefined methods.
+//
+// As of YA-0008, the predefined JWT_HS256/384/512 are templates without keys.
+// To use them for Generate/Validate, build a fresh Method with WithGeneratedKey()
+// (or WithKey for a deterministic secret).
 func predefinedMethods() {
 	fmt.Println("=== Predefined Methods ===")
 
@@ -26,9 +30,9 @@ func predefinedMethods() {
 	}
 
 	methods := []*ctokens.Method{
-		ctokens.JWT_HS256,
-		ctokens.JWT_HS384,
-		ctokens.JWT_HS512,
+		ctokens.NewMethod(ctokens.JWT_HS256.Name(), ctokens.SigningMethodHS256, ctokens.WithGeneratedKey()),
+		ctokens.NewMethod(ctokens.JWT_HS384.Name(), ctokens.SigningMethodHS384, ctokens.WithGeneratedKey()),
+		ctokens.NewMethod(ctokens.JWT_HS512.Name(), ctokens.SigningMethodHS512, ctokens.WithGeneratedKey()),
 	}
 
 	for _, m := range methods {
@@ -74,10 +78,15 @@ func customMethod() {
 }
 
 // registryLookup demonstrates retrieving a method by name and handling unknown algorithms.
+//
+// The registry stores templates without keys; callers register a method with a
+// key (or WithGeneratedKey()) before they can Generate/Validate via the lookup.
 func registryLookup() {
 	fmt.Println("=== Registry Lookup ===")
 
-	method, err := ctokens.Get("JWT_HS256")
+	ctokens.Register(*ctokens.NewMethod("JWT_HS256_keyed", ctokens.SigningMethodHS256, ctokens.WithGeneratedKey()))
+
+	method, err := ctokens.Get("JWT_HS256_keyed")
 	if err != nil {
 		log.Fatalf("registry lookup failed: %v", err)
 	}
@@ -87,7 +96,7 @@ func registryLookup() {
 		log.Fatalf("generate via registry failed: %v", err)
 	}
 
-	fmt.Printf("ctokens.Get(\"JWT_HS256\"): %s, token %d bytes\n", method.Name(), len(token))
+	fmt.Printf("ctokens.Get(\"JWT_HS256_keyed\"): %s, token %d bytes\n", method.Name(), len(token))
 
 	// Non-existent algorithm
 	_, err = ctokens.Get("UNKNOWN")

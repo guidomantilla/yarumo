@@ -22,11 +22,56 @@ func TestNewOptions(t *testing.T) {
 		if opts.timeout != 24*time.Hour {
 			t.Fatalf("expected 24h timeout, got %v", opts.timeout)
 		}
+		if opts.signingKey != nil {
+			t.Fatalf("expected nil signing key, got %d bytes", len(opts.signingKey))
+		}
+		if opts.verifyingKey != nil {
+			t.Fatalf("expected nil verifying key, got %d bytes", len(opts.verifyingKey))
+		}
+	})
+}
+
+func TestWithGeneratedKey(t *testing.T) {
+	t.Parallel()
+
+	t.Run("populates both keys with 64 bytes", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithGeneratedKey())
+
 		if len(opts.signingKey) != 64 {
 			t.Fatalf("expected 64-byte signing key, got %d", len(opts.signingKey))
 		}
 		if len(opts.verifyingKey) != 64 {
 			t.Fatalf("expected 64-byte verifying key, got %d", len(opts.verifyingKey))
+		}
+		if string(opts.signingKey) != string(opts.verifyingKey) {
+			t.Fatal("expected signing and verifying keys to be identical")
+		}
+	})
+
+	t.Run("entropy draw is fresh on each call", func(t *testing.T) {
+		t.Parallel()
+
+		a := NewOptions(WithGeneratedKey())
+		b := NewOptions(WithGeneratedKey())
+
+		if string(a.signingKey) == string(b.signingKey) {
+			t.Fatal("expected distinct random keys across two calls")
+		}
+	})
+
+	t.Run("later WithKey overrides generated key", func(t *testing.T) {
+		t.Parallel()
+
+		manual := []byte("manual-secret-key-1234567890")
+		opts := NewOptions(WithGeneratedKey(), WithKey(manual))
+
+		if string(opts.signingKey) != string(manual) {
+			t.Fatal("expected manual key to override generated signing key")
+		}
+		if string(opts.verifyingKey) != string(manual) {
+			t.Fatal("expected manual key to override generated verifying key")
 		}
 	})
 }
@@ -111,8 +156,11 @@ func TestWithKey(t *testing.T) {
 
 		opts := NewOptions(WithKey([]byte{}))
 
-		if len(opts.signingKey) != 64 {
-			t.Fatalf("expected default 64-byte key, got %d", len(opts.signingKey))
+		if opts.signingKey != nil {
+			t.Fatalf("expected nil signing key default preserved, got %d bytes", len(opts.signingKey))
+		}
+		if opts.verifyingKey != nil {
+			t.Fatalf("expected nil verifying key default preserved, got %d bytes", len(opts.verifyingKey))
 		}
 	})
 }
@@ -136,8 +184,8 @@ func TestWithSigningKey(t *testing.T) {
 
 		opts := NewOptions(WithSigningKey([]byte{}))
 
-		if len(opts.signingKey) != 64 {
-			t.Fatalf("expected default key preserved, got %d bytes", len(opts.signingKey))
+		if opts.signingKey != nil {
+			t.Fatalf("expected nil signing key default preserved, got %d bytes", len(opts.signingKey))
 		}
 	})
 }
@@ -161,8 +209,8 @@ func TestWithVerifyingKey(t *testing.T) {
 
 		opts := NewOptions(WithVerifyingKey([]byte{}))
 
-		if len(opts.verifyingKey) != 64 {
-			t.Fatalf("expected default key preserved, got %d bytes", len(opts.verifyingKey))
+		if opts.verifyingKey != nil {
+			t.Fatalf("expected nil verifying key default preserved, got %d bytes", len(opts.verifyingKey))
 		}
 	})
 }

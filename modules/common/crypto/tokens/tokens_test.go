@@ -1,6 +1,7 @@
 package tokens
 
 import (
+	"errors"
 	"testing"
 
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -141,6 +142,86 @@ func TestMethod_Generate_Validate_Roundtrip(t *testing.T) {
 
 		if payload["key"] != expected {
 			t.Fatalf("expected key %q, got %v", expected, payload["key"])
+		}
+	})
+}
+
+// TestYA0008_KeyManagementPaths exercises the three caller paths after the
+// YA-0008 behavior change. See modules/common/crypto/tokens documentation in
+// types.go for the design decision.
+func TestYA0008_KeyManagementPaths(t *testing.T) {
+	t.Parallel()
+
+	t.Run("default NewOptions then Generate returns ErrSigningKeyNil", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("no-key", jwt.SigningMethodHS256)
+
+		_, err := m.Generate("user@test.com", Payload{"role": "admin"})
+		if err == nil {
+			t.Fatal("expected error")
+		}
+		if !errors.Is(err, ErrSigningKeyNil) {
+			t.Fatalf("expected ErrSigningKeyNil, got %v", err)
+		}
+	})
+
+	t.Run("default NewOptions then Validate returns ErrVerifyingKeyNil", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("no-key", jwt.SigningMethodHS256)
+
+		_, err := m.Validate("some.jwt.token")
+		if err == nil {
+			t.Fatal("expected error")
+		}
+		if !errors.Is(err, ErrVerifyingKeyNil) {
+			t.Fatalf("expected ErrVerifyingKeyNil, got %v", err)
+		}
+	})
+
+	t.Run("WithGeneratedKey enables Generate/Validate roundtrip", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("gen-key", jwt.SigningMethodHS256, WithGeneratedKey())
+
+		token, err := m.Generate("user@test.com", Payload{"role": "admin"})
+		if err != nil {
+			t.Fatalf("unexpected generate error: %v", err)
+		}
+		if token == "" {
+			t.Fatal("expected non-empty token")
+		}
+
+		payload, err := m.Validate(token)
+		if err != nil {
+			t.Fatalf("unexpected validate error: %v", err)
+		}
+		if payload["role"] != "admin" {
+			t.Fatalf("expected role 'admin', got %v", payload["role"])
+		}
+	})
+
+	t.Run("WithSigningKey and WithVerifyingKey enable roundtrip", func(t *testing.T) {
+		t.Parallel()
+
+		key := []byte("explicit-key-1234567890-abcdefghij")
+		m := NewMethod("split-keys", jwt.SigningMethodHS256,
+			WithSigningKey(key),
+			WithVerifyingKey(key),
+		)
+
+		token, err := m.Generate("user@test.com", Payload{"scope": "read"})
+		if err != nil {
+			t.Fatalf("unexpected generate error: %v", err)
+		}
+
+		payload, err := m.Validate(token)
+		if err != nil {
+			t.Fatalf("unexpected validate error: %v", err)
+		}
+		if payload["scope"] != "read" {
+			t.Fatalf("expected scope 'read', got %v", payload["scope"])
 		}
 	})
 }
