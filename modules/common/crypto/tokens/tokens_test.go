@@ -231,6 +231,149 @@ func TestYA0008_KeyManagementPaths(t *testing.T) {
 	})
 }
 
+// TestYA0025_DecodeUnsafe verifies Method.DecodeUnsafe returns the token's
+// payload without performing signature verification. The diagnostic peek must
+// succeed on tampered tokens because no signature check happens, and must
+// surface malformed/empty input as a wrapped ErrValidationFailed.
+func TestYA0025_DecodeUnsafe(t *testing.T) {
+	t.Parallel()
+
+	t.Run("decodes payload without verifying signature (tampered signature)", func(t *testing.T) {
+		t.Parallel()
+
+		signingKey := []byte("ya-0025-original-key-for-signing-abcdef123456")
+		signer := NewMethod("ya0025-signer", AlgorithmHS256, WithKey(signingKey))
+
+		expected := "diagnostic-value"
+		token, err := signer.Generate("user@test.com", Payload{"trace": expected})
+		if err != nil {
+			t.Fatalf("unexpected generate error: %v", err)
+		}
+
+		// Tamper the signature segment so signature verification would fail.
+		tampered := token + "AAAA"
+
+		// Sanity check: a normal Validate must reject the tampered token.
+		if _, validateErr := signer.Validate(tampered); validateErr == nil {
+			t.Fatal("expected Validate to reject tampered token")
+		}
+
+		// DecodeUnsafe MUST still return the payload — signature is not checked.
+		payload, err := signer.DecodeUnsafe(tampered)
+		if err != nil {
+			t.Fatalf("unexpected DecodeUnsafe error: %v", err)
+		}
+		if payload["trace"] != expected {
+			t.Fatalf("expected trace %q, got %v", expected, payload["trace"])
+		}
+	})
+
+	t.Run("decodes payload using a method with a different key (signature not checked)", func(t *testing.T) {
+		t.Parallel()
+
+		signingKey := []byte("ya-0025-signing-key-for-encoding-abcdef123456")
+		signer := NewMethod("ya0025-signer-alt", AlgorithmHS256, WithKey(signingKey))
+
+		expected := "cross-method-value"
+		token, err := signer.Generate("user@test.com", Payload{"role": expected})
+		if err != nil {
+			t.Fatalf("unexpected generate error: %v", err)
+		}
+
+		// A peeker method with an entirely different key. Validate would fail,
+		// but DecodeUnsafe should not care about the key at all.
+		peeker := NewMethod("ya0025-peeker", AlgorithmHS256, WithKey([]byte("totally-different-key-1234567890abcdef")))
+
+		if _, validateErr := peeker.Validate(token); validateErr == nil {
+			t.Fatal("expected Validate to reject token signed with a different key")
+		}
+
+		payload, err := peeker.DecodeUnsafe(token)
+		if err != nil {
+			t.Fatalf("unexpected DecodeUnsafe error: %v", err)
+		}
+		if payload["role"] != expected {
+			t.Fatalf("expected role %q, got %v", expected, payload["role"])
+		}
+	})
+
+	t.Run("works without any key configured", func(t *testing.T) {
+		t.Parallel()
+
+		signingKey := []byte("ya-0025-no-peek-key-for-signing-abcdef123456")
+		signer := NewMethod("ya0025-no-peek-signer", AlgorithmHS256, WithKey(signingKey))
+
+		token, err := signer.Generate("user@test.com", Payload{"scope": "read"})
+		if err != nil {
+			t.Fatalf("unexpected generate error: %v", err)
+		}
+
+		// Peeker has no key at all — DecodeUnsafe must still work.
+		peeker := NewMethod("ya0025-no-key-peeker", AlgorithmHS256)
+
+		payload, err := peeker.DecodeUnsafe(token)
+		if err != nil {
+			t.Fatalf("unexpected DecodeUnsafe error: %v", err)
+		}
+		if payload["scope"] != "read" {
+			t.Fatalf("expected scope 'read', got %v", payload["scope"])
+		}
+	})
+
+	t.Run("empty token returns wrapped ErrValidationFailed", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("ya0025-empty", AlgorithmHS256)
+
+		_, err := m.DecodeUnsafe("")
+		if err == nil {
+			t.Fatal("expected error for empty token")
+		}
+		if !errors.Is(err, ErrValidationFailed) {
+			t.Fatalf("expected ErrValidationFailed in chain, got %v", err)
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("malformed token returns wrapped ErrValidationFailed", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("ya0025-malformed", AlgorithmHS256)
+
+		_, err := m.DecodeUnsafe("this-is-not-a-jwt-token")
+		if err == nil {
+			t.Fatal("expected error for malformed token")
+		}
+		if !errors.Is(err, ErrValidationFailed) {
+			t.Fatalf("expected ErrValidationFailed in chain, got %v", err)
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("token with malformed payload segment returns wrapped error", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("ya0025-bad-payload", AlgorithmHS256)
+
+		// Three segments but the middle one is not valid base64-encoded JSON.
+		_, err := m.DecodeUnsafe("header.!!!not-base64!!!.signature")
+		if err == nil {
+			t.Fatal("expected error for malformed payload segment")
+		}
+		if !errors.Is(err, ErrValidationFailed) {
+			t.Fatalf("expected ErrValidationFailed in chain, got %v", err)
+		}
+	})
+}
+
 // TestYA0009_AlgorithmEnum verifies the Algorithm enum maps to the expected
 // jwt.SigningMethod internally and that unknown values surface as
 // ErrAlgorithmInvalid / ErrAlgorithmUnknown via the package's assertion path.
