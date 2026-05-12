@@ -1,11 +1,9 @@
 package passwords
 
 import (
-	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 
@@ -15,6 +13,7 @@ import (
 	"golang.org/x/crypto/scrypt"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	crandom "github.com/guidomantilla/yarumo/common/random"
 	cutils "github.com/guidomantilla/yarumo/common/utils"
 )
 
@@ -43,21 +42,6 @@ type scryptDecoded struct {
 	p      int
 	salt   []byte
 	key    []byte
-}
-
-func generateSalt(saltSize int) ([]byte, error) {
-
-	unEncodedSalt := make([]byte, saltSize)
-	_, err := io.ReadFull(rand.Reader, unEncodedSalt)
-	if err != nil {
-		return nil, cerrs.Wrap(ErrSaltGenerationFailed, err)
-	}
-
-	length := base64.RawStdEncoding.EncodedLen(len(unEncodedSalt))
-	encodedSalt := make([]byte, length)
-	base64.RawStdEncoding.Encode(encodedSalt, unEncodedSalt)
-
-	return encodedSalt, nil
 }
 
 func encode(method *Method, rawPassword string) (string, error) {
@@ -135,9 +119,9 @@ func upgradeNeeded(method *Method, encodedPassword string) (bool, error) {
 func argon2Encode(method *Method, rawPassword string) (string, error) {
 	params := method.argon2Params
 
-	salt, err := generateSalt(params.saltLength)
-	if err != nil {
-		return "", err
+	salt := crandom.Bytes(params.saltLength)
+	if len(salt) == 0 {
+		return "", ErrSaltGenerationFailed
 	}
 
 	key := argon2.IDKey([]byte(rawPassword), salt, uint32(params.iterations), uint32(params.memory), uint8(params.threads), uint32(params.keyLength)) //nolint:gosec
@@ -302,9 +286,9 @@ func bcryptUpgradeNeeded(method *Method, encodedPassword string) (bool, error) {
 func pbkdf2Encode(method *Method, rawPassword string) (string, error) {
 	params := method.pbkdf2Params
 
-	salt, err := generateSalt(params.saltLength)
-	if err != nil {
-		return "", err
+	salt := crandom.Bytes(params.saltLength)
+	if len(salt) == 0 {
+		return "", ErrSaltGenerationFailed
 	}
 
 	bytes := pbkdf2.Key([]byte(rawPassword), salt, params.iterations, params.keyLength, params.hashFunc)
@@ -395,9 +379,9 @@ func pbkdf2UpgradeNeeded(method *Method, encodedPassword string) (bool, error) {
 func scryptEncode(method *Method, rawPassword string) (string, error) {
 	params := method.scryptParams
 
-	salt, err := generateSalt(params.saltLength)
-	if err != nil {
-		return "", err
+	salt := crandom.Bytes(params.saltLength)
+	if len(salt) == 0 {
+		return "", ErrSaltGenerationFailed
 	}
 
 	bytes, err := scrypt.Key([]byte(rawPassword), salt, params.n, params.r, params.p, params.keyLength)
