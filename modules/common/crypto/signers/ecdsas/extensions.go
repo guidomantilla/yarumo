@@ -6,6 +6,7 @@ import (
 
 var methods = map[string]Method{
 	ECDSA_with_SHA256_over_P256.name: *ECDSA_with_SHA256_over_P256,
+	ECDSA_with_SHA384_over_P384.name: *ECDSA_with_SHA384_over_P384,
 	ECDSA_with_SHA512_over_P521.name: *ECDSA_with_SHA512_over_P521,
 }
 

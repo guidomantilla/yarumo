@@ -12,6 +12,7 @@ import (
 // Predefined ECDSA methods registered at package init.
 var (
 	ECDSA_with_SHA256_over_P256 = NewMethod("ECDSA_with_SHA256_over_P256", crypto.SHA256, 32, elliptic.P256())
+	ECDSA_with_SHA384_over_P384 = NewMethod("ECDSA_with_SHA384_over_P384", crypto.SHA384, 48, elliptic.P384())
 	ECDSA_with_SHA512_over_P521 = NewMethod("ECDSA_with_SHA512_over_P521", crypto.SHA512, 66, elliptic.P521())
 )
 
