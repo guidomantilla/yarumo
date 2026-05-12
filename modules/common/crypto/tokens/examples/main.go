@@ -30,9 +30,9 @@ func predefinedMethods() {
 	}
 
 	methods := []*ctokens.Method{
-		ctokens.NewMethod(ctokens.JWT_HS256.Name(), ctokens.SigningMethodHS256, ctokens.WithGeneratedKey()),
-		ctokens.NewMethod(ctokens.JWT_HS384.Name(), ctokens.SigningMethodHS384, ctokens.WithGeneratedKey()),
-		ctokens.NewMethod(ctokens.JWT_HS512.Name(), ctokens.SigningMethodHS512, ctokens.WithGeneratedKey()),
+		ctokens.NewMethod(ctokens.JWT_HS256.Name(), ctokens.AlgorithmHS256, ctokens.WithGeneratedKey()),
+		ctokens.NewMethod(ctokens.JWT_HS384.Name(), ctokens.AlgorithmHS384, ctokens.WithGeneratedKey()),
+		ctokens.NewMethod(ctokens.JWT_HS512.Name(), ctokens.AlgorithmHS512, ctokens.WithGeneratedKey()),
 	}
 
 	for _, m := range methods {
@@ -56,7 +56,7 @@ func predefinedMethods() {
 func customMethod() {
 	fmt.Println("=== Custom Method ===")
 
-	custom := ctokens.NewMethod("CustomHS256", ctokens.SigningMethodHS256,
+	custom := ctokens.NewMethod("CustomHS256", ctokens.AlgorithmHS256,
 		ctokens.WithKey([]byte("my-secret-key-at-least-32-bytes!")),
 		ctokens.WithIssuer("yarumo-example"),
 		ctokens.WithTimeout(1*time.Hour),
@@ -84,7 +84,7 @@ func customMethod() {
 func registryLookup() {
 	fmt.Println("=== Registry Lookup ===")
 
-	ctokens.Register(*ctokens.NewMethod("JWT_HS256_keyed", ctokens.SigningMethodHS256, ctokens.WithGeneratedKey()))
+	ctokens.Register(*ctokens.NewMethod("JWT_HS256_keyed", ctokens.AlgorithmHS256, ctokens.WithGeneratedKey()))
 
 	method, err := ctokens.Get("JWT_HS256_keyed")
 	if err != nil {

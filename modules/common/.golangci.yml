@@ -202,6 +202,13 @@ linters:
         linters:
           - gochecknoglobals
           - ireturn
+      # crypto/tokens/tokens.go: signingMethodFor must return the jwt.SigningMethod
+      # interface from the backend library; that is the entire point of the helper
+      # so callers do not see jwt types. ireturn would force returning a concrete
+      # type from a third-party package, defeating the abstraction.
+      - path: crypto/tokens/tokens\.go
+        linters:
+          - ireturn
       # log/slog globals are required for the default logger singleton
       - path: log/slog/logger\.go
         linters:

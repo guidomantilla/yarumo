@@ -3,12 +3,106 @@ package ecdsas
 import (
 	"crypto/ecdsa"
 	"crypto/rand"
+	"crypto/x509"
+	"encoding/pem"
 	"math/big"
 
 	chashes "github.com/guidomantilla/yarumo/common/crypto/hashes"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	ctypes "github.com/guidomantilla/yarumo/common/types"
 )
+
+// pemBlockPrivateKey is the PEM block type used for PKCS#8 private keys.
+const pemBlockPrivateKey = "PRIVATE KEY"
+
+// pemBlockPublicKey is the PEM block type used for PKIX/SubjectPublicKeyInfo public keys.
+const pemBlockPublicKey = "PUBLIC KEY"
+
+// MarshalPrivateKeyPEM marshals an ECDSA private key into PKCS#8 PEM-encoded bytes.
+func MarshalPrivateKeyPEM(key *ecdsa.PrivateKey) ([]byte, error) {
+	if key == nil {
+		return nil, ErrPEMCodec(ErrKeyIsNil)
+	}
+
+	der, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		return nil, ErrPEMCodec(cerrs.Wrap(ErrMarshalKeyFailed, err))
+	}
+
+	out := pem.EncodeToMemory(&pem.Block{
+		Type:  pemBlockPrivateKey,
+		Bytes: der,
+	})
+
+	return out, nil
+}
+
+// ParsePrivateKeyPEM parses an ECDSA private key from PKCS#8 PEM-encoded bytes.
+func ParsePrivateKeyPEM(pemBytes []byte) (*ecdsa.PrivateKey, error) {
+	block, _ := pem.Decode(pemBytes)
+	if block == nil {
+		return nil, ErrPEMCodec(ErrPEMDecodeFailed)
+	}
+
+	if block.Type != pemBlockPrivateKey {
+		return nil, ErrPEMCodec(ErrPEMBlockTypeMismatch)
+	}
+
+	parsed, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, ErrPEMCodec(cerrs.Wrap(ErrParseKeyFailed, err))
+	}
+
+	key, ok := parsed.(*ecdsa.PrivateKey)
+	if !ok {
+		return nil, ErrPEMCodec(ErrKeyTypeMismatch)
+	}
+
+	return key, nil
+}
+
+// MarshalPublicKeyPEM marshals an ECDSA public key into PKIX/SubjectPublicKeyInfo PEM-encoded bytes.
+func MarshalPublicKeyPEM(key *ecdsa.PublicKey) ([]byte, error) {
+	if key == nil {
+		return nil, ErrPEMCodec(ErrKeyIsNil)
+	}
+
+	der, err := x509.MarshalPKIXPublicKey(key)
+	if err != nil {
+		return nil, ErrPEMCodec(cerrs.Wrap(ErrMarshalKeyFailed, err))
+	}
+
+	out := pem.EncodeToMemory(&pem.Block{
+		Type:  pemBlockPublicKey,
+		Bytes: der,
+	})
+
+	return out, nil
+}
+
+// ParsePublicKeyPEM parses an ECDSA public key from PKIX/SubjectPublicKeyInfo PEM-encoded bytes.
+func ParsePublicKeyPEM(pemBytes []byte) (*ecdsa.PublicKey, error) {
+	block, _ := pem.Decode(pemBytes)
+	if block == nil {
+		return nil, ErrPEMCodec(ErrPEMDecodeFailed)
+	}
+
+	if block.Type != pemBlockPublicKey {
+		return nil, ErrPEMCodec(ErrPEMBlockTypeMismatch)
+	}
+
+	parsed, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, ErrPEMCodec(cerrs.Wrap(ErrParseKeyFailed, err))
+	}
+
+	key, ok := parsed.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, ErrPEMCodec(ErrKeyTypeMismatch)
+	}
+
+	return key, nil
+}
 
 func key(method *Method) (*ecdsa.PrivateKey, error) {
 	return ecdsa.GenerateKey(method.curve, rand.Reader)

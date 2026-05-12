@@ -39,6 +39,7 @@ var (
 	ErrTokenPayloadEmpty = errors.New("token payload is empty")
 	ErrGenerationFailed  = errors.New("generation failed")
 	ErrValidationFailed  = errors.New("validation failed")
+	ErrAlgorithmUnknown  = errors.New("algorithm is unknown")
 )
 
 // ErrGeneration creates a token generation error with optional cause errors.
@@ -67,6 +68,17 @@ func ErrAlgorithmNotSupported(name string) *Error {
 		TypedError: cerrs.TypedError{
 			Type: TokenMethod,
 			Err:  fmt.Errorf("token method %s not found", name),
+		},
+	}
+}
+
+// ErrAlgorithmInvalid creates an error for unknown Algorithm enum values
+// passed to NewMethod. The cause chain always contains ErrAlgorithmUnknown.
+func ErrAlgorithmInvalid(algorithm Algorithm) *Error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: TokenMethod,
+			Err:  errors.Join(fmt.Errorf("algorithm %q is not a recognized tokens.Algorithm value", string(algorithm)), ErrAlgorithmUnknown),
 		},
 	}
 }
