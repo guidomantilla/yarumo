@@ -8,6 +8,7 @@ import (
 
 var methods = map[string]Method{
 	HMAC_with_SHA256.name: *HMAC_with_SHA256,
+	HMAC_with_SHA384.name: *HMAC_with_SHA384,
 	HMAC_with_SHA512.name: *HMAC_with_SHA512,
 }
 
