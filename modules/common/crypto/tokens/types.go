@@ -1,5 +1,9 @@
-// Package tokens provides JWT token generation and validation using HMAC
-// signing methods.
+// Package tokens provides token generation and validation. The current
+// implementation covers signed JWT tokens via the Algorithm enum; HS256/384/512
+// are predefined and RSA/ECDSA/EdDSA variants are planned (YA-0018). Opaque
+// encrypted-payload tokens via AEAD will land in YA-0019. The Method struct,
+// Generate/Validate operations, key management, and Algorithm selection are
+// shared across all future variants.
 //
 // # Key management
 //
