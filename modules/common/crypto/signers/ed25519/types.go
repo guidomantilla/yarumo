@@ -1,5 +1,19 @@
 // Package ed25519 provides Ed25519 key generation, signing, and verification
 // with pluggable function fields and a thread-safe name-based registry.
+//
+// # Config-driven algorithm selection
+//
+// *Method implements encoding.TextMarshaler / encoding.TextUnmarshaler.
+// MarshalText emits the registered algorithm name; UnmarshalText resolves a
+// name against the package registry (via Get) and overwrites the receiver.
+// This makes Method directly compatible with libraries that honor the
+// encoding interfaces — including encoding/json, viper, kong, and koanf —
+// so deployments can load Ed25519 algorithm choice from YAML/JSON/TOML config.
+//
+// Caveat: UnmarshalText resolves against whatever the registry contains at
+// the time of the call. Custom methods registered via Register after config
+// load will not resolve here; callers that need late-bound lookup should
+// call Get(name) directly.
 package ed25519
 
 import (
