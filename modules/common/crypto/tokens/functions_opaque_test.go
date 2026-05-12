@@ -22,13 +22,13 @@ func xchachaKey() []byte {
 	return []byte("abcdef0123456789abcdef0123456789")
 }
 
-func TestOpaque_NewOpaqueMethod(t *testing.T) {
+func TestOpaque_NewMethod(t *testing.T) {
 	t.Parallel()
 
 	t.Run("creates method with cipher and default options", func(t *testing.T) {
 		t.Parallel()
 
-		m := NewOpaqueMethod("custom-opaque", caead.AES_256_GCM)
+		m := NewMethod("custom-opaque", AlgorithmOpaqueAESGCM)
 
 		if m == nil {
 			t.Fatal("expected non-nil method")
@@ -68,7 +68,7 @@ func TestOpaque_RoundTrip_AES256GCM(t *testing.T) {
 	t.Parallel()
 
 	key := aes256Key()
-	m := NewOpaqueMethod("aes-gcm-roundtrip", caead.AES_256_GCM, WithKey(key))
+	m := NewMethod("aes-gcm-roundtrip", AlgorithmOpaqueAESGCM, WithKey(key))
 
 	token, err := m.Generate("user@test.com", Payload{"role": roleAdmin, "tenant": "acme"})
 	if err != nil {
@@ -102,7 +102,7 @@ func TestOpaque_RoundTrip_XChaCha20Poly1305(t *testing.T) {
 	t.Parallel()
 
 	key := xchachaKey()
-	m := NewOpaqueMethod("xchacha-roundtrip", caead.XCHACHA20_POLY1305, WithKey(key))
+	m := NewMethod("xchacha-roundtrip", AlgorithmOpaqueXChaCha20Poly1305, WithKey(key))
 
 	token, err := m.Generate("user@test.com", Payload{"role": "auditor", "scope": "read"})
 	if err != nil {
@@ -126,7 +126,7 @@ func TestOpaque_RoundTrip_WithIssuer(t *testing.T) {
 	t.Parallel()
 
 	key := aes256Key()
-	m := NewOpaqueMethod("aes-gcm-issuer", caead.AES_256_GCM,
+	m := NewMethod("aes-gcm-issuer", AlgorithmOpaqueAESGCM,
 		WithKey(key),
 		WithIssuer("yarumo-test"),
 	)
@@ -149,7 +149,7 @@ func TestOpaque_RoundTrip_WithIssuer(t *testing.T) {
 func TestOpaque_Generate_EmptySubject(t *testing.T) {
 	t.Parallel()
 
-	m := NewOpaqueMethod("e", caead.AES_256_GCM, WithKey(aes256Key()))
+	m := NewMethod("e", AlgorithmOpaqueAESGCM, WithKey(aes256Key()))
 
 	_, err := m.Generate("", Payload{"k": "v"})
 	if err == nil {
@@ -163,7 +163,7 @@ func TestOpaque_Generate_EmptySubject(t *testing.T) {
 func TestOpaque_Generate_NilPayload(t *testing.T) {
 	t.Parallel()
 
-	m := NewOpaqueMethod("e", caead.AES_256_GCM, WithKey(aes256Key()))
+	m := NewMethod("e", AlgorithmOpaqueAESGCM, WithKey(aes256Key()))
 
 	_, err := m.Generate("user@test.com", nil)
 	if err == nil {
@@ -178,7 +178,7 @@ func TestOpaque_Generate_NilSigningKey(t *testing.T) {
 	t.Parallel()
 
 	// Construct without a key — Generate must surface ErrSigningKeyNil.
-	m := NewOpaqueMethod("no-key", caead.AES_256_GCM)
+	m := NewMethod("no-key", AlgorithmOpaqueAESGCM)
 
 	_, err := m.Generate("user@test.com", Payload{"k": "v"})
 	if err == nil {
@@ -213,7 +213,7 @@ func TestOpaque_Generate_NilCipher(t *testing.T) {
 func TestOpaque_Validate_EmptyToken(t *testing.T) {
 	t.Parallel()
 
-	m := NewOpaqueMethod("e", caead.AES_256_GCM, WithKey(aes256Key()))
+	m := NewMethod("e", AlgorithmOpaqueAESGCM, WithKey(aes256Key()))
 
 	_, err := m.Validate("")
 	if err == nil {
@@ -227,7 +227,7 @@ func TestOpaque_Validate_EmptyToken(t *testing.T) {
 func TestOpaque_Validate_NilVerifyingKey(t *testing.T) {
 	t.Parallel()
 
-	m := NewOpaqueMethod("no-vkey", caead.AES_256_GCM)
+	m := NewMethod("no-vkey", AlgorithmOpaqueAESGCM)
 
 	_, err := m.Validate("dGhpcy1pcy1qdW5r")
 	if err == nil {
@@ -241,7 +241,7 @@ func TestOpaque_Validate_NilVerifyingKey(t *testing.T) {
 func TestOpaque_Validate_DecodeFailure(t *testing.T) {
 	t.Parallel()
 
-	m := NewOpaqueMethod("decode-fail", caead.AES_256_GCM, WithKey(aes256Key()))
+	m := NewMethod("decode-fail", AlgorithmOpaqueAESGCM, WithKey(aes256Key()))
 
 	// "!!!" is not a valid base64url string.
 	_, err := m.Validate("!!!not-base64url!!!")
@@ -260,7 +260,7 @@ func TestOpaque_Validate_ExpiredToken(t *testing.T) {
 	t.Parallel()
 
 	key := aes256Key()
-	m := NewOpaqueMethod("expired", caead.AES_256_GCM, WithKey(key))
+	m := NewMethod("expired", AlgorithmOpaqueAESGCM, WithKey(key))
 
 	// Hand-craft Claims with exp in the past, then encrypt with the same
 	// cipher/key so decryption succeeds and the temporal check fires.
@@ -303,7 +303,7 @@ func TestOpaque_Validate_NotYetValid(t *testing.T) {
 	t.Parallel()
 
 	key := aes256Key()
-	m := NewOpaqueMethod("nbf", caead.AES_256_GCM, WithKey(key))
+	m := NewMethod("nbf", AlgorithmOpaqueAESGCM, WithKey(key))
 
 	future := time.Now().Add(1 * time.Hour)
 	claims := &Claims{
@@ -343,8 +343,8 @@ func TestOpaque_Validate_WrongKey(t *testing.T) {
 	keyA := aes256Key()
 	keyB := []byte("fedcba9876543210fedcba9876543210")
 
-	mGen := NewOpaqueMethod("gen", caead.AES_256_GCM, WithKey(keyA))
-	mVal := NewOpaqueMethod("val", caead.AES_256_GCM, WithKey(keyB))
+	mGen := NewMethod("gen", AlgorithmOpaqueAESGCM, WithKey(keyA))
+	mVal := NewMethod("val", AlgorithmOpaqueAESGCM, WithKey(keyB))
 
 	token, err := mGen.Generate("user@test.com", Payload{"role": roleAdmin})
 	if err != nil {
@@ -364,7 +364,7 @@ func TestOpaque_Validate_TamperedCiphertext(t *testing.T) {
 	t.Parallel()
 
 	key := aes256Key()
-	m := NewOpaqueMethod("tamper", caead.AES_256_GCM, WithKey(key))
+	m := NewMethod("tamper", AlgorithmOpaqueAESGCM, WithKey(key))
 
 	token, err := m.Generate("user@test.com", Payload{"role": roleAdmin})
 	if err != nil {
@@ -398,8 +398,8 @@ func TestOpaque_Validate_IssuerMismatch(t *testing.T) {
 	t.Parallel()
 
 	key := aes256Key()
-	mGen := NewOpaqueMethod("gen", caead.AES_256_GCM, WithKey(key), WithIssuer("issuer-A"))
-	mVal := NewOpaqueMethod("val", caead.AES_256_GCM, WithKey(key), WithIssuer("issuer-B"))
+	mGen := NewMethod("gen", AlgorithmOpaqueAESGCM, WithKey(key), WithIssuer("issuer-A"))
+	mVal := NewMethod("val", AlgorithmOpaqueAESGCM, WithKey(key), WithIssuer("issuer-B"))
 
 	token, err := mGen.Generate("user@test.com", Payload{"role": roleAdmin})
 	if err != nil {
@@ -419,7 +419,7 @@ func TestOpaque_Validate_EmptyPayload(t *testing.T) {
 	t.Parallel()
 
 	key := aes256Key()
-	m := NewOpaqueMethod("empty-payload", caead.AES_256_GCM, WithKey(key))
+	m := NewMethod("empty-payload", AlgorithmOpaqueAESGCM, WithKey(key))
 
 	now := time.Now()
 	claims := &Claims{
@@ -460,7 +460,7 @@ func TestOpaque_Validate_GarbageAfterDecodeIsDecryptFailed(t *testing.T) {
 	// than the AEAD nonce — the caead.Method.Decrypt path surfaces
 	// ErrCiphertextTooShort wrapped by ErrDecryption, and we wrap with
 	// ErrTokenDecryptFailed.
-	m := NewOpaqueMethod("garbage", caead.AES_256_GCM, WithKey(aes256Key()))
+	m := NewMethod("garbage", AlgorithmOpaqueAESGCM, WithKey(aes256Key()))
 
 	_, err := m.Validate("YQ") // base64url for "a"
 	if err == nil {
@@ -476,8 +476,9 @@ func TestOpaque_Dispatch_DefaultGenerateUsesOpaque(t *testing.T) {
 
 	// generate() — the package-default GenerateFn — must dispatch to
 	// generateOpaque when method.cipher != nil. Build a Method through
-	// NewOpaqueMethod and confirm the resulting token is opaque (no dots).
-	m := NewOpaqueMethod("dispatch", caead.AES_256_GCM, WithKey(aes256Key()))
+	// NewMethod with an opaque Algorithm and confirm the resulting token is
+	// opaque (no dots).
+	m := NewMethod("dispatch", AlgorithmOpaqueAESGCM, WithKey(aes256Key()))
 
 	token, err := m.Generate("user@test.com", Payload{"x": "y"})
 	if err != nil {

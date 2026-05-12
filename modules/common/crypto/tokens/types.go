@@ -9,11 +9,12 @@
 //     The token is base64url(AEAD.Encrypt(key, json(claims), nil)) with the
 //     AEAD nonce prepended internally by the configured cipher.
 //
-// JWT methods are constructed with NewMethod(name, Algorithm, options...).
-// Opaque methods are constructed with NewOpaqueMethod(name, *caead.Method,
-// options...). Both flavors share the same Method struct, Generate/Validate
-// API, options pipeline, and registry — the cipher field on Method is the
-// discriminator (nil = JWT, non-nil = opaque).
+// Both JWT and opaque methods are constructed with a single entry point —
+// NewMethod(name, Algorithm, options...). The Algorithm enum value is the
+// discriminator: HS256/384/512 (and future asymmetric variants) belong to
+// the JWT family; AlgorithmOpaqueAESGCM and AlgorithmOpaqueXChaCha20Poly1305
+// belong to the opaque family. Both flavors share the same Method struct,
+// Generate/Validate API, options pipeline, and registry.
 //
 // # Key management
 //
@@ -103,6 +104,19 @@ const (
 	AlgorithmOpaqueAESGCM            Algorithm = "OPAQUE_AES_GCM"
 	AlgorithmOpaqueXChaCha20Poly1305 Algorithm = "OPAQUE_XCHACHA20_POLY1305"
 )
+
+// isOpaque reports whether the algorithm belongs to the opaque (AEAD-encrypted)
+// family. The JWT family (HS256/384/512 and future asymmetric variants) returns
+// false. This is the package-internal discriminator used by generate and
+// validate to dispatch between the two implementations.
+func (a Algorithm) isOpaque() bool {
+	switch a {
+	case AlgorithmOpaqueAESGCM, AlgorithmOpaqueXChaCha20Poly1305:
+		return true
+	default:
+		return false
+	}
+}
 
 // Payload is a named type for token claims payload data.
 type Payload map[string]any

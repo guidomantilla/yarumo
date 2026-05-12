@@ -11,25 +11,27 @@ import (
 	cutils "github.com/guidomantilla/yarumo/common/utils"
 )
 
-// generate is the package-default GenerateFn. It dispatches based on whether
-// the method carries an AEAD cipher:
+// generate is the package-default GenerateFn. It dispatches on the method's
+// Algorithm family:
 //
-//   - method.cipher == nil → JWT signed token via golang-jwt/v5.
-//   - method.cipher != nil → opaque (AEAD-encrypted) token.
+//   - opaque family (AlgorithmOpaque*) → opaque AEAD-encrypted token.
+//   - JWT family (everything else)    → JWT signed token via golang-jwt/v5.
 //
-// Callers that need a different impl can inject via WithGenerateFn; the
-// Method.Generate wrapper still funnels everything through ErrGeneration.
+// Method.Generate (the struct method) already enforces method != nil via
+// cassert.NotNil, so this private helper trusts the receiver. Callers that
+// need a different impl can inject via WithGenerateFn; the Method.Generate
+// wrapper still funnels everything through ErrGeneration.
 func generate(method *Method, subject string, payload Payload) (string, error) {
-	if method != nil && method.cipher != nil {
+	if method.algorithm.isOpaque() {
 		return generateOpaque(method, subject, payload)
 	}
 	return generateJWT(method, subject, payload)
 }
 
-// validate is the package-default ValidateFn. It dispatches based on whether
-// the method carries an AEAD cipher; see generate for the rules.
+// validate is the package-default ValidateFn. It dispatches on the method's
+// Algorithm family; see generate for the rules.
 func validate(method *Method, tokenString string) (Payload, error) {
-	if method != nil && method.cipher != nil {
+	if method.algorithm.isOpaque() {
 		return validateOpaque(method, tokenString)
 	}
 	return validateJWT(method, tokenString)

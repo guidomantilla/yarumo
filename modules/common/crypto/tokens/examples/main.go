@@ -128,7 +128,7 @@ func opaqueRoundTrip() {
 		log.Fatalf("opaque key generation failed: %v", err)
 	}
 
-	opaque := ctokens.NewOpaqueMethod("opaque-demo", caead.AES_256_GCM,
+	opaque := ctokens.NewMethod("opaque-demo", ctokens.AlgorithmOpaqueAESGCM,
 		ctokens.WithKey(key),
 		ctokens.WithIssuer("yarumo-example"),
 		ctokens.WithTimeout(1*time.Hour),
