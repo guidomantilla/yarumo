@@ -209,6 +209,14 @@ linters:
       - path: crypto/tokens/tokens\.go
         linters:
           - ireturn
+      # crypto/ciphers/hybrid: HPKE Method.GenerateKey and the internal
+      # generateKey helper return kem.PublicKey / kem.PrivateKey from circl —
+      # those are interfaces by design (one Method can serve multiple KEMs
+      # over time). Returning the concrete X25519 types would re-leak circl
+      # internals and break the polymorphism the abstraction is built on.
+      - path: crypto/ciphers/hybrid/(functions|hybrid)\.go
+        linters:
+          - ireturn
       # log/slog globals are required for the default logger singleton
       - path: log/slog/logger\.go
         linters:
