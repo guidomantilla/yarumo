@@ -1,5 +1,23 @@
-// Package tokens provides JWT token generation and validation using HMAC
-// signing methods.
+// Package tokens provides JWT token generation and validation using both
+// symmetric (HMAC) and asymmetric (RSA, RSA-PSS, ECDSA, EdDSA) signing
+// methods.
+//
+// # Algorithm coverage
+//
+// The package predefines templates for every JWS-standard algorithm
+// (RFC 7518) plus Ed25519 (RFC 8037):
+//
+//   - JWT_HS256 / JWT_HS384 / JWT_HS512 — HMAC over SHA-2.
+//   - JWT_RS256 / JWT_RS384 / JWT_RS512 — RSASSA-PKCS1-v1_5 over SHA-2.
+//   - JWT_PS256 / JWT_PS384 / JWT_PS512 — RSASSA-PSS over SHA-2.
+//   - JWT_ES256 / JWT_ES384 / JWT_ES512 — ECDSA over P-256/P-384/P-521.
+//   - JWT_EdDSA — Ed25519.
+//
+// The asymmetric variants (everything past HS512) require the caller to
+// supply a real key pair via WithSigningKey/WithVerifyingKey — the key
+// types come from crypto/rsa, crypto/ecdsa, and crypto/ed25519. The
+// signers/rsassas, signers/ecdsas, and signers/ed25519 sub-packages
+// provide GenerateKey helpers and PEM marshal/parse for these key types.
 //
 // # Key management
 //
@@ -85,6 +103,20 @@ const (
 	AlgorithmHS256 Algorithm = "HS256"
 	AlgorithmHS384 Algorithm = "HS384"
 	AlgorithmHS512 Algorithm = "HS512"
+
+	AlgorithmRS256 Algorithm = "RS256"
+	AlgorithmRS384 Algorithm = "RS384"
+	AlgorithmRS512 Algorithm = "RS512"
+
+	AlgorithmPS256 Algorithm = "PS256"
+	AlgorithmPS384 Algorithm = "PS384"
+	AlgorithmPS512 Algorithm = "PS512"
+
+	AlgorithmES256 Algorithm = "ES256"
+	AlgorithmES384 Algorithm = "ES384"
+	AlgorithmES512 Algorithm = "ES512"
+
+	AlgorithmEdDSA Algorithm = "EdDSA"
 )
 
 // Payload is a named type for token claims payload data.

@@ -6,11 +6,13 @@ import (
 	"time"
 
 	ctokens "github.com/guidomantilla/yarumo/common/crypto/tokens"
+	rsassas "github.com/guidomantilla/yarumo/common/crypto/signers/rsassas"
 )
 
 func main() {
 	predefinedMethods()
 	customMethod()
+	asymmetricMethod()
 	registryLookup()
 	listSupported()
 }
@@ -75,6 +77,42 @@ func customMethod() {
 	}
 
 	fmt.Printf("Custom Payload: action=%v\n\n", recovered["action"])
+}
+
+// asymmetricMethod demonstrates an end-to-end RS256 round-trip using a fresh
+// RSA key generated through the signers/rsassas helper. The same shape works
+// for the other predefined asymmetric variants (RS384/512, PS256/384/512,
+// ES256/384/512, EdDSA) — only the key generator and Algorithm constant change.
+func asymmetricMethod() {
+	fmt.Println("=== Asymmetric Method (RS256) ===")
+
+	priv, err := rsassas.RSASSA_PKCS1v15_using_SHA256.GenerateKey(2048)
+	if err != nil {
+		log.Fatalf("rsa GenerateKey failed: %v", err)
+	}
+
+	m := ctokens.NewMethod("JWT_RS256_demo", ctokens.AlgorithmRS256,
+		ctokens.WithSigningKey(priv),
+		ctokens.WithVerifyingKey(&priv.PublicKey),
+		ctokens.WithIssuer("yarumo-example"),
+	)
+
+	token, err := m.Generate("user-789", ctokens.Payload{
+		"role":  "issuer",
+		"scope": "rsa:sign",
+	})
+	if err != nil {
+		log.Fatalf("RS256 generate failed: %v", err)
+	}
+
+	fmt.Printf("RS256 Token: %.60s...\n", token)
+
+	recovered, err := m.Validate(token)
+	if err != nil {
+		log.Fatalf("RS256 validate failed: %v", err)
+	}
+
+	fmt.Printf("RS256 Payload: role=%v, scope=%v\n\n", recovered["role"], recovered["scope"])
 }
 
 // registryLookup demonstrates retrieving a method by name and handling unknown algorithms.
