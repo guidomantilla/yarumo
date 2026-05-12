@@ -12,7 +12,7 @@ import (
 // matches the workspace-wide crypto operation pattern of (result, error).
 func Hash(hash crypto.Hash, data ctypes.Bytes) (ctypes.Bytes, error) {
 	if !hash.Available() {
-		return nil, ErrDigest(ErrHashFunctionUnavailable)
+		return nil, ErrHashFunctionUnavailable
 	}
 
 	h := hash.New()

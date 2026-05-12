@@ -53,7 +53,7 @@ func (m *Method) Hash(data ctypes.Bytes) (ctypes.Bytes, error) {
 
 	digest, err := m.hashFn(m.kind, data)
 	if err != nil {
-		return nil, err
+		return nil, ErrDigest(err)
 	}
 
 	return digest, nil
