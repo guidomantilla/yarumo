@@ -883,19 +883,58 @@ func Test_upgradeNeeded_returns_error_for_no_config(t *testing.T) {
 	}
 }
 
-func Test_generateSalt(t *testing.T) {
+// Test_saltEntropy_viaPublicAPI verifies that encoded passwords embed a salt
+// section of the expected length and that two consecutive encodes of the same
+// raw password produce distinct outputs (i.e. the salt entropy source is
+// actually wired up). This replaces the previous unit test against the now-
+// removed private generateSalt helper; entropy now flows from common/random.
+func Test_saltEntropy_viaPublicAPI(t *testing.T) {
 	t.Parallel()
 
-	t.Run("generates salt of expected size", func(t *testing.T) {
+	t.Run("two encodes produce distinct outputs", func(t *testing.T) {
 		t.Parallel()
 
-		salt, err := generateSalt(16)
+		first, err := Argon2.Encode("same-password")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if len(salt) == 0 {
-			t.Fatal("expected non-empty salt")
+		second, err := Argon2.Encode("same-password")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if first == second {
+			t.Fatal("expected distinct encoded outputs from fresh salts; got identical")
+		}
+	})
+
+	t.Run("argon2 embeds salt section of configured length", func(t *testing.T) {
+		t.Parallel()
+
+		encoded, err := Argon2.Encode("salt-length-check")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		decoded, err := argon2Decode(encoded)
+		if err != nil {
+			t.Fatalf("unexpected decode error: %v", err)
+		}
+
+		if len(decoded.salt) != Argon2SaltLength {
+			t.Fatalf("expected salt length %d, got %d", Argon2SaltLength, len(decoded.salt))
+		}
+
+		allZero := true
+		for _, b := range decoded.salt {
+			if b != 0 {
+				allZero = false
+				break
+			}
+		}
+		if allZero {
+			t.Fatal("expected non-zero salt bytes")
 		}
 	})
 }
