@@ -27,7 +27,10 @@ func sign(method *Method, key *ecdsa.PrivateKey, data ctypes.Bytes, format Forma
 		return nil, ErrKeyCurveIsInvalid
 	}
 
-	h := chashes.Hash(method.kind, data)
+	h, err := chashes.Hash(method.kind, data)
+	if err != nil {
+		return nil, ErrSigning(err)
+	}
 
 	switch format {
 	case RS:
@@ -69,7 +72,10 @@ func verify(method *Method, key *ecdsa.PublicKey, signature ctypes.Bytes, data c
 		return false, ErrKeyCurveIsInvalid
 	}
 
-	h := chashes.Hash(method.kind, data)
+	h, err := chashes.Hash(method.kind, data)
+	if err != nil {
+		return false, ErrVerification(err)
+	}
 
 	switch format {
 	case RS:

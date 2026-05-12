@@ -16,4 +16,4 @@ var (
 )
 
 // HashFn is the function type for Hash.
-type HashFn func(hash crypto.Hash, data ctypes.Bytes) ctypes.Bytes
+type HashFn func(hash crypto.Hash, data ctypes.Bytes) (ctypes.Bytes, error)
