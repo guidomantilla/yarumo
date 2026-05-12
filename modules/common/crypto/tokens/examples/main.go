@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	caead "github.com/guidomantilla/yarumo/common/crypto/ciphers/aead"
 	ctokens "github.com/guidomantilla/yarumo/common/crypto/tokens"
 )
 
@@ -13,6 +14,7 @@ func main() {
 	customMethod()
 	registryLookup()
 	listSupported()
+	opaqueRoundTrip()
 }
 
 // predefinedMethods demonstrates generating and validating tokens with all predefined methods.
@@ -112,4 +114,45 @@ func listSupported() {
 	}
 
 	fmt.Println()
+}
+
+// opaqueRoundTrip demonstrates the YA-0019 opaque (AEAD-encrypted) flavor.
+// The entire claims payload is encrypted under a symmetric key, so the
+// emitted token is base64url ciphertext — nothing leaks to the client.
+func opaqueRoundTrip() {
+	fmt.Println("=== Opaque (AEAD) Round Trip ===")
+
+	// AES-256-GCM expects a 32-byte key.
+	key, err := caead.AES_256_GCM.GenerateKey()
+	if err != nil {
+		log.Fatalf("opaque key generation failed: %v", err)
+	}
+
+	opaque := ctokens.NewMethod("opaque-demo", ctokens.AlgorithmOpaqueAESGCM,
+		ctokens.WithKey(key),
+		ctokens.WithIssuer("yarumo-example"),
+		ctokens.WithTimeout(1*time.Hour),
+	)
+
+	subject := "user-789"
+	payload := ctokens.Payload{
+		"role":   "admin",
+		"tenant": "acme",
+		"scope":  "read:write",
+	}
+
+	token, err := opaque.Generate(subject, payload)
+	if err != nil {
+		log.Fatalf("opaque generate failed: %v", err)
+	}
+
+	fmt.Printf("Opaque Token: %.60s...\n", token)
+
+	recovered, err := opaque.Validate(token)
+	if err != nil {
+		log.Fatalf("opaque validate failed: %v", err)
+	}
+
+	fmt.Printf("Opaque Payload: role=%v, tenant=%v, scope=%v\n\n",
+		recovered["role"], recovered["tenant"], recovered["scope"])
 }

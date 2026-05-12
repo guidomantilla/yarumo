@@ -189,4 +189,60 @@ func TestSentinelErrors(t *testing.T) {
 			t.Fatal("expected non-nil")
 		}
 	})
+
+	t.Run("ErrTokenExpired is not nil", func(t *testing.T) {
+		t.Parallel()
+		if ErrTokenExpired == nil {
+			t.Fatal("expected non-nil")
+		}
+	})
+
+	t.Run("ErrTokenNotYetValid is not nil", func(t *testing.T) {
+		t.Parallel()
+		if ErrTokenNotYetValid == nil {
+			t.Fatal("expected non-nil")
+		}
+	})
+
+	t.Run("ErrTokenIssuerMismatch is not nil", func(t *testing.T) {
+		t.Parallel()
+		if ErrTokenIssuerMismatch == nil {
+			t.Fatal("expected non-nil")
+		}
+	})
+
+	t.Run("ErrCipherNil is not nil", func(t *testing.T) {
+		t.Parallel()
+		if ErrCipherNil == nil {
+			t.Fatal("expected non-nil")
+		}
+	})
+
+	t.Run("ErrTokenDecodeFailed is not nil", func(t *testing.T) {
+		t.Parallel()
+		if ErrTokenDecodeFailed == nil {
+			t.Fatal("expected non-nil")
+		}
+	})
+
+	t.Run("ErrTokenDecryptFailed is not nil", func(t *testing.T) {
+		t.Parallel()
+		if ErrTokenDecryptFailed == nil {
+			t.Fatal("expected non-nil")
+		}
+	})
+
+	t.Run("ErrTokenMarshalFailed is not nil", func(t *testing.T) {
+		t.Parallel()
+		if ErrTokenMarshalFailed == nil {
+			t.Fatal("expected non-nil")
+		}
+	})
+
+	t.Run("ErrTokenUnmarshalFailed is not nil", func(t *testing.T) {
+		t.Parallel()
+		if ErrTokenUnmarshalFailed == nil {
+			t.Fatal("expected non-nil")
+		}
+	})
 }
