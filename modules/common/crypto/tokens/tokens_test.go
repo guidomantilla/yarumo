@@ -258,7 +258,8 @@ func TestYA0025_DecodeUnsafe(t *testing.T) {
 		tampered := token + "AAAA"
 
 		// Sanity check: a normal Validate must reject the tampered token.
-		if _, validateErr := signer.Validate(tampered); validateErr == nil {
+		_, validateErr := signer.Validate(tampered)
+		if validateErr == nil {
 			t.Fatal("expected Validate to reject tampered token")
 		}
 
@@ -288,7 +289,8 @@ func TestYA0025_DecodeUnsafe(t *testing.T) {
 		// but DecodeUnsafe should not care about the key at all.
 		peeker := NewMethod("ya0025-peeker", AlgorithmHS256, WithKey([]byte("totally-different-key-1234567890abcdef")))
 
-		if _, validateErr := peeker.Validate(token); validateErr == nil {
+		_, validateErr := peeker.Validate(token)
+		if validateErr == nil {
 			t.Fatal("expected Validate to reject token signed with a different key")
 		}
 
