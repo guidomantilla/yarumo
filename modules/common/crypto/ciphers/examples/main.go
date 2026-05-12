@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 
@@ -14,6 +15,7 @@ func main() {
 	rsaOaepExample()
 	rsaOaepPEMExample()
 	registryExample()
+	aeadStreamExample()
 }
 
 // aeadExample demonstrates all four predefined AEAD methods:
@@ -208,5 +210,52 @@ func registryExample() {
 	_, err = crsaoaep.Get("UNKNOWN")
 	fmt.Printf("crsaoaep.Get(\"UNKNOWN\") error: %v\n", err)
 
+	fmt.Println()
+}
+
+// aeadStreamExample demonstrates Method.EncryptStream / Method.DecryptStream.
+// Each plaintext chunk of at most caead.StreamFrameSize bytes is sealed
+// independently with the underlying AEAD primitive and emitted with a
+// 4-byte big-endian uint32 length prefix; a zero-length frame closes the
+// stream. The frame counter is appended to the caller-supplied AAD so any
+// reordering or truncation fails authentication.
+func aeadStreamExample() {
+	fmt.Println("=== AEAD Streaming (EncryptStream / DecryptStream) ===")
+
+	// Use a payload that spans multiple frames to make the framing visible.
+	plaintext := bytes.Repeat([]byte("streaming-aead-payload "), 6000) // ~138 KiB
+
+	method := caead.AES_256_GCM
+	aad := ctypes.Bytes("stream-context")
+
+	key, err := method.GenerateKey()
+	if err != nil {
+		log.Fatalf("GenerateKey failed: %v", err)
+	}
+
+	// Encrypt: bytes.Reader -> bytes.Buffer.
+	var encrypted bytes.Buffer
+	if err := method.EncryptStream(key, bytes.NewReader(plaintext), &encrypted, aad); err != nil {
+		log.Fatalf("EncryptStream failed: %v", err)
+	}
+
+	fmt.Printf("Plaintext: %d bytes (~%d frames of %d bytes)\n",
+		len(plaintext),
+		(len(plaintext)+caead.StreamFrameSize-1)/caead.StreamFrameSize,
+		caead.StreamFrameSize)
+	fmt.Printf("Encrypted stream: %d bytes\n", encrypted.Len())
+
+	// Decrypt: bytes.Buffer -> bytes.Buffer.
+	var decrypted bytes.Buffer
+	if err := method.DecryptStream(key, &encrypted, &decrypted, aad); err != nil {
+		log.Fatalf("DecryptStream failed: %v", err)
+	}
+
+	if !bytes.Equal(decrypted.Bytes(), plaintext) {
+		log.Fatalf("plaintext mismatch after stream round-trip")
+	}
+
+	fmt.Printf("Round-trip recovered %d bytes (match: %t)\n",
+		decrypted.Len(), bytes.Equal(decrypted.Bytes(), plaintext))
 	fmt.Println()
 }
