@@ -11,7 +11,7 @@ func TestRegister(t *testing.T) {
 
 	t.Run("registers a new method", func(t *testing.T) {
 
-		custom := NewMethod("Custom_HS256", jwt.SigningMethodHS256)
+		custom := NewMethod("Custom_HS256", AlgorithmHS256)
 		Register(*custom)
 
 		got, err := Get("Custom_HS256")
@@ -29,10 +29,10 @@ func TestRegister(t *testing.T) {
 		key1 := []byte("key-one")
 		key2 := []byte("key-two")
 
-		m1 := NewMethod("Override", jwt.SigningMethodHS256, WithKey(key1))
+		m1 := NewMethod("Override", AlgorithmHS256, WithKey(key1))
 		Register(*m1)
 
-		m2 := NewMethod("Override", jwt.SigningMethodHS384, WithKey(key2))
+		m2 := NewMethod("Override", AlgorithmHS384, WithKey(key2))
 		Register(*m2)
 
 		got, err := Get("Override")

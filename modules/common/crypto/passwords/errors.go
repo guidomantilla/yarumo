@@ -37,6 +37,8 @@ var (
 	ErrUpgradeCheckFailed    = errors.New("upgrade check failed")
 	ErrMethodConfigMissing   = errors.New("method has no algorithm configuration")
 	ErrBcryptCostNotAllowed  = errors.New("bcrypt cost not allowed")
+	ErrUnknownEncodingPrefix = errors.New("unknown encoding prefix")
+	ErrDelegateFailed        = errors.New("delegating encoder operation failed")
 )
 
 // ErrEncoding creates a password encoding error with optional cause errors.
@@ -75,6 +77,16 @@ func ErrAlgorithmNotSupported(name string) *Error {
 		TypedError: cerrs.TypedError{
 			Type: PasswordMethod,
 			Err:  fmt.Errorf("password method %s not found", name),
+		},
+	}
+}
+
+// ErrDelegate creates a delegating encoder error with optional cause errors.
+func ErrDelegate(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: PasswordMethod,
+			Err:  errors.Join(append(errs, ErrDelegateFailed)...),
 		},
 	}
 }
