@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	cassert "github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
@@ -23,6 +24,9 @@ type Error struct {
 
 // Error returns the formatted error message.
 func (e *Error) Error() string {
+	cassert.NotNil(e, "error is nil")
+	cassert.NotNil(e.Err, "internal error is nil")
+
 	return fmt.Sprintf("token %s error: %s", e.Type, e.Err)
 }
 
