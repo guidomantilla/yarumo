@@ -42,7 +42,7 @@ func generate(method *Method, subject string, payload Payload) (string, error) {
 	token := jwt.NewWithClaims(method.signingMethod, claims)
 	signed, err := token.SignedString(method.signingKey)
 	if err != nil {
-		return "", err
+		return "", cerrs.Wrap(ErrTokenSignFailed, err)
 	}
 
 	return signed, nil

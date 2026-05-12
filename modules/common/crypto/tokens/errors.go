@@ -33,6 +33,7 @@ var (
 	ErrTokenEmpty        = errors.New("token is empty")
 	ErrSigningKeyNil     = errors.New("signing key is nil")
 	ErrSigningMethodNil  = errors.New("signing method is nil")
+	ErrTokenSignFailed   = errors.New("token signing failed")
 	ErrTokenParseFailed  = errors.New("token parse failed")
 	ErrTokenPayloadEmpty = errors.New("token payload is empty")
 	ErrGenerationFailed  = errors.New("generation failed")

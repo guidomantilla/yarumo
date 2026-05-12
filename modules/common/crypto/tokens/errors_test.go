@@ -148,6 +148,13 @@ func TestSentinelErrors(t *testing.T) {
 		}
 	})
 
+	t.Run("ErrTokenSignFailed is not nil", func(t *testing.T) {
+		t.Parallel()
+		if ErrTokenSignFailed == nil {
+			t.Fatal("expected non-nil")
+		}
+	})
+
 	t.Run("ErrTokenParseFailed is not nil", func(t *testing.T) {
 		t.Parallel()
 		if ErrTokenParseFailed == nil {
