@@ -12,6 +12,7 @@ import (
 // Predefined RSA signing methods registered at package init.
 var (
 	RSASSA_PSS_using_SHA256      = NewMethod("RSASSA_PSS_using_SHA256", crypto.SHA256, PSS, []int{2048, 3072, 4096})
+	RSASSA_PSS_using_SHA384      = NewMethod("RSASSA_PSS_using_SHA384", crypto.SHA384, PSS, []int{2048, 3072, 4096})
 	RSASSA_PSS_using_SHA512      = NewMethod("RSASSA_PSS_using_SHA512", crypto.SHA512, PSS, []int{3072, 4096})
 	RSASSA_PKCS1v15_using_SHA256 = NewMethod("RSASSA_PKCS1v15_using_SHA256", crypto.SHA256, PKCS1v15, []int{2048, 3072, 4096})
 	RSASSA_PKCS1v15_using_SHA384 = NewMethod("RSASSA_PKCS1v15_using_SHA384", crypto.SHA384, PKCS1v15, []int{2048, 3072, 4096})

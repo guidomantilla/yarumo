@@ -8,6 +8,7 @@ import (
 
 var methods = map[string]Method{
 	RSASSA_PSS_using_SHA256.name:      *RSASSA_PSS_using_SHA256,
+	RSASSA_PSS_using_SHA384.name:      *RSASSA_PSS_using_SHA384,
 	RSASSA_PSS_using_SHA512.name:      *RSASSA_PSS_using_SHA512,
 	RSASSA_PKCS1v15_using_SHA256.name: *RSASSA_PKCS1v15_using_SHA256,
 	RSASSA_PKCS1v15_using_SHA384.name: *RSASSA_PKCS1v15_using_SHA384,
