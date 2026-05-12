@@ -22,7 +22,8 @@ func predefinedMethods() {
 	rawPassword := "my-secret-password"
 
 	methods := []*cpasswords.Method{
-		cpasswords.Argon2,
+		cpasswords.Argon2id,
+		cpasswords.Argon2i,
 		cpasswords.Bcrypt,
 		cpasswords.Pbkdf2,
 		cpasswords.Scrypt,
@@ -56,7 +57,7 @@ func predefinedMethods() {
 func registryLookup() {
 	fmt.Println("=== Registry Lookup ===")
 
-	method, err := cpasswords.Get("Argon2")
+	method, err := cpasswords.Get("Argon2id")
 	if err != nil {
 		log.Fatalf("registry lookup failed: %v", err)
 	}
@@ -66,7 +67,7 @@ func registryLookup() {
 		log.Fatalf("encode via registry failed: %v", err)
 	}
 
-	fmt.Printf("cpasswords.Get(\"Argon2\"): %s, encoded %d bytes\n", method.Name(), len(encoded))
+	fmt.Printf("cpasswords.Get(\"Argon2id\"): %s, encoded %d bytes\n", method.Name(), len(encoded))
 
 	// Non-existent algorithm
 	_, err = cpasswords.Get("UNKNOWN")
@@ -123,8 +124,8 @@ func delegatingMigration() {
 	}
 	fmt.Printf("Legacy bcrypt hash : %.60s...\n", legacy)
 
-	// 2. Operator rolls out Argon2 as the new primary.
-	delegating := cpasswords.NewDelegatingEncoder(cpasswords.Argon2)
+	// 2. Operator rolls out Argon2id as the new primary.
+	delegating := cpasswords.NewDelegatingEncoder(cpasswords.Argon2id)
 
 	// 3. Login: legacy hash still verifies via prefix routing.
 	ok, err := delegating.Verify(legacy, raw)

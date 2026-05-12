@@ -59,6 +59,34 @@
 // the time of the call. Custom methods registered via Register after config
 // load will not resolve here; callers that need late-bound lookup should
 // call Get(name) directly.
+//
+// # Migration: Argon2 → Argon2id
+//
+// The predefined Argon2 method was always backed by argon2.IDKey — i.e. the
+// argon2id variant, the OWASP-recommended option for password storage. The
+// generic "Argon2" name was ambiguous because the Argon2 family has three
+// variants (argon2i, argon2d, argon2id). YA-0030 renames the predefined to
+// Argon2id with the matching {argon2id} prefix and adds a second predefined,
+// Argon2i, that uses argon2.Key (the side-channel-resistant variant) under
+// the {argon2i} prefix. argon2d is intentionally NOT added — it is not
+// appropriate for password storage.
+//
+// Backward compatibility:
+//
+//   - Stored hashes encoded under the legacy {argon2} prefix continue to
+//     verify: ByPrefix matches both {argon2} and {argon2id} and routes them
+//     to the Argon2id method. Newly encoded passwords use {argon2id}.
+//   - The Go-level identifier passwords.Argon2 remains as a deprecated alias
+//     of passwords.Argon2id for one release; direct consumers will see a
+//     staticcheck SA1019 warning prompting migration. The deprecated alias
+//     is not separately registered in the algorithm map, so Get("Argon2")
+//     returns ErrAlgorithmNotSupported — callers using registry lookup must
+//     migrate to Get("Argon2id"). Likewise the Argon2PrefixKey constant is
+//     deprecated in favor of Argon2idPrefixKey.
+//
+// The {argon2i} prefix has no legacy alias (the variant did not exist before
+// this change). To pick the i-variant explicitly, use passwords.Argon2i or
+// Get("Argon2i").
 package passwords
 
 import (
@@ -90,6 +118,11 @@ type argon2Config struct {
 	threads    int
 	saltLength int
 	keyLength  int
+	// useArgon2i selects the side-channel-resistant argon2.Key (argon2i)
+	// implementation instead of the default argon2.IDKey (argon2id). It is
+	// set by WithArgon2iParams and read inside argon2Encode / argon2Verify
+	// to pick the correct KDF call. False means argon2id (the default).
+	useArgon2i bool
 }
 
 type bcryptConfig struct {

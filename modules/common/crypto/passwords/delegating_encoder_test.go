@@ -12,13 +12,13 @@ func TestNewDelegatingEncoder(t *testing.T) {
 	t.Run("constructs encoder with primary method", func(t *testing.T) {
 		t.Parallel()
 
-		d := NewDelegatingEncoder(Argon2)
+		d := NewDelegatingEncoder(Argon2id)
 
 		if d == nil {
 			t.Fatal("expected non-nil delegating encoder")
 		}
-		if d.primary != Argon2 {
-			t.Fatalf("expected primary to be Argon2, got %v", d.primary)
+		if d.primary != Argon2id {
+			t.Fatalf("expected primary to be Argon2id, got %v", d.primary)
 		}
 	})
 
@@ -107,7 +107,7 @@ func TestDelegatingEncoder_Verify(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		d := NewDelegatingEncoder(Argon2)
+		d := NewDelegatingEncoder(Argon2id)
 
 		ok, err := d.Verify(legacy, "legacy-secret")
 		if err != nil {
@@ -152,7 +152,7 @@ func TestDelegatingEncoder_Verify(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		d := NewDelegatingEncoder(Argon2)
+		d := NewDelegatingEncoder(Argon2id)
 
 		ok, err := d.Verify(legacy, "wrong")
 		if err != nil {
@@ -175,7 +175,7 @@ func TestDelegatingEncoder_UpgradeNeeded(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		d := NewDelegatingEncoder(Argon2)
+		d := NewDelegatingEncoder(Argon2id)
 
 		needed, err := d.UpgradeNeeded(legacy)
 		if err != nil {
@@ -243,7 +243,7 @@ func TestDelegatingEncoder_MigrationRoundTrip(t *testing.T) {
 		t.Fatalf("expected bcrypt prefix on legacy hash, got %q", legacy)
 	}
 
-	d := NewDelegatingEncoder(Argon2)
+	d := NewDelegatingEncoder(Argon2id)
 
 	ok, err := d.Verify(legacy, raw)
 	if err != nil {
@@ -265,8 +265,8 @@ func TestDelegatingEncoder_MigrationRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error re-encoding under primary: %v", err)
 	}
-	if !strings.HasPrefix(upgraded, Argon2PrefixKey) {
-		t.Fatalf("expected argon2 prefix on upgraded hash, got %q", upgraded)
+	if !strings.HasPrefix(upgraded, Argon2idPrefixKey) {
+		t.Fatalf("expected argon2id prefix on upgraded hash, got %q", upgraded)
 	}
 
 	ok, err = d.Verify(upgraded, raw)

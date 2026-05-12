@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-const textCodecTestName = "Argon2"
+const textCodecTestName = "Argon2id"
 
 func TestMethod_MarshalText(t *testing.T) {
 	t.Parallel()
@@ -14,7 +14,7 @@ func TestMethod_MarshalText(t *testing.T) {
 	t.Run("returns the registry name", func(t *testing.T) {
 		t.Parallel()
 
-		data, err := Argon2.MarshalText()
+		data, err := Argon2id.MarshalText()
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -84,7 +84,7 @@ func TestMethod_TextCodec_RoundTrip(t *testing.T) {
 	t.Run("MarshalText then UnmarshalText preserves identity", func(t *testing.T) {
 		t.Parallel()
 
-		data, err := Argon2.MarshalText()
+		data, err := Argon2id.MarshalText()
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -96,12 +96,12 @@ func TestMethod_TextCodec_RoundTrip(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got.Name() != Argon2.Name() {
-			t.Fatalf("expected %q, got %q", Argon2.Name(), got.Name())
+		if got.Name() != Argon2id.Name() {
+			t.Fatalf("expected %q, got %q", Argon2id.Name(), got.Name())
 		}
 
-		if got.prefix != Argon2.prefix {
-			t.Fatalf("expected prefix %q, got %q", Argon2.prefix, got.prefix)
+		if got.prefix != Argon2id.prefix {
+			t.Fatalf("expected prefix %q, got %q", Argon2id.prefix, got.prefix)
 		}
 	})
 }
@@ -116,14 +116,14 @@ func TestMethod_JSON_RoundTrip(t *testing.T) {
 			Encoder *Method `json:"encoder"`
 		}
 
-		in := Config{Encoder: Argon2}
+		in := Config{Encoder: Argon2id}
 
 		raw, err := json.Marshal(in)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		const expected = `{"encoder":"Argon2"}`
+		const expected = `{"encoder":"Argon2id"}`
 		if string(raw) != expected {
 			t.Fatalf("expected %q, got %q", expected, string(raw))
 		}
