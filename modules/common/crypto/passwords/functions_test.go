@@ -900,6 +900,91 @@ func Test_generateSalt(t *testing.T) {
 	})
 }
 
+// TestBackwardCompat_OldHashesVerify ensures that hashes encoded under the
+// pre-OWASP-2024 defaults (BcryptDefaultCost=10, ScryptN=32768) still verify
+// after bumping the package defaults to OWASP-2024 values (cost=12, N=131072).
+//
+// Both bcrypt and scrypt encode their parameters into the hash string, and
+// Method.Verify reads the stored parameters when re-deriving the key — it
+// never substitutes the current package defaults. This test pins that
+// contract so the YA-0006 default bump cannot lock out existing users.
+func TestBackwardCompat_OldHashesVerify(t *testing.T) {
+	t.Parallel()
+
+	t.Run("bcrypt hash encoded at old cost 10 still verifies under cost 12 default", func(t *testing.T) {
+		t.Parallel()
+
+		// Encode using a Method pinned to the pre-OWASP default cost.
+		oldBcrypt := NewMethod("LegacyBcrypt", BcryptPrefixKey, WithBcryptParams(10))
+		encoded, err := oldBcrypt.Encode("legacy-bcrypt-password")
+		if err != nil {
+			t.Fatalf("unexpected error encoding under old cost: %v", err)
+		}
+
+		// Verify using the package-default Bcrypt method (which now uses cost 12).
+		ok, err := Bcrypt.Verify(encoded, "legacy-bcrypt-password")
+		if err != nil {
+			t.Fatalf("unexpected error verifying legacy hash: %v", err)
+		}
+		if !ok {
+			t.Fatal("expected legacy bcrypt hash (cost 10) to verify under cost 12 default")
+		}
+
+		// Bcrypt should also flag the legacy hash as upgrade-needed.
+		needed, err := Bcrypt.UpgradeNeeded(encoded)
+		if err != nil {
+			t.Fatalf("unexpected error checking upgrade: %v", err)
+		}
+		if !needed {
+			t.Fatal("expected upgrade needed for legacy bcrypt hash (cost 10 < 12)")
+		}
+	})
+
+	t.Run("scrypt hash encoded at old N=32768 still verifies under N=131072 default", func(t *testing.T) {
+		t.Parallel()
+
+		// Encode using a Method pinned to the pre-OWASP default N. WithScryptParams
+		// rejects values below the current ScryptN floor (now 131072), so we build
+		// the Method directly with a hand-rolled config to simulate a legacy hash.
+		oldScrypt := &Method{
+			name:   "LegacyScrypt",
+			prefix: ScryptPrefixKey,
+			scryptParams: &scryptConfig{
+				n:          32768,
+				r:          ScryptR,
+				p:          ScryptP,
+				saltLength: ScryptSaltLength,
+				keyLength:  ScryptKeyLength,
+			},
+			encodeFn:        encode,
+			verifyFn:        verify,
+			upgradeNeededFn: upgradeNeeded,
+		}
+		encoded, err := oldScrypt.Encode("legacy-scrypt-password")
+		if err != nil {
+			t.Fatalf("unexpected error encoding under old N: %v", err)
+		}
+
+		// Verify using the package-default Scrypt method (which now uses N=131072).
+		ok, err := Scrypt.Verify(encoded, "legacy-scrypt-password")
+		if err != nil {
+			t.Fatalf("unexpected error verifying legacy hash: %v", err)
+		}
+		if !ok {
+			t.Fatal("expected legacy scrypt hash (N=32768) to verify under N=131072 default")
+		}
+
+		// Scrypt should also flag the legacy hash as upgrade-needed.
+		needed, err := Scrypt.UpgradeNeeded(encoded)
+		if err != nil {
+			t.Fatalf("unexpected error checking upgrade: %v", err)
+		}
+		if !needed {
+			t.Fatal("expected upgrade needed for legacy scrypt hash (N=32768 < 131072)")
+		}
+	})
+}
+
 // --- Helpers ---
 
 func validB64() string {
