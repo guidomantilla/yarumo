@@ -331,3 +331,63 @@ func TestValidate(t *testing.T) {
 		}
 	})
 }
+
+func TestGenerate_ByName(t *testing.T) {
+	t.Parallel()
+
+	t.Run("generates and validates round trip by name", func(t *testing.T) {
+		t.Parallel()
+
+		const name = "test-helper-roundtrip"
+
+		key := []byte("test-secret-key-for-testing-1234567890")
+		m := NewMethod(name, AlgorithmHS256, WithKey(key))
+		Register(*m)
+
+		token, err := Generate(name, "user@test.com", Payload{"role": roleAdmin})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if token == "" {
+			t.Fatal("expected non-empty token")
+		}
+
+		payload, err := Validate(name, token)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if payload["role"] != roleAdmin {
+			t.Fatalf("expected payload role=%q, got %v", roleAdmin, payload["role"])
+		}
+	})
+
+	t.Run("Generate returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Generate("UNKNOWN", "user", Payload{"a": 1})
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("Validate returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Validate("UNKNOWN", "some-token")
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+}

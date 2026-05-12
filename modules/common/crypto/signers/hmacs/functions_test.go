@@ -7,6 +7,85 @@ import (
 	ctypes "github.com/guidomantilla/yarumo/common/types"
 )
 
+func TestDigest_ByName(t *testing.T) {
+	t.Parallel()
+
+	t.Run("computes digest by name", func(t *testing.T) {
+		t.Parallel()
+
+		k := ctypes.Bytes("12345678901234567890123456789012")
+
+		got, err := Digest("HMAC_with_SHA256", k, []byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(got) != 32 {
+			t.Fatalf("expected 32 bytes, got %d", len(got))
+		}
+	})
+
+	t.Run("returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := Digest("UNKNOWN", []byte("k"), []byte("data"))
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		if got != nil {
+			t.Fatalf("expected nil bytes, got %v", got)
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+}
+
+func TestValidate_ByName(t *testing.T) {
+	t.Parallel()
+
+	t.Run("validates digest by name", func(t *testing.T) {
+		t.Parallel()
+
+		k := ctypes.Bytes("12345678901234567890123456789012")
+
+		mac, err := Digest("HMAC_with_SHA256", k, []byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error computing digest: %v", err)
+		}
+
+		ok, err := Validate("HMAC_with_SHA256", k, mac, []byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !ok {
+			t.Fatal("expected validation to succeed")
+		}
+	})
+
+	t.Run("returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		ok, err := Validate("UNKNOWN", []byte("k"), []byte("sig"), []byte("data"))
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		if ok {
+			t.Fatal("expected ok to be false on error")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+}
+
 func TestKey(t *testing.T) {
 	t.Parallel()
 

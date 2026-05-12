@@ -19,6 +19,41 @@ const pemBlockPrivateKey = "PRIVATE KEY"
 // pemBlockPublicKey is the PEM block type used for PKIX/SubjectPublicKeyInfo public keys.
 const pemBlockPublicKey = "PUBLIC KEY"
 
+// Digest is the recommended entry point for callers that receive the
+// algorithm name as a string (e.g. loaded from config, a request header, or
+// a database column). It performs a single registry Get, parses the PKCS#8
+// PEM-encoded RSA private key, and forwards to Method.Sign.
+func Digest(name string, key, data ctypes.Bytes) (ctypes.Bytes, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	priv, err := ParsePrivateKeyPEM(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Sign(priv, data)
+}
+
+// Validate is the recommended entry point for callers that receive the
+// algorithm name as a string. It performs a single registry Get, parses the
+// PKIX PEM-encoded RSA public key, and forwards to Method.Verify.
+func Validate(name string, key, digest, data ctypes.Bytes) (bool, error) {
+	method, err := Get(name)
+	if err != nil {
+		return false, err
+	}
+
+	pub, err := ParsePublicKeyPEM(key)
+	if err != nil {
+		return false, err
+	}
+
+	return method.Verify(pub, digest, data)
+}
+
 // MarshalPrivateKeyPEM marshals an RSA private key into PKCS#8 PEM-encoded bytes.
 func MarshalPrivateKeyPEM(key *rsa.PrivateKey) ([]byte, error) {
 	if key == nil {

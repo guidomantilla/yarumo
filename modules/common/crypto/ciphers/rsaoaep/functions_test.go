@@ -412,3 +412,101 @@ func TestPublicKeyPEMRoundTrip(t *testing.T) {
 		}
 	})
 }
+
+func TestEncrypt_ByName(t *testing.T) {
+	t.Parallel()
+
+	t.Run("encrypts and decrypts round trip", func(t *testing.T) {
+		t.Parallel()
+
+		method, err := Get("RSA-OAEP-SHA256")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		priv, err := method.GenerateKey(2048)
+		if err != nil {
+			t.Fatalf("unexpected error generating key: %v", err)
+		}
+
+		privPEM, err := MarshalPrivateKeyPEM(priv)
+		if err != nil {
+			t.Fatalf("unexpected error marshalling private key: %v", err)
+		}
+
+		pubPEM, err := MarshalPublicKeyPEM(&priv.PublicKey)
+		if err != nil {
+			t.Fatalf("unexpected error marshalling public key: %v", err)
+		}
+
+		const plaintext = "round-trip"
+
+		ciphered, err := Encrypt("RSA-OAEP-SHA256", pubPEM, []byte(plaintext), []byte("label"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		plain, err := Decrypt("RSA-OAEP-SHA256", privPEM, ciphered, []byte("label"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if string(plain) != plaintext {
+			t.Fatalf("expected %q, got %q", plaintext, string(plain))
+		}
+	})
+
+	t.Run("Encrypt returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Encrypt("UNKNOWN", []byte("k"), []byte("d"), nil)
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("Decrypt returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Decrypt("UNKNOWN", []byte("k"), []byte("d"), nil)
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("Encrypt returns PEM codec error for invalid key", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Encrypt("RSA-OAEP-SHA256", []byte("not a pem"), []byte("d"), nil)
+		if err == nil {
+			t.Fatal("expected error for invalid PEM")
+		}
+
+		if !errors.Is(err, ErrPEMDecodeFailed) {
+			t.Fatalf("expected ErrPEMDecodeFailed, got %v", err)
+		}
+	})
+
+	t.Run("Decrypt returns PEM codec error for invalid key", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Decrypt("RSA-OAEP-SHA256", []byte("not a pem"), []byte("d"), nil)
+		if err == nil {
+			t.Fatal("expected error for invalid PEM")
+		}
+
+		if !errors.Is(err, ErrPEMDecodeFailed) {
+			t.Fatalf("expected ErrPEMDecodeFailed, got %v", err)
+		}
+	})
+}

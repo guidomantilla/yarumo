@@ -15,6 +15,14 @@
 // the time of the call. Custom methods registered via Register after config
 // load will not resolve here; callers that need late-bound lookup should
 // call Get(name) directly.
+//
+// # Recommended entry point for string-named algorithms
+//
+// Encrypt(name, key, data, aad) and Decrypt(name, key, data, aad) are the
+// recommended top-level helpers for callers that load the algorithm name
+// from config. They each perform a single Get, parse the PEM-encoded RSA
+// key, and forward to the corresponding Method operation. The aad argument
+// is passed through as the OAEP label.
 package rsaoaep
 
 import (

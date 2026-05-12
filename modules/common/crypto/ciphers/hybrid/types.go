@@ -52,6 +52,14 @@
 // the time of the call. Custom methods registered via Register after config
 // load will not resolve here; callers that need late-bound lookup should
 // call Get(name) directly.
+//
+// # Recommended entry point for string-named algorithms
+//
+// Encrypt(name, key, data, aad) and Decrypt(name, key, data, aad) are the
+// recommended top-level helpers for callers that load the algorithm name
+// from config. The key argument carries the recipient's KEM public/private
+// key in its scheme-defined binary form (see kem.Scheme.MarshalBinary*);
+// aad maps to the HPKE info label.
 package hybrid
 
 import (

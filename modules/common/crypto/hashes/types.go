@@ -17,6 +17,15 @@
 // load will not resolve here; callers that need late-bound lookup should
 // call Get(name) directly.
 //
+// # Recommended entry point for string-named algorithms
+//
+// Compute(name, data) is the recommended top-level helper for callers that
+// receive the algorithm name as a string (e.g. loaded from config, a request
+// header, or a database column). It collapses the standard "Get + Hash"
+// boilerplate into a single call and returns the package's domain error
+// when the name is not registered. Callers that already hold a *Method
+// (predefined or returned by Get) should keep using Method.Hash directly.
+//
 // # Streaming
 //
 // Method.NewHasher returns Go's standard hash.Hash so callers can compute

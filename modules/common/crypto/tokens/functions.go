@@ -11,6 +11,39 @@ import (
 	cutils "github.com/guidomantilla/yarumo/common/utils"
 )
 
+// Generate is the recommended entry point for callers that receive the
+// algorithm name as a string (e.g. loaded from config, a request header, or
+// a database column). It performs a single registry Get and forwards to
+// Method.Generate.
+//
+// The named Method must have been registered with keys configured (via
+// WithKey / WithSigningKey / WithGeneratedKey). The predefined templates
+// (JWT_HS256, JWT_RS256, OPAQUE_AES_256_GCM, ...) carry no key material;
+// register a custom Method via Register before calling Generate by name.
+func Generate(name, subject string, payload Payload) (string, error) {
+	method, err := Get(name)
+	if err != nil {
+		return "", err
+	}
+
+	return method.Generate(subject, payload)
+}
+
+// Validate is the recommended entry point for callers that receive the
+// algorithm name as a string. It performs a single registry Get and forwards
+// to Method.Validate.
+//
+// The named Method must have been registered with verifying-key material
+// configured. See the Generate doc-string for the registry contract.
+func Validate(name, tokenString string) (Payload, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Validate(tokenString)
+}
+
 // generate is the package-default GenerateFn. It dispatches on the method's
 // Algorithm family:
 //
