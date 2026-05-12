@@ -149,6 +149,24 @@ func TestMethod_Sign(t *testing.T) {
 		}
 	})
 
+	t.Run("signs data with PSS SHA384", func(t *testing.T) {
+		t.Parallel()
+
+		key, err := RSASSA_PSS_using_SHA384.GenerateKey(2048)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		sig, err := RSASSA_PSS_using_SHA384.Sign(key, []byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(sig) == 0 {
+			t.Fatal("expected non-empty signature")
+		}
+	})
+
 	t.Run("wraps error from signFn", func(t *testing.T) {
 		t.Parallel()
 
@@ -228,6 +246,29 @@ func TestMethod_Verify(t *testing.T) {
 		}
 
 		ok, err := RSASSA_PKCS1v15_using_SHA384.Verify(&key.PublicKey, sig, []byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !ok {
+			t.Fatal("expected verification to succeed")
+		}
+	})
+
+	t.Run("round-trips PSS SHA384 with 2048-bit key", func(t *testing.T) {
+		t.Parallel()
+
+		key, err := RSASSA_PSS_using_SHA384.GenerateKey(2048)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		sig, err := RSASSA_PSS_using_SHA384.Sign(key, []byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		ok, err := RSASSA_PSS_using_SHA384.Verify(&key.PublicKey, sig, []byte("data"))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}

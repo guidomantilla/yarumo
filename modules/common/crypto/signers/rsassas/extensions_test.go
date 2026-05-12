@@ -57,6 +57,17 @@ func TestGet(t *testing.T) {
 		}
 	})
 
+	t.Run("retrieves predefined PSS SHA384 method", func(t *testing.T) {
+		got, err := Get("RSASSA_PSS_using_SHA384")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if got.Name() != "RSASSA_PSS_using_SHA384" {
+			t.Fatalf("unexpected name: %q", got.Name())
+		}
+	})
+
 	t.Run("returns error for unknown method", func(t *testing.T) {
 		_, err := Get("UNKNOWN")
 		if err == nil {
@@ -74,8 +85,24 @@ func TestSupported(t *testing.T) {
 	t.Run("returns at least the predefined methods", func(t *testing.T) {
 		list := Supported()
 
-		if len(list) < 5 {
-			t.Fatalf("expected at least 5, got %d", len(list))
+		if len(list) < 6 {
+			t.Fatalf("expected at least 6, got %d", len(list))
+		}
+	})
+
+	t.Run("includes RSASSA_PSS_using_SHA384", func(t *testing.T) {
+		list := Supported()
+
+		var found bool
+		for _, m := range list {
+			if m.Name() == "RSASSA_PSS_using_SHA384" {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			t.Fatal("expected Supported() to include RSASSA_PSS_using_SHA384")
 		}
 	})
 }
