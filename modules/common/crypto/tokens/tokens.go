@@ -1,6 +1,7 @@
 package tokens
 
 import (
+	"fmt"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -37,7 +38,7 @@ func NewMethod(name string, algorithm Algorithm, options ...Option) *Method {
 	cassert.NotEmpty(string(algorithm), "algorithm is empty")
 
 	signingMethod := signingMethodFor(algorithm)
-	cassert.NotNil(signingMethod, ErrAlgorithmInvalid(algorithm).Error())
+	cassert.NotNil(signingMethod, fmt.Sprintf("algorithm %q is invalid", string(algorithm)))
 
 	opts := NewOptions(options...)
 
