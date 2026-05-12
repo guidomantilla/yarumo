@@ -32,9 +32,14 @@ func predefinedMethods(data []byte) {
 		name   string
 		method *chashes.Method
 	}{
+		// SHA-1 is included only for legacy interop (TLS 1.0/1.1, Git,
+		// HMAC-SHA1). Do not use it for new collision-sensitive workloads.
+		{"SHA1", chashes.SHA1},
+		{"SHA224", chashes.SHA224},
 		{"SHA256", chashes.SHA256},
 		{"SHA512", chashes.SHA512},
 		{"SHA3_256", chashes.SHA3_256},
+		{"SHA3_384", chashes.SHA3_384},
 		{"SHA3_512", chashes.SHA3_512},
 		{"BLAKE2b_256", chashes.BLAKE2b_256},
 		{"BLAKE2b_512", chashes.BLAKE2b_512},

@@ -1,6 +1,7 @@
 package hashes
 
 import (
+	_ "crypto/sha1"
 	_ "crypto/sha256"
 	_ "crypto/sha3"
 	_ "crypto/sha512"
@@ -10,10 +11,13 @@ import (
 )
 
 var methods = map[string]Method{
+	SHA1.name:        *SHA1,
+	SHA224.name:      *SHA224,
 	SHA256.name:      *SHA256,
 	SHA384.name:      *SHA384,
 	SHA512.name:      *SHA512,
 	SHA3_256.name:    *SHA3_256,
+	SHA3_384.name:    *SHA3_384,
 	SHA3_512.name:    *SHA3_512,
 	BLAKE2b_256.name: *BLAKE2b_256,
 	BLAKE2b_512.name: *BLAKE2b_512,
