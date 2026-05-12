@@ -10,6 +10,7 @@ import (
 // Predefined HMAC methods registered at package init.
 var (
 	HMAC_with_SHA256 = NewMethod("HMAC_with_SHA256", crypto.SHA256, 32)
+	HMAC_with_SHA384 = NewMethod("HMAC_with_SHA384", crypto.SHA384, 48)
 	HMAC_with_SHA512 = NewMethod("HMAC_with_SHA512", crypto.SHA512, 64)
 )
 
