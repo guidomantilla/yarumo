@@ -77,6 +77,32 @@ func TestMethod_Name(t *testing.T) {
 func TestMethod_Hash(t *testing.T) {
 	t.Parallel()
 
+	t.Run("computes SHA1 digest", func(t *testing.T) {
+		t.Parallel()
+
+		result, err := SHA1.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(result) != 20 {
+			t.Fatalf("expected 20 bytes for SHA1, got %d", len(result))
+		}
+	})
+
+	t.Run("computes SHA224 digest", func(t *testing.T) {
+		t.Parallel()
+
+		result, err := SHA224.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(result) != 28 {
+			t.Fatalf("expected 28 bytes for SHA224, got %d", len(result))
+		}
+	})
+
 	t.Run("computes SHA256 digest", func(t *testing.T) {
 		t.Parallel()
 
@@ -126,6 +152,19 @@ func TestMethod_Hash(t *testing.T) {
 
 		if len(result) != 32 {
 			t.Fatalf("expected 32 bytes for SHA3_256, got %d", len(result))
+		}
+	})
+
+	t.Run("computes SHA3_384 digest", func(t *testing.T) {
+		t.Parallel()
+
+		result, err := SHA3_384.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(result) != 48 {
+			t.Fatalf("expected 48 bytes for SHA3_384, got %d", len(result))
 		}
 	})
 

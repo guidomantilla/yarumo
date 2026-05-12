@@ -266,10 +266,22 @@ linters:
       - path: crypto/
         linters:
           - gochecknoglobals
+      # crypto/hashes is the legitimate registration point for legacy hash drivers
+      # (crypto/sha1, crypto/md5). These imports are required so callers can opt
+      # into legacy interop without each importing the stdlib drivers themselves.
+      - path: crypto/hashes/extensions\.go
+        linters:
+          - depguard
+          - gosec
       # crypto examples use println for demonstration purposes
       - path: crypto/.*/examples/
         linters:
           - forbidigo
+      # crypto/hashes examples demonstrate legacy hashes (SHA1) marked Deprecated by design;
+      # staticcheck SA1019 fires correctly for consumers but the demo itself is intentional.
+      - path: crypto/hashes/examples/
+        linters:
+          - staticcheck
       # crypto private functions return errors that are wrapped by the Method caller
       - path: crypto/.*/functions\.go
         linters:
