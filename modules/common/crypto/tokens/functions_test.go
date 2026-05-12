@@ -119,6 +119,34 @@ func TestGenerate(t *testing.T) {
 			t.Fatalf("expected ErrSigningMethodNil, got %v", err)
 		}
 	})
+
+	t.Run("wraps SignedString failure with ErrTokenSignFailed and ErrGenerationFailed", func(t *testing.T) {
+		t.Parallel()
+
+		// RS256 expects an *rsa.PrivateKey, but Method.signingKey is []byte.
+		// SignedString will reject the wrong key type and return an error,
+		// which generate must wrap via cerrs.Wrap(ErrTokenSignFailed, err).
+		m := &Method{
+			name:          "rs256-bad-key",
+			signingMethod: jwt.SigningMethodRS256,
+			signingKey:    []byte("not-an-rsa-private-key"),
+			timeout:       time.Hour,
+			generateFn:    generate,
+		}
+
+		_, err := m.Generate("user@test.com", Payload{"role": "admin"})
+		if err == nil {
+			t.Fatal("expected error from SignedString")
+		}
+
+		if !errors.Is(err, ErrTokenSignFailed) {
+			t.Fatalf("expected chain to contain ErrTokenSignFailed, got %v", err)
+		}
+
+		if !errors.Is(err, ErrGenerationFailed) {
+			t.Fatalf("expected chain to contain ErrGenerationFailed, got %v", err)
+		}
+	})
 }
 
 func TestValidate(t *testing.T) {
