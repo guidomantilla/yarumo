@@ -99,3 +99,27 @@ func (m *Method) Validate(tokenString string) (Payload, error) {
 	}
 	return payload, nil
 }
+
+// DecodeUnsafe returns the token claims WITHOUT verifying the signature or
+// expiration. The caller MUST NOT trust the returned payload for authorization
+// decisions. Intended for diagnostic use only (logging, routing pre-verification).
+//
+// For opaque (AEAD-encrypted) tokens the payload is unreadable without the key,
+// so DecodeUnsafe on an opaque Method returns ErrCipherRequired — opaque tokens
+// have no unsafe-peek path by design.
+func (m *Method) DecodeUnsafe(tokenString string) (Payload, error) {
+	cassert.NotNil(m, "method is nil")
+
+	parser := jwt.NewParser()
+	jwtToken, _, err := parser.ParseUnverified(tokenString, &Claims{})
+	if err != nil {
+		return nil, ErrValidation(err)
+	}
+
+	claims, ok := jwtToken.Claims.(*Claims)
+	if !ok {
+		return nil, ErrValidation(ErrTokenParseFailed)
+	}
+
+	return claims.Payload, nil
+}
