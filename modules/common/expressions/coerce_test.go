@@ -134,7 +134,8 @@ func TestFormatValue(t *testing.T) {
 
 	t.Run("nil returns nil string", func(t *testing.T) {
 		t.Parallel()
-		if got := formatValue(nil); got != "nil" {
+		got := formatValue(nil)
+		if got != "nil" {
 			t.Fatalf("expected nil, got %s", got)
 		}
 	})

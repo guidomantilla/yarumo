@@ -602,7 +602,8 @@ func TestMustParse(t *testing.T) {
 	t.Run("invalid input panics", func(t *testing.T) {
 		t.Parallel()
 		defer func() {
-			if r := recover(); r == nil {
+			r := recover()
+			if r == nil {
 				t.Fatal("expected panic for invalid input")
 			}
 		}()
@@ -615,7 +616,8 @@ func TestTokenToOp(t *testing.T) {
 
 	t.Run("unknown token returns OpAdd", func(t *testing.T) {
 		t.Parallel()
-		if got := tokenToOp(tokEOF); got != OpAdd {
+		got := tokenToOp(tokEOF)
+		if got != OpAdd {
 			t.Fatalf("expected OpAdd for unknown, got %v", got)
 		}
 	})

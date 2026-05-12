@@ -24,7 +24,8 @@ func TestRequestSpec_Build(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := req.Header.Get("Accept"); got != applicationJSON {
+		got := req.Header.Get("Accept")
+		if got != applicationJSON {
 			t.Fatalf("expected default Accept header, got %q", got)
 		}
 	})
@@ -43,7 +44,8 @@ func TestRequestSpec_Build(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := req.Header.Get("Accept"); got != "text/html" {
+		got := req.Header.Get("Accept")
+		if got != "text/html" {
 			t.Fatalf("expected preserved Accept header, got %q", got)
 		}
 	})
@@ -61,7 +63,8 @@ func TestRequestSpec_Build(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := req.Header.Get("Accept"); got != applicationJSON {
+		got := req.Header.Get("Accept")
+		if got != applicationJSON {
 			t.Fatalf("expected Accept header, got %q", got)
 		}
 	})
@@ -80,11 +83,13 @@ func TestRequestSpec_Build(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := req.Header.Get("Content-Type"); got != applicationJSON {
+		got := req.Header.Get("Content-Type")
+		if got != applicationJSON {
 			t.Fatalf("expected Content-Type header, got %q", got)
 		}
 
-		if got := req.Header.Get("Content-Length"); got == "" {
+		got = req.Header.Get("Content-Length")
+		if got == "" {
 			t.Fatal("expected Content-Length header to be set")
 		}
 	})
@@ -104,7 +109,8 @@ func TestRequestSpec_Build(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := req.Header.Get("Content-Type"); got != "text/plain" {
+		got := req.Header.Get("Content-Type")
+		if got != "text/plain" {
 			t.Fatalf("content-type should not be overwritten, got %q", got)
 		}
 	})
@@ -122,7 +128,8 @@ func TestRequestSpec_Build(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := req.Header.Get("Content-Type"); got != "" {
+		got := req.Header.Get("Content-Type")
+		if got != "" {
 			t.Fatalf("content-type should be empty when no body, got %q", got)
 		}
 	})
@@ -267,7 +274,8 @@ func TestRequestSpec_Build(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := req.Header.Get("Content-Type"); got != "" {
+		got := req.Header.Get("Content-Type")
+		if got != "" {
 			t.Fatalf("expected empty Content-Type for io.Reader, got %q", got)
 		}
 	})
@@ -286,11 +294,13 @@ func TestRequestSpec_Build(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := req.Header.Get("Content-Length"); got == "" {
+		got := req.Header.Get("Content-Length")
+		if got == "" {
 			t.Fatal("expected Content-Length header for byte slice body")
 		}
 
-		if got := req.Header.Get("Content-Type"); got != "" {
+		got = req.Header.Get("Content-Type")
+		if got != "" {
 			t.Fatalf("expected empty Content-Type for []byte, got %q", got)
 		}
 	})
@@ -309,11 +319,13 @@ func TestRequestSpec_Build(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := req.Header.Get("Content-Length"); got == "" {
+		got := req.Header.Get("Content-Length")
+		if got == "" {
 			t.Fatal("expected Content-Length header for string body")
 		}
 
-		if got := req.Header.Get("Content-Type"); got != "" {
+		got = req.Header.Get("Content-Type")
+		if got != "" {
 			t.Fatalf("expected empty Content-Type for string, got %q", got)
 		}
 	})
@@ -332,11 +344,13 @@ func TestRequestSpec_Build(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if got := req.Header.Get("Content-Type"); got != applicationFormURLEncoded {
+		got := req.Header.Get("Content-Type")
+		if got != applicationFormURLEncoded {
 			t.Fatalf("expected %s, got %q", applicationFormURLEncoded, got)
 		}
 
-		if got := req.Header.Get("Content-Length"); got == "" {
+		got = req.Header.Get("Content-Length")
+		if got == "" {
 			t.Fatal("expected Content-Length header for url.Values body")
 		}
 	})

@@ -108,6 +108,29 @@ val, ok := x.(MyType)
 if ok { ... }
 ```
 
+### Enforcement
+
+This rule is enforced by the custom `inlineassign` analyzer located in
+`tools/lint/inlineassign/`. It is a `go/analysis` pass that flags any
+`*ast.IfStmt` with a non-nil `Init` clause, covering the three forbidden forms
+above plus any other inline assignment in an `if` statement.
+
+Run it locally from the workspace root:
+
+```bash
+make lint-inline
+```
+
+or directly via `go vet`:
+
+```bash
+go build -o /tmp/inlineassign ./tools/lint/inlineassign/cmd/inlineassign
+cd modules/common && go vet -vettool=/tmp/inlineassign ./...
+```
+
+The `lint` Makefile target depends on `lint-inline`, so `make lint` exercises
+both `golangci-lint` and the inline-assignment analyzer.
+
 ## Error Handling Pattern
 
 Packages that contain logic returning errors must follow the `common/errs` pattern:
