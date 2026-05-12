@@ -22,14 +22,18 @@ type Options struct {
 }
 
 // NewOptions creates Options with defaults.
+//
+// The signing and verifying keys default to nil. Callers must either supply a
+// key explicitly via WithKey / WithSigningKey / WithVerifyingKey, or opt in to
+// random-key generation by passing WithGeneratedKey. If neither path is taken,
+// Method.Generate and Method.Validate will return ErrSigningKeyNil /
+// ErrVerifyingKeyNil at call-time. This avoids burning entropy at construction
+// and prevents init-time panics when crypto/rand is constrained.
 func NewOptions(opts ...Option) *Options {
-	key := crandom.Bytes(64)
 	options := &Options{
-		timeout:      24 * time.Hour,
-		signingKey:   key,
-		verifyingKey: key,
-		generateFn:   generate,
-		validateFn:   validate,
+		timeout:    24 * time.Hour,
+		generateFn: generate,
+		validateFn: validate,
 	}
 
 	for _, opt := range opts {
@@ -64,6 +68,20 @@ func WithKey(key []byte) Option {
 			opts.signingKey = key
 			opts.verifyingKey = key
 		}
+	}
+}
+
+// WithGeneratedKey draws 64 bytes from crypto/rand at apply-time and assigns
+// them to both the signing and verifying keys. Use this when the caller does
+// not have a key of its own and wants the package to mint a fresh symmetric
+// secret. The entropy draw happens when this option is applied (inside
+// NewOptions / NewMethod), not at package init, so unused constructors do not
+// consume entropy.
+func WithGeneratedKey() Option {
+	return func(opts *Options) {
+		key := crandom.Bytes(64)
+		opts.signingKey = key
+		opts.verifyingKey = key
 	}
 }
 

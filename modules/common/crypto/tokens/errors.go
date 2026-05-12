@@ -32,6 +32,7 @@ var (
 	ErrPayloadNil        = errors.New("payload is nil")
 	ErrTokenEmpty        = errors.New("token is empty")
 	ErrSigningKeyNil     = errors.New("signing key is nil")
+	ErrVerifyingKeyNil   = errors.New("verifying key is nil")
 	ErrSigningMethodNil  = errors.New("signing method is nil")
 	ErrTokenSignFailed   = errors.New("token signing failed")
 	ErrTokenParseFailed  = errors.New("token parse failed")

@@ -141,6 +141,13 @@ func TestSentinelErrors(t *testing.T) {
 		}
 	})
 
+	t.Run("ErrVerifyingKeyNil is not nil", func(t *testing.T) {
+		t.Parallel()
+		if ErrVerifyingKeyNil == nil {
+			t.Fatal("expected non-nil")
+		}
+	})
+
 	t.Run("ErrSigningMethodNil is not nil", func(t *testing.T) {
 		t.Parallel()
 		if ErrSigningMethodNil == nil {

@@ -54,6 +54,10 @@ func validate(method *Method, tokenString string) (Payload, error) {
 		return nil, ErrTokenEmpty
 	}
 
+	if cutils.Nil(method.verifyingKey) {
+		return nil, ErrVerifyingKeyNil
+	}
+
 	getKeyFunc := func(_ *jwt.Token) (any, error) {
 		return method.verifyingKey, nil
 	}
