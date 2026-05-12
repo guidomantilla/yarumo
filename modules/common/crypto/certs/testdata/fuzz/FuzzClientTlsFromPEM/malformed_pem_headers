@@ -1,0 +1,4 @@
+go test fuzz v1
+[]byte("-----BEGIN GARBAGE-----\nAAAA\n-----END GARBAGE-----\n")
+[]byte("-----BEGIN CERTIFICATE-----\n-----END WRONG-----\n")
+[]byte("-----BEGIN PRIVATE KEY-----")
