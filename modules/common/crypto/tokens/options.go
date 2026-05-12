@@ -3,8 +3,6 @@ package tokens
 import (
 	"time"
 
-	jwt "github.com/golang-jwt/jwt/v5"
-
 	crandom "github.com/guidomantilla/yarumo/common/random"
 )
 
@@ -120,10 +118,3 @@ func WithValidateFn(fn ValidateFn) Option {
 		}
 	}
 }
-
-// Predefined signing methods for convenience.
-var (
-	SigningMethodHS256 = jwt.SigningMethodHS256
-	SigningMethodHS384 = jwt.SigningMethodHS384
-	SigningMethodHS512 = jwt.SigningMethodHS512
-)

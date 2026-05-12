@@ -10,9 +10,9 @@ import (
 
 // Predefined methods with default parameters.
 var (
-	JWT_HS256 = NewMethod("JWT_HS256", jwt.SigningMethodHS256)
-	JWT_HS384 = NewMethod("JWT_HS384", jwt.SigningMethodHS384)
-	JWT_HS512 = NewMethod("JWT_HS512", jwt.SigningMethodHS512)
+	JWT_HS256 = NewMethod("JWT_HS256", AlgorithmHS256)
+	JWT_HS384 = NewMethod("JWT_HS384", AlgorithmHS384)
+	JWT_HS512 = NewMethod("JWT_HS512", AlgorithmHS512)
 )
 
 // Method represents a token signing algorithm with its configuration.
@@ -27,10 +27,17 @@ type Method struct {
 	validateFn    ValidateFn
 }
 
-// NewMethod creates a new token method with the given name and signing method.
-func NewMethod(name string, signingMethod jwt.SigningMethod, options ...Option) *Method {
+// NewMethod creates a new token method with the given name and algorithm.
+//
+// algorithm selects the signing primitive via an opaque enum so callers do
+// not import golang-jwt/v5. Passing an unknown Algorithm asserts via
+// cassert.NotNil, with ErrAlgorithmInvalid as the underlying cause.
+func NewMethod(name string, algorithm Algorithm, options ...Option) *Method {
 	cassert.NotEmpty(name, "name is empty")
-	cassert.NotNil(signingMethod, "signing method is nil")
+	cassert.NotEmpty(string(algorithm), "algorithm is empty")
+
+	signingMethod := signingMethodFor(algorithm)
+	cassert.NotNil(signingMethod, ErrAlgorithmInvalid(algorithm).Error())
 
 	opts := NewOptions(options...)
 
@@ -43,6 +50,22 @@ func NewMethod(name string, signingMethod jwt.SigningMethod, options ...Option) 
 		timeout:       opts.timeout,
 		generateFn:    opts.generateFn,
 		validateFn:    opts.validateFn,
+	}
+}
+
+// signingMethodFor maps an Algorithm enum value to the concrete
+// jwt.SigningMethod used by the golang-jwt/v5 backend. It returns nil for
+// unrecognized values; callers must convert nil into ErrAlgorithmInvalid.
+func signingMethodFor(algorithm Algorithm) jwt.SigningMethod {
+	switch algorithm {
+	case AlgorithmHS256:
+		return jwt.SigningMethodHS256
+	case AlgorithmHS384:
+		return jwt.SigningMethodHS384
+	case AlgorithmHS512:
+		return jwt.SigningMethodHS512
+	default:
+		return nil
 	}
 }
 
