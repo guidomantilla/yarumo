@@ -15,6 +15,30 @@
 // the time of the call. Custom methods registered via Register after config
 // load will not resolve here; callers that need late-bound lookup should
 // call Get(name) directly.
+//
+// # Streaming
+//
+// Method.EncryptStream and Method.DecryptStream implement chunked AEAD
+// suitable for multi-megabyte or unbounded io.Reader / io.Writer pipelines.
+// The input is split into fixed-size StreamFrameSize (64 KiB) plaintext
+// frames; each frame is sealed independently with the underlying AEAD
+// primitive and emitted on the wire with a 4-byte big-endian uint32 length
+// prefix. A zero-length frame marks end-of-stream and lets the decoder
+// distinguish a clean close from truncation.
+//
+// Frame format on the wire:
+//
+//	[ 4-byte BE uint32 frame length ][ ciphertext = nonce || enc(plain) || tag ]
+//	[ 4-byte BE uint32 frame length ][ ciphertext                              ]
+//	...
+//	[ 4-byte BE uint32 = 0 ]   ← end-of-stream sentinel
+//
+// Each frame's per-call AAD is (caller_aad || 8-byte BE frame counter),
+// binding the frame's position into the AEAD authentication tag. This
+// protects against frame reordering, duplication, and dropping. The
+// per-frame random nonce produced by the underlying AEAD primitive is
+// embedded inside the ciphertext frame itself, so the streaming API does
+// not need to manage nonce derivation.
 package aead
 
 import (
