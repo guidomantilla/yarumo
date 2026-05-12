@@ -45,6 +45,7 @@ exclude:
     - ^crypto/certs/examples/main.go
     - ^crypto/ciphers/examples/main.go
     - ^crypto/hashes/examples/main.go
+    - ^crypto/kdfs/examples/main.go
     - ^crypto/passwords/examples/main.go
     - ^crypto/signers/examples/main.go
     - ^crypto/tokens/examples/main.go
