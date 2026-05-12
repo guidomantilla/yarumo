@@ -60,7 +60,9 @@ func WithUpgradeNeededFn(fn UpgradeNeededFn) Option {
 	}
 }
 
-// WithArgon2Params sets the argon2 algorithm parameters.
+// WithArgon2Params sets the argon2id algorithm parameters. The resulting
+// Method uses argon2.IDKey (the OWASP-recommended variant) at encode and
+// verify time.
 func WithArgon2Params(iterations, memory, threads, saltLength, keyLength int) Option {
 	return func(opts *Options) {
 		if iterations >= Argon2Iterations && memory >= Argon2Memory && threads >= Argon2Threads && saltLength >= Argon2SaltLength && keyLength >= Argon2KeyLength {
@@ -70,6 +72,26 @@ func WithArgon2Params(iterations, memory, threads, saltLength, keyLength int) Op
 				threads:    threads,
 				saltLength: saltLength,
 				keyLength:  keyLength,
+				useArgon2i: false,
+			}
+		}
+	}
+}
+
+// WithArgon2iParams sets the argon2i algorithm parameters. The resulting
+// Method uses argon2.Key (the side-channel-resistant variant) at encode and
+// verify time. For general-purpose password storage prefer WithArgon2Params
+// (argon2id), the OWASP-recommended option.
+func WithArgon2iParams(iterations, memory, threads, saltLength, keyLength int) Option {
+	return func(opts *Options) {
+		if iterations >= Argon2Iterations && memory >= Argon2Memory && threads >= Argon2Threads && saltLength >= Argon2SaltLength && keyLength >= Argon2KeyLength {
+			opts.argon2Params = &argon2Config{
+				iterations: iterations,
+				memory:     memory,
+				threads:    threads,
+				saltLength: saltLength,
+				keyLength:  keyLength,
+				useArgon2i: true,
 			}
 		}
 	}

@@ -8,15 +8,46 @@ import (
 
 // Prefix constants for encoded password identification.
 const (
-	Argon2PrefixKey = "{argon2}"
-	BcryptPrefixKey = "{bcrypt}"
-	Pbkdf2PrefixKey = "{pbkdf2}"
-	ScryptPrefixKey = "{scrypt}"
+	// Argon2PrefixKey is the legacy prefix produced by the original Argon2
+	// predefined method.
+	//
+	// Deprecated: use Argon2idPrefixKey instead. The underlying implementation
+	// was always argon2.IDKey (argon2id) so the generic "{argon2}" prefix was
+	// ambiguous. Stored hashes carrying this prefix continue to verify because
+	// ByPrefix matches both {argon2} and {argon2id} and routes them to the
+	// Argon2id method. Newly encoded passwords use {argon2id}. See the
+	// package doc "Migration: Argon2 → Argon2id" section for details.
+	Argon2PrefixKey   = "{argon2}"
+	Argon2idPrefixKey = "{argon2id}"
+	Argon2iPrefixKey  = "{argon2i}"
+	BcryptPrefixKey   = "{bcrypt}"
+	Pbkdf2PrefixKey   = "{pbkdf2}"
+	ScryptPrefixKey   = "{scrypt}"
 )
 
 // Predefined methods with default parameters.
 var (
-	Argon2 = NewMethod("Argon2", Argon2PrefixKey, WithArgon2Params(Argon2Iterations, Argon2Memory, Argon2Threads, Argon2SaltLength, Argon2KeyLength))
+	// Argon2id is the OWASP-recommended argon2 variant for password storage,
+	// implemented via argon2.IDKey. New encodes use the {argon2id} prefix;
+	// ByPrefix also routes legacy {argon2} hashes to this method so existing
+	// stored hashes continue to verify after the YA-0030 rename.
+	Argon2id = NewMethod("Argon2id", Argon2idPrefixKey, WithArgon2Params(Argon2Iterations, Argon2Memory, Argon2Threads, Argon2SaltLength, Argon2KeyLength))
+	// Argon2i is the side-channel-resistant argon2 variant, implemented via
+	// argon2.Key. Useful in threat models that include cache-timing or
+	// side-channel adversaries; for general-purpose password storage prefer
+	// Argon2id, which is the OWASP recommendation.
+	Argon2i = NewMethod("Argon2i", Argon2iPrefixKey, WithArgon2iParams(Argon2Iterations, Argon2Memory, Argon2Threads, Argon2SaltLength, Argon2KeyLength))
+	// Argon2 is a deprecated alias of Argon2id retained for one release to
+	// ease migration. Direct consumers will see staticcheck SA1019.
+	//
+	// Deprecated: use Argon2id. The original Argon2 predefined was always
+	// backed by argon2.IDKey, so the name was ambiguous. Note: the alias is
+	// not separately registered in the algorithm map — Get("Argon2") returns
+	// ErrAlgorithmNotSupported; callers using registry lookup must migrate
+	// to Get("Argon2id"). Stored hashes with the legacy {argon2} prefix
+	// continue to verify via ByPrefix's dual-match. See the package doc
+	// "Migration: Argon2 → Argon2id" section for details.
+	Argon2 = Argon2id
 	Bcrypt = NewMethod("Bcrypt", BcryptPrefixKey, WithBcryptParams(BcryptDefaultCost))
 	Pbkdf2 = NewMethod("Pbkdf2", Pbkdf2PrefixKey, WithPbkdf2Params(Pbkdf2Iterations, Pbkdf2SaltLength, Pbkdf2KeyLength, sha512.New))
 	Scrypt = NewMethod("Scrypt", ScryptPrefixKey, WithScryptParams(ScryptN, ScryptR, ScryptP, ScryptSaltLength, ScryptKeyLength))

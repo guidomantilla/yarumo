@@ -124,13 +124,22 @@ func argon2Encode(method *Method, rawPassword string) (string, error) {
 		return "", ErrSaltGenerationFailed
 	}
 
-	key := argon2.IDKey([]byte(rawPassword), salt, uint32(params.iterations), uint32(params.memory), uint8(params.threads), uint32(params.keyLength)) //nolint:gosec
+	key := argon2DeriveKey(params.useArgon2i, []byte(rawPassword), salt, params.iterations, params.memory, params.threads, params.keyLength)
 
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
 	b64Key := base64.RawStdEncoding.EncodeToString(key)
 
 	encoded := fmt.Sprintf("%s$%d$%d$%d$%d$%s$%s", method.prefix, argon2.Version, params.iterations, params.memory, params.threads, b64Salt, b64Key)
 	return encoded, nil
+}
+
+// argon2DeriveKey dispatches to argon2.Key (argon2i, side-channel resistant)
+// or argon2.IDKey (argon2id, OWASP recommended) based on useArgon2i.
+func argon2DeriveKey(useArgon2i bool, password, salt []byte, iterations, memory, threads, keyLength int) []byte {
+	if useArgon2i {
+		return argon2.Key(password, salt, uint32(iterations), uint32(memory), uint8(threads), uint32(keyLength)) //nolint:gosec
+	}
+	return argon2.IDKey(password, salt, uint32(iterations), uint32(memory), uint8(threads), uint32(keyLength)) //nolint:gosec
 }
 
 func argon2Decode(encodedPassword string) (*argon2Decoded, error) {
@@ -185,7 +194,7 @@ func argon2Decode(encodedPassword string) (*argon2Decoded, error) {
 
 func argon2Verify(method *Method, encodedPassword string, rawPassword string) (bool, error) {
 
-	if !strings.HasPrefix(encodedPassword, method.prefix) {
+	if !argon2PrefixMatches(method, encodedPassword) {
 		return false, ErrEncodedPasswordFormat
 	}
 
@@ -194,14 +203,29 @@ func argon2Verify(method *Method, encodedPassword string, rawPassword string) (b
 		return false, err
 	}
 
-	newKey := argon2.IDKey([]byte(rawPassword), decoded.salt, uint32(decoded.iterations), uint32(decoded.memory), uint8(decoded.threads), uint32(len(decoded.key))) //nolint:gosec
+	newKey := argon2DeriveKey(method.argon2Params.useArgon2i, []byte(rawPassword), decoded.salt, decoded.iterations, decoded.memory, decoded.threads, len(decoded.key))
 
 	return subtle.ConstantTimeCompare(decoded.key, newKey) == 1, nil
 }
 
+// argon2PrefixMatches returns true if encodedPassword carries the method's
+// own prefix, OR — when the method is the Argon2id default (prefix
+// {argon2id}) — the legacy {argon2} prefix. This preserves verification of
+// stored hashes produced by the pre-YA-0030 code, which always emitted
+// {argon2} regardless of the underlying argon2.IDKey call.
+func argon2PrefixMatches(method *Method, encodedPassword string) bool {
+	if strings.HasPrefix(encodedPassword, method.prefix) {
+		return true
+	}
+	if method.prefix == Argon2idPrefixKey && strings.HasPrefix(encodedPassword, Argon2PrefixKey) {
+		return true
+	}
+	return false
+}
+
 func argon2UpgradeNeeded(method *Method, encodedPassword string) (bool, error) {
 
-	if !strings.HasPrefix(encodedPassword, method.prefix) {
+	if !argon2PrefixMatches(method, encodedPassword) {
 		return false, ErrEncodedPasswordFormat
 	}
 
