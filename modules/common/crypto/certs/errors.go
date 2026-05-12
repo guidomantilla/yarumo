@@ -56,6 +56,20 @@ var (
 	ErrPoolCertificateEmpty           = errors.New("pool certificate is empty")
 	ErrPoolCertificateParseFailed     = errors.New("pool certificate parse failed")
 	ErrPoolFailed                     = errors.New("pool failed")
+	ErrLoadFileFailed                 = errors.New("load file failed")
+	ErrParseCertificateFailed         = errors.New("parse certificate failed")
+	ErrParsePrivateKeyFailed          = errors.New("parse private key failed")
+	ErrGenerateCSRFailed              = errors.New("generate csr failed")
+	ErrParseCSRFailed                 = errors.New("parse csr failed")
+	ErrUnsupportedKeyAlgorithm        = errors.New("unsupported key algorithm")
+	ErrPathEmpty                      = errors.New("path is empty")
+	ErrPEMEmpty                       = errors.New("pem is empty")
+	ErrPEMDecodeFailed                = errors.New("pem decode failed")
+	ErrPEMBlockTypeUnexpected         = errors.New("pem block type unexpected")
+	ErrPrivateKeyNil                  = errors.New("private key is nil")
+	ErrCSRSignatureVerifyFailed       = errors.New("csr signature verify failed")
+	ErrLoadFailed                     = errors.New("load failed")
+	ErrCSRFailed                      = errors.New("csr failed")
 )
 
 // ErrClientTls creates a certificate error for client TLS operations.
@@ -94,6 +108,26 @@ func ErrPool(errs ...error) error {
 		TypedError: cerrs.TypedError{
 			Type: CertificateType,
 			Err:  errors.Join(append(errs, ErrPoolFailed)...),
+		},
+	}
+}
+
+// ErrLoad creates a certificate error for load/parse operations.
+func ErrLoad(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: CertificateType,
+			Err:  errors.Join(append(errs, ErrLoadFailed)...),
+		},
+	}
+}
+
+// ErrCSR creates a certificate error for CSR operations.
+func ErrCSR(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: CertificateType,
+			Err:  errors.Join(append(errs, ErrCSRFailed)...),
 		},
 	}
 }
