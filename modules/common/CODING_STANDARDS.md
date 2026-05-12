@@ -246,6 +246,8 @@ var lock = new(sync.RWMutex)
 - `Register` must use `lock.Lock()`.
 - `Get` and `Supported` must use `lock.RLock()` / `lock.RUnlock()` (read-only operations).
 
+`Get(name)` returns a **snapshot** of the registered `Method`: the returned `*Method` points to a copy taken at lookup time, so later `Register` calls do not mutate previously returned pointers, and callers needing fresh state must call `Get` again. This contract is documented canonically on each subpackage's `Get` doc comment (see `extensions.go` in `hashes`, `passwords`, `tokens`, `ciphers/aead`, `ciphers/rsaoaep`, `signers/hmacs`, `signers/ecdsas`, `signers/rsassas`, `signers/ed25519`).
+
 ### Error Pattern (crypto-specific)
 
 Follows the general error handling pattern with one addition:

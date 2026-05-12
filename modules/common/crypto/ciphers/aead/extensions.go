@@ -21,7 +21,10 @@ func Register(method Method) {
 	methods[method.name] = method
 }
 
-// Get retrieves an AEAD method by name from the registry.
+// Get retrieves an AEAD method by name from the registry. The returned pointer
+// references a snapshot taken at lookup time; subsequent Register calls
+// do not affect previously returned pointers. Callers that need fresh
+// state must call Get again.
 func Get(name string) (*Method, error) {
 	lock.RLock()
 	defer lock.RUnlock()
