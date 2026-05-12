@@ -35,6 +35,16 @@
 // returns true whenever the encoded prefix resolves to a method other than
 // the primary, and the caller re-encodes the password with the primary on
 // next successful login. See NewDelegatingEncoder for the constructor.
+//
+// # Random bytes for non-password use cases
+//
+// This package does not expose a public salt generator. Callers that need
+// cryptographically-secure random bytes for adjacent purposes — a non-password
+// KDF, a token nonce, a session id, etc. — should use
+// [github.com/guidomantilla/yarumo/common/random.Bytes] directly. The
+// passwords package itself sources salt entropy from that same primitive, so
+// there is a single source of truth for random-bytes generation in the
+// workspace.
 package passwords
 
 import (
@@ -45,7 +55,6 @@ var (
 	_ EncodeFn        = encode
 	_ VerifyFn        = verify
 	_ UpgradeNeededFn = upgradeNeeded
-	_ GenerateSaltFn  = generateSalt
 )
 
 // EncodeFn is the function type for encoding a raw password using a method.
@@ -56,9 +65,6 @@ type VerifyFn func(method *Method, encodedPassword string, rawPassword string) (
 
 // UpgradeNeededFn is the function type for checking if an encoded password needs re-encoding.
 type UpgradeNeededFn func(method *Method, encodedPassword string) (bool, error)
-
-// GenerateSaltFn is the function type for generating a cryptographic salt.
-type GenerateSaltFn func(saltSize int) ([]byte, error)
 
 // HashFunc is the type for hash functions used by pbkdf2.
 type HashFunc func() hash.Hash
