@@ -2,6 +2,7 @@ package hashes
 
 import (
 	"crypto"
+	"errors"
 	"testing"
 
 	ctypes "github.com/guidomantilla/yarumo/common/types"
@@ -36,14 +37,17 @@ func TestNewMethod(t *testing.T) {
 		t.Parallel()
 
 		called := false
-		custom := func(hash crypto.Hash, data ctypes.Bytes) ctypes.Bytes {
+		custom := func(hash crypto.Hash, data ctypes.Bytes) (ctypes.Bytes, error) {
 			called = true
-			return data
+			return data, nil
 		}
 
 		m := NewMethod("custom", crypto.SHA512, WithHashFn(custom))
 
-		result := m.Hash([]byte("data"))
+		result, err := m.Hash([]byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if !called {
 			t.Fatal("expected custom hashFn to be called")
@@ -76,7 +80,10 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("computes SHA256 digest", func(t *testing.T) {
 		t.Parallel()
 
-		result := SHA256.Hash([]byte("hello"))
+		result, err := SHA256.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if len(result) != 32 {
 			t.Fatalf("expected 32 bytes for SHA256, got %d", len(result))
@@ -86,7 +93,10 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("computes SHA384 digest", func(t *testing.T) {
 		t.Parallel()
 
-		result := SHA384.Hash([]byte("hello"))
+		result, err := SHA384.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if len(result) != 48 {
 			t.Fatalf("expected 48 bytes for SHA384, got %d", len(result))
@@ -96,7 +106,10 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("computes SHA512 digest", func(t *testing.T) {
 		t.Parallel()
 
-		result := SHA512.Hash([]byte("hello"))
+		result, err := SHA512.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if len(result) != 64 {
 			t.Fatalf("expected 64 bytes for SHA512, got %d", len(result))
@@ -106,7 +119,10 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("computes SHA3_256 digest", func(t *testing.T) {
 		t.Parallel()
 
-		result := SHA3_256.Hash([]byte("hello"))
+		result, err := SHA3_256.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if len(result) != 32 {
 			t.Fatalf("expected 32 bytes for SHA3_256, got %d", len(result))
@@ -116,7 +132,10 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("computes SHA3_512 digest", func(t *testing.T) {
 		t.Parallel()
 
-		result := SHA3_512.Hash([]byte("hello"))
+		result, err := SHA3_512.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if len(result) != 64 {
 			t.Fatalf("expected 64 bytes for SHA3_512, got %d", len(result))
@@ -126,7 +145,10 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("computes BLAKE2b_256 digest", func(t *testing.T) {
 		t.Parallel()
 
-		result := BLAKE2b_256.Hash([]byte("hello"))
+		result, err := BLAKE2b_256.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if len(result) != 32 {
 			t.Fatalf("expected 32 bytes for BLAKE2b_256, got %d", len(result))
@@ -136,7 +158,10 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("computes BLAKE2b_512 digest", func(t *testing.T) {
 		t.Parallel()
 
-		result := BLAKE2b_512.Hash([]byte("hello"))
+		result, err := BLAKE2b_512.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if len(result) != 64 {
 			t.Fatalf("expected 64 bytes for BLAKE2b_512, got %d", len(result))
@@ -146,8 +171,15 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("produces deterministic output", func(t *testing.T) {
 		t.Parallel()
 
-		a := SHA256.Hash([]byte("test"))
-		b := SHA256.Hash([]byte("test"))
+		a, err := SHA256.Hash([]byte("test"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		b, err := SHA256.Hash([]byte("test"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if a.ToHex() != b.ToHex() {
 			t.Fatal("expected identical digests for same input")
@@ -157,8 +189,15 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("produces different output for different input", func(t *testing.T) {
 		t.Parallel()
 
-		a := SHA256.Hash([]byte("hello"))
-		b := SHA256.Hash([]byte("world"))
+		a, err := SHA256.Hash([]byte("hello"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		b, err := SHA256.Hash([]byte("world"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if a.ToHex() == b.ToHex() {
 			t.Fatal("expected different digests for different input")
@@ -168,7 +207,10 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("handles empty input", func(t *testing.T) {
 		t.Parallel()
 
-		result := SHA256.Hash([]byte{})
+		result, err := SHA256.Hash([]byte{})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if len(result) != 32 {
 			t.Fatalf("expected 32 bytes for empty input, got %d", len(result))
@@ -178,10 +220,43 @@ func TestMethod_Hash(t *testing.T) {
 	t.Run("handles nil input", func(t *testing.T) {
 		t.Parallel()
 
-		result := SHA256.Hash(nil)
+		result, err := SHA256.Hash(nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if len(result) != 32 {
 			t.Fatalf("expected 32 bytes for nil input, got %d", len(result))
+		}
+	})
+
+	t.Run("returns error when crypto.Hash driver is unavailable", func(t *testing.T) {
+		t.Parallel()
+
+		// crypto.Hash(99) is not a registered hash function — the driver was
+		// not blank-imported, so hash.Available() returns false.
+		m := NewMethod("unavailable", crypto.Hash(99))
+
+		result, err := m.Hash([]byte("data"))
+		if result != nil {
+			t.Fatalf("expected nil result, got %v", result)
+		}
+
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if !errors.Is(err, ErrHashFunctionUnavailable) {
+			t.Fatalf("expected errors.Is to match ErrHashFunctionUnavailable, got %v", err)
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error via errors.As, got %T", err)
+		}
+
+		if domErr.Type != HashUnavailable {
+			t.Fatalf("expected type %q, got %q", HashUnavailable, domErr.Type)
 		}
 	})
 }

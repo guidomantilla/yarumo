@@ -298,7 +298,7 @@ func (m *Method) <Operation>(...) (..., error) {
 ```
 
 Common operations by category:
-- **hashes**: `Hash(data) Bytes`
+- **hashes**: `Hash(data) (Bytes, error)`
 - **symmetric signers** (hmacs): `GenerateKey()`, `Digest(key, data)`, `Validate(key, digest, data)`
 - **asymmetric signers** (ecdsas, ed25519, rsapss): `GenerateKey(...)`, `Sign(key, data, ...)`, `Verify(key, signature, data, ...)`
 

@@ -41,7 +41,13 @@ func predefinedMethods(data []byte) {
 	}
 
 	for _, m := range methods {
-		digest := m.method.Hash(data)
+		digest, err := m.method.Hash(data)
+		if err != nil {
+			fmt.Printf("%-12s error: %v\n", m.name, err)
+
+			continue
+		}
+
 		fmt.Printf("%-12s Hex:    %s\n", m.name, digest.ToHex())
 		fmt.Printf("%-12s Base64: %s\n", m.name, digest.ToBase64Std())
 	}
@@ -54,7 +60,13 @@ func predefinedMethods(data []byte) {
 func standaloneHash(data []byte) {
 	fmt.Println("=== Standalone Hash Function ===")
 
-	digest := chashes.Hash(crypto.SHA256, data)
+	digest, err := chashes.Hash(crypto.SHA256, data)
+	if err != nil {
+		fmt.Printf("standalone hash error: %v\n", err)
+
+		return
+	}
+
 	fmt.Printf("SHA256 (standalone) Hex:    %s\n", digest.ToHex())
 	fmt.Printf("SHA256 (standalone) Base64: %s\n", digest.ToBase64Std())
 	fmt.Println()
@@ -69,7 +81,13 @@ func registryLookup(data []byte) {
 		log.Fatalf("registry lookup failed: %v", err)
 	}
 
-	digest := method.Hash(data)
+	digest, err := method.Hash(data)
+	if err != nil {
+		fmt.Printf("registry hash error: %v\n", err)
+
+		return
+	}
+
 	fmt.Printf("BLAKE2b_256 (via Get) Hex:    %s\n", digest.ToHex())
 	fmt.Printf("BLAKE2b_256 (via Get) Base64: %s\n", digest.ToBase64Std())
 

@@ -46,9 +46,15 @@ func (m *Method) Name() string {
 }
 
 // Hash computes the digest of the given data using this method's hash function.
-func (m *Method) Hash(data ctypes.Bytes) ctypes.Bytes {
+// It returns an error if the underlying crypto.Hash driver is unavailable.
+func (m *Method) Hash(data ctypes.Bytes) (ctypes.Bytes, error) {
 	cassert.NotNil(m, "method is nil")
 	cassert.NotNil(m.hashFn, "method hashFn is nil")
 
-	return m.hashFn(m.kind, data)
+	digest, err := m.hashFn(m.kind, data)
+	if err != nil {
+		return nil, ErrDigest(err)
+	}
+
+	return digest, nil
 }

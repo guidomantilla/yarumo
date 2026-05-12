@@ -28,14 +28,14 @@ func TestNewOptions(t *testing.T) {
 		t.Parallel()
 
 		called := false
-		custom := func(hash crypto.Hash, data ctypes.Bytes) ctypes.Bytes {
+		custom := func(hash crypto.Hash, data ctypes.Bytes) (ctypes.Bytes, error) {
 			called = true
-			return nil
+			return nil, nil
 		}
 
 		opts := NewOptions(WithHashFn(custom))
 
-		opts.hashFn(crypto.SHA256, nil)
+		_, _ = opts.hashFn(crypto.SHA256, nil)
 
 		if !called {
 			t.Fatal("expected custom hashFn to be applied")
@@ -50,14 +50,14 @@ func TestWithHashFn(t *testing.T) {
 		t.Parallel()
 
 		called := false
-		custom := func(hash crypto.Hash, data ctypes.Bytes) ctypes.Bytes {
+		custom := func(hash crypto.Hash, data ctypes.Bytes) (ctypes.Bytes, error) {
 			called = true
-			return nil
+			return nil, nil
 		}
 
 		opts := NewOptions(WithHashFn(custom))
 
-		opts.hashFn(crypto.SHA256, nil)
+		_, _ = opts.hashFn(crypto.SHA256, nil)
 
 		if !called {
 			t.Fatal("expected custom hashFn to be set")

@@ -28,7 +28,10 @@ func sign(method *Method, key *rsa.PrivateKey, data ctypes.Bytes) (ctypes.Bytes,
 		return nil, ErrKeyLengthIsInvalid
 	}
 
-	h := chashes.Hash(method.kind, data)
+	h, err := chashes.Hash(method.kind, data)
+	if err != nil {
+		return nil, ErrSigning(err)
+	}
 
 	switch method.padding {
 	case PSS:
@@ -68,9 +71,10 @@ func verify(method *Method, key *rsa.PublicKey, signature ctypes.Bytes, data cty
 		return false, ErrKeyLengthIsInvalid
 	}
 
-	h := chashes.Hash(method.kind, data)
-
-	var err error
+	h, err := chashes.Hash(method.kind, data)
+	if err != nil {
+		return false, ErrVerification(err)
+	}
 
 	switch method.padding {
 	case PSS:
