@@ -40,6 +40,12 @@ var (
 	ErrKeyGenerationFailed    = errors.New("key generation failed")
 	ErrSigningFailed          = errors.New("signing failed")
 	ErrVerificationFailed     = errors.New("verification failed")
+	ErrPEMDecodeFailed        = errors.New("pem decode failed")
+	ErrPEMBlockTypeMismatch   = errors.New("pem block type mismatch")
+	ErrKeyTypeMismatch        = errors.New("key type mismatch")
+	ErrMarshalKeyFailed       = errors.New("marshal key failed")
+	ErrParseKeyFailed         = errors.New("parse key failed")
+	ErrPEMCodecFailed         = errors.New("pem codec failed")
 )
 
 // ErrAlgorithmNotSupported returns an error indicating the named Ed25519 algorithm is not registered.
@@ -78,6 +84,16 @@ func ErrVerification(errs ...error) error {
 		TypedError: cerrs.TypedError{
 			Type: Ed25519Method,
 			Err:  errors.Join(append(errs, ErrVerificationFailed)...),
+		},
+	}
+}
+
+// ErrPEMCodec wraps the given errors into a domain Error for PEM marshal/parse failures.
+func ErrPEMCodec(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: Ed25519Method,
+			Err:  errors.Join(append(errs, ErrPEMCodecFailed)...),
 		},
 	}
 }

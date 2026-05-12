@@ -33,14 +33,20 @@ func (e *Error) Error() string {
 
 // Sentinel errors for the rsaoaep package.
 var (
-	ErrMethodIsNil         = errors.New("method is nil")
-	ErrKeyIsNil            = errors.New("key is nil")
-	ErrKeyLengthIsInvalid  = errors.New("key length is invalid")
-	ErrHashNotAvailable    = errors.New("hash function not available")
-	ErrKeySizeNotAllowed   = errors.New("key size not allowed")
-	ErrKeyGenerationFailed = errors.New("key generation failed")
-	ErrEncryptionFailed    = errors.New("encryption failed")
-	ErrDecryptionFailed    = errors.New("decryption failed")
+	ErrMethodIsNil          = errors.New("method is nil")
+	ErrKeyIsNil             = errors.New("key is nil")
+	ErrKeyLengthIsInvalid   = errors.New("key length is invalid")
+	ErrHashNotAvailable     = errors.New("hash function not available")
+	ErrKeySizeNotAllowed    = errors.New("key size not allowed")
+	ErrKeyGenerationFailed  = errors.New("key generation failed")
+	ErrEncryptionFailed     = errors.New("encryption failed")
+	ErrDecryptionFailed     = errors.New("decryption failed")
+	ErrPEMDecodeFailed      = errors.New("pem decode failed")
+	ErrPEMBlockTypeMismatch = errors.New("pem block type mismatch")
+	ErrKeyTypeMismatch      = errors.New("key type mismatch")
+	ErrMarshalKeyFailed     = errors.New("marshal key failed")
+	ErrParseKeyFailed       = errors.New("parse key failed")
+	ErrPEMCodecFailed       = errors.New("pem codec failed")
 )
 
 // ErrAlgorithmNotSupported returns an error indicating the named RSA-OAEP algorithm is not registered.
@@ -79,6 +85,16 @@ func ErrDecryption(errs ...error) error {
 		TypedError: cerrs.TypedError{
 			Type: RsaOaepMethod,
 			Err:  errors.Join(append(errs, ErrDecryptionFailed)...),
+		},
+	}
+}
+
+// ErrPEMCodec wraps the given errors into a domain Error for PEM marshal/parse failures.
+func ErrPEMCodec(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: RsaOaepMethod,
+			Err:  errors.Join(append(errs, ErrPEMCodecFailed)...),
 		},
 	}
 }

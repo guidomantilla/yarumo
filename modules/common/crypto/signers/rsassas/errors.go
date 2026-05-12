@@ -33,16 +33,22 @@ func (e *Error) Error() string {
 
 // Sentinel errors for the rsassas package.
 var (
-	ErrMethodIsNil         = errors.New("method is nil")
-	ErrKeyIsNil            = errors.New("key is nil")
-	ErrKeyLengthIsInvalid  = errors.New("key length is invalid")
-	ErrSignFailed          = errors.New("sign failed")
-	ErrVerifyFailed        = errors.New("verify failed")
-	ErrKeySizeNotAllowed   = errors.New("key size not allowed")
-	ErrPaddingNotSupported = errors.New("padding scheme not supported")
-	ErrKeyGenerationFailed = errors.New("key generation failed")
-	ErrSigningFailed       = errors.New("signing failed")
-	ErrVerificationFailed  = errors.New("verification failed")
+	ErrMethodIsNil          = errors.New("method is nil")
+	ErrKeyIsNil             = errors.New("key is nil")
+	ErrKeyLengthIsInvalid   = errors.New("key length is invalid")
+	ErrSignFailed           = errors.New("sign failed")
+	ErrVerifyFailed         = errors.New("verify failed")
+	ErrKeySizeNotAllowed    = errors.New("key size not allowed")
+	ErrPaddingNotSupported  = errors.New("padding scheme not supported")
+	ErrKeyGenerationFailed  = errors.New("key generation failed")
+	ErrSigningFailed        = errors.New("signing failed")
+	ErrVerificationFailed   = errors.New("verification failed")
+	ErrPEMDecodeFailed      = errors.New("pem decode failed")
+	ErrPEMBlockTypeMismatch = errors.New("pem block type mismatch")
+	ErrKeyTypeMismatch      = errors.New("key type mismatch")
+	ErrMarshalKeyFailed     = errors.New("marshal key failed")
+	ErrParseKeyFailed       = errors.New("parse key failed")
+	ErrPEMCodecFailed       = errors.New("pem codec failed")
 )
 
 // ErrAlgorithmNotSupported returns an error indicating the named RSA algorithm is not registered.
@@ -81,6 +87,16 @@ func ErrVerification(errs ...error) error {
 		TypedError: cerrs.TypedError{
 			Type: RsassasMethod,
 			Err:  errors.Join(append(errs, ErrVerificationFailed)...),
+		},
+	}
+}
+
+// ErrPEMCodec wraps the given errors into a domain Error for PEM marshal/parse failures.
+func ErrPEMCodec(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: RsassasMethod,
+			Err:  errors.Join(append(errs, ErrPEMCodecFailed)...),
 		},
 	}
 }

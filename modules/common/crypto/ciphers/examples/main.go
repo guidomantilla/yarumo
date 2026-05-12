@@ -12,6 +12,7 @@ import (
 func main() {
 	aeadExample()
 	rsaOaepExample()
+	rsaOaepPEMExample()
 	registryExample()
 }
 
@@ -112,6 +113,57 @@ func rsaOaepExample() {
 	}
 
 	fmt.Printf("SHA256/2048 (no label) decrypted=%q\n\n", string(decrypted))
+}
+
+// rsaOaepPEMExample demonstrates loading an RSA private key from a PKCS#8 PEM blob
+// (the realistic deployment case where keys are mounted from a secrets manager)
+// and using it to decrypt a payload encrypted under the matching public key,
+// itself distributed via PKIX/SubjectPublicKeyInfo PEM.
+func rsaOaepPEMExample() {
+	fmt.Println("=== RSA-OAEP PEM marshal/parse ===")
+
+	priv, err := crsaoaep.RSA_OAEP_SHA256.GenerateKey(2048)
+	if err != nil {
+		log.Fatalf("RSA-OAEP key generation failed: %v", err)
+	}
+
+	privPEM, err := crsaoaep.MarshalPrivateKeyPEM(priv)
+	if err != nil {
+		log.Fatalf("MarshalPrivateKeyPEM failed: %v", err)
+	}
+
+	fmt.Printf("Marshalled private key PEM (%d bytes)\n", len(privPEM))
+
+	pubPEM, err := crsaoaep.MarshalPublicKeyPEM(&priv.PublicKey)
+	if err != nil {
+		log.Fatalf("MarshalPublicKeyPEM failed: %v", err)
+	}
+
+	fmt.Printf("Marshalled public key PEM (%d bytes)\n", len(pubPEM))
+
+	loadedPriv, err := crsaoaep.ParsePrivateKeyPEM(privPEM)
+	if err != nil {
+		log.Fatalf("ParsePrivateKeyPEM failed: %v", err)
+	}
+
+	loadedPub, err := crsaoaep.ParsePublicKeyPEM(pubPEM)
+	if err != nil {
+		log.Fatalf("ParsePublicKeyPEM failed: %v", err)
+	}
+
+	plaintext := ctypes.Bytes("short secret")
+
+	ciphered, err := crsaoaep.RSA_OAEP_SHA256.Encrypt(loadedPub, plaintext, nil)
+	if err != nil {
+		log.Fatalf("Encrypt with parsed public key failed: %v", err)
+	}
+
+	plain, err := crsaoaep.RSA_OAEP_SHA256.Decrypt(loadedPriv, ciphered, nil)
+	if err != nil {
+		log.Fatalf("Decrypt with parsed private key failed: %v", err)
+	}
+
+	fmt.Printf("PEM round-trip decrypted=%q\n\n", string(plain))
 }
 
 // registryExample demonstrates the Get and Supported functions for both cipher packages.
