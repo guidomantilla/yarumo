@@ -206,9 +206,14 @@ linters:
       # interface from the backend library; that is the entire point of the helper
       # so callers do not see jwt types. ireturn would force returning a concrete
       # type from a third-party package, defeating the abstraction.
+      # cyclop: signingMethodFor is a flat enum mapping over 13 Algorithm values
+      # (HS256/384/512 + RS256/384/512 + PS256/384/512 + ES256/384/512 + EdDSA).
+      # Each case is a single return; extraction into table-driven dispatch hurts
+      # readability without reducing real complexity.
       - path: crypto/tokens/tokens\.go
         linters:
           - ireturn
+          - cyclop
       # crypto/ciphers/hybrid: HPKE Method.GenerateKey and the internal
       # generateKey helper return kem.PublicKey / kem.PrivateKey from circl —
       # those are interfaces by design (one Method can serve multiple KEMs

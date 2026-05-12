@@ -3,9 +3,24 @@ package tokens
 import "sync"
 
 var methods = map[string]Method{
-	JWT_HS256.name:                 *JWT_HS256,
-	JWT_HS384.name:                 *JWT_HS384,
-	JWT_HS512.name:                 *JWT_HS512,
+	JWT_HS256.name: *JWT_HS256,
+	JWT_HS384.name: *JWT_HS384,
+	JWT_HS512.name: *JWT_HS512,
+
+	JWT_RS256.name: *JWT_RS256,
+	JWT_RS384.name: *JWT_RS384,
+	JWT_RS512.name: *JWT_RS512,
+
+	JWT_PS256.name: *JWT_PS256,
+	JWT_PS384.name: *JWT_PS384,
+	JWT_PS512.name: *JWT_PS512,
+
+	JWT_ES256.name: *JWT_ES256,
+	JWT_ES384.name: *JWT_ES384,
+	JWT_ES512.name: *JWT_ES512,
+
+	JWT_EdDSA.name: *JWT_EdDSA,
+
 	OPAQUE_AES_256_GCM.name:        *OPAQUE_AES_256_GCM,
 	OPAQUE_XCHACHA20_POLY1305.name: *OPAQUE_XCHACHA20_POLY1305,
 }

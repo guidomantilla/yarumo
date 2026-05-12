@@ -1,9 +1,14 @@
 // Package tokens provides token generation and validation. Two distinct
 // flavors are supported:
 //
-//   - JWT signed tokens via HMAC signing methods (HS256/HS384/HS512). The
-//     claims payload is transparent — anyone can base64-decode the body;
-//     only the signature protects integrity.
+//   - JWT signed tokens via the Algorithm enum, covering HMAC (HS256/384/512),
+//     RSASSA-PKCS1-v1_5 (RS256/384/512), RSASSA-PSS (PS256/384/512), ECDSA
+//     (ES256/384/512), and Ed25519 (EdDSA). The claims payload is transparent
+//     — anyone can base64-decode the body; only the signature protects
+//     integrity. Asymmetric variants require a real key pair via
+//     WithSigningKey / WithVerifyingKey; the signers/{rsassas, ecdsas, ed25519}
+//     subpackages provide GenerateKey helpers and PEM marshal/parse for the
+//     key types involved.
 //   - Opaque tokens via AEAD encryption (YA-0019). The entire claims payload
 //     is encrypted under a symmetric key, so nothing leaks to the client.
 //     The token is base64url(AEAD.Encrypt(key, json(claims), nil)) with the
@@ -11,10 +16,10 @@
 //
 // Both JWT and opaque methods are constructed with a single entry point —
 // NewMethod(name, Algorithm, options...). The Algorithm enum value is the
-// discriminator: HS256/384/512 (and future asymmetric variants) belong to
-// the JWT family; AlgorithmOpaqueAESGCM and AlgorithmOpaqueXChaCha20Poly1305
-// belong to the opaque family. Both flavors share the same Method struct,
-// Generate/Validate API, options pipeline, and registry.
+// discriminator: HMAC and asymmetric variants belong to the JWT family;
+// AlgorithmOpaqueAESGCM and AlgorithmOpaqueXChaCha20Poly1305 belong to the
+// opaque family. Both flavors share the same Method struct, Generate/Validate
+// API, options pipeline, and registry.
 //
 // # Key management
 //
@@ -98,9 +103,24 @@ type Algorithm string
 // registered JWT algorithm identifier. Opaque algorithms use bespoke names
 // since they have no JWS analogue.
 const (
-	AlgorithmHS256                   Algorithm = "HS256"
-	AlgorithmHS384                   Algorithm = "HS384"
-	AlgorithmHS512                   Algorithm = "HS512"
+	AlgorithmHS256 Algorithm = "HS256"
+	AlgorithmHS384 Algorithm = "HS384"
+	AlgorithmHS512 Algorithm = "HS512"
+
+	AlgorithmRS256 Algorithm = "RS256"
+	AlgorithmRS384 Algorithm = "RS384"
+	AlgorithmRS512 Algorithm = "RS512"
+
+	AlgorithmPS256 Algorithm = "PS256"
+	AlgorithmPS384 Algorithm = "PS384"
+	AlgorithmPS512 Algorithm = "PS512"
+
+	AlgorithmES256 Algorithm = "ES256"
+	AlgorithmES384 Algorithm = "ES384"
+	AlgorithmES512 Algorithm = "ES512"
+
+	AlgorithmEdDSA Algorithm = "EdDSA"
+
 	AlgorithmOpaqueAESGCM            Algorithm = "OPAQUE_AES_GCM"
 	AlgorithmOpaqueXChaCha20Poly1305 Algorithm = "OPAQUE_XCHACHA20_POLY1305"
 )

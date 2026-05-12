@@ -138,6 +138,14 @@ func generateOpaque(method *Method, subject string, payload Payload) (string, er
 		return "", ErrSigningKeyNil
 	}
 
+	// Opaque AEAD requires a symmetric byte-slice key. The Method.signingKey
+	// field is widened to any so the JWT-asymmetric path can hold *rsa /
+	// *ecdsa / ed25519 keys; for opaque it must be []byte.
+	signingKey, ok := method.signingKey.([]byte)
+	if !ok {
+		return "", ErrSigningKeyNil
+	}
+
 	now := time.Now()
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -155,7 +163,7 @@ func generateOpaque(method *Method, subject string, payload Payload) (string, er
 		return "", cerrs.Wrap(ErrTokenMarshalFailed, err)
 	}
 
-	ciphertext, err := method.cipher.Encrypt(method.signingKey, jsonBytes, nil)
+	ciphertext, err := method.cipher.Encrypt(signingKey, jsonBytes, nil)
 	if err != nil {
 		return "", cerrs.Wrap(ErrTokenSignFailed, err)
 	}
@@ -182,12 +190,19 @@ func validateOpaque(method *Method, tokenString string) (Payload, error) {
 		return nil, ErrVerifyingKeyNil
 	}
 
+	// Opaque AEAD requires a symmetric byte-slice key. See the matching
+	// assertion in generateOpaque for the rationale.
+	verifyingKey, ok := method.verifyingKey.([]byte)
+	if !ok {
+		return nil, ErrVerifyingKeyNil
+	}
+
 	ciphertext, err := base64.RawURLEncoding.DecodeString(tokenString)
 	if err != nil {
 		return nil, cerrs.Wrap(ErrTokenDecodeFailed, err)
 	}
 
-	jsonBytes, err := method.cipher.Decrypt(method.verifyingKey, ciphertext, nil)
+	jsonBytes, err := method.cipher.Decrypt(verifyingKey, ciphertext, nil)
 	if err != nil {
 		return nil, cerrs.Wrap(ErrTokenDecryptFailed, err)
 	}

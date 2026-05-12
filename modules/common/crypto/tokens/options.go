@@ -3,6 +3,7 @@ package tokens
 import (
 	"time"
 
+	cpointer "github.com/guidomantilla/yarumo/common/pointer"
 	crandom "github.com/guidomantilla/yarumo/common/random"
 )
 
@@ -10,11 +11,16 @@ import (
 type Option func(opts *Options)
 
 // Options holds the configuration for a tokens Method.
+//
+// signingKey and verifyingKey are typed as any so a single Options value
+// can carry the byte-slice secret used by HMAC variants alongside the
+// *rsa.PrivateKey / *ecdsa.PrivateKey / ed25519.PrivateKey values (and
+// matching public keys) required by the asymmetric variants.
 type Options struct {
 	issuer       string
 	timeout      time.Duration
-	signingKey   []byte
-	verifyingKey []byte
+	signingKey   any
+	verifyingKey any
 	generateFn   GenerateFn
 	validateFn   ValidateFn
 }
@@ -60,9 +66,15 @@ func WithTimeout(timeout time.Duration) Option {
 }
 
 // WithKey sets both signing and verifying keys to the same value.
-func WithKey(key []byte) Option {
+//
+// key is accepted as any so the same option works for HMAC ([]byte) and
+// for asymmetric algorithms where a single value carries both roles
+// (none of the predefined asymmetric algorithms do — pass WithSigningKey
+// and WithVerifyingKey separately in that case). Nil or empty byte
+// slices are ignored.
+func WithKey(key any) Option {
 	return func(opts *Options) {
-		if len(key) > 0 {
+		if isUsableKey(key) {
 			opts.signingKey = key
 			opts.verifyingKey = key
 		}
@@ -77,28 +89,54 @@ func WithKey(key []byte) Option {
 // consume entropy.
 func WithGeneratedKey() Option {
 	return func(opts *Options) {
-		key := crandom.Bytes(64)
+		// Convert to a plain []byte so golang-jwt/v5 HMAC type-assertion
+		// (key.([]byte)) succeeds — types.Bytes is a named type and would
+		// fail that assertion.
+		key := []byte(crandom.Bytes(64))
 		opts.signingKey = key
 		opts.verifyingKey = key
 	}
 }
 
 // WithSigningKey sets the signing key independently.
-func WithSigningKey(key []byte) Option {
+//
+// key is accepted as any so the same option works for HMAC ([]byte
+// secrets) and for the asymmetric algorithms whose signing keys are
+// *rsa.PrivateKey, *ecdsa.PrivateKey, or ed25519.PrivateKey. Nil or
+// empty byte slices are ignored.
+func WithSigningKey(key any) Option {
 	return func(opts *Options) {
-		if len(key) > 0 {
+		if isUsableKey(key) {
 			opts.signingKey = key
 		}
 	}
 }
 
 // WithVerifyingKey sets the verifying key independently.
-func WithVerifyingKey(key []byte) Option {
+//
+// key is accepted as any so the same option works for HMAC ([]byte
+// secrets) and for the asymmetric algorithms whose verifying keys are
+// *rsa.PublicKey, *ecdsa.PublicKey, or ed25519.PublicKey. Nil or empty
+// byte slices are ignored.
+func WithVerifyingKey(key any) Option {
 	return func(opts *Options) {
-		if len(key) > 0 {
+		if isUsableKey(key) {
 			opts.verifyingKey = key
 		}
 	}
+}
+
+// isUsableKey reports whether the value is non-nil and, in the case of
+// a []byte, also non-empty. Asymmetric key values (e.g. *rsa.PrivateKey)
+// pass through whenever they are non-nil.
+func isUsableKey(key any) bool {
+	if cpointer.IsNil(key) {
+		return false
+	}
+	if b, ok := key.([]byte); ok {
+		return len(b) > 0
+	}
+	return true
 }
 
 // WithGenerateFn sets a custom generate function.

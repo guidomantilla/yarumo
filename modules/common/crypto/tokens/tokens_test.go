@@ -34,7 +34,11 @@ func TestNewMethod(t *testing.T) {
 		key := []byte("custom-key-12345")
 		m := NewMethod("custom", AlgorithmHS512, WithKey(key))
 
-		if string(m.signingKey) != string(key) {
+		signing, ok := m.signingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected signing key []byte, got %T", m.signingKey)
+		}
+		if string(signing) != string(key) {
 			t.Fatal("expected custom signing key")
 		}
 		if m.signingMethod != jwt.SigningMethodHS512 {
@@ -407,7 +411,7 @@ func TestYA0009_AlgorithmEnum(t *testing.T) {
 	t.Run("unknown Algorithm returns nil from signingMethodFor", func(t *testing.T) {
 		t.Parallel()
 
-		if got := signingMethodFor(Algorithm("ES256")); got != nil {
+		if got := signingMethodFor(Algorithm("XX999")); got != nil {
 			t.Fatalf("expected nil for unsupported algorithm, got %v", got)
 		}
 	})
@@ -415,7 +419,7 @@ func TestYA0009_AlgorithmEnum(t *testing.T) {
 	t.Run("ErrAlgorithmInvalid wraps ErrAlgorithmUnknown for unknown values", func(t *testing.T) {
 		t.Parallel()
 
-		err := ErrAlgorithmInvalid(Algorithm("ES256"))
+		err := ErrAlgorithmInvalid(Algorithm("XX999"))
 		if err == nil {
 			t.Fatal("expected non-nil error")
 		}

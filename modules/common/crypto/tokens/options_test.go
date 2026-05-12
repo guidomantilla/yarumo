@@ -23,10 +23,10 @@ func TestNewOptions(t *testing.T) {
 			t.Fatalf("expected 24h timeout, got %v", opts.timeout)
 		}
 		if opts.signingKey != nil {
-			t.Fatalf("expected nil signing key, got %d bytes", len(opts.signingKey))
+			t.Fatalf("expected nil signing key, got %v", opts.signingKey)
 		}
 		if opts.verifyingKey != nil {
-			t.Fatalf("expected nil verifying key, got %d bytes", len(opts.verifyingKey))
+			t.Fatalf("expected nil verifying key, got %v", opts.verifyingKey)
 		}
 	})
 }
@@ -39,13 +39,21 @@ func TestWithGeneratedKey(t *testing.T) {
 
 		opts := NewOptions(WithGeneratedKey())
 
-		if len(opts.signingKey) != 64 {
-			t.Fatalf("expected 64-byte signing key, got %d", len(opts.signingKey))
+		signing, ok := opts.signingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected signing key []byte, got %T", opts.signingKey)
 		}
-		if len(opts.verifyingKey) != 64 {
-			t.Fatalf("expected 64-byte verifying key, got %d", len(opts.verifyingKey))
+		verifying, ok := opts.verifyingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected verifying key []byte, got %T", opts.verifyingKey)
 		}
-		if string(opts.signingKey) != string(opts.verifyingKey) {
+		if len(signing) != 64 {
+			t.Fatalf("expected 64-byte signing key, got %d", len(signing))
+		}
+		if len(verifying) != 64 {
+			t.Fatalf("expected 64-byte verifying key, got %d", len(verifying))
+		}
+		if string(signing) != string(verifying) {
 			t.Fatal("expected signing and verifying keys to be identical")
 		}
 	})
@@ -56,7 +64,15 @@ func TestWithGeneratedKey(t *testing.T) {
 		a := NewOptions(WithGeneratedKey())
 		b := NewOptions(WithGeneratedKey())
 
-		if string(a.signingKey) == string(b.signingKey) {
+		aKey, ok := a.signingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected a.signingKey []byte, got %T", a.signingKey)
+		}
+		bKey, ok := b.signingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected b.signingKey []byte, got %T", b.signingKey)
+		}
+		if string(aKey) == string(bKey) {
 			t.Fatal("expected distinct random keys across two calls")
 		}
 	})
@@ -67,10 +83,18 @@ func TestWithGeneratedKey(t *testing.T) {
 		manual := []byte("manual-secret-key-1234567890")
 		opts := NewOptions(WithGeneratedKey(), WithKey(manual))
 
-		if string(opts.signingKey) != string(manual) {
+		signing, ok := opts.signingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected signing key []byte, got %T", opts.signingKey)
+		}
+		verifying, ok := opts.verifyingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected verifying key []byte, got %T", opts.verifyingKey)
+		}
+		if string(signing) != string(manual) {
 			t.Fatal("expected manual key to override generated signing key")
 		}
-		if string(opts.verifyingKey) != string(manual) {
+		if string(verifying) != string(manual) {
 			t.Fatal("expected manual key to override generated verifying key")
 		}
 	})
@@ -143,10 +167,18 @@ func TestWithKey(t *testing.T) {
 		key := []byte("test-key-0123456789")
 		opts := NewOptions(WithKey(key))
 
-		if string(opts.signingKey) != string(key) {
+		signing, ok := opts.signingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected signing key []byte, got %T", opts.signingKey)
+		}
+		verifying, ok := opts.verifyingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected verifying key []byte, got %T", opts.verifyingKey)
+		}
+		if string(signing) != string(key) {
 			t.Fatal("expected signing key to match")
 		}
-		if string(opts.verifyingKey) != string(key) {
+		if string(verifying) != string(key) {
 			t.Fatal("expected verifying key to match")
 		}
 	})
@@ -157,10 +189,10 @@ func TestWithKey(t *testing.T) {
 		opts := NewOptions(WithKey([]byte{}))
 
 		if opts.signingKey != nil {
-			t.Fatalf("expected nil signing key default preserved, got %d bytes", len(opts.signingKey))
+			t.Fatalf("expected nil signing key default preserved, got %v", opts.signingKey)
 		}
 		if opts.verifyingKey != nil {
-			t.Fatalf("expected nil verifying key default preserved, got %d bytes", len(opts.verifyingKey))
+			t.Fatalf("expected nil verifying key default preserved, got %v", opts.verifyingKey)
 		}
 	})
 }
@@ -174,7 +206,11 @@ func TestWithSigningKey(t *testing.T) {
 		key := []byte("signing-key-0123456789")
 		opts := NewOptions(WithSigningKey(key))
 
-		if string(opts.signingKey) != string(key) {
+		signing, ok := opts.signingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected signing key []byte, got %T", opts.signingKey)
+		}
+		if string(signing) != string(key) {
 			t.Fatal("expected signing key to match")
 		}
 	})
@@ -185,7 +221,7 @@ func TestWithSigningKey(t *testing.T) {
 		opts := NewOptions(WithSigningKey([]byte{}))
 
 		if opts.signingKey != nil {
-			t.Fatalf("expected nil signing key default preserved, got %d bytes", len(opts.signingKey))
+			t.Fatalf("expected nil signing key default preserved, got %v", opts.signingKey)
 		}
 	})
 }
@@ -199,7 +235,11 @@ func TestWithVerifyingKey(t *testing.T) {
 		key := []byte("verifying-key-0123456789")
 		opts := NewOptions(WithVerifyingKey(key))
 
-		if string(opts.verifyingKey) != string(key) {
+		verifying, ok := opts.verifyingKey.([]byte)
+		if !ok {
+			t.Fatalf("expected verifying key []byte, got %T", opts.verifyingKey)
+		}
+		if string(verifying) != string(key) {
 			t.Fatal("expected verifying key to match")
 		}
 	})
@@ -210,7 +250,7 @@ func TestWithVerifyingKey(t *testing.T) {
 		opts := NewOptions(WithVerifyingKey([]byte{}))
 
 		if opts.verifyingKey != nil {
-			t.Fatalf("expected nil verifying key default preserved, got %d bytes", len(opts.verifyingKey))
+			t.Fatalf("expected nil verifying key default preserved, got %v", opts.verifyingKey)
 		}
 	})
 }
