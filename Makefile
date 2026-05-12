@@ -1,4 +1,4 @@
-.PHONY: verify-tools install tidy graph generate imports format vet lint lint-inline build-inlineassign test coverage check validate build ci update-dependencies
+.PHONY: verify-tools install tidy graph generate imports format vet lint lint-inline build-inlineassign test bench coverage check validate build ci update-dependencies
 
 MODULES := modules/common modules/config modules/managed modules/telemetry/otel
 MODULES += modules/compute/math modules/compute/engine modules/compute/tests/acceptance
@@ -115,6 +115,15 @@ test: verify-tools
 		echo "==> test $$mod"; \
 		(cd $$mod && go test -covermode atomic -coverprofile .reports/testcoverage.out ./...); \
 	done
+
+# bench runs the per-algorithm crypto benchmarks under
+# modules/common/crypto/*/examples/. CI does not invoke this target — the
+# benchmark suite is opt-in to keep PR pipelines fast. Tune BENCHTIME to
+# trade run time for accuracy (default 100ms).
+BENCHTIME ?= 100ms
+bench:
+	@echo "==> bench modules/common/crypto (benchtime=$(BENCHTIME))"
+	@cd modules/common && go test -bench=. -benchtime=$(BENCHTIME) -run=- ./crypto/...
 
 coverage: verify-tools test
 	@for mod in $(MODULES); do \
