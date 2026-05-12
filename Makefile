@@ -1,4 +1,4 @@
-.PHONY: verify-tools install tidy graph generate imports format vet lint test coverage check validate build ci update-dependencies
+.PHONY: verify-tools install tidy graph generate imports format vet lint lint-inline build-inlineassign test coverage check validate build ci update-dependencies
 
 MODULES := modules/common modules/config modules/managed modules/telemetry/otel
 MODULES += modules/compute/math modules/compute/engine modules/compute/tests/acceptance
@@ -6,6 +6,16 @@ MODULES += sdks/decisions/core
 ENABLE_INTERNAL := false
 INTERNAL := internal/examples
 INTERNAL += internal/temporal/courses/edu-101-go-code internal/temporal/courses/edu-102-go-code
+
+# Modules that must be free of "No Inline Assignments" violations.
+# Other modules (compute/math, compute/engine) still carry historical
+# violations tracked under follow-up tickets; expand this list as those
+# modules are cleaned up.
+INLINE_MODULES := modules/common
+
+# Built inlineassign binary location. The cmd/inlineassign main package lives
+# under tools/lint/inlineassign and is wired into go.work for local builds.
+INLINEASSIGN_BIN := $(CURDIR)/tools/lint/inlineassign/bin/inlineassign
 
 verify-tools:
 	@go tool golangci-lint --version >/dev/null 2>&1 || { echo >&2 "golangci-lint is not installed. Run 'make install'"; exit 1; }
@@ -83,10 +93,21 @@ vet: verify-tools
 		(cd $$mod && go vet ./...); \
 	done
 
-lint:
+lint: lint-inline
 	@for mod in $(MODULES); do \
 		echo "==> lint $$mod"; \
 		(cd $$mod && go tool golangci-lint run --fix ./...); \
+	done
+
+build-inlineassign:
+	@echo "==> build inlineassign analyzer"
+	@mkdir -p $(dir $(INLINEASSIGN_BIN))
+	@cd tools/lint/inlineassign && go build -o $(INLINEASSIGN_BIN) ./cmd/inlineassign
+
+lint-inline: build-inlineassign
+	@for mod in $(INLINE_MODULES); do \
+		echo "==> lint-inline $$mod"; \
+		(cd $$mod && go vet -vettool=$(INLINEASSIGN_BIN) ./...) || exit 1; \
 	done
 
 test: verify-tools

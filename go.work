@@ -16,4 +16,5 @@ use (
 	./sdks/decisions/core
 	./sdks/decisions/examples
 	./tools
+	./tools/lint/inlineassign
 )
