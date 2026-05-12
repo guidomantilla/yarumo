@@ -24,7 +24,8 @@ func TestNewEvaluator(t *testing.T) {
 		custom := func(args ...any) (any, error) { return 42.0, nil }
 		ev := NewEvaluator(WithFunc("custom", custom))
 
-		if _, ok := ev.options.funcs["custom"]; !ok {
+		_, ok := ev.options.funcs["custom"]
+		if !ok {
 			t.Fatal("expected custom function in evaluator")
 		}
 	})
