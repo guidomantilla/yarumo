@@ -19,6 +19,7 @@ func main() {
 	ecdsaExample(data)
 	ed25519Example(data)
 	rsassasExample(data)
+	pemExample(data)
 	registryExample()
 }
 
@@ -204,6 +205,62 @@ func rsassasExample(data []byte) {
 	}
 
 	fmt.Printf("RSASSA-PKCS1v15/SHA256 Verify: %v\n\n", ok)
+}
+
+// pemExample demonstrates a realistic deployment flow: a private key in PKCS#8 PEM
+// format (the kind you'd load from a secrets manager or mounted file) is parsed
+// once and used to sign a payload. The corresponding public key is then encoded
+// to PKIX/SubjectPublicKeyInfo PEM for distribution.
+func pemExample(data []byte) {
+	fmt.Println("=== PEM marshal/parse (ECDSA P-256) ===")
+
+	// Generate an ECDSA P-256 private key and marshal it to a PKCS#8 PEM block.
+	// In production this PEM blob would come from disk, Vault, or a secrets manager.
+	priv, err := cecdsas.ECDSA_with_SHA256_over_P256.GenerateKey()
+	if err != nil {
+		log.Fatalf("ECDSA P256 key generation failed: %v", err)
+	}
+
+	privPEM, err := cecdsas.MarshalPrivateKeyPEM(priv)
+	if err != nil {
+		log.Fatalf("MarshalPrivateKeyPEM failed: %v", err)
+	}
+
+	fmt.Printf("Marshalled private key PEM (%d bytes):\n%s", len(privPEM), string(privPEM))
+
+	// Parse it back from PEM bytes — the realistic load path.
+	loaded, err := cecdsas.ParsePrivateKeyPEM(privPEM)
+	if err != nil {
+		log.Fatalf("ParsePrivateKeyPEM failed: %v", err)
+	}
+
+	// Sign with the loaded key.
+	sig, err := cecdsas.ECDSA_with_SHA256_over_P256.Sign(loaded, data, cecdsas.ASN1)
+	if err != nil {
+		log.Fatalf("Sign with loaded key failed: %v", err)
+	}
+
+	fmt.Printf("Loaded-key Signature (ASN1) Hex: %s\n", sig.ToHex())
+
+	// Distribute the public key via PKIX/SubjectPublicKeyInfo PEM and verify.
+	pubPEM, err := cecdsas.MarshalPublicKeyPEM(&loaded.PublicKey)
+	if err != nil {
+		log.Fatalf("MarshalPublicKeyPEM failed: %v", err)
+	}
+
+	fmt.Printf("Marshalled public key PEM (%d bytes):\n%s", len(pubPEM), string(pubPEM))
+
+	pub, err := cecdsas.ParsePublicKeyPEM(pubPEM)
+	if err != nil {
+		log.Fatalf("ParsePublicKeyPEM failed: %v", err)
+	}
+
+	ok, err := cecdsas.ECDSA_with_SHA256_over_P256.Verify(pub, sig, data, cecdsas.ASN1)
+	if err != nil {
+		log.Fatalf("Verify with parsed public key failed: %v", err)
+	}
+
+	fmt.Printf("PEM round-trip verify: %v\n\n", ok)
 }
 
 // registryExample demonstrates the Get and Supported functions across all signer packages.

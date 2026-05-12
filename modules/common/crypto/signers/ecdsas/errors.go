@@ -33,15 +33,21 @@ func (e *Error) Error() string {
 
 // Sentinel errors for the ecdsas package.
 var (
-	ErrMethodIsNil         = errors.New("method is nil")
-	ErrKeyIsNil            = errors.New("key is nil")
-	ErrKeyCurveIsInvalid   = errors.New("key curve is invalid")
-	ErrSignatureInvalid    = errors.New("signature is invalid")
-	ErrSignFailed          = errors.New("sign failed")
-	ErrFormatUnsupported   = errors.New("format unsupported")
-	ErrKeyGenerationFailed = errors.New("key generation failed")
-	ErrSigningFailed       = errors.New("signing failed")
-	ErrVerificationFailed  = errors.New("verification failed")
+	ErrMethodIsNil          = errors.New("method is nil")
+	ErrKeyIsNil             = errors.New("key is nil")
+	ErrKeyCurveIsInvalid    = errors.New("key curve is invalid")
+	ErrSignatureInvalid     = errors.New("signature is invalid")
+	ErrSignFailed           = errors.New("sign failed")
+	ErrFormatUnsupported    = errors.New("format unsupported")
+	ErrKeyGenerationFailed  = errors.New("key generation failed")
+	ErrSigningFailed        = errors.New("signing failed")
+	ErrVerificationFailed   = errors.New("verification failed")
+	ErrPEMDecodeFailed      = errors.New("pem decode failed")
+	ErrPEMBlockTypeMismatch = errors.New("pem block type mismatch")
+	ErrKeyTypeMismatch      = errors.New("key type mismatch")
+	ErrMarshalKeyFailed     = errors.New("marshal key failed")
+	ErrParseKeyFailed       = errors.New("parse key failed")
+	ErrPEMCodecFailed       = errors.New("pem codec failed")
 )
 
 // ErrAlgorithmNotSupported returns an error indicating the named ECDSA algorithm is not registered.
@@ -80,6 +86,16 @@ func ErrVerification(errs ...error) error {
 		TypedError: cerrs.TypedError{
 			Type: EcdsaMethod,
 			Err:  errors.Join(append(errs, ErrVerificationFailed)...),
+		},
+	}
+}
+
+// ErrPEMCodec wraps the given errors into a domain Error for PEM marshal/parse failures.
+func ErrPEMCodec(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: EcdsaMethod,
+			Err:  errors.Join(append(errs, ErrPEMCodecFailed)...),
 		},
 	}
 }

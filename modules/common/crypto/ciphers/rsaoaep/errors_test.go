@@ -86,6 +86,25 @@ func TestErrDecryption(t *testing.T) {
 	})
 }
 
+func TestErrPEMCodec(t *testing.T) {
+	t.Parallel()
+
+	t.Run("wraps with ErrPEMCodecFailed sentinel", func(t *testing.T) {
+		t.Parallel()
+
+		err := ErrPEMCodec(errors.New("cause"))
+
+		if !errors.Is(err, ErrPEMCodecFailed) {
+			t.Fatal("expected ErrPEMCodecFailed")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+}
+
 func TestSentinelErrors(t *testing.T) {
 	t.Parallel()
 
