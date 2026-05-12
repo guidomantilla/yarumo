@@ -12,6 +12,7 @@ import (
 // Predefined RSA-OAEP methods registered at package init.
 var (
 	RSA_OAEP_SHA256 = NewMethod("RSA-OAEP-SHA256", crypto.SHA256, []int{2048, 3072, 4096})
+	RSA_OAEP_SHA384 = NewMethod("RSA-OAEP-SHA384", crypto.SHA384, []int{3072, 4096})
 	RSA_OAEP_SHA512 = NewMethod("RSA-OAEP-SHA512", crypto.SHA512, []int{3072, 4096})
 )
 

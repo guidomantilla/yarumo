@@ -190,6 +190,33 @@ func TestMethod_Decrypt(t *testing.T) {
 	})
 }
 
+func TestMethod_SHA384Variant(t *testing.T) {
+	t.Parallel()
+
+	t.Run("RSA-OAEP-SHA384 encrypt and decrypt", func(t *testing.T) {
+		t.Parallel()
+
+		key, err := RSA_OAEP_SHA384.GenerateKey(3072)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		ciphered, err := RSA_OAEP_SHA384.Encrypt(&key.PublicKey, []byte("sha384-payload"), nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		plain, err := RSA_OAEP_SHA384.Decrypt(key, ciphered, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if string(plain) != "sha384-payload" {
+			t.Fatalf("expected 'sha384-payload', got %q", string(plain))
+		}
+	})
+}
+
 func TestMethod_SHA512Variant(t *testing.T) {
 	t.Parallel()
 

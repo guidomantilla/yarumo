@@ -6,6 +6,7 @@ import (
 
 var methods = map[string]Method{
 	RSA_OAEP_SHA256.name: *RSA_OAEP_SHA256,
+	RSA_OAEP_SHA384.name: *RSA_OAEP_SHA384,
 	RSA_OAEP_SHA512.name: *RSA_OAEP_SHA512,
 }
 
