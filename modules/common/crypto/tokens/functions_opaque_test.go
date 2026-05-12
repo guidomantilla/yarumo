@@ -12,6 +12,11 @@ import (
 	caead "github.com/guidomantilla/yarumo/common/crypto/ciphers/aead"
 )
 
+// scopeRead is a fixture scope value used by the XChaCha20-Poly1305 round-trip
+// test. Extracted into a const so the same literal does not repeat across the
+// payload construction, the assertion, and the failure message (goconst).
+const scopeRead = "read"
+
 // aes256Key returns a 32-byte key suitable for AES-256-GCM.
 func aes256Key() []byte {
 	return []byte("0123456789abcdef0123456789abcdef")
@@ -104,7 +109,7 @@ func TestOpaque_RoundTrip_XChaCha20Poly1305(t *testing.T) {
 	key := xchachaKey()
 	m := NewMethod("xchacha-roundtrip", AlgorithmOpaqueXChaCha20Poly1305, WithKey(key))
 
-	token, err := m.Generate("user@test.com", Payload{"role": "auditor", "scope": "read"})
+	token, err := m.Generate("user@test.com", Payload{"role": "auditor", "scope": scopeRead})
 	if err != nil {
 		t.Fatalf("unexpected generate error: %v", err)
 	}
@@ -117,8 +122,8 @@ func TestOpaque_RoundTrip_XChaCha20Poly1305(t *testing.T) {
 	if payload["role"] != "auditor" {
 		t.Fatalf("expected role 'auditor', got %v", payload["role"])
 	}
-	if payload["scope"] != "read" {
-		t.Fatalf("expected scope 'read', got %v", payload["scope"])
+	if payload["scope"] != scopeRead {
+		t.Fatalf("expected scope %q, got %v", scopeRead, payload["scope"])
 	}
 }
 
