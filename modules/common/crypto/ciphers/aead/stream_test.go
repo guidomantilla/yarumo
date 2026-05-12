@@ -131,6 +131,114 @@ func TestMethod_EncryptStream_FrameBoundaries(t *testing.T) {
 	}
 }
 
+func TestMethod_EncryptStream_NilSrc(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil src returns ErrStreamSrcNil wrapped in ErrEncryption", func(t *testing.T) {
+		t.Parallel()
+
+		key, err := AES_256_GCM.GenerateKey()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		var dst bytes.Buffer
+
+		encErr := AES_256_GCM.EncryptStream(key, nil, &dst, nil)
+		if encErr == nil {
+			t.Fatal("expected error for nil src, got nil")
+		}
+
+		if !errors.Is(encErr, ErrStreamSrcNil) {
+			t.Fatalf("expected ErrStreamSrcNil in chain, got %v", encErr)
+		}
+
+		if !errors.Is(encErr, ErrEncryptFailed) {
+			t.Fatalf("expected ErrEncryptFailed in chain, got %v", encErr)
+		}
+	})
+}
+
+func TestMethod_EncryptStream_NilDst(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil dst returns ErrStreamDstNil wrapped in ErrEncryption", func(t *testing.T) {
+		t.Parallel()
+
+		key, err := AES_256_GCM.GenerateKey()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		encErr := AES_256_GCM.EncryptStream(key, bytes.NewReader(nil), nil, nil)
+		if encErr == nil {
+			t.Fatal("expected error for nil dst, got nil")
+		}
+
+		if !errors.Is(encErr, ErrStreamDstNil) {
+			t.Fatalf("expected ErrStreamDstNil in chain, got %v", encErr)
+		}
+
+		if !errors.Is(encErr, ErrEncryptFailed) {
+			t.Fatalf("expected ErrEncryptFailed in chain, got %v", encErr)
+		}
+	})
+}
+
+func TestMethod_DecryptStream_NilSrc(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil src returns ErrStreamSrcNil wrapped in ErrDecryption", func(t *testing.T) {
+		t.Parallel()
+
+		key, err := AES_256_GCM.GenerateKey()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		var dst bytes.Buffer
+
+		decErr := AES_256_GCM.DecryptStream(key, nil, &dst, nil)
+		if decErr == nil {
+			t.Fatal("expected error for nil src, got nil")
+		}
+
+		if !errors.Is(decErr, ErrStreamSrcNil) {
+			t.Fatalf("expected ErrStreamSrcNil in chain, got %v", decErr)
+		}
+
+		if !errors.Is(decErr, ErrDecryptFailed) {
+			t.Fatalf("expected ErrDecryptFailed in chain, got %v", decErr)
+		}
+	})
+}
+
+func TestMethod_DecryptStream_NilDst(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil dst returns ErrStreamDstNil wrapped in ErrDecryption", func(t *testing.T) {
+		t.Parallel()
+
+		key, err := AES_256_GCM.GenerateKey()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		decErr := AES_256_GCM.DecryptStream(key, bytes.NewReader(nil), nil, nil)
+		if decErr == nil {
+			t.Fatal("expected error for nil dst, got nil")
+		}
+
+		if !errors.Is(decErr, ErrStreamDstNil) {
+			t.Fatalf("expected ErrStreamDstNil in chain, got %v", decErr)
+		}
+
+		if !errors.Is(decErr, ErrDecryptFailed) {
+			t.Fatalf("expected ErrDecryptFailed in chain, got %v", decErr)
+		}
+	})
+}
+
 func TestMethod_EncryptStream_EmptyInput(t *testing.T) {
 	t.Parallel()
 

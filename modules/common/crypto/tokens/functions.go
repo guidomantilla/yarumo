@@ -17,11 +17,14 @@ import (
 //   - opaque family (AlgorithmOpaque*) → opaque AEAD-encrypted token.
 //   - JWT family (everything else)    → JWT signed token via golang-jwt/v5.
 //
-// Method.Generate (the struct method) already enforces method != nil via
-// cassert.NotNil, so this private helper trusts the receiver. Callers that
-// need a different impl can inject via WithGenerateFn; the Method.Generate
-// wrapper still funnels everything through ErrGeneration.
+// Per the workspace defensive-validation standard, every private helper that
+// takes *Method validates it independently — even though Method.Generate
+// already cassert.NotNil-checks the receiver upstream.
 func generate(method *Method, subject string, payload Payload) (string, error) {
+	if method == nil {
+		return "", ErrMethodIsNil
+	}
+
 	if method.algorithm.isOpaque() {
 		return generateOpaque(method, subject, payload)
 	}
@@ -31,6 +34,10 @@ func generate(method *Method, subject string, payload Payload) (string, error) {
 // validate is the package-default ValidateFn. It dispatches on the method's
 // Algorithm family; see generate for the rules.
 func validate(method *Method, tokenString string) (Payload, error) {
+	if method == nil {
+		return nil, ErrMethodIsNil
+	}
+
 	if method.algorithm.isOpaque() {
 		return validateOpaque(method, tokenString)
 	}
@@ -38,6 +45,9 @@ func validate(method *Method, tokenString string) (Payload, error) {
 }
 
 func generateJWT(method *Method, subject string, payload Payload) (string, error) {
+	if method == nil {
+		return "", ErrMethodIsNil
+	}
 
 	if cutils.Empty(subject) {
 		return "", ErrSubjectEmpty
@@ -77,6 +87,9 @@ func generateJWT(method *Method, subject string, payload Payload) (string, error
 }
 
 func validateJWT(method *Method, tokenString string) (Payload, error) {
+	if method == nil {
+		return nil, ErrMethodIsNil
+	}
 
 	if cutils.Empty(tokenString) {
 		return nil, ErrTokenEmpty
@@ -121,6 +134,9 @@ func validateJWT(method *Method, tokenString string) (Payload, error) {
 // signingKey, and base64url-encoded. The AEAD nonce is prepended internally
 // by caead.Method.Encrypt.
 func generateOpaque(method *Method, subject string, payload Payload) (string, error) {
+	if method == nil {
+		return "", ErrMethodIsNil
+	}
 
 	if cutils.Empty(subject) {
 		return "", ErrSubjectEmpty
@@ -134,16 +150,9 @@ func generateOpaque(method *Method, subject string, payload Payload) (string, er
 		return "", ErrCipherNil
 	}
 
-	if cutils.Nil(method.signingKey) {
-		return "", ErrSigningKeyNil
-	}
-
-	// Opaque AEAD requires a symmetric byte-slice key. The Method.signingKey
-	// field is widened to any so the JWT-asymmetric path can hold *rsa /
-	// *ecdsa / ed25519 keys; for opaque it must be []byte.
-	signingKey, ok := method.signingKey.([]byte)
-	if !ok {
-		return "", ErrSigningKeyNil
+	signingKey, err := opaqueAEADKey(method.signingKey, ErrSigningKeyNil)
+	if err != nil {
+		return "", err
 	}
 
 	now := time.Now()
@@ -177,6 +186,9 @@ func generateOpaque(method *Method, subject string, payload Payload) (string, er
 // ErrTokenUnmarshalFailed, ErrTokenExpired, ErrTokenNotYetValid,
 // ErrTokenIssuerMismatch) wrapped via cerrs.Wrap on failure.
 func validateOpaque(method *Method, tokenString string) (Payload, error) {
+	if method == nil {
+		return nil, ErrMethodIsNil
+	}
 
 	if cutils.Empty(tokenString) {
 		return nil, ErrTokenEmpty
@@ -186,15 +198,9 @@ func validateOpaque(method *Method, tokenString string) (Payload, error) {
 		return nil, ErrCipherNil
 	}
 
-	if cutils.Nil(method.verifyingKey) {
-		return nil, ErrVerifyingKeyNil
-	}
-
-	// Opaque AEAD requires a symmetric byte-slice key. See the matching
-	// assertion in generateOpaque for the rationale.
-	verifyingKey, ok := method.verifyingKey.([]byte)
-	if !ok {
-		return nil, ErrVerifyingKeyNil
+	verifyingKey, err := opaqueAEADKey(method.verifyingKey, ErrVerifyingKeyNil)
+	if err != nil {
+		return nil, err
 	}
 
 	ciphertext, err := base64.RawURLEncoding.DecodeString(tokenString)
@@ -245,4 +251,22 @@ func checkOpaqueClaims(method *Method, claims *Claims) error {
 	}
 
 	return nil
+}
+
+// opaqueAEADKey converts a Method's signing/verifying key (typed as any to
+// accommodate the JWT-asymmetric variants that use *rsa.PrivateKey /
+// *ecdsa.PrivateKey / ed25519.PrivateKey) into the []byte required by the
+// opaque AEAD path. Returns the provided nilSentinel (ErrSigningKeyNil or
+// ErrVerifyingKeyNil) if the value is nil or not a []byte.
+func opaqueAEADKey(key any, nilSentinel error) ([]byte, error) {
+	if key == nil {
+		return nil, nilSentinel
+	}
+
+	bytes, ok := key.([]byte)
+	if !ok {
+		return nil, nilSentinel
+	}
+
+	return bytes, nil
 }

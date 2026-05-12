@@ -32,6 +32,7 @@ func (e *Error) Error() string {
 
 // Sentinel errors for token operations.
 var (
+	ErrMethodIsNil          = errors.New("method is nil")
 	ErrSubjectEmpty         = errors.New("subject is empty")
 	ErrPayloadNil           = errors.New("payload is nil")
 	ErrTokenEmpty           = errors.New("token is empty")

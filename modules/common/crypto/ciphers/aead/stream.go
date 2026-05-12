@@ -77,8 +77,14 @@ var (
 func (m *Method) EncryptStream(key ctypes.Bytes, src io.Reader, dst io.Writer, aad ctypes.Bytes) error {
 	cassert.NotNil(m, "method is nil")
 	cassert.NotNil(m.encryptFn, "method encryptFn is nil")
-	cassert.NotNil(src, "src is nil")
-	cassert.NotNil(dst, "dst is nil")
+
+	if src == nil {
+		return ErrEncryption(ErrStreamSrcNil)
+	}
+
+	if dst == nil {
+		return ErrEncryption(ErrStreamDstNil)
+	}
 
 	buf := make([]byte, StreamFrameSize)
 	frameAAD := make([]byte, 0, len(aad)+streamFrameCounterSize)
@@ -118,14 +124,7 @@ func (m *Method) EncryptStream(key ctypes.Bytes, src io.Reader, dst io.Writer, a
 
 // sealAndWriteFrame seals a single plaintext frame and writes it to dst with
 // its length prefix. frameAADBuf is a reusable scratch buffer.
-func (m *Method) sealAndWriteFrame(
-	key ctypes.Bytes,
-	plain []byte,
-	aad ctypes.Bytes,
-	frameAADBuf []byte,
-	dst io.Writer,
-	counter uint64,
-) error {
+func (m *Method) sealAndWriteFrame(key ctypes.Bytes, plain []byte, aad ctypes.Bytes, frameAADBuf []byte, dst io.Writer, counter uint64) error {
 	frameAAD := appendFrameAAD(frameAADBuf[:0], aad, counter)
 
 	ciphered, err := m.encryptFn(m, key, plain, frameAAD)
@@ -161,8 +160,14 @@ func (m *Method) sealAndWriteFrame(
 func (m *Method) DecryptStream(key ctypes.Bytes, src io.Reader, dst io.Writer, aad ctypes.Bytes) error {
 	cassert.NotNil(m, "method is nil")
 	cassert.NotNil(m.decryptFn, "method decryptFn is nil")
-	cassert.NotNil(src, "src is nil")
-	cassert.NotNil(dst, "dst is nil")
+
+	if src == nil {
+		return ErrDecryption(ErrStreamSrcNil)
+	}
+
+	if dst == nil {
+		return ErrDecryption(ErrStreamDstNil)
+	}
 
 	frameAAD := make([]byte, 0, len(aad)+streamFrameCounterSize)
 
@@ -193,15 +198,7 @@ func (m *Method) DecryptStream(key ctypes.Bytes, src io.Reader, dst io.Writer, a
 
 // openAndWriteFrame reads a single ciphertext frame, opens it, and writes
 // the recovered plaintext to dst. frameAADBuf is a reusable scratch buffer.
-func (m *Method) openAndWriteFrame(
-	key ctypes.Bytes,
-	src io.Reader,
-	dst io.Writer,
-	aad ctypes.Bytes,
-	frameAADBuf []byte,
-	length uint32,
-	counter uint64,
-) error {
+func (m *Method) openAndWriteFrame(key ctypes.Bytes, src io.Reader, dst io.Writer, aad ctypes.Bytes, frameAADBuf []byte, length uint32, counter uint64) error {
 	ciphered := make([]byte, length)
 
 	_, readErr := io.ReadFull(src, ciphered)
