@@ -90,6 +90,26 @@ func ecdsaExample(data []byte) {
 
 	fmt.Printf("P256/SHA256 Verify (ASN1): %v\n\n", ok)
 
+	// P384 / SHA-384 with ASN1 encoding (JOSE ES384, TLS 1.3 P-384 interop)
+	p384Key, err := cecdsas.ECDSA_with_SHA384_over_P384.GenerateKey()
+	if err != nil {
+		log.Fatalf("ECDSA P384 key generation failed: %v", err)
+	}
+
+	sig, err = cecdsas.ECDSA_with_SHA384_over_P384.Sign(p384Key, data, cecdsas.ASN1)
+	if err != nil {
+		log.Fatalf("ECDSA P384 sign failed: %v", err)
+	}
+
+	fmt.Printf("P384/SHA384 Signature (ASN1) Hex: %s\n", sig.ToHex())
+
+	ok, err = cecdsas.ECDSA_with_SHA384_over_P384.Verify(&p384Key.PublicKey, sig, data, cecdsas.ASN1)
+	if err != nil {
+		log.Fatalf("ECDSA P384 verify failed: %v", err)
+	}
+
+	fmt.Printf("P384/SHA384 Verify (ASN1): %v\n\n", ok)
+
 	// P521 / SHA-512 with RS encoding
 	p521Key, err := cecdsas.ECDSA_with_SHA512_over_P521.GenerateKey()
 	if err != nil {

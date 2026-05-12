@@ -231,3 +231,66 @@ func TestMethod_Verify(t *testing.T) {
 		}
 	})
 }
+
+func TestECDSA_with_SHA384_over_P384_RoundTrip(t *testing.T) {
+	t.Parallel()
+
+	t.Run("signs and verifies with RS format", func(t *testing.T) {
+		t.Parallel()
+
+		key, err := ECDSA_with_SHA384_over_P384.GenerateKey()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if key.Curve != elliptic.P384() {
+			t.Fatalf("expected P-384 curve, got %v", key.Curve)
+		}
+
+		sig, err := ECDSA_with_SHA384_over_P384.Sign(key, []byte("p384 data"), RS)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		// P-384 component size is 48 bytes => RS format is 96 bytes total.
+		if len(sig) != 96 {
+			t.Fatalf("expected 96 bytes for RS format, got %d", len(sig))
+		}
+
+		ok, err := ECDSA_with_SHA384_over_P384.Verify(&key.PublicKey, sig, []byte("p384 data"), RS)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !ok {
+			t.Fatal("expected verification to succeed")
+		}
+	})
+
+	t.Run("signs and verifies with ASN1 format", func(t *testing.T) {
+		t.Parallel()
+
+		key, err := ECDSA_with_SHA384_over_P384.GenerateKey()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		sig, err := ECDSA_with_SHA384_over_P384.Sign(key, []byte("p384 data"), ASN1)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(sig) == 0 {
+			t.Fatal("expected non-empty signature")
+		}
+
+		ok, err := ECDSA_with_SHA384_over_P384.Verify(&key.PublicKey, sig, []byte("p384 data"), ASN1)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !ok {
+			t.Fatal("expected verification to succeed")
+		}
+	})
+}
