@@ -3,9 +3,11 @@ package tokens
 import "sync"
 
 var methods = map[string]Method{
-	JWT_HS256.name: *JWT_HS256,
-	JWT_HS384.name: *JWT_HS384,
-	JWT_HS512.name: *JWT_HS512,
+	JWT_HS256.name:                 *JWT_HS256,
+	JWT_HS384.name:                 *JWT_HS384,
+	JWT_HS512.name:                 *JWT_HS512,
+	OPAQUE_AES_256_GCM.name:        *OPAQUE_AES_256_GCM,
+	OPAQUE_XCHACHA20_POLY1305.name: *OPAQUE_XCHACHA20_POLY1305,
 }
 
 var lock = new(sync.RWMutex)

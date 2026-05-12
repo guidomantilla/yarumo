@@ -1,5 +1,19 @@
-// Package tokens provides JWT token generation and validation using HMAC
-// signing methods.
+// Package tokens provides token generation and validation. Two distinct
+// flavors are supported:
+//
+//   - JWT signed tokens via HMAC signing methods (HS256/HS384/HS512). The
+//     claims payload is transparent — anyone can base64-decode the body;
+//     only the signature protects integrity.
+//   - Opaque tokens via AEAD encryption (YA-0019). The entire claims payload
+//     is encrypted under a symmetric key, so nothing leaks to the client.
+//     The token is base64url(AEAD.Encrypt(key, json(claims), nil)) with the
+//     AEAD nonce prepended internally by the configured cipher.
+//
+// JWT methods are constructed with NewMethod(name, Algorithm, options...).
+// Opaque methods are constructed with NewOpaqueMethod(name, *caead.Method,
+// options...). Both flavors share the same Method struct, Generate/Validate
+// API, options pipeline, and registry — the cipher field on Method is the
+// discriminator (nil = JWT, non-nil = opaque).
 //
 // # Key management
 //
@@ -79,12 +93,15 @@ var (
 type Algorithm string
 
 // Supported Algorithm values. Keep names aligned with the JWS "alg" header
-// strings (RFC 7518) so the enum value can double as the registered JWT
-// algorithm identifier.
+// strings (RFC 7518) where applicable so the enum value can double as the
+// registered JWT algorithm identifier. Opaque algorithms use bespoke names
+// since they have no JWS analogue.
 const (
-	AlgorithmHS256 Algorithm = "HS256"
-	AlgorithmHS384 Algorithm = "HS384"
-	AlgorithmHS512 Algorithm = "HS512"
+	AlgorithmHS256                   Algorithm = "HS256"
+	AlgorithmHS384                   Algorithm = "HS384"
+	AlgorithmHS512                   Algorithm = "HS512"
+	AlgorithmOpaqueAESGCM            Algorithm = "OPAQUE_AES_GCM"
+	AlgorithmOpaqueXChaCha20Poly1305 Algorithm = "OPAQUE_XCHACHA20_POLY1305"
 )
 
 // Payload is a named type for token claims payload data.
