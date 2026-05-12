@@ -23,6 +23,18 @@
 // Callers wanting to pin a profile by name (e.g. "owasp-2024") rather than
 // inherit whatever defaults the imported version of this package carries
 // should track YA-0034 (WithSecureDefaults helper).
+//
+// # DelegatingEncoder and gradual algorithm migration
+//
+// DelegatingEncoder is a Spring-Security-style wrapper that encodes new
+// passwords with a configurable primary Method but routes Verify and
+// UpgradeNeeded calls via the package ByPrefix registry. This enables the
+// canonical "login-time upgrade" pattern when an application needs to
+// migrate stored hashes from a legacy algorithm to a new one (for example,
+// bcrypt → argon2id): legacy hashes continue to verify, UpgradeNeeded
+// returns true whenever the encoded prefix resolves to a method other than
+// the primary, and the caller re-encodes the password with the primary on
+// next successful login. See NewDelegatingEncoder for the constructor.
 package passwords
 
 import (
