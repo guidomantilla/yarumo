@@ -124,6 +124,7 @@ Each milestone closes when all its issues are `Done`.
 | **YA-0026** | new subpackage `common/crypto/kdfs/` | **Blocks YA-0027** |
 | **YA-0027** | new subpackage `common/crypto/ciphers/hybrid/` (ECIES/HPKE) | After YA-0026 |
 | **YA-0034** | passwords — `WithSecureDefaults` helper | Coordinates with YA-0006, YA-0030 |
+| **YA-0093** | passwords — re-introduce password generator (archived in gist after YA-0002 deletion) | Independent; archive [gist](https://gist.github.com/guidomantilla/cf0b78c1acb1ca704cd4e40e33788473) |
 
 ---
 
