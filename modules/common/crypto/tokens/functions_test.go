@@ -15,7 +15,7 @@ func TestGenerate(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("test-secret-key-for-testing-1234567890")
-		m := NewMethod("test", jwt.SigningMethodHS256, WithKey(key))
+		m := NewMethod("test", AlgorithmHS256, WithKey(key))
 
 		_, err := m.Generate("", Payload{"role": "admin"})
 		if err == nil {
@@ -31,7 +31,7 @@ func TestGenerate(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("test-secret-key-for-testing-1234567890")
-		m := NewMethod("test", jwt.SigningMethodHS256, WithKey(key))
+		m := NewMethod("test", AlgorithmHS256, WithKey(key))
 
 		_, err := m.Generate("user@test.com", nil)
 		if err == nil {
@@ -47,7 +47,7 @@ func TestGenerate(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("test-secret-key-for-testing-1234567890")
-		m := NewMethod("test", jwt.SigningMethodHS256, WithKey(key))
+		m := NewMethod("test", AlgorithmHS256, WithKey(key))
 
 		token, err := m.Generate("user@test.com", Payload{"role": "admin"})
 		if err != nil {
@@ -63,7 +63,7 @@ func TestGenerate(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("test-secret-key-for-testing-1234567890")
-		m := NewMethod("test", jwt.SigningMethodHS256, WithKey(key), WithIssuer("my-app"))
+		m := NewMethod("test", AlgorithmHS256, WithKey(key), WithIssuer("my-app"))
 
 		token, err := m.Generate("user@test.com", Payload{"role": "admin"})
 		if err != nil {
@@ -156,7 +156,7 @@ func TestValidate(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("test-secret-key-for-testing-1234567890")
-		m := NewMethod("test", jwt.SigningMethodHS256, WithKey(key))
+		m := NewMethod("test", AlgorithmHS256, WithKey(key))
 
 		_, err := m.Validate("")
 		if err == nil {
@@ -172,7 +172,7 @@ func TestValidate(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("test-secret-key-for-testing-1234567890")
-		m := NewMethod("test", jwt.SigningMethodHS256, WithKey(key))
+		m := NewMethod("test", AlgorithmHS256, WithKey(key))
 
 		_, err := m.Validate("invalid.token.string")
 		if err == nil {
@@ -188,7 +188,7 @@ func TestValidate(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("test-secret-key-for-testing-1234567890")
-		m := NewMethod("test", jwt.SigningMethodHS256, WithKey(key))
+		m := NewMethod("test", AlgorithmHS256, WithKey(key))
 
 		token, err := m.Generate("user@test.com", Payload{"role": "admin", "id": float64(42)})
 		if err != nil {
@@ -215,8 +215,8 @@ func TestValidate(t *testing.T) {
 		key1 := []byte("key-one-1234567890123456789012345678")
 		key2 := []byte("key-two-1234567890123456789012345678")
 
-		m1 := NewMethod("gen", jwt.SigningMethodHS256, WithKey(key1))
-		m2 := NewMethod("val", jwt.SigningMethodHS256, WithKey(key2))
+		m1 := NewMethod("gen", AlgorithmHS256, WithKey(key1))
+		m2 := NewMethod("val", AlgorithmHS256, WithKey(key2))
 
 		token, err := m1.Generate("user@test.com", Payload{"role": "admin"})
 		if err != nil {
@@ -250,7 +250,7 @@ func TestValidate(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		m := NewMethod("test", jwt.SigningMethodHS256, WithKey(key))
+		m := NewMethod("test", AlgorithmHS256, WithKey(key))
 
 		_, err = m.Validate(signed)
 		if err == nil {
@@ -279,7 +279,7 @@ func TestValidate(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		m := NewMethod("test", jwt.SigningMethodHS256, WithKey(key))
+		m := NewMethod("test", AlgorithmHS256, WithKey(key))
 
 		_, err = m.Validate(signed)
 		if err == nil {
@@ -298,7 +298,7 @@ func TestValidate(t *testing.T) {
 			return "", errors.New("gen boom")
 		}
 
-		m := NewMethod("fail", jwt.SigningMethodHS256, WithGenerateFn(fail))
+		m := NewMethod("fail", AlgorithmHS256, WithGenerateFn(fail))
 
 		_, err := m.Generate("user", Payload{"x": "y"})
 		if err == nil {
@@ -318,7 +318,7 @@ func TestValidate(t *testing.T) {
 			return nil, errors.New("val boom")
 		}
 
-		m := NewMethod("fail", jwt.SigningMethodHS256, WithValidateFn(fail))
+		m := NewMethod("fail", AlgorithmHS256, WithValidateFn(fail))
 
 		_, err := m.Validate("some-token")
 		if err == nil {

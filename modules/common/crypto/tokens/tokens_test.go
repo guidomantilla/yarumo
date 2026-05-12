@@ -7,13 +7,15 @@ import (
 	jwt "github.com/golang-jwt/jwt/v5"
 )
 
+const roleAdmin = "admin"
+
 func TestNewMethod(t *testing.T) {
 	t.Parallel()
 
 	t.Run("creates method with default options", func(t *testing.T) {
 		t.Parallel()
 
-		m := NewMethod("test", jwt.SigningMethodHS256)
+		m := NewMethod("test", AlgorithmHS256)
 
 		if m == nil {
 			t.Fatal("expected non-nil method")
@@ -30,17 +32,20 @@ func TestNewMethod(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("custom-key-12345")
-		m := NewMethod("custom", jwt.SigningMethodHS512, WithKey(key))
+		m := NewMethod("custom", AlgorithmHS512, WithKey(key))
 
 		if string(m.signingKey) != string(key) {
 			t.Fatal("expected custom signing key")
+		}
+		if m.signingMethod != jwt.SigningMethodHS512 {
+			t.Fatalf("expected HS512, got %v", m.signingMethod)
 		}
 	})
 
 	t.Run("creates method with custom issuer and timeout", func(t *testing.T) {
 		t.Parallel()
 
-		m := NewMethod("issuer-test", jwt.SigningMethodHS256, WithIssuer("my-app"))
+		m := NewMethod("issuer-test", AlgorithmHS256, WithIssuer("my-app"))
 
 		if m.issuer != "my-app" {
 			t.Fatalf("expected issuer 'my-app', got %q", m.issuer)
@@ -83,7 +88,7 @@ func TestMethod_Generate_Validate_Roundtrip(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("hs256-secret-key-for-testing-1234567890")
-		m := NewMethod("hs256", jwt.SigningMethodHS256, WithKey(key))
+		m := NewMethod("hs256", AlgorithmHS256, WithKey(key))
 
 		expected := "hs256-val"
 		token, err := m.Generate("subject", Payload{"key": expected})
@@ -105,7 +110,7 @@ func TestMethod_Generate_Validate_Roundtrip(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("hs384-secret-key-for-testing-123456789012345678901234")
-		m := NewMethod("hs384", jwt.SigningMethodHS384, WithKey(key))
+		m := NewMethod("hs384", AlgorithmHS384, WithKey(key))
 
 		expected := "hs384-val"
 		token, err := m.Generate("subject", Payload{"key": expected})
@@ -127,7 +132,7 @@ func TestMethod_Generate_Validate_Roundtrip(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("hs512-secret-key-for-testing-12345678901234567890123456789012345678901234")
-		m := NewMethod("hs512", jwt.SigningMethodHS512, WithKey(key))
+		m := NewMethod("hs512", AlgorithmHS512, WithKey(key))
 
 		expected := "hs512-val"
 		token, err := m.Generate("subject", Payload{"key": expected})
@@ -155,9 +160,9 @@ func TestYA0008_KeyManagementPaths(t *testing.T) {
 	t.Run("default NewOptions then Generate returns ErrSigningKeyNil", func(t *testing.T) {
 		t.Parallel()
 
-		m := NewMethod("no-key", jwt.SigningMethodHS256)
+		m := NewMethod("no-key", AlgorithmHS256)
 
-		_, err := m.Generate("user@test.com", Payload{"role": "admin"})
+		_, err := m.Generate("user@test.com", Payload{"role": roleAdmin})
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -169,7 +174,7 @@ func TestYA0008_KeyManagementPaths(t *testing.T) {
 	t.Run("default NewOptions then Validate returns ErrVerifyingKeyNil", func(t *testing.T) {
 		t.Parallel()
 
-		m := NewMethod("no-key", jwt.SigningMethodHS256)
+		m := NewMethod("no-key", AlgorithmHS256)
 
 		_, err := m.Validate("some.jwt.token")
 		if err == nil {
@@ -183,9 +188,9 @@ func TestYA0008_KeyManagementPaths(t *testing.T) {
 	t.Run("WithGeneratedKey enables Generate/Validate roundtrip", func(t *testing.T) {
 		t.Parallel()
 
-		m := NewMethod("gen-key", jwt.SigningMethodHS256, WithGeneratedKey())
+		m := NewMethod("gen-key", AlgorithmHS256, WithGeneratedKey())
 
-		token, err := m.Generate("user@test.com", Payload{"role": "admin"})
+		token, err := m.Generate("user@test.com", Payload{"role": roleAdmin})
 		if err != nil {
 			t.Fatalf("unexpected generate error: %v", err)
 		}
@@ -197,7 +202,7 @@ func TestYA0008_KeyManagementPaths(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected validate error: %v", err)
 		}
-		if payload["role"] != "admin" {
+		if payload["role"] != roleAdmin {
 			t.Fatalf("expected role 'admin', got %v", payload["role"])
 		}
 	})
@@ -206,7 +211,7 @@ func TestYA0008_KeyManagementPaths(t *testing.T) {
 		t.Parallel()
 
 		key := []byte("explicit-key-1234567890-abcdefghij")
-		m := NewMethod("split-keys", jwt.SigningMethodHS256,
+		m := NewMethod("split-keys", AlgorithmHS256,
 			WithSigningKey(key),
 			WithVerifyingKey(key),
 		)
@@ -222,6 +227,62 @@ func TestYA0008_KeyManagementPaths(t *testing.T) {
 		}
 		if payload["scope"] != "read" {
 			t.Fatalf("expected scope 'read', got %v", payload["scope"])
+		}
+	})
+}
+
+// TestYA0009_AlgorithmEnum verifies the Algorithm enum maps to the expected
+// jwt.SigningMethod internally and that unknown values surface as
+// ErrAlgorithmInvalid / ErrAlgorithmUnknown via the package's assertion path.
+func TestYA0009_AlgorithmEnum(t *testing.T) {
+	t.Parallel()
+
+	t.Run("HS256 maps to jwt.SigningMethodHS256", func(t *testing.T) {
+		t.Parallel()
+
+		if got := signingMethodFor(AlgorithmHS256); got != jwt.SigningMethodHS256 {
+			t.Fatalf("expected jwt.SigningMethodHS256, got %v", got)
+		}
+	})
+
+	t.Run("HS384 maps to jwt.SigningMethodHS384", func(t *testing.T) {
+		t.Parallel()
+
+		if got := signingMethodFor(AlgorithmHS384); got != jwt.SigningMethodHS384 {
+			t.Fatalf("expected jwt.SigningMethodHS384, got %v", got)
+		}
+	})
+
+	t.Run("HS512 maps to jwt.SigningMethodHS512", func(t *testing.T) {
+		t.Parallel()
+
+		if got := signingMethodFor(AlgorithmHS512); got != jwt.SigningMethodHS512 {
+			t.Fatalf("expected jwt.SigningMethodHS512, got %v", got)
+		}
+	})
+
+	t.Run("unknown Algorithm returns nil from signingMethodFor", func(t *testing.T) {
+		t.Parallel()
+
+		if got := signingMethodFor(Algorithm("ES256")); got != nil {
+			t.Fatalf("expected nil for unsupported algorithm, got %v", got)
+		}
+	})
+
+	t.Run("ErrAlgorithmInvalid wraps ErrAlgorithmUnknown for unknown values", func(t *testing.T) {
+		t.Parallel()
+
+		err := ErrAlgorithmInvalid(Algorithm("ES256"))
+		if err == nil {
+			t.Fatal("expected non-nil error")
+		}
+		if !errors.Is(err, ErrAlgorithmUnknown) {
+			t.Fatalf("expected ErrAlgorithmUnknown in chain, got %v", err)
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
 		}
 	})
 }
