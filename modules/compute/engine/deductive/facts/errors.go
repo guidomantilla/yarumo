@@ -20,7 +20,8 @@ type Error struct {
 
 // Sentinel errors for fact failure modes.
 var (
-	ErrNotFound = errors.New("fact not found")
+	ErrNotFound        = errors.New("fact not found")
+	ErrFactQueryFailed = errors.New("fact query failed")
 )
 
 // ErrQuery creates a fact domain error joining the given causes.
@@ -28,7 +29,7 @@ func ErrQuery(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: FactType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrFactQueryFailed)...),
 		},
 	}
 }

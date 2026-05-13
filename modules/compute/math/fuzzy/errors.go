@@ -22,6 +22,7 @@ type Error struct {
 var (
 	ErrEmptySamples = errors.New("empty sample set")
 	ErrInvalidRange = errors.New("invalid range")
+	ErrFuzzyFailed  = errors.New("fuzzy operation failed")
 )
 
 // ErrFuzzy creates a fuzzy domain error joining the given causes.
@@ -29,7 +30,7 @@ func ErrFuzzy(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: FuzzyType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrFuzzyFailed)...),
 		},
 	}
 }

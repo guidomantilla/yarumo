@@ -47,3 +47,24 @@ func TestErrPredicate_type(t *testing.T) {
 		t.Fatalf("expected type %s, got %s", PredicateType, predErr.Type)
 	}
 }
+
+func TestErrPredicate_zeroArgs(t *testing.T) {
+	t.Parallel()
+
+	err := ErrPredicate()
+	if !errors.Is(err, ErrPredicateFailed) {
+		t.Fatal("expected ErrPredicateFailed in chain")
+	}
+}
+
+func TestErrPredicateFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrPredicateFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrPredicateFailed.Error() != "predicate operation failed" {
+		t.Fatalf("unexpected message: %s", ErrPredicateFailed.Error())
+	}
+}

@@ -28,6 +28,7 @@ var (
 	ErrInvalidWeight      = errors.New("weights must be positive")
 	ErrDimensionMismatch  = errors.New("dimensions do not match")
 	ErrEmptyInput         = errors.New("empty input")
+	ErrMCDMFailed         = errors.New("mcdm operation failed")
 )
 
 // ErrMCDM creates an MCDM domain error joining the given causes.
@@ -35,7 +36,7 @@ func ErrMCDM(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: MCDMType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrMCDMFailed)...),
 		},
 	}
 }

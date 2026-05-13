@@ -20,7 +20,8 @@ type Error struct {
 
 // Sentinel errors for rule failure modes.
 var (
-	ErrRuleInvalid = errors.New("rule is invalid")
+	ErrRuleInvalid          = errors.New("rule is invalid")
+	ErrRuleValidationFailed = errors.New("rule validation failed")
 )
 
 // ErrValidation creates a rule domain error joining the given causes.
@@ -28,7 +29,7 @@ func ErrValidation(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: RuleType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrRuleValidationFailed)...),
 		},
 	}
 }

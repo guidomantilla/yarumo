@@ -110,6 +110,14 @@ func TestSentinelErrors(t *testing.T) {
 			t.Fatalf("unexpected: %s", ErrEmptyInput.Error())
 		}
 	})
+
+	t.Run("ErrMCDMFailed", func(t *testing.T) {
+		t.Parallel()
+
+		if ErrMCDMFailed.Error() != "mcdm operation failed" {
+			t.Fatalf("unexpected: %s", ErrMCDMFailed.Error())
+		}
+	})
 }
 
 func TestError_type(t *testing.T) {
@@ -125,5 +133,14 @@ func TestError_type(t *testing.T) {
 
 	if mcdmErr.Type != MCDMType {
 		t.Fatalf("expected type %s, got %s", MCDMType, mcdmErr.Type)
+	}
+}
+
+func TestErrMCDM_zeroArgs(t *testing.T) {
+	t.Parallel()
+
+	err := ErrMCDM()
+	if !errors.Is(err, ErrMCDMFailed) {
+		t.Fatal("expected ErrMCDMFailed in chain")
 	}
 }

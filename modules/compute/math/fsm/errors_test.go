@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
@@ -54,9 +55,33 @@ func TestErrFSM_error_message(t *testing.T) {
 
 	err := ErrFSM(ErrStateNotFound)
 
-	expected := "math-fsm error: state not found"
-	if err.Error() != expected {
-		t.Fatalf("expected %q, got %q", expected, err.Error())
+	got := err.Error()
+	if !strings.Contains(got, "math-fsm") {
+		t.Fatalf("expected type prefix in %q", got)
+	}
+	if !strings.Contains(got, "state not found") {
+		t.Fatalf("expected cause in %q", got)
+	}
+}
+
+func TestErrFSM_zeroArgs(t *testing.T) {
+	t.Parallel()
+
+	err := ErrFSM()
+	if !errors.Is(err, ErrFSMFailed) {
+		t.Fatal("expected ErrFSMFailed in chain")
+	}
+}
+
+func TestErrFSMFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrFSMFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrFSMFailed.Error() != "fsm operation failed" {
+		t.Fatalf("unexpected message: %s", ErrFSMFailed.Error())
 	}
 }
 

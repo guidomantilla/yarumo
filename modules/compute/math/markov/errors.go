@@ -30,6 +30,7 @@ var (
 	ErrSingularMatrix     = errors.New("singular matrix")
 	ErrNotTransient       = errors.New("state is not transient")
 	ErrNoAbsorbingStates  = errors.New("no absorbing states")
+	ErrMarkovFailed       = errors.New("markov operation failed")
 )
 
 // ErrMarkov creates a markov domain error joining the given causes.
@@ -37,7 +38,7 @@ func ErrMarkov(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: MarkovType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrMarkovFailed)...),
 		},
 	}
 }

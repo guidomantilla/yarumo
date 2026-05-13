@@ -33,6 +33,7 @@ var (
 	ErrMultipleParents = errors.New("node has multiple parents")
 	ErrSelfLoop        = errors.New("self-loop not allowed")
 	ErrDuplicateNode   = errors.New("node already exists")
+	ErrGraphFailed     = errors.New("graph operation failed")
 )
 
 // ErrGraph creates a graph domain error joining the given causes.
@@ -40,7 +41,7 @@ func ErrGraph(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: GraphType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrGraphFailed)...),
 		},
 	}
 }

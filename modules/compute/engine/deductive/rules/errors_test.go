@@ -60,4 +60,25 @@ func TestErrValidation(t *testing.T) {
 			t.Fatalf("expected type %s, got %s", RuleType, ruleErr.Type)
 		}
 	})
+
+	t.Run("zero args still wraps ErrRuleValidationFailed", func(t *testing.T) {
+		t.Parallel()
+
+		err := ErrValidation()
+		if !errors.Is(err, ErrRuleValidationFailed) {
+			t.Fatal("expected ErrRuleValidationFailed in chain")
+		}
+	})
+}
+
+func TestErrRuleValidationFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrRuleValidationFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrRuleValidationFailed.Error() != "rule validation failed" {
+		t.Fatalf("unexpected message: %s", ErrRuleValidationFailed.Error())
+	}
 }

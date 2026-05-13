@@ -22,6 +22,7 @@ type Error struct {
 var (
 	ErrEmptyCollection = errors.New("collection is empty")
 	ErrNilPredicate    = errors.New("predicate is nil")
+	ErrPredicateFailed = errors.New("predicate operation failed")
 )
 
 // ErrPredicate creates a predicate domain error joining the given causes.
@@ -29,7 +30,7 @@ func ErrPredicate(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: PredicateType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrPredicateFailed)...),
 		},
 	}
 }

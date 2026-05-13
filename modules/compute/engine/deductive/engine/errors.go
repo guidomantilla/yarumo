@@ -23,6 +23,7 @@ var (
 	ErrMaxIterations = errors.New("maximum iterations reached")
 	ErrNoRules       = errors.New("no rules provided")
 	ErrMaxDepth      = errors.New("maximum recursion depth reached")
+	ErrEngineFailed  = errors.New("engine operation failed")
 )
 
 // ErrEngine creates an engine domain error joining the given causes.
@@ -30,7 +31,7 @@ func ErrEngine(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: EngineType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrEngineFailed)...),
 		},
 	}
 }

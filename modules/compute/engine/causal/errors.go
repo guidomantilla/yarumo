@@ -26,6 +26,7 @@ var (
 	ErrDuplicateVariable = errors.New("duplicate variable")
 	ErrNilEquation       = errors.New("equation function is nil")
 	ErrParentNotFound    = errors.New("parent variable not found")
+	ErrCausalFailed      = errors.New("causal inference failed")
 )
 
 // ErrCausal creates a causal domain error joining the given causes.
@@ -33,7 +34,7 @@ func ErrCausal(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: CausalType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrCausalFailed)...),
 		},
 	}
 }

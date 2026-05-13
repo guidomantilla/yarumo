@@ -61,6 +61,15 @@ func TestErrFuzzy(t *testing.T) {
 			t.Fatalf("expected type %s, got %s", FuzzyType, fuzzyErr.Type)
 		}
 	})
+
+	t.Run("zero args still wraps ErrFuzzyFailed", func(t *testing.T) {
+		t.Parallel()
+
+		err := ErrFuzzy()
+		if !errors.Is(err, ErrFuzzyFailed) {
+			t.Fatal("expected ErrFuzzyFailed in chain")
+		}
+	})
 }
 
 func TestSentinelErrors(t *testing.T) {
@@ -79,6 +88,14 @@ func TestSentinelErrors(t *testing.T) {
 
 		if ErrNoRules.Error() != "no rules provided" {
 			t.Fatalf("unexpected: %s", ErrNoRules.Error())
+		}
+	})
+
+	t.Run("ErrFuzzyFailed", func(t *testing.T) {
+		t.Parallel()
+
+		if ErrFuzzyFailed.Error() != "fuzzy inference failed" {
+			t.Fatalf("unexpected: %s", ErrFuzzyFailed.Error())
 		}
 	})
 }

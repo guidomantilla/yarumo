@@ -2,6 +2,7 @@ package markov
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
@@ -54,9 +55,33 @@ func TestErrMarkov_error_message(t *testing.T) {
 
 	err := ErrMarkov(ErrStateNotFound)
 
-	expected := "math-markov error: state not found"
-	if err.Error() != expected {
-		t.Fatalf("expected %q, got %q", expected, err.Error())
+	got := err.Error()
+	if !strings.Contains(got, "math-markov") {
+		t.Fatalf("expected type prefix in %q", got)
+	}
+	if !strings.Contains(got, "state not found") {
+		t.Fatalf("expected cause in %q", got)
+	}
+}
+
+func TestErrMarkov_zeroArgs(t *testing.T) {
+	t.Parallel()
+
+	err := ErrMarkov()
+	if !errors.Is(err, ErrMarkovFailed) {
+		t.Fatal("expected ErrMarkovFailed in chain")
+	}
+}
+
+func TestErrMarkovFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrMarkovFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrMarkovFailed.Error() != "markov operation failed" {
+		t.Fatalf("unexpected message: %s", ErrMarkovFailed.Error())
 	}
 }
 

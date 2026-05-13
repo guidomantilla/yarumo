@@ -28,6 +28,7 @@ var (
 	ErrInvalidTransition   = errors.New("transition references unknown state")
 	ErrNoInitialState      = errors.New("initial state not found")
 	ErrInvalidEvent        = errors.New("event must not be empty")
+	ErrFSMFailed           = errors.New("fsm operation failed")
 )
 
 // ErrFSM creates an fsm domain error joining the given causes.
@@ -35,7 +36,7 @@ func ErrFSM(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: FSMType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrFSMFailed)...),
 		},
 	}
 }

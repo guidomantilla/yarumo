@@ -55,12 +55,17 @@ var (
 	ErrNonPositiveData = errors.New("all values must be positive")
 )
 
+// Generic fallback sentinel for the stats package.
+var (
+	ErrStatsFailed = errors.New("stats operation failed")
+)
+
 // ErrStats creates a stats domain error joining the given causes.
 func ErrStats(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: StatsType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrStatsFailed)...),
 		},
 	}
 }

@@ -22,6 +22,8 @@ type Error struct {
 var (
 	// ErrEventNotFound indicates that a required event label is not present in the trace.
 	ErrEventNotFound = errors.New("event not found in trace")
+	// ErrTemporalFailed is the generic fallback wrapped by ErrTemporal.
+	ErrTemporalFailed = errors.New("temporal operation failed")
 )
 
 // ErrTemporal creates a temporal domain error joining the given causes.
@@ -29,7 +31,7 @@ func ErrTemporal(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: TemporalType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrTemporalFailed)...),
 		},
 	}
 }
