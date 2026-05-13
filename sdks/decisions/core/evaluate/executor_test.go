@@ -346,7 +346,7 @@ func TestDispatchModelParadigm(t *testing.T) {
 	t.Run("wrong ruleset type", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := dispatchModelParadigm(context.Background(), Table, "not a ruleset", nil, Options{})
+		_, err := dispatchModelParadigm(context.Background(), Table, "not a ruleset", nil, &Options{})
 
 		if err == nil {
 			t.Fatal("expected error")
@@ -362,7 +362,7 @@ func TestDispatchModelParadigm(t *testing.T) {
 
 		rs := &schema.RuleSet{Name: "test"}
 
-		_, err := dispatchModelParadigm(context.Background(), Paradigm(99), rs, nil, Options{})
+		_, err := dispatchModelParadigm(context.Background(), Paradigm(99), rs, nil, &Options{})
 
 		if err == nil {
 			t.Fatal("expected error")
@@ -378,7 +378,7 @@ func TestDispatchModelParadigm(t *testing.T) {
 
 		rs := &schema.RuleSet{Name: "test"}
 
-		_, err := dispatchModelParadigm(context.Background(), Deductive, rs, nil, Options{})
+		_, err := dispatchModelParadigm(context.Background(), Deductive, rs, nil, &Options{})
 
 		if err == nil {
 			t.Fatal("expected error for inference paradigm in dispatchModelParadigm")

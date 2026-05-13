@@ -6,7 +6,7 @@ import (
 
 // evaluator is the default Evaluator implementation backed by Parse + Expr.Eval.
 type evaluator struct {
-	options Options
+	options *Options
 }
 
 // NewEvaluator creates a new Evaluator with the given options.

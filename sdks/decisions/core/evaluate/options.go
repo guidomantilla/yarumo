@@ -22,10 +22,10 @@ type Options struct {
 type Option func(*Options)
 
 // NewOptions creates Options from the given functional options.
-func NewOptions(opts ...Option) Options {
+func NewOptions(opts ...Option) *Options {
 	defaultExplainer := explain.NewTemplateExplainer(explain.English)
 
-	o := Options{
+	o := &Options{
 		deductiveExplainer: defaultExplainer,
 		bayesianExplainer:  defaultExplainer,
 		fuzzyExplainer:     defaultExplainer,
@@ -35,7 +35,7 @@ func NewOptions(opts ...Option) Options {
 	}
 
 	for _, opt := range opts {
-		opt(&o)
+		opt(o)
 	}
 
 	return o
