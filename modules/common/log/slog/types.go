@@ -1,27 +1,9 @@
-// Package log provides a structured logging abstraction with support for multiple log levels.
-package log
+package slog
 
-import (
-	"context"
-)
+import "context"
 
-// LogFn is the function type for package-level logging functions.
-type LogFn func(ctx context.Context, msg string, args ...any)
-
-// UseFn is the function type for Use.
-type UseFn func(l Logger)
-
-var (
-	_ UseFn = Use
-	_ LogFn = Trace
-	_ LogFn = Debug
-	_ LogFn = Info
-	_ LogFn = Warn
-	_ LogFn = Error
-	_ LogFn = Fatal
-)
-
-// Logger defines the interface for structured logging with six severity levels.
+// Logger defines the contract for the slog-backed logger.
+// Methods are safe for concurrent use.
 type Logger interface {
 	// Trace logs a message at trace level.
 	Trace(ctx context.Context, msg string, args ...any)
@@ -36,3 +18,5 @@ type Logger interface {
 	// Fatal logs a message at fatal level and terminates the process.
 	Fatal(ctx context.Context, msg string, args ...any)
 }
+
+var _ Logger = (*logger)(nil)
