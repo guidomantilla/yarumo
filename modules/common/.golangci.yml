@@ -243,6 +243,11 @@ linters:
       - path: log/slog/handler_fanout\.go
         linters:
           - wrapcheck
+      # context handler delegates directly to the inner slog.Handler; wrapping
+      # the error here would obscure the underlying handler's diagnostics
+      - path: log/slog/handler_context\.go
+        linters:
+          - wrapcheck
       # tracefr delegates directly to trace.FlightRecorder; wrapping errors adds no value
       - path: diagnostics/trace\.go
         linters:

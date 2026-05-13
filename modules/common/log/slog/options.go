@@ -11,9 +11,10 @@ type Option func(opts *Options)
 
 // Options holds the configuration for the slog Logger.
 type Options struct {
-	level    Level
-	writer   io.Writer
-	handlers []slog.Handler
+	level      Level
+	writer     io.Writer
+	handlers   []slog.Handler
+	extractors []AttrExtractor
 }
 
 // NewOptions creates a new Options with sensible defaults and applies the given options.
@@ -54,6 +55,24 @@ func WithHandlers(handlers ...slog.Handler) Option {
 	return func(opts *Options) {
 		if len(handlers) > 0 {
 			opts.handlers = append(opts.handlers, handlers...)
+		}
+	}
+}
+
+// WithContextExtractors registers attribute extractors that run on every log
+// record. Each extractor is invoked with the record's context and its returned
+// attributes are added to the record before it reaches the underlying handlers.
+// Nil extractors are filtered out.
+//
+// Multiple calls accumulate, so callers can register extractors for distinct
+// concerns (request-scoped attrs, OTel trace context, tenancy, etc.) and have
+// them all run per record.
+func WithContextExtractors(extractors ...AttrExtractor) Option {
+	return func(opts *Options) {
+		for _, fn := range extractors {
+			if fn != nil {
+				opts.extractors = append(opts.extractors, fn)
+			}
 		}
 	}
 }
