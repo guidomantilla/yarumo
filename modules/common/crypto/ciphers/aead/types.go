@@ -16,6 +16,14 @@
 // load will not resolve here; callers that need late-bound lookup should
 // call Get(name) directly.
 //
+// # Recommended entry point for string-named algorithms
+//
+// Encrypt(name, key, data, aad) and Decrypt(name, key, data, aad) are the
+// recommended top-level helpers for callers that load the algorithm name
+// from config. They each perform a single Get and forward to the
+// corresponding Method operation, returning the package's domain error
+// when the name is not registered.
+//
 // # Streaming
 //
 // Method.EncryptStream and Method.DecryptStream implement chunked AEAD

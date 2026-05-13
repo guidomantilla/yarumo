@@ -69,6 +69,37 @@ func encrypt(method *Method, key ctypes.Bytes, data ctypes.Bytes, aad ctypes.Byt
 	return out, nil
 }
 
+// Encrypt is the recommended entry point for callers that receive the
+// algorithm name as a string (e.g. loaded from config, a request header, or
+// a database column). It performs a single registry Get and forwards to
+// Method.Encrypt, returning ErrAlgorithmNotSupported when name is not
+// registered.
+//
+// For callers that already hold a *Method (predefined or returned by Get),
+// use Method.Encrypt directly; Encrypt exists purely to collapse the
+// "Get + Encrypt" boilerplate at the config↔runtime seam.
+func Encrypt(name string, key, data, aad ctypes.Bytes) (ctypes.Bytes, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Encrypt(key, data, aad)
+}
+
+// Decrypt is the recommended entry point for callers that receive the
+// algorithm name as a string. It performs a single registry Get and forwards
+// to Method.Decrypt, returning ErrAlgorithmNotSupported when name is not
+// registered.
+func Decrypt(name string, key, data, aad ctypes.Bytes) (ctypes.Bytes, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Decrypt(key, data, aad)
+}
+
 func decrypt(method *Method, key ctypes.Bytes, ciphered ctypes.Bytes, aad ctypes.Bytes) (ctypes.Bytes, error) {
 	if method == nil {
 		return nil, ErrMethodInvalid

@@ -367,3 +367,107 @@ func TestPublicKeyPEMRoundTrip(t *testing.T) {
 		var _ *ecdsa.PublicKey = parsedPub
 	})
 }
+
+func TestDigest_ByName(t *testing.T) {
+	t.Parallel()
+
+	t.Run("signs and verifies round trip", func(t *testing.T) {
+		t.Parallel()
+
+		method, err := Get("ECDSA_with_SHA256_over_P256")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		priv, err := method.GenerateKey()
+		if err != nil {
+			t.Fatalf("unexpected error generating key: %v", err)
+		}
+
+		privPEM, err := MarshalPrivateKeyPEM(priv)
+		if err != nil {
+			t.Fatalf("unexpected error marshalling private key: %v", err)
+		}
+
+		pubPEM, err := MarshalPublicKeyPEM(&priv.PublicKey)
+		if err != nil {
+			t.Fatalf("unexpected error marshalling public key: %v", err)
+		}
+
+		sig, err := Digest("ECDSA_with_SHA256_over_P256", privPEM, []byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		ok, err := Validate("ECDSA_with_SHA256_over_P256", pubPEM, sig, []byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !ok {
+			t.Fatal("expected verification to succeed")
+		}
+	})
+
+	t.Run("Digest returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := Digest("UNKNOWN", []byte("k"), []byte("data"))
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		if got != nil {
+			t.Fatalf("expected nil bytes, got %v", got)
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("Digest returns PEM codec error for invalid key", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Digest("ECDSA_with_SHA256_over_P256", []byte("not a pem"), []byte("data"))
+		if err == nil {
+			t.Fatal("expected error for invalid PEM")
+		}
+
+		if !errors.Is(err, ErrPEMDecodeFailed) {
+			t.Fatalf("expected ErrPEMDecodeFailed, got %v", err)
+		}
+	})
+
+	t.Run("Validate returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		ok, err := Validate("UNKNOWN", []byte("k"), []byte("sig"), []byte("data"))
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		if ok {
+			t.Fatal("expected ok=false on error")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("Validate returns PEM codec error for invalid key", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Validate("ECDSA_with_SHA256_over_P256", []byte("not a pem"), []byte("sig"), []byte("data"))
+		if err == nil {
+			t.Fatal("expected error for invalid PEM")
+		}
+
+		if !errors.Is(err, ErrPEMDecodeFailed) {
+			t.Fatalf("expected ErrPEMDecodeFailed, got %v", err)
+		}
+	})
+}

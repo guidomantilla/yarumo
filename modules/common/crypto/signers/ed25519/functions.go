@@ -106,6 +106,41 @@ func key() (ed25519.PublicKey, ed25519.PrivateKey, error) {
 	return ed25519.GenerateKey(rand.Reader)
 }
 
+// Digest is the recommended entry point for callers that receive the
+// algorithm name as a string (e.g. loaded from config, a request header, or
+// a database column). It performs a single registry Get, parses the PKCS#8
+// PEM-encoded private key, and forwards to Method.Sign.
+func Digest(name string, key, data ctypes.Bytes) (ctypes.Bytes, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	priv, err := ParsePrivateKeyPEM(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Sign(&priv, data)
+}
+
+// Validate is the recommended entry point for callers that receive the
+// algorithm name as a string. It performs a single registry Get, parses the
+// PKIX PEM-encoded public key, and forwards to Method.Verify.
+func Validate(name string, key, digest, data ctypes.Bytes) (bool, error) {
+	method, err := Get(name)
+	if err != nil {
+		return false, err
+	}
+
+	pub, err := ParsePublicKeyPEM(key)
+	if err != nil {
+		return false, err
+	}
+
+	return method.Verify(&pub, digest, data)
+}
+
 func sign(method *Method, key *ed25519.PrivateKey, data ctypes.Bytes) (ctypes.Bytes, error) {
 	if method == nil {
 		return nil, ErrMethodIsNil

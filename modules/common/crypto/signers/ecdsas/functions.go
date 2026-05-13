@@ -18,6 +18,47 @@ const pemBlockPrivateKey = "PRIVATE KEY"
 // pemBlockPublicKey is the PEM block type used for PKIX/SubjectPublicKeyInfo public keys.
 const pemBlockPublicKey = "PUBLIC KEY"
 
+// Digest is the recommended entry point for callers that receive the
+// algorithm name as a string (e.g. loaded from config, a request header, or
+// a database column). It performs a single registry Get, parses the PKCS#8
+// PEM-encoded private key, and forwards to Method.Sign using the ASN.1 DER
+// signature format (the standard library default).
+//
+// Use the explicit Method.Sign API when an alternative signature format
+// (e.g. RS for JOSE/JWT or WebAuthn) is required.
+func Digest(name string, key, data ctypes.Bytes) (ctypes.Bytes, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	priv, err := ParsePrivateKeyPEM(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Sign(priv, data, ASN1)
+}
+
+// Validate is the recommended entry point for callers that receive the
+// algorithm name as a string. It performs a single registry Get, parses the
+// PKIX PEM-encoded public key, and forwards to Method.Verify using the
+// ASN.1 DER signature format. Use Method.Verify directly when a different
+// signature format is required.
+func Validate(name string, key, digest, data ctypes.Bytes) (bool, error) {
+	method, err := Get(name)
+	if err != nil {
+		return false, err
+	}
+
+	pub, err := ParsePublicKeyPEM(key)
+	if err != nil {
+		return false, err
+	}
+
+	return method.Verify(pub, digest, data, ASN1)
+}
+
 // MarshalPrivateKeyPEM marshals an ECDSA private key into PKCS#8 PEM-encoded bytes.
 func MarshalPrivateKeyPEM(key *ecdsa.PrivateKey) ([]byte, error) {
 	if key == nil {

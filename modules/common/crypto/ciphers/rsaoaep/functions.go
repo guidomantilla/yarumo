@@ -105,6 +105,44 @@ func ParsePublicKeyPEM(pemBytes []byte) (*rsa.PublicKey, error) {
 	return key, nil
 }
 
+// Encrypt is the recommended entry point for callers that receive the
+// algorithm name as a string (e.g. loaded from config, a request header, or
+// a database column). It performs a single registry Get, parses the PKIX
+// PEM-encoded RSA public key, and forwards to Method.Encrypt. The aad
+// argument is passed through as the OAEP label.
+func Encrypt(name string, key, data, aad ctypes.Bytes) (ctypes.Bytes, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	pub, err := ParsePublicKeyPEM(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Encrypt(pub, data, aad)
+}
+
+// Decrypt is the recommended entry point for callers that receive the
+// algorithm name as a string. It performs a single registry Get, parses the
+// PKCS#8 PEM-encoded RSA private key, and forwards to Method.Decrypt. The
+// aad argument is passed through as the OAEP label and must match the
+// value used at encryption time.
+func Decrypt(name string, key, data, aad ctypes.Bytes) (ctypes.Bytes, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	priv, err := ParsePrivateKeyPEM(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Decrypt(priv, data, aad)
+}
+
 func key(method *Method, bits int) (*rsa.PrivateKey, error) {
 	if method == nil {
 		return nil, ErrMethodIsNil

@@ -82,6 +82,15 @@
 // the time of the call. Custom methods registered via Register after config
 // load will not resolve here; callers that need late-bound lookup should
 // call Get(name) directly.
+//
+// # Recommended entry point for string-named algorithms
+//
+// Generate(name, subject, payload) and Validate(name, tokenString) are the
+// recommended top-level helpers for callers that load the algorithm name
+// from config. They each perform a single Get and forward to the
+// corresponding Method operation. The named Method must already have been
+// registered with keys configured (see Key management above): the
+// predefined templates carry no key material on purpose.
 package tokens
 
 import (

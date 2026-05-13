@@ -185,3 +185,103 @@ func TestDecrypt(t *testing.T) {
 		}
 	})
 }
+
+func TestEncrypt_ByName(t *testing.T) {
+	t.Parallel()
+
+	const methodName = "HPKE_X25519_HKDF_SHA256_AES_256_GCM"
+
+	t.Run("encrypts and decrypts round trip", func(t *testing.T) {
+		t.Parallel()
+
+		method, err := Get(methodName)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		pub, priv, err := method.GenerateKey()
+		if err != nil {
+			t.Fatalf("unexpected error generating key: %v", err)
+		}
+
+		pubBin, err := pub.MarshalBinary()
+		if err != nil {
+			t.Fatalf("unexpected error marshalling public key: %v", err)
+		}
+
+		privBin, err := priv.MarshalBinary()
+		if err != nil {
+			t.Fatalf("unexpected error marshalling private key: %v", err)
+		}
+
+		const plaintext = "round-trip"
+
+		ciphered, err := Encrypt(methodName, pubBin, []byte(plaintext), []byte("info"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		plain, err := Decrypt(methodName, privBin, ciphered, []byte("info"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if string(plain) != plaintext {
+			t.Fatalf("expected %q, got %q", plaintext, string(plain))
+		}
+	})
+
+	t.Run("Encrypt returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Encrypt("UNKNOWN", []byte("k"), []byte("d"), nil)
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("Decrypt returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Decrypt("UNKNOWN", []byte("k"), []byte("d"), nil)
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("Encrypt returns key-type-mismatch error for invalid key", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Encrypt(methodName, []byte("not a kem key"), []byte("d"), nil)
+		if err == nil {
+			t.Fatal("expected error for invalid binary key")
+		}
+
+		if !errors.Is(err, ErrKeyTypeMismatch) {
+			t.Fatalf("expected ErrKeyTypeMismatch, got %v", err)
+		}
+	})
+
+	t.Run("Decrypt returns key-type-mismatch error for invalid key", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Decrypt(methodName, []byte("not a kem key"), []byte("d"), nil)
+		if err == nil {
+			t.Fatal("expected error for invalid binary key")
+		}
+
+		if !errors.Is(err, ErrKeyTypeMismatch) {
+			t.Fatalf("expected ErrKeyTypeMismatch, got %v", err)
+		}
+	})
+}

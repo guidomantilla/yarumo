@@ -15,6 +15,13 @@
 // the time of the call. Custom methods registered via Register after config
 // load will not resolve here; callers that need late-bound lookup should
 // call Get(name) directly.
+//
+// # Recommended entry point for string-named algorithms
+//
+// Digest(name, key, data) and Validate(name, key, digest, data) are the
+// recommended top-level helpers for callers that load the algorithm name
+// from config. They each perform a single Get, parse the PEM-encoded RSA
+// key, and forward to the corresponding Method operation.
 package rsassas
 
 import (

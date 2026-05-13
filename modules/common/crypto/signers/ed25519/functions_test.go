@@ -340,3 +340,98 @@ func TestPublicKeyPEMRoundTrip(t *testing.T) {
 		}
 	})
 }
+
+func TestDigest_ByName(t *testing.T) {
+	t.Parallel()
+
+	t.Run("signs and verifies round trip", func(t *testing.T) {
+		t.Parallel()
+
+		pub, priv, err := ed25519.GenerateKey(rand.Reader)
+		if err != nil {
+			t.Fatalf("unexpected error generating key: %v", err)
+		}
+
+		privPEM, err := MarshalPrivateKeyPEM(priv)
+		if err != nil {
+			t.Fatalf("unexpected error marshalling private key: %v", err)
+		}
+
+		pubPEM, err := MarshalPublicKeyPEM(pub)
+		if err != nil {
+			t.Fatalf("unexpected error marshalling public key: %v", err)
+		}
+
+		sig, err := Digest("Ed25519", privPEM, []byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		ok, err := Validate("Ed25519", pubPEM, sig, []byte("data"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !ok {
+			t.Fatal("expected verification to succeed")
+		}
+	})
+
+	t.Run("Digest returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Digest("UNKNOWN", []byte("k"), []byte("data"))
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("Validate returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		ok, err := Validate("UNKNOWN", []byte("k"), []byte("sig"), []byte("data"))
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		if ok {
+			t.Fatal("expected ok=false on error")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("Digest returns PEM codec error for invalid key", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Digest("Ed25519", []byte("not a pem"), []byte("data"))
+		if err == nil {
+			t.Fatal("expected error for invalid PEM")
+		}
+
+		if !errors.Is(err, ErrPEMDecodeFailed) {
+			t.Fatalf("expected ErrPEMDecodeFailed, got %v", err)
+		}
+	})
+
+	t.Run("Validate returns PEM codec error for invalid key", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Validate("Ed25519", []byte("not a pem"), []byte("sig"), []byte("data"))
+		if err == nil {
+			t.Fatal("expected error for invalid PEM")
+		}
+
+		if !errors.Is(err, ErrPEMDecodeFailed) {
+			t.Fatalf("expected ErrPEMDecodeFailed, got %v", err)
+		}
+	})
+}

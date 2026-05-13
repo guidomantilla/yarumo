@@ -206,3 +206,65 @@ func TestDecrypt(t *testing.T) {
 		}
 	})
 }
+
+func TestEncrypt_ByName(t *testing.T) {
+	t.Parallel()
+
+	t.Run("encrypts and decrypts round trip", func(t *testing.T) {
+		t.Parallel()
+
+		method, err := Get("AES_256_GCM")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		k, err := method.GenerateKey()
+		if err != nil {
+			t.Fatalf("unexpected error generating key: %v", err)
+		}
+
+		const plaintext = "round-trip"
+
+		ciphered, err := Encrypt("AES_256_GCM", k, []byte(plaintext), []byte("aad"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		plain, err := Decrypt("AES_256_GCM", k, ciphered, []byte("aad"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if string(plain) != plaintext {
+			t.Fatalf("expected %q, got %q", plaintext, string(plain))
+		}
+	})
+
+	t.Run("Encrypt returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Encrypt("UNKNOWN", []byte("k"), []byte("d"), nil)
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+
+	t.Run("Decrypt returns domain error for unknown name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := Decrypt("UNKNOWN", []byte("k"), []byte("d"), nil)
+		if err == nil {
+			t.Fatal("expected error for unknown name")
+		}
+
+		var domErr *Error
+		if !errors.As(err, &domErr) {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+	})
+}

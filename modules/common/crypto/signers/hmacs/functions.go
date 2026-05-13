@@ -7,6 +7,37 @@ import (
 	ctypes "github.com/guidomantilla/yarumo/common/types"
 )
 
+// Digest is the recommended entry point for callers that receive the
+// algorithm name as a string (e.g. loaded from config, a request header, or
+// a database column). It performs a single registry Get and forwards to
+// Method.Digest, returning ErrAlgorithmNotSupported when name is not
+// registered.
+//
+// For callers that already hold a *Method (predefined or returned by Get),
+// use Method.Digest directly; Digest exists purely to collapse the
+// "Get + Digest" boilerplate at the config↔runtime seam.
+func Digest(name string, key, data ctypes.Bytes) (ctypes.Bytes, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Digest(key, data)
+}
+
+// Validate is the recommended entry point for callers that receive the
+// algorithm name as a string. It performs a single registry Get and forwards
+// to Method.Validate, returning ErrAlgorithmNotSupported when name is not
+// registered.
+func Validate(name string, key, digest, data ctypes.Bytes) (bool, error) {
+	method, err := Get(name)
+	if err != nil {
+		return false, err
+	}
+
+	return method.Validate(key, digest, data)
+}
+
 func key(method *Method) (ctypes.Bytes, error) {
 	if method == nil {
 		return nil, ErrMethodIsNil

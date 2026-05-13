@@ -70,6 +70,48 @@ func encrypt(method *Method, recipientPub kem.PublicKey, plaintext, info ctypes.
 	return out, nil
 }
 
+// Encrypt is the recommended entry point for callers that receive the
+// algorithm name as a string (e.g. loaded from config, a request header, or
+// a database column). It performs a single registry Get, unmarshals the
+// recipient's binary public key using the method's KEM scheme, and forwards
+// to Method.Encrypt. The aad argument is passed through as the HPKE info
+// label.
+//
+// Use Method.Encrypt directly when the caller already holds a
+// kem.PublicKey.
+func Encrypt(name string, key, data, aad ctypes.Bytes) (ctypes.Bytes, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	pub, err := method.kemID.Scheme().UnmarshalBinaryPublicKey(key)
+	if err != nil {
+		return nil, ErrEncrypt(cerrs.Wrap(ErrKeyTypeMismatch, err))
+	}
+
+	return method.Encrypt(pub, data, aad)
+}
+
+// Decrypt is the recommended entry point for callers that receive the
+// algorithm name as a string. It performs a single registry Get, unmarshals
+// the recipient's binary private key using the method's KEM scheme, and
+// forwards to Method.Decrypt. The aad argument must match the info label
+// used at encryption time.
+func Decrypt(name string, key, data, aad ctypes.Bytes) (ctypes.Bytes, error) {
+	method, err := Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	priv, err := method.kemID.Scheme().UnmarshalBinaryPrivateKey(key)
+	if err != nil {
+		return nil, ErrDecrypt(cerrs.Wrap(ErrKeyTypeMismatch, err))
+	}
+
+	return method.Decrypt(priv, data, aad)
+}
+
 // decrypt performs HPKE base-mode decryption. It expects the wire format
 // produced by encrypt (encapsulated key || AEAD ciphertext).
 func decrypt(method *Method, recipientPriv kem.PrivateKey, ciphertext, info ctypes.Bytes) (ctypes.Bytes, error) {
