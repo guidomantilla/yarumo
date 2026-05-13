@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"context"
-	"runtime"
+	"runtime/debug"
 	"time"
 
 	"google.golang.org/grpc"
@@ -18,10 +18,7 @@ func RecoveryInterceptor() grpc.UnaryServerInterceptor {
 		defer func() {
 			r := recover()
 			if r != nil {
-				stack := make([]byte, 4096)
-				n := runtime.Stack(stack, false)
-
-				clog.Error(ctx, "grpc handler panicked", "method", info.FullMethod, "panic", r, "stack", string(stack[:n]))
+				clog.Error(ctx, "grpc handler panicked", "method", info.FullMethod, "panic", r, "stack", string(debug.Stack()))
 
 				err = status.Errorf(codes.Internal, "internal server error")
 			}
@@ -37,10 +34,7 @@ func StreamRecoveryInterceptor() grpc.StreamServerInterceptor {
 		defer func() {
 			r := recover()
 			if r != nil {
-				stack := make([]byte, 4096)
-				n := runtime.Stack(stack, false)
-
-				clog.Error(ss.Context(), "grpc stream handler panicked", "method", info.FullMethod, "panic", r, "stack", string(stack[:n]))
+				clog.Error(ss.Context(), "grpc stream handler panicked", "method", info.FullMethod, "panic", r, "stack", string(debug.Stack()))
 
 				err = status.Errorf(codes.Internal, "internal server error")
 			}
