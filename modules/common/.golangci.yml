@@ -222,10 +222,14 @@ linters:
       - path: crypto/ciphers/hybrid/(functions|hybrid)\.go
         linters:
           - ireturn
-      # log/slog globals are required for the default logger singleton
+      # log/slog globals are required for the default logger singleton.
+      # ireturn: NewLogger returns the local Logger interface (YA-0039) per
+      # CODING_STANDARDS criterion default rule; structural typing keeps it
+      # compatible with the parent log.Logger without closing an import cycle.
       - path: log/slog/logger\.go
         linters:
           - gochecknoglobals
+          - ireturn
       # fanout handler single-path returns error directly from interface method
       - path: log/slog/handler_fanout\.go
         linters:
