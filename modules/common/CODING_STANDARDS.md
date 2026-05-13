@@ -10,9 +10,24 @@ Conventions and standards for all packages under `modules/common`:
    * Exceptions: Constructors do not require function types.
 3. **Public Interface, Private Implementation** - Interfaces should be public, implementation private.
    * If the package exposes an interface that external consumers need to mock, provide a `Pluggable<Interface>` struct with public function fields (e.g. `PluggableClient` with `DoFn`, `LimiterEnabledFn`).
-4. **Constructor returns interface** - All constructors should return an interface. The name of the constructor should be func New<InterfaceName>.
-   * Use `assert.NotNil` or `assert.NotEmpty` on non-variadic parameters that must not be nil or empty.
-   * Struct methods must call `assert.NotNil` on the receiver at the start of the function.
+4. **Constructor returns interface (when an interface makes sense)** — when the type defines a public abstraction with multiple implementations or a genuine extension point, the constructor returns the interface, and its name follows `func New<InterfaceName>`. Canonical examples in the repo: `NewEngine`, `NewClient`, `NewServer`, `NewRepository`, `NewBaseWorker`, `NewScheduler`, `NewUID`, `NewValidator`.
+
+   A constructor returns `*Struct` (or value `Struct`) — **not** an interface — in these cases:
+
+   1. **Options structs.** `NewOptions` returns `*Options`. Options carry configuration data, not an abstraction; the Options pattern requires the struct exposed directly. Same for variants like `*CSROptions`, `*SelfSignedOptions`.
+
+   2. **Concrete data structures with rich method sets.** Containers, graphs, trees, FSMs, accumulators — the type IS the data, there is no abstraction to hide. Hiding it behind an interface would be ceremony with zero polymorphism. Canonical examples: `compute/math/graph/` (`*DAG`, `*Directed`, `*Bipartite`, `*Undirected`, `*Tree`, `*MultigraphDirected`, `*MultigraphUndirected`), `compute/math/fsm/` (`*Machine`), `compute/math/stats/` (`*WindowedStats`), `compute/math/markov/` (`*Chain`). Plus crypto helpers: `*Generator` (`passwords/generator/`), `*DelegatingEncoder` (`passwords/`).
+
+   3. **"Pluggable struct" pattern.** When the type achieves polymorphism via **function fields configured through Options**, the struct itself plays the role of both public type and mock point — no separate interface is needed. Different "implementations" appear as different **instances** of the same struct, configured differently. Canonical example: crypto's `*Method` (10 packages: `hashes`, `kdfs`, `ciphers/{aead,hybrid,rsaoaep}`, `signers/{hmacs,ecdsas,ed25519,rsassas}`, `passwords`, `tokens`). The function field (`hashFn`, `kdfFn`, `signFn`, …) is the mockability mechanism; the `With<Xxx>Fn(...)` option is how callers swap behavior. There is intentionally no `Pluggable<X>` wrapper in these packages — the struct IS the pluggable.
+
+   4. **Wrappers over stdlib / external types.** When the constructor's job is to compose / validate inputs and hand back a type owned by another package, return that external type directly. Example: `NewPool(...) (*x509.CertPool, error)` in `crypto/certs/`.
+
+   In all four cases:
+   * `assert.NotNil` / `assert.NotEmpty` still applies to non-variadic required parameters.
+   * Struct methods still call `assert.NotNil` on the receiver at the start of the function.
+   * Type compliance vars still apply where relevant.
+
+   When **not** to use these exceptions: if the type genuinely has multiple distinct implementations (real polymorphism, real extension point), expose an interface and follow the main rule.
 5. **Options** - the fields of the struct should be private. Check a func With<FieldName> to set the field. Each With function must validate its input using `if valid { assign }` — never use guard clauses with early `return` inside the option closure. Invalid input is silently ignored, preserving the default.
    ```go
    // Good — if valid then assign
@@ -237,6 +252,8 @@ Crypto does **not** use public interfaces with private implementations. Instead:
 - Pluggable behavior is achieved via function fields injected through Options.
 
 ### Override: Criterion 4 — Constructor returns `*Method`
+
+> This is a concrete instance of Exception 3 (Pluggable struct pattern) from criterion 4 above.
 
 `NewMethod` returns `*Method`, not an interface. Parameters vary by algorithm:
 
