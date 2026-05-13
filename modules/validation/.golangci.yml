@@ -1,0 +1,123 @@
+version: "2"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  default: all
+
+  disable:
+    - dupl
+    - err113
+    - exhaustruct
+    - godot
+    - gomoddirectives
+    - iface
+    - ireturn
+    - lll
+    - mnd
+    - nlreturn
+    - revive
+    - tagliatelle
+    - testpackage
+    - varnamelen
+    - whitespace
+    - wsl
+    - wsl_v5
+
+  settings:
+    depguard:
+      rules:
+        main:
+          list-mode: original
+          deny:
+            - pkg: "^log$"
+              desc: "use log/slog instead of stdlib log"
+            - pkg: "github.com/sirupsen/logrus"
+              desc: "use log/slog instead of logrus"
+            - pkg: "go.uber.org/zap"
+              desc: "use log/slog instead of zap"
+            - pkg: "github.com/rs/zerolog"
+              desc: "use log/slog instead of zerolog"
+            - pkg: "github.com/stretchr/testify"
+              desc: "use t.Fatal/t.Fatalf instead of testify assertions"
+            - pkg: "github.com/pkg/errors"
+              desc: "use errs.Wrap(sentinel, err) with a sentinel from errors.go"
+            - pkg: "io/ioutil"
+              desc: "ioutil is deprecated since Go 1.16"
+            - pkg: "github.com/spf13/viper"
+              desc: "viper is not allowed in validation module"
+
+    forbidigo:
+      forbid:
+        - pattern: ^(fmt\.Print(|f|ln)|fmt\.Fprint(|f|ln)|print|println)$
+          msg: "use the project logger (log/slog) instead of direct print statements"
+
+    funlen:
+      lines: 220
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+  exclusions:
+    rules:
+      # Test files: drop the noisiest rules.
+      - path: _test\.go
+        linters:
+          - cyclop
+          - errcheck
+          - errchkjson
+          - errname
+          - forbidigo
+          - containedctx
+          - funlen
+          - gocognit
+          - gocyclo
+          - gosec
+          - maintidx
+          - noctx
+          - wrapcheck
+          - forcetypeassert
+          - paralleltest
+      # Type compliance vars in types.go are package-level by design.
+      - path: types\.go
+        linters:
+          - gochecknoglobals
+      # Sentinel errors are package-level by design.
+      - path: errors\.go
+        linters:
+          - gochecknoglobals
+          - forbidigo
+      # builtins.go uses a package-level dispatch table.
+      - path: builtins\.go
+        linters:
+          - gochecknoglobals
+      # yaml.go reserved key map is package-level.
+      - path: yaml\.go
+        linters:
+          - gochecknoglobals
+      # Examples use fmt.Print* for demonstration purposes.
+      - path: examples/
+        linters:
+          - forbidigo
+          - gosec
+      # builtins.go and engine.go delegate to common/validation/ which already
+      # wraps errors via ErrValidation. wrapcheck cannot detect Join-style
+      # wrapping across packages.
+      - path: builtins\.go
+        linters:
+          - wrapcheck
+      - path: engine\.go
+        linters:
+          - wrapcheck
+      # coerce.go: integer conversions are bounded by validation rule input
+      # validation, not user-controlled.
+      - path: coerce\.go
+        linters:
+          - gosec
+      # loader_test.go: repeated "required" string is a literal rule name, not
+      # a magic constant worth extracting.
+      - path: loader_test\.go
+        linters:
+          - goconst

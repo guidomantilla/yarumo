@@ -13,6 +13,7 @@ use (
 	./modules/config
 	./modules/managed
 	./modules/telemetry/otel
+	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples
 	./tools

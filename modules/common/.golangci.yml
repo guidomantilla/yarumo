@@ -388,3 +388,7 @@ linters:
         linters:
           - goconst
           - staticcheck
+      # validation examples use println for demonstration purposes
+      - path: validation/examples/
+        linters:
+          - forbidigo

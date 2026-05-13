@@ -1,0 +1,19 @@
+# Fixture (b): conditional `when` rules.
+# When method == 'POST', the ID must be undefined.
+# When method == 'GET', the ID must be a valid UUID.
+- when: "method == 'POST'"
+  rules:
+    - field: ID
+      rules:
+        - must_be_undefined
+- when: "method == 'GET'"
+  rules:
+    - field: ID
+      rules:
+        - required
+        - uuid
+- when: "country == 'CO'"
+  rules:
+    - field: Phone
+      rules:
+        - { regex: '^\+57\d{10}$' }
