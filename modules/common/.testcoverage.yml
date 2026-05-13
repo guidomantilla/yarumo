@@ -54,6 +54,7 @@ exclude:
     - ^crypto/signers/examples/main.go
     - ^crypto/tokens/examples/main.go
     - ^diagnostics/examples/main.go
+    - ^validation/examples/main.go
 
 # NOTES:
 # - symbol `/` in all path regexps will be replaced by the current OS file path separator
