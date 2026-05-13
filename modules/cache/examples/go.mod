@@ -1,0 +1,50 @@
+module github.com/guidomantilla/yarumo/cache/examples
+
+go 1.25.5
+
+replace github.com/guidomantilla/yarumo/cache => ../
+
+replace github.com/guidomantilla/yarumo/common => ../../common
+
+replace github.com/guidomantilla/yarumo/managed => ../../managed
+
+require github.com/guidomantilla/yarumo/cache v0.0.0-00010101000000-000000000000
+
+require (
+	github.com/allegro/bigcache/v3 v3.1.0 // indirect
+	github.com/avast/retry-go/v4 v4.7.0 // indirect
+	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dgraph-io/ristretto/v2 v2.4.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/eko/gocache/lib/v4 v4.2.3 // indirect
+	github.com/eko/gocache/store/bigcache/v4 v4.2.4 // indirect
+	github.com/eko/gocache/store/go_cache/v4 v4.2.5 // indirect
+	github.com/eko/gocache/store/ristretto/v4 v4.3.2 // indirect
+	github.com/go-logr/logr v1.4.3 // indirect
+	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000 // indirect
+	github.com/guidomantilla/yarumo/managed v0.0.0-00010101000000-000000000000 // indirect
+	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	github.com/prometheus/client_golang v1.23.2 // indirect
+	github.com/prometheus/client_model v0.6.2 // indirect
+	github.com/prometheus/common v0.67.4 // indirect
+	github.com/prometheus/procfs v0.19.2 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
+	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
+	go.opentelemetry.io/otel v1.39.0 // indirect
+	go.opentelemetry.io/otel/metric v1.39.0 // indirect
+	go.opentelemetry.io/otel/trace v1.39.0 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
+	golang.org/x/exp v0.0.0-20251209150349-8475f28825e9 // indirect
+	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/time v0.14.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260226221140-a57be14db171 // indirect
+	google.golang.org/grpc v1.79.1 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
+)
