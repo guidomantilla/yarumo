@@ -71,7 +71,7 @@ func NewMethod(name string, prefix string, options ...Option) *Method {
 	cassert.NotEmpty(name, "name is empty")
 	cassert.NotEmpty(prefix, "prefix is empty")
 
-	opts := NewOptions(options...)
+	opts := newOptionsForMethod(prefix, options...)
 
 	return &Method{
 		name:            name,

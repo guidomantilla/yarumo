@@ -22,7 +22,32 @@
 //
 // Callers wanting to pin a profile by name (e.g. "owasp-2024") rather than
 // inherit whatever defaults the imported version of this package carries
-// should track YA-0034 (WithSecureDefaults helper).
+// can use WithSecureDefaults (see below).
+//
+// # WithSecureDefaults — recommended high-security profile
+//
+// WithSecureDefaults applies yarumo's recommended high-security profile for
+// the password algorithm associated with a Method. It is the ceiling
+// counterpart to the package-level constants, which act as the floor.
+//
+// Profile values, reviewed as of 2026-05 (may shift with future yarumo
+// releases — pin a specific version if you require deterministic parameters
+// across deploys):
+//
+//   - Argon2id / Argon2i: iterations=3, memory=64 MiB (65536 KiB), threads=2.
+//     Salt length 16 bytes, key length 32 bytes (inherits from
+//     Argon2SaltLength / Argon2KeyLength).
+//   - Bcrypt: cost=12 (matches OWASP 2024 recommendation).
+//   - PBKDF2: iterations=1,200,000 with SHA-512. Salt length 32 bytes, key
+//     length 64 bytes (inherits from Pbkdf2SaltLength / Pbkdf2KeyLength).
+//   - Scrypt: N=2^17 (131072), r=8, p=1. Salt length 16 bytes, key length 32
+//     bytes (inherits from ScryptSaltLength / ScryptKeyLength).
+//
+// WithSecureDefaults dispatches on the Method prefix (set by NewMethod before
+// user options run); using it inside NewMethod is the supported entry point.
+// Calling it on raw Options via NewOptions is a no-op because the prefix is
+// empty in that path. Unknown prefixes are also no-ops — combine with a
+// WithXxxParams call for full control of custom Methods.
 //
 // # DelegatingEncoder and gradual algorithm migration
 //
@@ -90,8 +115,14 @@
 package passwords
 
 import (
+	"crypto/sha512"
 	"hash"
 )
+
+// securePbkdf2HashFunc is the hash constructor applied by WithSecureDefaults
+// for pbkdf2. SHA-512 matches the OWASP 2024 recommendation and the package
+// default; isolated here so the secure profile is self-contained.
+var securePbkdf2HashFunc HashFunc = sha512.New
 
 var (
 	_ EncodeFn        = encode
@@ -167,4 +198,37 @@ const (
 	ScryptP          = 1
 	ScryptSaltLength = 16
 	ScryptKeyLength  = 32
+)
+
+// Secure-profile algorithm parameters applied by WithSecureDefaults. These
+// represent yarumo's recommended high-security profile (reviewed 2026-05) and
+// may shift with future releases. See WithSecureDefaults for usage and the
+// package doc for the authoritative profile listing.
+const (
+	// SecureArgon2Iterations is the t parameter (time cost) used by
+	// WithSecureDefaults for argon2id and argon2i.
+	SecureArgon2Iterations = 3
+	// SecureArgon2Memory is the m parameter (memory cost in KiB) used by
+	// WithSecureDefaults for argon2id and argon2i: 64 MiB.
+	SecureArgon2Memory = 64 * 1024
+	// SecureArgon2Threads is the p parameter (parallelism) used by
+	// WithSecureDefaults for argon2id and argon2i.
+	SecureArgon2Threads = 2
+
+	// SecureBcryptCost is the bcrypt cost applied by WithSecureDefaults.
+	SecureBcryptCost = 12
+
+	// SecurePbkdf2Iterations is the iteration count applied by
+	// WithSecureDefaults for pbkdf2 (SHA-512).
+	SecurePbkdf2Iterations = 1_200_000
+
+	// SecureScryptN is the CPU/memory cost parameter applied by
+	// WithSecureDefaults for scrypt: 2^17 = 131072.
+	SecureScryptN = 131072
+	// SecureScryptR is the block size parameter applied by WithSecureDefaults
+	// for scrypt.
+	SecureScryptR = 8
+	// SecureScryptP is the parallelism parameter applied by WithSecureDefaults
+	// for scrypt.
+	SecureScryptP = 1
 )

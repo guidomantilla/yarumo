@@ -209,6 +209,240 @@ func TestWithPbkdf2Params(t *testing.T) {
 	})
 }
 
+func TestWithSecureDefaults(t *testing.T) {
+	t.Parallel()
+
+	t.Run("argon2id prefix populates argon2id params", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("SecureArgon2id", Argon2idPrefixKey, WithSecureDefaults())
+
+		if m.argon2Params == nil {
+			t.Fatal("expected argon2Params to be set")
+		}
+		if m.argon2Params.iterations != SecureArgon2Iterations {
+			t.Fatalf("expected iterations %d, got %d", SecureArgon2Iterations, m.argon2Params.iterations)
+		}
+		if m.argon2Params.memory != SecureArgon2Memory {
+			t.Fatalf("expected memory %d, got %d", SecureArgon2Memory, m.argon2Params.memory)
+		}
+		if m.argon2Params.threads != SecureArgon2Threads {
+			t.Fatalf("expected threads %d, got %d", SecureArgon2Threads, m.argon2Params.threads)
+		}
+		if m.argon2Params.useArgon2i {
+			t.Fatal("expected useArgon2i to be false for argon2id prefix")
+		}
+	})
+
+	t.Run("legacy argon2 prefix routes to argon2id profile", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("LegacyArgon2", Argon2PrefixKey, WithSecureDefaults())
+
+		if m.argon2Params == nil {
+			t.Fatal("expected argon2Params to be set")
+		}
+		if m.argon2Params.useArgon2i {
+			t.Fatal("expected useArgon2i to be false for legacy argon2 prefix")
+		}
+	})
+
+	t.Run("argon2i prefix selects useArgon2i variant", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("SecureArgon2i", Argon2iPrefixKey, WithSecureDefaults())
+
+		if m.argon2Params == nil {
+			t.Fatal("expected argon2Params to be set")
+		}
+		if !m.argon2Params.useArgon2i {
+			t.Fatal("expected useArgon2i to be true for argon2i prefix")
+		}
+	})
+
+	t.Run("bcrypt prefix populates bcrypt params", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("SecureBcrypt", BcryptPrefixKey, WithSecureDefaults())
+
+		if m.bcryptParams == nil {
+			t.Fatal("expected bcryptParams to be set")
+		}
+		if m.bcryptParams.cost != SecureBcryptCost {
+			t.Fatalf("expected cost %d, got %d", SecureBcryptCost, m.bcryptParams.cost)
+		}
+	})
+
+	t.Run("pbkdf2 prefix populates pbkdf2 params", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("SecurePbkdf2", Pbkdf2PrefixKey, WithSecureDefaults())
+
+		if m.pbkdf2Params == nil {
+			t.Fatal("expected pbkdf2Params to be set")
+		}
+		if m.pbkdf2Params.iterations != SecurePbkdf2Iterations {
+			t.Fatalf("expected iterations %d, got %d", SecurePbkdf2Iterations, m.pbkdf2Params.iterations)
+		}
+		if m.pbkdf2Params.hashFunc == nil {
+			t.Fatal("expected hashFunc to be set")
+		}
+	})
+
+	t.Run("scrypt prefix populates scrypt params", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("SecureScrypt", ScryptPrefixKey, WithSecureDefaults())
+
+		if m.scryptParams == nil {
+			t.Fatal("expected scryptParams to be set")
+		}
+		if m.scryptParams.n != SecureScryptN {
+			t.Fatalf("expected n %d, got %d", SecureScryptN, m.scryptParams.n)
+		}
+		if m.scryptParams.r != SecureScryptR {
+			t.Fatalf("expected r %d, got %d", SecureScryptR, m.scryptParams.r)
+		}
+		if m.scryptParams.p != SecureScryptP {
+			t.Fatalf("expected p %d, got %d", SecureScryptP, m.scryptParams.p)
+		}
+	})
+
+	t.Run("unknown prefix is a no-op", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithSecureDefaults())
+
+		if opts.argon2Params != nil {
+			t.Fatal("expected argon2Params to remain nil")
+		}
+		if opts.bcryptParams != nil {
+			t.Fatal("expected bcryptParams to remain nil")
+		}
+		if opts.pbkdf2Params != nil {
+			t.Fatal("expected pbkdf2Params to remain nil")
+		}
+		if opts.scryptParams != nil {
+			t.Fatal("expected scryptParams to remain nil")
+		}
+	})
+
+	t.Run("custom prefix is a no-op", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("Custom", "{custom}", WithSecureDefaults(), WithBcryptParams(BcryptDefaultCost))
+
+		if m.argon2Params != nil {
+			t.Fatal("expected argon2Params to remain nil for unknown prefix")
+		}
+		if m.bcryptParams == nil {
+			t.Fatal("expected bcryptParams set by the trailing WithBcryptParams")
+		}
+	})
+}
+
+func TestWithSecureDefaults_EncodeAndUpgradeNeeded(t *testing.T) {
+	t.Parallel()
+
+	t.Run("argon2id encodes and reports no upgrade needed", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("SecureArgon2id_E2E", Argon2idPrefixKey, WithSecureDefaults())
+
+		encoded, err := m.Encode("secure-pwd")
+		if err != nil {
+			t.Fatalf("unexpected encode error: %v", err)
+		}
+		if encoded == "" {
+			t.Fatal("expected non-empty encoded output")
+		}
+
+		needed, err := m.UpgradeNeeded(encoded)
+		if err != nil {
+			t.Fatalf("unexpected upgrade check error: %v", err)
+		}
+		if needed {
+			t.Fatal("expected UpgradeNeeded=false immediately after encode")
+		}
+	})
+
+	t.Run("argon2i encodes and reports no upgrade needed", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("SecureArgon2i_E2E", Argon2iPrefixKey, WithSecureDefaults())
+
+		encoded, err := m.Encode("secure-pwd")
+		if err != nil {
+			t.Fatalf("unexpected encode error: %v", err)
+		}
+
+		needed, err := m.UpgradeNeeded(encoded)
+		if err != nil {
+			t.Fatalf("unexpected upgrade check error: %v", err)
+		}
+		if needed {
+			t.Fatal("expected UpgradeNeeded=false immediately after encode")
+		}
+	})
+
+	t.Run("bcrypt encodes and reports no upgrade needed", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("SecureBcrypt_E2E", BcryptPrefixKey, WithSecureDefaults())
+
+		encoded, err := m.Encode("secure-pwd")
+		if err != nil {
+			t.Fatalf("unexpected encode error: %v", err)
+		}
+
+		needed, err := m.UpgradeNeeded(encoded)
+		if err != nil {
+			t.Fatalf("unexpected upgrade check error: %v", err)
+		}
+		if needed {
+			t.Fatal("expected UpgradeNeeded=false immediately after encode")
+		}
+	})
+
+	t.Run("pbkdf2 encodes and reports no upgrade needed", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("SecurePbkdf2_E2E", Pbkdf2PrefixKey, WithSecureDefaults())
+
+		encoded, err := m.Encode("secure-pwd")
+		if err != nil {
+			t.Fatalf("unexpected encode error: %v", err)
+		}
+
+		needed, err := m.UpgradeNeeded(encoded)
+		if err != nil {
+			t.Fatalf("unexpected upgrade check error: %v", err)
+		}
+		if needed {
+			t.Fatal("expected UpgradeNeeded=false immediately after encode")
+		}
+	})
+
+	t.Run("scrypt encodes and reports no upgrade needed", func(t *testing.T) {
+		t.Parallel()
+
+		m := NewMethod("SecureScrypt_E2E", ScryptPrefixKey, WithSecureDefaults())
+
+		encoded, err := m.Encode("secure-pwd")
+		if err != nil {
+			t.Fatalf("unexpected encode error: %v", err)
+		}
+
+		needed, err := m.UpgradeNeeded(encoded)
+		if err != nil {
+			t.Fatalf("unexpected upgrade check error: %v", err)
+		}
+		if needed {
+			t.Fatal("expected UpgradeNeeded=false immediately after encode")
+		}
+	})
+}
+
 func TestWithScryptParams(t *testing.T) {
 	t.Parallel()
 
