@@ -62,7 +62,7 @@ func runScorecard(ctx context.Context, config *schema.ScorecardConfig, exprCtx c
 	}, nil
 }
 
-func evalBins(evaluator *cexpressions.Evaluator, bins []schema.ScorecardBinDef, exprCtx cexpressions.Context) (float64, bool, error) {
+func evalBins(evaluator cexpressions.Evaluator, bins []schema.ScorecardBinDef, exprCtx cexpressions.Context) (float64, bool, error) {
 	for _, bin := range bins {
 		val, err := evaluator.Evaluate(bin.Condition, exprCtx)
 		if err != nil {
