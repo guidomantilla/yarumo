@@ -272,6 +272,30 @@ linters:
       - path: uids/(uids|extensions)\.go
         linters:
           - gochecknoglobals
+      # health package-level singleton: DefaultHealth is the on-demand
+      # aggregator registered by application code; required for the YA-0077
+      # primitives package.
+      - path: health/extensions\.go
+        linters:
+          - gochecknoglobals
+      # health/health.go: NewHealth follows criterion 4 (constructor returns
+      # interface — Health is a public abstraction with a private impl).
+      # cassert.NotNil does not accept context; runProbes receives ctx but the
+      # assert guards the receiver.
+      - path: health/health\.go
+        linters:
+          - ireturn
+          - contextcheck
+      # health/extensions_test.go: tests modify the global DefaultHealth and
+      # cannot run in parallel.
+      - path: health/extensions_test\.go
+        linters:
+          - paralleltest
+          - tparallel
+      # health examples use fmt.Print* for demonstration purposes
+      - path: health/examples/
+        linters:
+          - forbidigo
       # uids/extensions.go: Generate delegates to the current UID.Generate; the
       # wrapping happens inside the predefined generators (uids/functions.go).
       # uids/functions.go: external library errors are wrapped with ErrGenerationFailed
