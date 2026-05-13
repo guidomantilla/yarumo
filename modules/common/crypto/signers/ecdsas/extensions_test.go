@@ -90,7 +90,8 @@ func TestSupported(t *testing.T) {
 		}
 
 		for _, m := range list {
-			if _, ok := want[m.Name()]; ok {
+			_, ok := want[m.Name()]
+			if ok {
 				want[m.Name()] = true
 			}
 		}

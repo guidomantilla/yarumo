@@ -283,7 +283,8 @@ func TestLoadPrivateKey(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if _, ok := key.(*ecdsa.PrivateKey); !ok {
+		_, ok := key.(*ecdsa.PrivateKey)
+		if !ok {
 			t.Fatalf("expected *ecdsa.PrivateKey, got %T", key)
 		}
 	})
@@ -303,7 +304,8 @@ func TestLoadPrivateKey(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if _, ok := key.(ed25519.PrivateKey); !ok {
+		_, ok := key.(ed25519.PrivateKey)
+		if !ok {
 			t.Fatalf("expected ed25519.PrivateKey, got %T", key)
 		}
 	})
@@ -323,7 +325,8 @@ func TestLoadPrivateKey(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if _, ok := key.(*rsa.PrivateKey); !ok {
+		_, ok := key.(*rsa.PrivateKey)
+		if !ok {
 			t.Fatalf("expected *rsa.PrivateKey, got %T", key)
 		}
 	})
@@ -346,7 +349,8 @@ func TestLoadPrivateKey(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if _, ok := key.(*rsa.PrivateKey); !ok {
+		_, ok := key.(*rsa.PrivateKey)
+		if !ok {
 			t.Fatalf("expected *rsa.PrivateKey, got %T", key)
 		}
 	})
@@ -560,7 +564,8 @@ func TestSelfSignedWithKeyAlgorithm(t *testing.T) {
 			t.Fatalf("expected *rsa.PrivateKey, got %T", key)
 		}
 
-		if bits := rsaKey.N.BitLen(); bits != 3072 {
+		bits := rsaKey.N.BitLen()
+		if bits != 3072 {
 			t.Fatalf("expected 3072-bit key, got %d", bits)
 		}
 	})
@@ -628,7 +633,8 @@ func TestSelfSignedTLSHandshakeRoundtrip(t *testing.T) {
 			}
 
 			// Sanity check the loaded key is a crypto.Signer.
-			if _, ok := loadedKey.(crypto.Signer); !ok {
+			_, ok := loadedKey.(crypto.Signer)
+			if !ok {
 				t.Fatalf("loaded key is not a crypto.Signer: %T", loadedKey)
 			}
 

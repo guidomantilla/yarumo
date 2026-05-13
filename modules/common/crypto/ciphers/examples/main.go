@@ -235,7 +235,8 @@ func aeadStreamExample() {
 
 	// Encrypt: bytes.Reader -> bytes.Buffer.
 	var encrypted bytes.Buffer
-	if err := method.EncryptStream(key, bytes.NewReader(plaintext), &encrypted, aad); err != nil {
+	err = method.EncryptStream(key, bytes.NewReader(plaintext), &encrypted, aad)
+	if err != nil {
 		log.Fatalf("EncryptStream failed: %v", err)
 	}
 
@@ -247,7 +248,8 @@ func aeadStreamExample() {
 
 	// Decrypt: bytes.Buffer -> bytes.Buffer.
 	var decrypted bytes.Buffer
-	if err := method.DecryptStream(key, &encrypted, &decrypted, aad); err != nil {
+	err = method.DecryptStream(key, &encrypted, &decrypted, aad)
+	if err != nil {
 		log.Fatalf("DecryptStream failed: %v", err)
 	}
 

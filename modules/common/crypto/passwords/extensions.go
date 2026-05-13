@@ -64,7 +64,8 @@ func ByPrefix(encodedPassword string) (*Method, error) {
 	// Legacy {argon2} prefix — route to Argon2id for backward compatibility
 	// with hashes produced before the YA-0030 rename.
 	if strings.HasPrefix(encodedPassword, Argon2PrefixKey) && len(encodedPassword) > len(Argon2PrefixKey) {
-		if alg, ok := methods[Argon2id.name]; ok {
+		alg, ok := methods[Argon2id.name]
+		if ok {
 			return &alg, nil
 		}
 	}
