@@ -23,6 +23,7 @@ import (
 	_ "github.com/guidomantilla/yarumo/common/errs"
 	_ "github.com/guidomantilla/yarumo/common/expressions"
 	_ "github.com/guidomantilla/yarumo/common/grpc"
+	_ "github.com/guidomantilla/yarumo/common/health"
 	_ "github.com/guidomantilla/yarumo/common/http"
 	_ "github.com/guidomantilla/yarumo/common/log"
 	_ "github.com/guidomantilla/yarumo/common/pointer"
