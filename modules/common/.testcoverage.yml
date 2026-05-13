@@ -53,6 +53,7 @@ exclude:
     - ^crypto/passwords/examples/main.go
     - ^crypto/signers/examples/main.go
     - ^crypto/tokens/examples/main.go
+    - ^diagnostics/examples/main.go
     - ^validation/examples/main.go
 
 # NOTES:

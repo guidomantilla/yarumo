@@ -12,6 +12,11 @@ var (
 	_ UIDFn                      = UUIDv7
 	_ UIDFn                      = ULID
 	_ UIDFn                      = XID
+	_ IsUIDFn                    = IsUUID
+	_ IsUIDFn                    = IsULID
+	_ IsUIDFn                    = IsNanoID
+	_ IsUIDFn                    = IsCUID2
+	_ IsUIDFn                    = IsXID
 	_ RegisterFn                 = Register
 	_ GetFn                      = Get
 	_ UseFn                      = Use
@@ -34,6 +39,11 @@ type UID interface {
 // fails. Silent fallbacks are not permitted: an empty string with a nil error
 // is never acceptable.
 type UIDFn func() (string, error)
+
+// IsUIDFn is the function type for UID format validators. Implementations
+// report whether the input string matches the canonical format of a
+// specific algorithm, without parsing it into a structured value.
+type IsUIDFn func(s string) bool
 
 // RegisterFn is the function type for Register.
 type RegisterFn func(uid UID)
