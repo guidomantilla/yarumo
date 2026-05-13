@@ -1,0 +1,10 @@
+# Fixture (a): simple field rules — required + min/max length checks.
+- field: Name
+  rules:
+    - required
+    - { min_len: 1 }
+    - { max_len: 100 }
+- field: Email
+  rules:
+    - required
+    - email

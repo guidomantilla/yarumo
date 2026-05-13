@@ -1,11 +1,32 @@
 // Package diagnostics provides profiling and tracing tools for Go applications.
 package diagnostics
 
-import "io"
+import (
+	"context"
+	"io"
+	"time"
+)
+
+// CaptureCPUFn is the signature of CaptureCPUProfile.
+type CaptureCPUFn func(ctx context.Context, w io.Writer, duration time.Duration) error
+
+// CaptureHeapFn is the signature of CaptureHeapProfile.
+type CaptureHeapFn func(w io.Writer) error
+
+// CaptureGoroutineFn is the signature of CaptureGoroutineProfile.
+type CaptureGoroutineFn func(w io.Writer) error
+
+// CaptureBlockFn is the signature of CaptureBlockProfile.
+type CaptureBlockFn func(w io.Writer) error
 
 var (
 	_ TraceFlightRecorder = (*tracefr)(nil)
 	_ TraceFlightRecorder = (*PluggableTraceFlightRecorder)(nil)
+
+	_ CaptureCPUFn       = CaptureCPUProfile
+	_ CaptureHeapFn      = CaptureHeapProfile
+	_ CaptureGoroutineFn = CaptureGoroutineProfile
+	_ CaptureBlockFn     = CaptureBlockProfile
 )
 
 // TraceFlightRecorder defines the interface for a flight recorder that captures execution traces.

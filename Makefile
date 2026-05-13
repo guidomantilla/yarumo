@@ -2,6 +2,7 @@
 
 MODULES := modules/common modules/config modules/managed modules/telemetry/otel
 MODULES += modules/compute/math modules/compute/engine modules/compute/tests/acceptance
+MODULES += modules/validation
 MODULES += sdks/decisions/core
 ENABLE_INTERNAL := false
 INTERNAL := internal/examples
@@ -11,7 +12,7 @@ INTERNAL += internal/temporal/courses/edu-101-go-code internal/temporal/courses/
 # Other modules (compute/math, compute/engine) still carry historical
 # violations tracked under follow-up tickets; expand this list as those
 # modules are cleaned up.
-INLINE_MODULES := modules/common
+INLINE_MODULES := modules/common modules/validation
 
 # Built inlineassign binary location. The cmd/inlineassign main package lives
 # under tools/lint/inlineassign and is wired into go.work for local builds.
