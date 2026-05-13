@@ -341,6 +341,30 @@ linters:
       - path: diagnostics/pprof\.go
         linters:
           - depguard
+      # diagnostics/captures.go wraps runtime/pprof — the import is the whole
+      # point of the file. wrapcheck: profile.WriteTo returns external errors
+      # that ErrCaptureProfile re-wraps into the domain error.
+      - path: diagnostics/captures\.go
+        linters:
+          - depguard
+          - wrapcheck
+      # diagnostics/captures_test.go: runtime/pprof.Lookup cross-check is
+      # intentional; pprofProfileMagic and blockProfileMu are required test
+      # globals; CPU/block profile state is process-global so those subtests
+      # cannot run in parallel.
+      - path: diagnostics/captures_test\.go
+        linters:
+          - depguard
+          - gochecknoglobals
+          - paralleltest
+          - tparallel
+      # diagnostics examples demonstrate pprof capture wrappers and print
+      # output for the reader; defers after log.Fatalf are intentional in
+      # demo code.
+      - path: diagnostics/examples/
+        linters:
+          - forbidigo
+          - gocritic
       # sentinel errors and type compliance vars are package-level by design
       - path: grpc/(errors|types)\.go
         linters:
