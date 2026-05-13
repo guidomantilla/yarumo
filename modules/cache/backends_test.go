@@ -1,143 +1,148 @@
 package cache
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
 )
 
-func TestBuildBackend(t *testing.T) {
+func TestNewRistrettoCache(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ristretto", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithBackend(BackendRistretto))
-		b, err := buildBackend(opts)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if b == nil || b.cache == nil || b.closer == nil {
-			t.Fatal("expected complete backend instance")
-		}
-		closeErr := b.closer.Close()
-		if closeErr != nil {
-			t.Fatalf("close failed: %v", closeErr)
-		}
-	})
-
-	t.Run("bigcache", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithBackend(BackendBigcache))
-		b, err := buildBackend(opts)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if b == nil || b.cache == nil || b.closer == nil {
-			t.Fatal("expected complete backend instance")
-		}
-		closeErr := b.closer.Close()
-		if closeErr != nil {
-			t.Fatalf("close failed: %v", closeErr)
-		}
-	})
-
-	t.Run("go-cache", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithBackend(BackendGoCache))
-		b, err := buildBackend(opts)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if b == nil || b.cache == nil || b.closer == nil {
-			t.Fatal("expected complete backend instance")
-		}
-		closeErr := b.closer.Close()
-		if closeErr != nil {
-			t.Fatalf("close failed: %v", closeErr)
-		}
-	})
-
-	t.Run("unsupported backend returns error", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions()
-		opts.backend = Backend("redis")
-		_, err := buildBackend(opts)
-		if err == nil {
-			t.Fatal("expected error for unsupported backend")
-		}
-		if !errors.Is(err, ErrUnsupportedBackend) {
-			t.Fatal("expected ErrUnsupportedBackend")
-		}
-	})
-
-	t.Run("nil options returns error", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := buildBackend(nil)
-		if err == nil {
-			t.Fatal("expected error for nil options")
-		}
-	})
+	opts := NewOptions(WithBackend(BackendRistretto))
+	c, err := newRistrettoCache[string, []byte](opts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c == nil {
+		t.Fatal("expected non-nil cache")
+	}
+	if c.getFn == nil || c.setFn == nil || c.deleteFn == nil || c.hasFn == nil || c.clearFn == nil || c.stopFn == nil {
+		t.Fatal("expected all function fields populated")
+	}
+	stopErr := c.Stop(context.Background())
+	if stopErr != nil {
+		t.Fatalf("stop failed: %v", stopErr)
+	}
 }
 
-func TestSetOptionsForTTL(t *testing.T) {
+func TestNewBigcacheCache(t *testing.T) {
+	t.Parallel()
+
+	opts := NewOptions(WithBackend(BackendBigcache))
+	c, err := newBigcacheCache[string, []byte](opts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c == nil {
+		t.Fatal("expected non-nil cache")
+	}
+	if c.getFn == nil || c.setFn == nil || c.deleteFn == nil || c.hasFn == nil || c.clearFn == nil || c.stopFn == nil {
+		t.Fatal("expected all function fields populated")
+	}
+	stopErr := c.Stop(context.Background())
+	if stopErr != nil {
+		t.Fatalf("stop failed: %v", stopErr)
+	}
+}
+
+func TestNewGoCacheCache(t *testing.T) {
+	t.Parallel()
+
+	opts := NewOptions(WithBackend(BackendGoCache))
+	c, err := newGoCacheCache[string, []byte](opts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if c == nil {
+		t.Fatal("expected non-nil cache")
+	}
+	if c.getFn == nil || c.setFn == nil || c.deleteFn == nil || c.hasFn == nil || c.clearFn == nil || c.stopFn == nil {
+		t.Fatal("expected all function fields populated")
+	}
+	stopErr := c.Stop(context.Background())
+	if stopErr != nil {
+		t.Fatalf("stop failed: %v", stopErr)
+	}
+}
+
+func TestNewCache_UnsupportedBackend(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewCache[string, []byte](func(o *Options) { o.backend = Backend("redis") })
+	if err == nil {
+		t.Fatal("expected error for unsupported backend")
+	}
+	if !errors.Is(err, ErrUnsupportedBackend) {
+		t.Fatalf("expected ErrUnsupportedBackend, got %v", err)
+	}
+}
+
+func TestEffectiveTTL(t *testing.T) {
 	t.Parallel()
 
 	t.Run("positive ttl is used", func(t *testing.T) {
 		t.Parallel()
 
-		got := setOptionsForTTL(2*time.Second, time.Minute)
-		if len(got) == 0 {
-			t.Fatal("expected non-empty options")
+		got := effectiveTTL(2*time.Second, time.Minute)
+		if got != 2*time.Second {
+			t.Fatalf("got %v, want 2s", got)
 		}
 	})
 
-	t.Run("non-positive ttl falls back to default", func(t *testing.T) {
+	t.Run("zero ttl falls back to default", func(t *testing.T) {
 		t.Parallel()
 
-		got := setOptionsForTTL(0, time.Minute)
-		if len(got) == 0 {
-			t.Fatal("expected non-empty options")
+		got := effectiveTTL(0, time.Minute)
+		if got != time.Minute {
+			t.Fatalf("got %v, want 1m", got)
 		}
 	})
 
 	t.Run("negative ttl falls back to default", func(t *testing.T) {
 		t.Parallel()
 
-		got := setOptionsForTTL(-time.Second, time.Minute)
-		if len(got) == 0 {
-			t.Fatal("expected non-empty options")
+		got := effectiveTTL(-time.Second, time.Minute)
+		if got != time.Minute {
+			t.Fatalf("got %v, want 1m", got)
 		}
 	})
 }
 
-func TestCloserFn(t *testing.T) {
+func TestNewMetricsIfEnabled(t *testing.T) {
 	t.Parallel()
 
-	called := false
-	c := closerFn(func() error {
-		called = true
-		return nil
+	t.Run("disabled returns nil", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions()
+		if newMetricsIfEnabled(opts) != nil {
+			t.Fatal("expected nil when OTel disabled")
+		}
 	})
-	err := c.Close()
+
+	t.Run("enabled returns adapter", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithOTel())
+		if newMetricsIfEnabled(opts) == nil {
+			t.Fatal("expected non-nil adapter when OTel enabled")
+		}
+	})
+}
+
+func TestBigcache_NonByteValue(t *testing.T) {
+	t.Parallel()
+
+	c, err := NewCache[string, string](WithBackend(BackendBigcache))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !called {
-		t.Fatal("expected closer to be invoked")
-	}
-}
+	defer func() { _ = c.Stop(context.Background()) }()
 
-func TestNoopCloser(t *testing.T) {
-	t.Parallel()
-
-	c := noopCloser{}
-	err := c.Close()
-	if err != nil {
-		t.Fatalf("unexpected error from noop close: %v", err)
+	setErr := c.Set(context.Background(), "k", "not-bytes", time.Minute)
+	if !errors.Is(setErr, ErrSerialization) {
+		t.Fatalf("expected ErrSerialization for non-[]byte bigcache value, got %v", setErr)
 	}
 }

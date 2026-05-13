@@ -10,22 +10,25 @@ func TestStringKey(t *testing.T) {
 	t.Run("string keys are returned verbatim", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := stringKey("hello")
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
+		got := stringKey("hello")
 		if got != "hello" {
 			t.Fatalf("got %q, want hello", got)
+		}
+	})
+
+	t.Run("empty string key is returned verbatim", func(t *testing.T) {
+		t.Parallel()
+
+		got := stringKey("")
+		if got != "" {
+			t.Fatalf("got %q, want empty string", got)
 		}
 	})
 
 	t.Run("int keys are rendered", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := stringKey(42)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
+		got := stringKey(42)
 		if got != "42" {
 			t.Fatalf("got %q, want 42", got)
 		}
@@ -38,10 +41,7 @@ func TestStringKey(t *testing.T) {
 			Name string
 			ID   int
 		}
-		got, err := stringKey(k{Name: "x", ID: 7})
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
+		got := stringKey(k{Name: "x", ID: 7})
 		if got == "" {
 			t.Fatal("expected non-empty rendering of struct key")
 		}

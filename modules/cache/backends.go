@@ -2,93 +2,108 @@ package cache
 
 import (
 	"context"
-	"io"
+	"errors"
 	"time"
 
 	"github.com/allegro/bigcache/v3"
 	"github.com/dgraph-io/ristretto/v2"
-	gocachelib "github.com/eko/gocache/lib/v4/cache"
-	libstore "github.com/eko/gocache/lib/v4/store"
-	bigcachestore "github.com/eko/gocache/store/bigcache/v4"
-	gocachestore "github.com/eko/gocache/store/go_cache/v4"
-	ristrettostore "github.com/eko/gocache/store/ristretto/v4"
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	gocache "github.com/patrickmn/go-cache"
 )
 
-// backendCache is the minimal interface the wrapper consumes from gocache.
-// It mirrors the relevant subset of gocache.CacheInterface[any].
-type backendCache interface {
-	Get(ctx context.Context, key any) (any, error)
-	Set(ctx context.Context, key any, value any, options ...libstore.Option) error
-	Delete(ctx context.Context, key any) error
-	Clear(ctx context.Context) error
-}
-
-// backendInstance bundles a gocache cache with an io.Closer used to release the
-// backend's underlying resources during Stop.
-type backendInstance struct {
-	cache  backendCache
-	closer io.Closer
-}
-
-// closerFn adapts a no-arg function into an io.Closer.
-type closerFn func() error
-
-func (f closerFn) Close() error { return f() }
-
-// noopCloser implements io.Closer with a no-op Close.
-type noopCloser struct{}
-
-func (noopCloser) Close() error { return nil }
-
-// buildBackend creates the gocache instance for the configured backend.
+// newRistrettoCache builds a *cache[K, V] backed by dgraph-io/ristretto.
 //
-// Each branch instantiates the concrete in-memory backend, wraps it in the
-// gocache adapter, and packages the result with an io.Closer that the public
-// Stop method calls to release resources.
-func buildBackend(opts *Options) (*backendInstance, error) {
-	err := validateOptions(opts)
-	if err != nil {
-		return nil, cerrs.Wrap(err)
-	}
-
-	switch opts.backend {
-	case BackendRistretto:
-		return buildRistretto(opts)
-	case BackendBigcache:
-		return buildBigcache(opts)
-	case BackendGoCache:
-		return buildGoCache(opts)
-	default:
-		return nil, cerrs.Wrap(ErrUnsupportedBackend)
-	}
-}
-
-// buildRistretto creates a ristretto-backed gocache instance.
-func buildRistretto(opts *Options) (*backendInstance, error) {
+// Behaviour is encoded entirely in the function fields populated below; the
+// closures capture the ristretto client and any per-backend state (metrics,
+// slog hooks via the cache receiver). No internal interface is involved.
+func newRistrettoCache[K comparable, V any](opts *Options) (*cache[K, V], error) {
 	client, err := ristretto.NewCache(&ristretto.Config[string, any]{
 		NumCounters: opts.ristrettoNumCtrs,
 		MaxCost:     opts.ristrettoMaxCost,
 		BufferItems: opts.ristrettoBufItems,
 	})
 	if err != nil {
-		return nil, cerrs.Wrap(ErrBackendUnavailable, err)
+		return nil, ErrBackend(err)
 	}
 
-	store := ristrettostore.NewRistretto(client, libstore.WithCost(1), libstore.WithSynchronousSet())
-	wrapped := gocachelib.New[any](store)
+	c := &cache[K, V]{
+		options: opts,
+		metrics: newMetricsIfEnabled(opts),
+	}
 
-	closer := closerFn(func() error {
-		client.Close()
+	c.getFn = func(ctx context.Context, key K) (V, error) {
+		var zero V
+
+		cacheKey := stringKey(key)
+
+		raw, ok := client.Get(cacheKey)
+		if !ok {
+			c.recordMiss(ctx, cacheKey)
+			return zero, ErrMiss()
+		}
+
+		value, aerr := assertValue[V](raw)
+		if aerr != nil {
+			c.recordMiss(ctx, cacheKey)
+			return zero, aerr
+		}
+
+		c.recordHit(ctx, cacheKey)
+		return value, nil
+	}
+
+	c.setFn = func(ctx context.Context, key K, value V, ttl time.Duration) error {
+		cacheKey := stringKey(key)
+		effective := effectiveTTL(ttl, opts.ttl)
+
+		ok := client.SetWithTTL(cacheKey, any(value), 1, effective)
+		if !ok {
+			return ErrBackend(errRistrettoSetRejected)
+		}
+
+		// Ristretto applies writes asynchronously via a buffered admission
+		// channel; Wait blocks until previously buffered writes have been
+		// fully applied, matching the synchronous-set semantics the eko
+		// adapter previously requested via libstore.WithSynchronousSet.
+		client.Wait()
+
+		c.recordSet(ctx, cacheKey)
 		return nil
-	})
+	}
 
-	return &backendInstance{cache: wrapped, closer: closer}, nil
+	c.deleteFn = func(ctx context.Context, key K) error {
+		cacheKey := stringKey(key)
+		client.Del(cacheKey)
+		c.recordEviction(ctx, cacheKey)
+		return nil
+	}
+
+	c.hasFn = func(_ context.Context, key K) bool {
+		_, ok := client.Get(stringKey(key))
+		return ok
+	}
+
+	c.clearFn = func(ctx context.Context) error {
+		client.Clear()
+		c.recordEviction(ctx, "*")
+		return nil
+	}
+
+	c.stopFn = func(ctx context.Context) error {
+		client.Close()
+		c.recordStopped(ctx)
+		return nil
+	}
+
+	return c, nil
 }
 
-// buildBigcache creates a bigcache-backed gocache instance.
-func buildBigcache(opts *Options) (*backendInstance, error) {
+// newBigcacheCache builds a *cache[K, V] backed by allegro/bigcache.
+//
+// bigcache stores raw []byte payloads natively, so the closure asserts that V
+// is convertible to []byte via a type-assertion on the boxed value. Mismatched
+// types surface as ErrSerialize so the public contract stays consistent across
+// backends.
+func newBigcacheCache[K comparable, V any](opts *Options) (*cache[K, V], error) {
 	cfg := bigcache.DefaultConfig(opts.bigcacheLifeWin)
 	cfg.Shards = opts.bigcacheShards
 	cfg.CleanWindow = opts.bigcacheCleanWin
@@ -97,36 +112,189 @@ func buildBigcache(opts *Options) (*backendInstance, error) {
 
 	client, err := bigcache.New(context.Background(), cfg)
 	if err != nil {
-		return nil, cerrs.Wrap(ErrBackendUnavailable, err)
+		return nil, ErrBackend(err)
 	}
 
-	store := bigcachestore.NewBigcache(client)
-	wrapped := gocachelib.New[any](store)
+	c := &cache[K, V]{
+		options: opts,
+		metrics: newMetricsIfEnabled(opts),
+	}
 
-	return &backendInstance{cache: wrapped, closer: client}, nil
+	c.getFn = func(ctx context.Context, key K) (V, error) {
+		var zero V
+
+		cacheKey := stringKey(key)
+
+		raw, gerr := client.Get(cacheKey)
+		if gerr != nil {
+			if errors.Is(gerr, bigcache.ErrEntryNotFound) {
+				c.recordMiss(ctx, cacheKey)
+				return zero, ErrMiss()
+			}
+			return zero, ErrCache(gerr)
+		}
+
+		// bigcache stores []byte natively; assertValue cross-validates that V
+		// is a []byte (the documented bigcache contract).
+		value, aerr := assertValue[V](raw)
+		if aerr != nil {
+			c.recordMiss(ctx, cacheKey)
+			return zero, aerr
+		}
+
+		c.recordHit(ctx, cacheKey)
+		return value, nil
+	}
+
+	c.setFn = func(ctx context.Context, key K, value V, _ time.Duration) error {
+		cacheKey := stringKey(key)
+
+		// bigcache only stores []byte and applies a global TTL configured at
+		// construction (no per-entry TTL). The wrapper's per-call ttl is
+		// accepted for API parity but intentionally ignored here.
+		payload, ok := any(value).([]byte)
+		if !ok {
+			return ErrSerialize(errors.New("bigcache requires []byte values"))
+		}
+
+		serr := client.Set(cacheKey, payload)
+		if serr != nil {
+			return ErrCache(serr)
+		}
+
+		c.recordSet(ctx, cacheKey)
+		return nil
+	}
+
+	c.deleteFn = func(ctx context.Context, key K) error {
+		cacheKey := stringKey(key)
+
+		derr := client.Delete(cacheKey)
+		if derr != nil && !errors.Is(derr, bigcache.ErrEntryNotFound) {
+			return ErrCache(derr)
+		}
+
+		c.recordEviction(ctx, cacheKey)
+		return nil
+	}
+
+	c.hasFn = func(_ context.Context, key K) bool {
+		_, gerr := client.Get(stringKey(key))
+		return gerr == nil
+	}
+
+	c.clearFn = func(ctx context.Context) error {
+		rerr := client.Reset()
+		if rerr != nil {
+			return ErrCache(rerr)
+		}
+
+		c.recordEviction(ctx, "*")
+		return nil
+	}
+
+	c.stopFn = func(ctx context.Context) error {
+		cerr := client.Close()
+		if cerr != nil {
+			return ErrCache(cerr)
+		}
+
+		c.recordStopped(ctx)
+		return nil
+	}
+
+	return c, nil
 }
 
-// buildGoCache creates a go-cache-backed gocache instance.
-func buildGoCache(opts *Options) (*backendInstance, error) {
+// newGoCacheCache builds a *cache[K, V] backed by patrickmn/go-cache.
+//
+// go-cache stores values as `any`, so the closure performs a direct
+// type-assertion on the retrieved interface value to recover V.
+func newGoCacheCache[K comparable, V any](opts *Options) (*cache[K, V], error) {
 	client := gocache.New(opts.gocacheDefault, opts.gocacheCleanup)
 
-	store := gocachestore.NewGoCache(client)
-	wrapped := gocachelib.New[any](store)
-
-	return &backendInstance{cache: wrapped, closer: noopCloser{}}, nil
-}
-
-// setOptionsForTTL returns the libstore options that the wrapper applies on
-// every Set call, mapping the wrapper's ttl semantics onto each backend.
-func setOptionsForTTL(ttl time.Duration, defaultTTL time.Duration) []libstore.Option {
-	effective := ttl
-	if effective <= 0 {
-		effective = defaultTTL
+	c := &cache[K, V]{
+		options: opts,
+		metrics: newMetricsIfEnabled(opts),
 	}
 
-	return []libstore.Option{
-		libstore.WithExpiration(effective),
-		libstore.WithCost(1),
-		libstore.WithSynchronousSet(),
+	c.getFn = func(ctx context.Context, key K) (V, error) {
+		var zero V
+
+		cacheKey := stringKey(key)
+
+		raw, ok := client.Get(cacheKey)
+		if !ok {
+			c.recordMiss(ctx, cacheKey)
+			return zero, ErrMiss()
+		}
+
+		value, aerr := assertValue[V](raw)
+		if aerr != nil {
+			c.recordMiss(ctx, cacheKey)
+			return zero, aerr
+		}
+
+		c.recordHit(ctx, cacheKey)
+		return value, nil
 	}
+
+	c.setFn = func(ctx context.Context, key K, value V, ttl time.Duration) error {
+		cacheKey := stringKey(key)
+		effective := effectiveTTL(ttl, opts.ttl)
+
+		client.Set(cacheKey, any(value), effective)
+		c.recordSet(ctx, cacheKey)
+		return nil
+	}
+
+	c.deleteFn = func(ctx context.Context, key K) error {
+		cacheKey := stringKey(key)
+		client.Delete(cacheKey)
+		c.recordEviction(ctx, cacheKey)
+		return nil
+	}
+
+	c.hasFn = func(_ context.Context, key K) bool {
+		_, ok := client.Get(stringKey(key))
+		return ok
+	}
+
+	c.clearFn = func(ctx context.Context) error {
+		client.Flush()
+		c.recordEviction(ctx, "*")
+		return nil
+	}
+
+	c.stopFn = func(ctx context.Context) error {
+		// go-cache holds no external resources; just record the stop.
+		c.recordStopped(ctx)
+		return nil
+	}
+
+	return c, nil
 }
+
+// newMetricsIfEnabled returns an otelMetrics adapter when WithOTel was set on
+// opts, or nil otherwise. Centralised here so each factory's wiring stays
+// compact.
+func newMetricsIfEnabled(opts *Options) *otelMetrics {
+	if !opts.otelEnabled {
+		return nil
+	}
+	return newOtelMetrics(opts.otelMeterName)
+}
+
+// effectiveTTL resolves the per-call ttl, falling back to the cache default
+// when ttl is non-positive.
+func effectiveTTL(ttl time.Duration, defaultTTL time.Duration) time.Duration {
+	if ttl > 0 {
+		return ttl
+	}
+	return defaultTTL
+}
+
+// errRistrettoSetRejected is returned wrapped in ErrBackend when ristretto
+// rejects a SetWithTTL call (most commonly because the admission policy
+// dropped the entry).
+var errRistrettoSetRejected = errors.New("ristretto rejected set")

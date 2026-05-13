@@ -2,24 +2,37 @@ package cache
 
 import (
 	"context"
-	"errors"
 	"sync/atomic"
 	"time"
 
-	"github.com/allegro/bigcache/v3"
-	libstore "github.com/eko/gocache/lib/v4/store"
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	clog "github.com/guidomantilla/yarumo/common/log"
 )
 
-// cache is the private implementation of the Cache[K, V] interface. It wraps a
-// gocache instance, applies the wrapper's TTL semantics, and optionally emits
-// OTel metrics and slog debug logs on each event.
+// cache is the private implementation of the Cache[K, V] interface.
+//
+// Behaviour is pluggable per-backend via function fields populated at
+// construction time by the matching factory in backends.go. The struct
+// itself contains no backend-specific logic — each method just delegates
+// to its function field after asserting the receiver is non-nil. This
+// follows criterion 4 Exception 3 (Pluggable struct pattern) from the
+// common coding standards and mirrors crypto's *Method.
+//
+// Hooks (slog and OTel metrics) are wired into the closures by the
+// factory; the recordHit / recordMiss / recordSet / recordEviction
+// helpers live on the cache and the closures call them directly.
 type cache[K comparable, V any] struct {
 	options *Options
-	backend *backendInstance
 	metrics *otelMetrics
 	stopped atomic.Bool
+
+	// Pluggable function fields — the cache's behaviour IS these closures.
+	getFn    func(ctx context.Context, key K) (V, error)
+	setFn    func(ctx context.Context, key K, value V, ttl time.Duration) error
+	deleteFn func(ctx context.Context, key K) error
+	hasFn    func(ctx context.Context, key K) bool
+	clearFn  func(ctx context.Context) error
+	stopFn   func(ctx context.Context) error
 }
 
 // NewCache constructs a Cache[K, V] with the given options. The returned cache
@@ -28,21 +41,21 @@ type cache[K comparable, V any] struct {
 func NewCache[K comparable, V any](opts ...Option) (Cache[K, V], error) {
 	options := NewOptions(opts...)
 
-	backend, err := buildBackend(options)
+	err := validateOptions(options)
 	if err != nil {
 		return nil, ErrCache(err)
 	}
 
-	var metrics *otelMetrics
-	if options.otelEnabled {
-		metrics = newOtelMetrics(options.otelMeterName)
+	switch options.backend {
+	case BackendRistretto:
+		return newRistrettoCache[K, V](options)
+	case BackendBigcache:
+		return newBigcacheCache[K, V](options)
+	case BackendGoCache:
+		return newGoCacheCache[K, V](options)
+	default:
+		return nil, ErrUnsupported()
 	}
-
-	return &cache[K, V]{
-		options: options,
-		backend: backend,
-		metrics: metrics,
-	}, nil
 }
 
 // Get returns the value stored at key. It returns an ErrCacheMiss-typed error
@@ -50,30 +63,7 @@ func NewCache[K comparable, V any](opts ...Option) (Cache[K, V], error) {
 func (c *cache[K, V]) Get(ctx context.Context, key K) (V, error) {
 	cassert.NotNil(c, "cache receiver is nil")
 
-	var zero V
-
-	cacheKey, err := stringKey(key)
-	if err != nil {
-		return zero, ErrCache(err)
-	}
-
-	raw, err := c.backend.cache.Get(ctx, cacheKey)
-	if err != nil {
-		if isNotFound(err) {
-			c.recordMiss(ctx, cacheKey)
-			return zero, ErrMiss()
-		}
-		return zero, ErrCache(err)
-	}
-
-	value, ok := raw.(V)
-	if !ok {
-		c.recordMiss(ctx, cacheKey)
-		return zero, ErrSerialize(errors.New("value type mismatch"))
-	}
-
-	c.recordHit(ctx, cacheKey)
-	return value, nil
+	return c.getFn(ctx, key)
 }
 
 // Set stores value under key with the given TTL. A non-positive ttl resolves
@@ -81,68 +71,28 @@ func (c *cache[K, V]) Get(ctx context.Context, key K) (V, error) {
 func (c *cache[K, V]) Set(ctx context.Context, key K, value V, ttl time.Duration) error {
 	cassert.NotNil(c, "cache receiver is nil")
 
-	cacheKey, err := stringKey(key)
-	if err != nil {
-		return ErrCache(err)
-	}
-
-	opts := setOptionsForTTL(ttl, c.options.ttl)
-
-	err = c.backend.cache.Set(ctx, cacheKey, value, opts...)
-	if err != nil {
-		return ErrCache(err)
-	}
-
-	c.recordSet(ctx, cacheKey)
-	return nil
+	return c.setFn(ctx, key, value, ttl)
 }
 
 // Delete removes the entry at key. It is a no-op if the key is absent.
 func (c *cache[K, V]) Delete(ctx context.Context, key K) error {
 	cassert.NotNil(c, "cache receiver is nil")
 
-	cacheKey, err := stringKey(key)
-	if err != nil {
-		return ErrCache(err)
-	}
-
-	err = c.backend.cache.Delete(ctx, cacheKey)
-	if err != nil {
-		return ErrCache(err)
-	}
-
-	c.recordEviction(ctx, cacheKey)
-	return nil
+	return c.deleteFn(ctx, key)
 }
 
 // Has reports whether key is present in the cache.
 func (c *cache[K, V]) Has(ctx context.Context, key K) bool {
 	cassert.NotNil(c, "cache receiver is nil")
 
-	cacheKey, err := stringKey(key)
-	if err != nil {
-		return false
-	}
-
-	raw, err := c.backend.cache.Get(ctx, cacheKey)
-	if err != nil {
-		return false
-	}
-
-	return raw != nil
+	return c.hasFn(ctx, key)
 }
 
 // Clear empties the cache.
 func (c *cache[K, V]) Clear(ctx context.Context) error {
 	cassert.NotNil(c, "cache receiver is nil")
 
-	err := c.backend.cache.Clear(ctx)
-	if err != nil {
-		return ErrCache(err)
-	}
-
-	c.recordEviction(ctx, "*")
-	return nil
+	return c.clearFn(ctx)
 }
 
 // Stop releases the backend resources. Safe to call multiple times.
@@ -154,16 +104,7 @@ func (c *cache[K, V]) Stop(ctx context.Context) error {
 		return nil
 	}
 
-	err := c.backend.closer.Close()
-	if err != nil {
-		return ErrCache(err)
-	}
-
-	if c.options.slogEnabled {
-		clog.Debug(ctx, "cache stopped", "component", "cache", "backend", string(c.options.backend))
-	}
-
-	return nil
+	return c.stopFn(ctx)
 }
 
 // recordHit emits the OTel hit counter and optionally logs a debug message.
@@ -206,31 +147,9 @@ func (c *cache[K, V]) recordEviction(ctx context.Context, key string) {
 	}
 }
 
-// isNotFound reports whether err is a backend's "not found" sentinel.
-//
-// gocache and most store adapters wrap a libstore.NotFound, but a handful of
-// backends (notably allegro/bigcache for direct lookups) surface their own
-// native sentinel. This helper recognises both.
-func isNotFound(err error) bool {
-	if err == nil {
-		return false
+// recordStopped optionally logs a debug message when the backend has been released.
+func (c *cache[K, V]) recordStopped(ctx context.Context) {
+	if c.options.slogEnabled {
+		clog.Debug(ctx, "cache stopped", "component", "cache", "backend", string(c.options.backend))
 	}
-
-	var nf *libstore.NotFound
-	if errors.As(err, &nf) {
-		return true
-	}
-
-	// Some store backends return store.NotFound by value via Is(); cross-check.
-	probe := libstore.NotFoundWithCause(nil)
-	if errors.Is(err, probe) {
-		return true
-	}
-
-	// allegro/bigcache returns its own native error before gocache wraps it.
-	if errors.Is(err, bigcache.ErrEntryNotFound) {
-		return true
-	}
-
-	return false
 }

@@ -195,104 +195,187 @@ func TestCache_Miss(t *testing.T) {
 func TestCache_Delete(t *testing.T) {
 	t.Parallel()
 
-	c, err := NewCache[string, []byte](WithBackend(BackendGoCache))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer func() { _ = c.Stop(context.Background()) }()
+	runDelete := func(t *testing.T, backend Backend) {
+		t.Helper()
+		c, err := NewCache[string, []byte](WithBackend(backend))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		defer func() { _ = c.Stop(context.Background()) }()
 
-	ctx := context.Background()
-	setErr := c.Set(ctx, "key", []byte(testValueString), time.Minute)
-	if setErr != nil {
-		t.Fatalf("set failed: %v", setErr)
+		ctx := context.Background()
+		setErr := c.Set(ctx, "key", []byte(testValueString), time.Minute)
+		if setErr != nil {
+			t.Fatalf("set failed: %v", setErr)
+		}
+
+		delErr := c.Delete(ctx, "key")
+		if delErr != nil {
+			t.Fatalf("delete failed: %v", delErr)
+		}
+
+		_, getErr := c.Get(ctx, "key")
+		if !errors.Is(getErr, ErrCacheMiss) {
+			t.Fatalf("expected miss after delete, got %v", getErr)
+		}
 	}
 
-	delErr := c.Delete(ctx, "key")
-	if delErr != nil {
-		t.Fatalf("delete failed: %v", delErr)
-	}
-
-	_, getErr := c.Get(ctx, "key")
-	if !errors.Is(getErr, ErrCacheMiss) {
-		t.Fatalf("expected miss after delete, got %v", getErr)
-	}
+	t.Run("go-cache", func(t *testing.T) {
+		t.Parallel()
+		runDelete(t, BackendGoCache)
+	})
+	t.Run("ristretto", func(t *testing.T) {
+		t.Parallel()
+		runDelete(t, BackendRistretto)
+	})
+	t.Run("bigcache", func(t *testing.T) {
+		t.Parallel()
+		runDelete(t, BackendBigcache)
+	})
 }
 
 func TestCache_Has(t *testing.T) {
 	t.Parallel()
 
-	c, err := NewCache[string, []byte](WithBackend(BackendGoCache))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer func() { _ = c.Stop(context.Background()) }()
+	runHas := func(t *testing.T, backend Backend) {
+		t.Helper()
+		c, err := NewCache[string, []byte](WithBackend(backend))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		defer func() { _ = c.Stop(context.Background()) }()
 
-	ctx := context.Background()
-	if c.Has(ctx, "absent") {
-		t.Fatal("expected Has=false for absent key")
+		ctx := context.Background()
+		if c.Has(ctx, "absent") {
+			t.Fatal("expected Has=false for absent key")
+		}
+
+		setErr := c.Set(ctx, "present", []byte(testValueString), time.Minute)
+		if setErr != nil {
+			t.Fatalf("set failed: %v", setErr)
+		}
+
+		if !c.Has(ctx, "present") {
+			t.Fatal("expected Has=true after set")
+		}
 	}
 
-	setErr := c.Set(ctx, "present", []byte(testValueString), time.Minute)
-	if setErr != nil {
-		t.Fatalf("set failed: %v", setErr)
-	}
-
-	if !c.Has(ctx, "present") {
-		t.Fatal("expected Has=true after set")
-	}
+	t.Run("go-cache", func(t *testing.T) {
+		t.Parallel()
+		runHas(t, BackendGoCache)
+	})
+	t.Run("ristretto", func(t *testing.T) {
+		t.Parallel()
+		runHas(t, BackendRistretto)
+	})
+	t.Run("bigcache", func(t *testing.T) {
+		t.Parallel()
+		runHas(t, BackendBigcache)
+	})
 }
 
 func TestCache_Clear(t *testing.T) {
 	t.Parallel()
 
-	c, err := NewCache[string, []byte](WithBackend(BackendGoCache))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer func() { _ = c.Stop(context.Background()) }()
+	runClear := func(t *testing.T, backend Backend) {
+		t.Helper()
+		c, err := NewCache[string, []byte](WithBackend(backend))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		defer func() { _ = c.Stop(context.Background()) }()
 
-	ctx := context.Background()
-	setErr := c.Set(ctx, "a", []byte("1"), time.Minute)
-	if setErr != nil {
-		t.Fatalf("set failed: %v", setErr)
-	}
-	setErr = c.Set(ctx, "b", []byte("2"), time.Minute)
-	if setErr != nil {
-		t.Fatalf("set failed: %v", setErr)
+		ctx := context.Background()
+		setErr := c.Set(ctx, "a", []byte("1"), time.Minute)
+		if setErr != nil {
+			t.Fatalf("set failed: %v", setErr)
+		}
+		setErr = c.Set(ctx, "b", []byte("2"), time.Minute)
+		if setErr != nil {
+			t.Fatalf("set failed: %v", setErr)
+		}
+
+		clearErr := c.Clear(ctx)
+		if clearErr != nil {
+			t.Fatalf("clear failed: %v", clearErr)
+		}
+
+		_, getErr := c.Get(ctx, "a")
+		if !errors.Is(getErr, ErrCacheMiss) {
+			t.Fatalf("expected miss after clear, got %v", getErr)
+		}
 	}
 
-	clearErr := c.Clear(ctx)
-	if clearErr != nil {
-		t.Fatalf("clear failed: %v", clearErr)
-	}
-
-	_, getErr := c.Get(ctx, "a")
-	if !errors.Is(getErr, ErrCacheMiss) {
-		t.Fatalf("expected miss after clear, got %v", getErr)
-	}
+	t.Run("go-cache", func(t *testing.T) {
+		t.Parallel()
+		runClear(t, BackendGoCache)
+	})
+	t.Run("ristretto", func(t *testing.T) {
+		t.Parallel()
+		runClear(t, BackendRistretto)
+	})
+	t.Run("bigcache", func(t *testing.T) {
+		t.Parallel()
+		runClear(t, BackendBigcache)
+	})
 }
 
 func TestCache_TTLExpiry(t *testing.T) {
 	t.Parallel()
 
-	c, err := NewCache[string, []byte](WithBackend(BackendGoCache), WithGoCacheCapacity(100*time.Millisecond, 50*time.Millisecond))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer func() { _ = c.Stop(context.Background()) }()
+	t.Run("go-cache", func(t *testing.T) {
+		t.Parallel()
 
-	ctx := context.Background()
-	setErr := c.Set(ctx, "tempkey", []byte("v"), 50*time.Millisecond)
-	if setErr != nil {
-		t.Fatalf("set failed: %v", setErr)
-	}
+		c, err := NewCache[string, []byte](WithBackend(BackendGoCache), WithGoCacheCapacity(100*time.Millisecond, 50*time.Millisecond))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		defer func() { _ = c.Stop(context.Background()) }()
 
-	time.Sleep(200 * time.Millisecond)
+		ctx := context.Background()
+		setErr := c.Set(ctx, "tempkey", []byte("v"), 50*time.Millisecond)
+		if setErr != nil {
+			t.Fatalf("set failed: %v", setErr)
+		}
 
-	_, getErr := c.Get(ctx, "tempkey")
-	if !errors.Is(getErr, ErrCacheMiss) {
-		t.Fatalf("expected miss after expiry, got %v", getErr)
-	}
+		time.Sleep(200 * time.Millisecond)
+
+		_, getErr := c.Get(ctx, "tempkey")
+		if !errors.Is(getErr, ErrCacheMiss) {
+			t.Fatalf("expected miss after expiry, got %v", getErr)
+		}
+	})
+
+	t.Run("ristretto uses default ttl when ttl<=0", func(t *testing.T) {
+		t.Parallel()
+
+		// Exercise the ttl<=0 fallback path inside the ristretto setFn closure.
+		c, err := NewCache[string, []byte](WithBackend(BackendRistretto), WithTTL(time.Minute))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		defer func() { _ = c.Stop(context.Background()) }()
+
+		setErr := c.Set(context.Background(), "k", []byte("v"), 0)
+		if setErr != nil {
+			t.Fatalf("set failed: %v", setErr)
+		}
+	})
+
+	t.Run("go-cache uses default ttl when ttl<=0", func(t *testing.T) {
+		t.Parallel()
+
+		c, err := NewCache[string, []byte](WithBackend(BackendGoCache), WithTTL(time.Minute))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		defer func() { _ = c.Stop(context.Background()) }()
+
+		setErr := c.Set(context.Background(), "k", []byte("v"), 0)
+		if setErr != nil {
+			t.Fatalf("set failed: %v", setErr)
+		}
+	})
 }
 
 func TestCache_Stop(t *testing.T) {
@@ -333,7 +416,6 @@ func TestCache_SlogEnabled(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	defer func() { _ = c.Stop(context.Background()) }()
 
 	ctx := context.Background()
 	setErr := c.Set(ctx, "k", []byte("v"), time.Minute)
@@ -359,6 +441,12 @@ func TestCache_SlogEnabled(t *testing.T) {
 	clearErr := c.Clear(ctx)
 	if clearErr != nil {
 		t.Fatalf("clear failed: %v", clearErr)
+	}
+
+	// Stop with slog enabled to exercise recordStopped.
+	stopErr := c.Stop(ctx)
+	if stopErr != nil {
+		t.Fatalf("stop failed: %v", stopErr)
 	}
 }
 
@@ -428,31 +516,29 @@ func TestCache_OTelMetrics(t *testing.T) {
 	}
 }
 
-func TestCache_ValueTypeMismatch(t *testing.T) {
+func TestAssertValue(t *testing.T) {
 	t.Parallel()
 
-	c, err := NewCache[string, []byte](WithBackend(BackendGoCache))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer func() { _ = c.Stop(context.Background()) }()
+	t.Run("matching type returns value", func(t *testing.T) {
+		t.Parallel()
 
-	ctx := context.Background()
+		got, err := assertValue[[]byte](any([]byte("hi")))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if string(got) != "hi" {
+			t.Fatalf("got %q, want hi", got)
+		}
+	})
 
-	// Bypass the wrapper Set to store a value of the wrong type underneath.
-	impl, ok := c.(*cache[string, []byte])
-	if !ok {
-		t.Fatal("expected *cache[string, []byte]")
-	}
-	rawSetErr := impl.backend.cache.Set(ctx, "k", 42)
-	if rawSetErr != nil {
-		t.Fatalf("internal set failed: %v", rawSetErr)
-	}
+	t.Run("mismatched type returns ErrSerialization", func(t *testing.T) {
+		t.Parallel()
 
-	_, getErr := c.Get(ctx, "k")
-	if !errors.Is(getErr, ErrSerialization) {
-		t.Fatalf("expected ErrSerialization, got %v", getErr)
-	}
+		_, err := assertValue[[]byte](any(42))
+		if !errors.Is(err, ErrSerialization) {
+			t.Fatalf("expected ErrSerialization, got %v", err)
+		}
+	})
 }
 
 func TestCache_IntKey(t *testing.T) {
@@ -479,22 +565,3 @@ func TestCache_IntKey(t *testing.T) {
 	}
 }
 
-func TestIsNotFound(t *testing.T) {
-	t.Parallel()
-
-	t.Run("nil err is not a miss", func(t *testing.T) {
-		t.Parallel()
-
-		if isNotFound(nil) {
-			t.Fatal("nil should not be NotFound")
-		}
-	})
-
-	t.Run("plain error is not a miss", func(t *testing.T) {
-		t.Parallel()
-
-		if isNotFound(errors.New("boom")) {
-			t.Fatal("unrelated error should not be NotFound")
-		}
-	})
-}

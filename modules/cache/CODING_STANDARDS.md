@@ -20,7 +20,7 @@ This module follows the conventions defined in [`modules/common/CODING_STANDARDS
 
 ### Override: Top-level module (not under common/)
 
-`gocache` is a meta-package whose backend adapters pull substantial transitive dependencies (ristretto, bigcache, go-cache, …). For that reason the cache wrapper lives at the top-level module layer alongside `modules/managed/`, `modules/telemetry/`, and `modules/config/`, never inside `modules/common/`.
+The cache backends (`ristretto`, `bigcache`, `go-cache`) pull substantial transitive dependencies. For that reason the cache wrapper lives at the top-level module layer alongside `modules/managed/`, `modules/telemetry/`, and `modules/config/`, never inside `modules/common/`.
 
 ### Override: Lifecycle integration with managed
 
@@ -29,6 +29,12 @@ This module follows the conventions defined in [`modules/common/CODING_STANDARDS
 ### Override: In-memory only
 
 This release implements `ristretto`, `bigcache`, and `go-cache` only. Redis, memcached, chained caches and tag-based invalidation are deferred (see ticket YA-0079 for rationale).
+
+### Override: Pluggable struct backend dispatch (criterion 4 Exception 3)
+
+The private `cache[K, V]` implementation holds the backend behaviour in **function fields** (`getFn`, `setFn`, `deleteFn`, `hasFn`, `clearFn`, `stopFn`) populated by per-backend factories in `backends.go` (`newRistrettoCache`, `newBigcacheCache`, `newGoCacheCache`). This is a concrete instance of Exception 3 from criterion 4 of `modules/common/CODING_STANDARDS.md` — different "implementations" are different instances of the same struct, configured differently. The public `Cache[K, V]` interface stays unchanged.
+
+There is intentionally **no internal `backendCache` interface**. The pattern mirrors crypto's `*Method` (10 packages under `modules/common/crypto/`).
 
 ## Reviewed Packages
 
