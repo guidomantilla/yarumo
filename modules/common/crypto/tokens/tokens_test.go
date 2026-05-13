@@ -389,7 +389,8 @@ func TestYA0009_AlgorithmEnum(t *testing.T) {
 	t.Run("HS256 maps to jwt.SigningMethodHS256", func(t *testing.T) {
 		t.Parallel()
 
-		if got := signingMethodFor(AlgorithmHS256); got != jwt.SigningMethodHS256 {
+		got := signingMethodFor(AlgorithmHS256)
+		if got != jwt.SigningMethodHS256 {
 			t.Fatalf("expected jwt.SigningMethodHS256, got %v", got)
 		}
 	})
@@ -397,7 +398,8 @@ func TestYA0009_AlgorithmEnum(t *testing.T) {
 	t.Run("HS384 maps to jwt.SigningMethodHS384", func(t *testing.T) {
 		t.Parallel()
 
-		if got := signingMethodFor(AlgorithmHS384); got != jwt.SigningMethodHS384 {
+		got := signingMethodFor(AlgorithmHS384)
+		if got != jwt.SigningMethodHS384 {
 			t.Fatalf("expected jwt.SigningMethodHS384, got %v", got)
 		}
 	})
@@ -405,7 +407,8 @@ func TestYA0009_AlgorithmEnum(t *testing.T) {
 	t.Run("HS512 maps to jwt.SigningMethodHS512", func(t *testing.T) {
 		t.Parallel()
 
-		if got := signingMethodFor(AlgorithmHS512); got != jwt.SigningMethodHS512 {
+		got := signingMethodFor(AlgorithmHS512)
+		if got != jwt.SigningMethodHS512 {
 			t.Fatalf("expected jwt.SigningMethodHS512, got %v", got)
 		}
 	})
@@ -413,7 +416,8 @@ func TestYA0009_AlgorithmEnum(t *testing.T) {
 	t.Run("unknown Algorithm returns nil from signingMethodFor", func(t *testing.T) {
 		t.Parallel()
 
-		if got := signingMethodFor(Algorithm("XX999")); got != nil {
+		got := signingMethodFor(Algorithm("XX999"))
+		if got != nil {
 			t.Fatalf("expected nil for unsupported algorithm, got %v", got)
 		}
 	})

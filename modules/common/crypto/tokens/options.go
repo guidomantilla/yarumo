@@ -143,7 +143,8 @@ func isUsableKey(key any) bool {
 	if cpointer.IsNil(key) {
 		return false
 	}
-	if b, ok := key.([]byte); ok {
+	b, ok := key.([]byte)
+	if ok {
 		return len(b) > 0
 	}
 	return true

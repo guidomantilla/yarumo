@@ -136,7 +136,8 @@ func runECDSARoundtrip(t *testing.T, alg Algorithm, signer *ecdsas.Method) {
 		AlgorithmES384: elliptic.P384(),
 		AlgorithmES512: elliptic.P521(),
 	}
-	if want, ok := wantCurve[alg]; ok && priv.Curve != want {
+	want, ok := wantCurve[alg]
+	if ok && priv.Curve != want {
 		t.Fatalf("expected curve %v, got %v", want.Params().Name, priv.Curve.Params().Name)
 	}
 }
@@ -200,7 +201,8 @@ func TestYA0018_SigningMethodFor_AsymmetricMappings(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name+" maps correctly", func(t *testing.T) {
 			t.Parallel()
-			if got := signingMethodFor(tc.alg); got != tc.want {
+			got := signingMethodFor(tc.alg)
+			if got != tc.want {
 				t.Fatalf("signingMethodFor(%q) = %v, want %v", tc.alg, got, tc.want)
 			}
 		})
