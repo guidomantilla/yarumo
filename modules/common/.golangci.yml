@@ -280,11 +280,18 @@ linters:
           - contextcheck
       # interceptors return status.Errorf directly; context comes from gRPC framework
       # recovery interceptors use named returns so defer can assign the error
+      # recovery interceptors use runtime/debug.Stack() to capture full panic stacks (YA-0037)
       - path: grpc/functions\.go
         linters:
           - wrapcheck
           - contextcheck
           - nonamedreturns
+          - depguard
+      # stack-capture test mutates the global logger via clog.Use; cannot be parallel
+      - path: grpc/functions_test\.go
+        linters:
+          - paralleltest
+          - tparallel
       # server delegates directly to *grpc.Server; wrapping errors adds no value
       - path: grpc/server\.go
         linters:
