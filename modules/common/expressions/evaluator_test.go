@@ -13,7 +13,12 @@ func TestNewEvaluator(t *testing.T) {
 
 		ev := NewEvaluator()
 
-		if ev.options.funcs == nil {
+		impl, ok := ev.(*evaluator)
+		if !ok {
+			t.Fatal("expected *evaluator concrete type")
+		}
+
+		if impl.options.funcs == nil {
 			t.Fatal("expected funcs to be initialized")
 		}
 	})
@@ -24,7 +29,12 @@ func TestNewEvaluator(t *testing.T) {
 		custom := func(args ...any) (any, error) { return 42.0, nil }
 		ev := NewEvaluator(WithFunc("custom", custom))
 
-		_, ok := ev.options.funcs["custom"]
+		impl, ok := ev.(*evaluator)
+		if !ok {
+			t.Fatal("expected *evaluator concrete type")
+		}
+
+		_, ok = impl.options.funcs["custom"]
 		if !ok {
 			t.Fatal("expected custom function in evaluator")
 		}

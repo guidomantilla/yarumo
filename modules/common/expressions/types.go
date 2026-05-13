@@ -13,6 +13,14 @@ type Expr interface {
 	String() string
 }
 
+// Evaluator parses and evaluates expression strings against a context.
+type Evaluator interface {
+	// Evaluate parses an input expression and evaluates it against the given context.
+	Evaluate(input string, ctx Context) (any, error)
+}
+
+var _ Evaluator = (*evaluator)(nil)
+
 // OpKind represents the kind of operator in binary and unary expressions.
 type OpKind int
 

@@ -48,7 +48,7 @@ func runTree(ctx context.Context, config *schema.TreeConfig, exprCtx cexpression
 	}, nil
 }
 
-func walkTree(evaluator *cexpressions.Evaluator, node *schema.TreeNodeDef, exprCtx cexpressions.Context) ([]explain.TreeStep, map[string]any, error) {
+func walkTree(evaluator cexpressions.Evaluator, node *schema.TreeNodeDef, exprCtx cexpressions.Context) ([]explain.TreeStep, map[string]any, error) {
 	if node.Output != nil {
 		return nil, node.Output, nil
 	}

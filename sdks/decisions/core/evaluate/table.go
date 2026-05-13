@@ -79,7 +79,7 @@ func resolveHitPolicy(policy string) string {
 	}
 }
 
-func evalAllConditions(evaluator *cexpressions.Evaluator, conditions []string, exprCtx cexpressions.Context) (bool, error) {
+func evalAllConditions(evaluator cexpressions.Evaluator, conditions []string, exprCtx cexpressions.Context) (bool, error) {
 	for _, cond := range conditions {
 		val, err := evaluator.Evaluate(cond, exprCtx)
 		if err != nil {
