@@ -87,12 +87,22 @@ func WithKey(key any) Option {
 // secret. The entropy draw happens when this option is applied (inside
 // NewOptions / NewMethod), not at package init, so unused constructors do not
 // consume entropy.
+//
+// If crypto/rand fails to deliver the requested bytes, the keys are left at
+// their previous value (typically nil). Method.Generate and Method.Validate
+// will then surface ErrSigningKeyNil / ErrVerifyingKeyNil at call-time —
+// consistent with the no-key path documented on NewOptions.
 func WithGeneratedKey() Option {
 	return func(opts *Options) {
 		// Convert to a plain []byte so golang-jwt/v5 HMAC type-assertion
 		// (key.([]byte)) succeeds — types.Bytes is a named type and would
 		// fail that assertion.
-		key := []byte(crandom.Bytes(64))
+		raw, err := crandom.Bytes(64)
+		if err != nil {
+			return
+		}
+
+		key := []byte(raw)
 		opts.signingKey = key
 		opts.verifyingKey = key
 	}

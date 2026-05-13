@@ -32,8 +32,9 @@ func (u *uid) Name() string {
 	return u.name
 }
 
-// Generate generates and returns a new unique identifier.
-func (u *uid) Generate() string {
+// Generate generates and returns a new unique identifier, or an error if the
+// underlying entropy source fails.
+func (u *uid) Generate() (string, error) {
 	cassert.NotNil(u, "uid is nil")
 	return u.fn()
 }

@@ -16,7 +16,10 @@ func TestMethod_EncryptStream_DecryptStream_RoundTrip(t *testing.T) {
 		t.Parallel()
 
 		// 3 MiB of random plaintext exercises many frames.
-		plaintext := crandom.Bytes(3 * 1024 * 1024)
+		plaintext, ptErr := crandom.Bytes(3 * 1024 * 1024)
+		if ptErr != nil {
+			t.Fatalf("unexpected plaintext error: %v", ptErr)
+		}
 
 		key, err := AES_256_GCM.GenerateKey()
 		if err != nil {
@@ -103,7 +106,10 @@ func TestMethod_EncryptStream_FrameBoundaries(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			plaintext := crandom.Bytes(tc.size)
+			plaintext, ptErr := crandom.Bytes(tc.size)
+			if ptErr != nil {
+				t.Fatalf("unexpected plaintext error: %v", ptErr)
+			}
 
 			key, err := AES_256_GCM.GenerateKey()
 			if err != nil {
@@ -357,7 +363,10 @@ func TestMethod_DecryptStream_Tampering(t *testing.T) {
 
 		// Use a payload large enough to span multiple frames so the
 		// tamper falls inside a known ciphertext region.
-		plaintext := crandom.Bytes(3 * StreamFrameSize)
+		plaintext, ptErr := crandom.Bytes(3 * StreamFrameSize)
+		if ptErr != nil {
+			t.Fatalf("unexpected plaintext error: %v", ptErr)
+		}
 
 		var encrypted bytes.Buffer
 
@@ -483,7 +492,10 @@ func TestMethod_DecryptStream_FrameReordering(t *testing.T) {
 		}
 
 		// Two distinct full-frame blocks so we can swap them on the wire.
-		plaintext := crandom.Bytes(2 * StreamFrameSize)
+		plaintext, ptErr := crandom.Bytes(2 * StreamFrameSize)
+		if ptErr != nil {
+			t.Fatalf("unexpected plaintext error: %v", ptErr)
+		}
 
 		var encrypted bytes.Buffer
 

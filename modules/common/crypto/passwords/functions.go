@@ -128,7 +128,11 @@ func upgradeNeeded(method *Method, encodedPassword string) (bool, error) {
 func argon2Encode(method *Method, rawPassword string) (string, error) {
 	params := method.argon2Params
 
-	salt := crandom.Bytes(params.saltLength)
+	salt, err := crandom.Bytes(params.saltLength)
+	if err != nil {
+		return "", cerrs.Wrap(ErrSaltGenerationFailed, err)
+	}
+
 	if len(salt) == 0 {
 		return "", ErrSaltGenerationFailed
 	}
@@ -319,7 +323,11 @@ func bcryptUpgradeNeeded(method *Method, encodedPassword string) (bool, error) {
 func pbkdf2Encode(method *Method, rawPassword string) (string, error) {
 	params := method.pbkdf2Params
 
-	salt := crandom.Bytes(params.saltLength)
+	salt, err := crandom.Bytes(params.saltLength)
+	if err != nil {
+		return "", cerrs.Wrap(ErrSaltGenerationFailed, err)
+	}
+
 	if len(salt) == 0 {
 		return "", ErrSaltGenerationFailed
 	}
@@ -412,7 +420,11 @@ func pbkdf2UpgradeNeeded(method *Method, encodedPassword string) (bool, error) {
 func scryptEncode(method *Method, rawPassword string) (string, error) {
 	params := method.scryptParams
 
-	salt := crandom.Bytes(params.saltLength)
+	salt, saltErr := crandom.Bytes(params.saltLength)
+	if saltErr != nil {
+		return "", cerrs.Wrap(ErrSaltGenerationFailed, saltErr)
+	}
+
 	if len(salt) == 0 {
 		return "", ErrSaltGenerationFailed
 	}

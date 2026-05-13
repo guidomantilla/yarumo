@@ -3,6 +3,7 @@ package hmacs
 import (
 	"crypto/hmac"
 
+	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	crandom "github.com/guidomantilla/yarumo/common/random"
 	ctypes "github.com/guidomantilla/yarumo/common/types"
 )
@@ -43,7 +44,12 @@ func key(method *Method) (ctypes.Bytes, error) {
 		return nil, ErrMethodIsNil
 	}
 
-	return crandom.Bytes(method.keySize), nil
+	out, err := crandom.Bytes(method.keySize)
+	if err != nil {
+		return nil, cerrs.Wrap(ErrKeyGenerationFailed, err)
+	}
+
+	return out, nil
 }
 
 func digest(method *Method, key ctypes.Bytes, data ctypes.Bytes) (ctypes.Bytes, error) {

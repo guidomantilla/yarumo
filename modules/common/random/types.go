@@ -17,7 +17,7 @@ var (
 )
 
 // BytesFn is the function type for Bytes.
-type BytesFn func(size int) ctypes.Bytes
+type BytesFn func(size int) (ctypes.Bytes, error)
 
 // NumberFn is the function type for Number.
 type NumberFn func(limit int64) (int64, error)

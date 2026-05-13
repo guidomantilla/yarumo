@@ -12,7 +12,7 @@ func TestNewUID(t *testing.T) {
 	t.Run("creates UID with name and function", func(t *testing.T) {
 		t.Parallel()
 
-		fn := func() string { return "test-id" }
+		fn := func() (string, error) { return "test-id", nil }
 
 		u := NewUID("TEST", fn)
 		if u == nil {
@@ -23,7 +23,11 @@ func TestNewUID(t *testing.T) {
 			t.Fatalf("Name() = %q, want %q", u.Name(), "TEST")
 		}
 
-		got := u.Generate()
+		got, err := u.Generate()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
 		if got != "test-id" {
 			t.Fatalf("Generate() = %q, want %q", got, "test-id")
 		}
@@ -32,15 +36,45 @@ func TestNewUID(t *testing.T) {
 	t.Run("different instances are independent", func(t *testing.T) {
 		t.Parallel()
 
-		u1 := NewUID("A", func() string { return "a" })
-		u2 := NewUID("B", func() string { return "b" })
+		u1 := NewUID("A", func() (string, error) { return "a", nil })
+		u2 := NewUID("B", func() (string, error) { return "b", nil })
 
 		if u1.Name() == u2.Name() {
 			t.Fatal("expected different names")
 		}
 
-		if u1.Generate() == u2.Generate() {
+		gotA, errA := u1.Generate()
+		if errA != nil {
+			t.Fatalf("unexpected error: %v", errA)
+		}
+
+		gotB, errB := u2.Generate()
+		if errB != nil {
+			t.Fatalf("unexpected error: %v", errB)
+		}
+
+		if gotA == gotB {
 			t.Fatal("expected different generated values")
+		}
+	})
+
+	t.Run("propagates error from underlying generator", func(t *testing.T) {
+		t.Parallel()
+
+		want := errors.New("entropy source failed")
+		u := NewUID("FAIL", func() (string, error) { return "", want })
+
+		got, err := u.Generate()
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if !errors.Is(err, want) {
+			t.Fatalf("expected wrapped error, got %v", err)
+		}
+
+		if got != "" {
+			t.Fatalf("expected empty string on error, got %q", got)
 		}
 	})
 }

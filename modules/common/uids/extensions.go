@@ -63,8 +63,9 @@ func Use(name string) error {
 	return nil
 }
 
-// Generate delegates to the current default UID generator.
-func Generate() string {
+// Generate delegates to the current default UID generator, returning any
+// error surfaced by the underlying entropy source.
+func Generate() (string, error) {
 	lock.RLock()
 	defer lock.RUnlock()
 
