@@ -11,7 +11,7 @@ with the overrides documented below.
 | 1 | Bullet proof review | Yes | |
 | 2 | Type Compliance | Yes | Engine (deductive, bayesian, fuzzy, causal), FactBase, EvidenceBase, Network, SCM, Rule (deductive, fuzzy), Variable |
 | 3 | Public Interface, Private Implementation | Yes | |
-| 4 | Constructor returns interface | Yes | NewEngine (×4), NewFactBase, NewEvidenceBase, NewNetwork, NewSCM, NewRule (×2), NewVariable |
+| 4 | Constructor returns interface | Yes for engines/registries; *Struct for math data structures (Exception 2) | NewEngine (×4), NewFactBase, NewEvidenceBase, NewNetwork, NewSCM, NewRule (×2), NewVariable return interfaces. `compute/math/graph/*` (`*DAG`, `*Directed`, etc.), `compute/math/fsm/*` (`*Machine`), `compute/math/stats/*` (`*WindowedStats`), `compute/math/markov/*` (`*Chain`) return `*Struct` per Exception 2 of the master criterion. |
 | 5 | Options | Yes | engine (deductive, bayesian, fuzzy), rules (deductive, fuzzy), variable, parser |
 | 6 | Preconfigured Default Singletons | No | |
 | 7 | Linter | Yes | |
