@@ -85,17 +85,19 @@ import (
 
 ## No Inline Assignments
 
-Never combine assignment and condition in a single `if` statement. Always separate the assignment from the check. This applies to:
+Never combine assignment and condition in a single `if` statement. Always separate the assignment from the check. This rule applies to **every** form of `if init; cond`, regardless of what the init is — error returns, map lookups, type assertions, function-call results, anything. There is no test-code exception.
 
 - **Error checks**: `if err := fn(); err != nil` — use `err := fn()` then `if err != nil`.
 - **Map lookups**: `if val, ok := m[key]; ok` — use `val, ok := m[key]` then `if ok`.
 - **Type assertions**: `if val, ok := x.(T); ok` — use `val, ok := x.(T)` then `if ok`.
+- **Assignment-then-compare** (including tests): `if got := f(); got != x` — use `got := f()` then `if got != x`.
 
 ```go
 // Bad
 if err := doSomething(); err != nil { ... }
 if val, ok := myMap[key]; ok { ... }
 if val, ok := x.(MyType); ok { ... }
+if got := node.String(); got != "42" { ... }
 
 // Good
 err := doSomething()
@@ -106,6 +108,9 @@ if ok { ... }
 
 val, ok := x.(MyType)
 if ok { ... }
+
+got := node.String()
+if got != "42" { ... }
 ```
 
 ### Enforcement
