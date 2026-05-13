@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("-----BEGIN WRONG-----\nAAAA\n-----END WRONG-----\n")
