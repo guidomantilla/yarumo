@@ -16,6 +16,11 @@ type logger struct {
 }
 
 // NewLogger returns a new Logger backed by log/slog.
+//
+// When one or more context attribute extractors have been registered via
+// WithContextExtractors, the returned logger wraps the fanout root with a
+// context-aware handler that invokes the extractors on every record before
+// dispatching to the underlying handlers.
 func NewLogger(options ...Option) Logger {
 	opts := NewOptions(options...)
 
@@ -28,8 +33,13 @@ func NewLogger(options ...Option) Logger {
 		handlers = append(handlers, slog.NewJSONHandler(opts.writer, handlerOpts))
 	}
 
+	root := NewFanoutHandler(handlers...)
+	if len(opts.extractors) > 0 {
+		root = NewContextHandler(root, opts.extractors...)
+	}
+
 	return &logger{
-		internal: slog.New(NewFanoutHandler(handlers...)),
+		internal: slog.New(root),
 	}
 }
 

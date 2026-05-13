@@ -1,0 +1,22 @@
+# Fixture (c): nested rule groups (arbitrary depth).
+# - First a flat field rule (Name).
+# - Then nested groups walk Owner.Email and Owner.Tags from a parent field.
+- field: Name
+  rules:
+    - required
+- field: Owner
+  rules:
+    - required
+    - field: Email
+      rules:
+        - required
+        - email
+    - field: Tags
+      rules:
+        - non_empty
+- when: "tier == 'gold'"
+  rules:
+    - field: Level
+      rules:
+        - { min: 50 }
+        - { in_range: [1, 100] }

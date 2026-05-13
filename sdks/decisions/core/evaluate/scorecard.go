@@ -10,7 +10,7 @@ import (
 	"github.com/guidomantilla/yarumo/decisions/core/schema"
 )
 
-func runScorecard(ctx context.Context, config *schema.ScorecardConfig, exprCtx cexpressions.Context, opts Options) (Result, error) {
+func runScorecard(ctx context.Context, config *schema.ScorecardConfig, exprCtx cexpressions.Context, opts *Options) (Result, error) {
 	evaluator := cexpressions.NewEvaluator(opts.expressionOpts...)
 	total := config.BaseScore
 	breakdown := make([]explain.ScoreEntry, 0, len(config.Attributes))
