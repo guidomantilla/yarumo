@@ -76,7 +76,7 @@ func dispatchParadigm(ctx context.Context, paradigm Paradigm, ruleSetAny any, //
 
 // dispatchModelParadigm routes execution to the appropriate model engine based on paradigm.
 func dispatchModelParadigm(ctx context.Context, paradigm Paradigm, ruleSetAny any,
-	exprCtx cexpressions.Context, opts Options) (Result, error) { //nolint:unparam // Result is used by service.go caller
+	exprCtx cexpressions.Context, opts *Options) (Result, error) { //nolint:unparam // Result is used by service.go caller
 
 	ruleSet, ok := ruleSetAny.(*schema.RuleSet)
 	if !ok {

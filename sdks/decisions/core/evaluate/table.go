@@ -12,7 +12,7 @@ import (
 	"github.com/guidomantilla/yarumo/decisions/core/schema"
 )
 
-func runTable(ctx context.Context, config *schema.TableConfig, exprCtx cexpressions.Context, opts Options) (Result, error) {
+func runTable(ctx context.Context, config *schema.TableConfig, exprCtx cexpressions.Context, opts *Options) (Result, error) {
 	evaluator := cexpressions.NewEvaluator(opts.expressionOpts...)
 	policy := resolveHitPolicy(config.HitPolicy)
 

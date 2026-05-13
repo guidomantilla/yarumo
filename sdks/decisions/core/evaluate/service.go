@@ -24,7 +24,7 @@ type service[D any] struct {
 	fuzzyBinder      FuzzyBinder[D]
 	expressionBinder ExpressionBinder[D]
 	repo             repository.Repository
-	options          Options
+	options          *Options
 }
 
 // NewService creates a new Service with the given binder, repository, and options.

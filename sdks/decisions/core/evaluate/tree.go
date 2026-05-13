@@ -10,7 +10,7 @@ import (
 	"github.com/guidomantilla/yarumo/decisions/core/schema"
 )
 
-func runTree(ctx context.Context, config *schema.TreeConfig, exprCtx cexpressions.Context, opts Options) (Result, error) {
+func runTree(ctx context.Context, config *schema.TreeConfig, exprCtx cexpressions.Context, opts *Options) (Result, error) {
 	evaluator := cexpressions.NewEvaluator(opts.expressionOpts...)
 
 	path, outputs, err := walkTree(evaluator, &config.Root, exprCtx)
