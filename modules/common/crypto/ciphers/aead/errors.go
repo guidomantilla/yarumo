@@ -33,17 +33,18 @@ func (e *Error) Error() string {
 
 // Sentinel errors for the aead package.
 var (
-	ErrMethodInvalid       = errors.New("cipher method is invalid")
-	ErrKeyInvalid          = errors.New("cipher key is invalid")
-	ErrCipherInitFailed    = errors.New("cipher initialization failed")
-	ErrCiphertextTooShort  = errors.New("ciphertext too short")
-	ErrKeySizeInvalid      = errors.New("key size is invalid")
-	ErrNonceSizeInvalid    = errors.New("nonce size is invalid")
-	ErrKeyGenerationFailed = errors.New("key generation failed")
-	ErrEncryptFailed       = errors.New("encrypt failed")
-	ErrDecryptFailed       = errors.New("decrypt failed")
-	ErrStreamSrcNil        = errors.New("aead stream src is nil")
-	ErrStreamDstNil        = errors.New("aead stream dst is nil")
+	ErrMethodInvalid         = errors.New("cipher method is invalid")
+	ErrKeyInvalid            = errors.New("cipher key is invalid")
+	ErrCipherInitFailed      = errors.New("cipher initialization failed")
+	ErrCiphertextTooShort    = errors.New("ciphertext too short")
+	ErrKeySizeInvalid        = errors.New("key size is invalid")
+	ErrNonceSizeInvalid      = errors.New("nonce size is invalid")
+	ErrKeyGenerationFailed   = errors.New("key generation failed")
+	ErrNonceGenerationFailed = errors.New("nonce generation failed")
+	ErrEncryptFailed         = errors.New("encrypt failed")
+	ErrDecryptFailed         = errors.New("decrypt failed")
+	ErrStreamSrcNil          = errors.New("aead stream src is nil")
+	ErrStreamDstNil          = errors.New("aead stream dst is nil")
 )
 
 // ErrAlgorithmNotSupported returns an error indicating the named AEAD algorithm is not registered.

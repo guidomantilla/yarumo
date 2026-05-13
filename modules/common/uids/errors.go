@@ -1,6 +1,7 @@
 package uids
 
 import (
+	"errors"
 	"fmt"
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
@@ -11,6 +12,11 @@ import (
 const (
 	UidNotFound = "uid_function_not_found"
 )
+
+// ErrGenerationFailed is returned by Generate (and the underlying UIDFn) when
+// the entropy source backing the algorithm fails. Callers can match it with
+// errors.Is to distinguish generator failures from other errors.
+var ErrGenerationFailed = errors.New("uid generation failed")
 
 // Error is a domain error type for UID operations.
 type Error struct {

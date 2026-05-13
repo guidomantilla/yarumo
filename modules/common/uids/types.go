@@ -24,12 +24,16 @@ var (
 type UID interface {
 	// Name returns the algorithm name.
 	Name() string
-	// Generate generates and returns a new unique identifier.
-	Generate() string
+	// Generate generates and returns a new unique identifier, or an error if
+	// the underlying entropy source fails.
+	Generate() (string, error)
 }
 
-// UIDFn is the function type for UID generation functions.
-type UIDFn func() string
+// UIDFn is the function type for UID generation functions. Implementations
+// return an error when the underlying entropy source (typically crypto/rand)
+// fails. Silent fallbacks are not permitted: an empty string with a nil error
+// is never acceptable.
+type UIDFn func() (string, error)
 
 // RegisterFn is the function type for Register.
 type RegisterFn func(uid UID)
@@ -41,7 +45,7 @@ type GetFn func(name string) (UID, error)
 type UseFn func(name string) error
 
 // GenerateFn is the function type for Generate.
-type GenerateFn func() string
+type GenerateFn func() (string, error)
 
 // SupportedFn is the function type for Supported.
 type SupportedFn func() []UID

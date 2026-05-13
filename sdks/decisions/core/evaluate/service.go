@@ -87,8 +87,13 @@ func (s *service[D]) Execute(ctx context.Context, request Request[D]) (Result, e
 	}
 
 	if s.options.auditLog != nil {
+		id, idErr := cuids.UuidV7.Generate()
+		if idErr != nil {
+			return result, ErrAudit(idErr)
+		}
+
 		auditErr := s.options.auditLog.Record(ctx, Entry{
-			ID:             cuids.UuidV7.Generate(),
+			ID:             id,
 			Timestamp:      start,
 			RuleSetName:    request.RuleSetName,
 			RuleSetVersion: request.RuleSetVersion,

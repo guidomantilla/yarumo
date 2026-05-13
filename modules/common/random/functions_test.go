@@ -18,6 +18,16 @@ func withRandInt(temp func(reader io.Reader, limit *big.Int) (*big.Int, error), 
 	fn()
 }
 
+// withRandRead temporarily replaces the package-level randRead and restores it after fn returns.
+func withRandRead(temp func(b []byte) (int, error), fn func()) {
+	orig := randRead
+	randRead = temp
+
+	defer func() { randRead = orig }()
+
+	fn()
+}
+
 // allRunesIn returns true when every rune in s exists in charset.
 func allRunesIn(s, charset string) bool {
 	for _, r := range s {
@@ -30,12 +40,14 @@ func allRunesIn(s, charset string) bool {
 }
 
 func TestBytes(t *testing.T) {
-	t.Parallel()
-
 	t.Run("negative size returns nil", func(t *testing.T) {
 		t.Parallel()
 
-		got := Bytes(-1)
+		got, err := Bytes(-1)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
 		if got != nil {
 			t.Fatalf("got %v, want nil", got)
 		}
@@ -44,7 +56,11 @@ func TestBytes(t *testing.T) {
 	t.Run("zero size returns nil", func(t *testing.T) {
 		t.Parallel()
 
-		got := Bytes(0)
+		got, err := Bytes(0)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
 		if got != nil {
 			t.Fatalf("got %v, want nil", got)
 		}
@@ -53,7 +69,11 @@ func TestBytes(t *testing.T) {
 	t.Run("positive size returns correct length", func(t *testing.T) {
 		t.Parallel()
 
-		got := Bytes(16)
+		got, err := Bytes(16)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
 		if len(got) != 16 {
 			t.Fatalf("got length %d, want 16", len(got))
 		}
@@ -62,7 +82,11 @@ func TestBytes(t *testing.T) {
 	t.Run("output contains non-zero bytes", func(t *testing.T) {
 		t.Parallel()
 
-		got := Bytes(32)
+		got, err := Bytes(32)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
 		allZero := true
 
 		for _, b := range got {
@@ -75,6 +99,40 @@ func TestBytes(t *testing.T) {
 		if allZero {
 			t.Fatal("expected non-zero bytes in random output")
 		}
+	})
+
+	t.Run("error from rand.Read", func(t *testing.T) {
+		withRandRead(func(_ []byte) (int, error) {
+			return 0, errors.New("boom")
+		}, func() {
+			got, err := Bytes(16)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+
+			if got != nil {
+				t.Fatalf("expected nil bytes on error, got %v", got)
+			}
+		})
+	})
+
+	t.Run("short read returns ErrShortRead", func(t *testing.T) {
+		withRandRead(func(b []byte) (int, error) {
+			return len(b) - 1, nil
+		}, func() {
+			got, err := Bytes(16)
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+
+			if !errors.Is(err, ErrShortRead) {
+				t.Fatalf("expected ErrShortRead, got %v", err)
+			}
+
+			if got != nil {
+				t.Fatalf("expected nil bytes on short read, got %v", got)
+			}
+		})
 	})
 }
 

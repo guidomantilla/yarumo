@@ -2,11 +2,18 @@ package random
 
 import (
 	"crypto/rand"
+	"errors"
 	"math/big"
 	"strings"
 
 	ctypes "github.com/guidomantilla/yarumo/common/types"
 )
+
+// ErrShortRead is returned when crypto/rand.Read returns fewer bytes than
+// requested. crypto/rand.Read should never return a short read on the
+// supported platforms, but the contract allows it and Bytes refuses to
+// silently return a partial buffer.
+var ErrShortRead = errors.New("crypto/rand short read")
 
 // Character sets for random string generation.
 const (
@@ -23,16 +30,30 @@ const (
 // Tests may override this variable within the package to simulate failures.
 var randInt = rand.Int
 
-// Bytes returns cryptographically random bytes.
-func Bytes(size int) ctypes.Bytes {
+// randRead is an indirection to crypto/rand.Read to allow error-path testing.
+// Tests may override this variable within the package to simulate failures.
+var randRead = rand.Read
+
+// Bytes returns cryptographically random bytes. It returns a nil slice with a
+// nil error when size is non-positive, and a non-nil error when the underlying
+// crypto/rand source fails to deliver the requested number of bytes.
+func Bytes(size int) (ctypes.Bytes, error) {
 	if size <= 0 {
-		return nil
+		return nil, nil
 	}
 
 	key := make([]byte, size)
-	_, _ = rand.Read(key)
 
-	return key
+	n, err := randRead(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if n != size {
+		return nil, ErrShortRead
+	}
+
+	return key, nil
 }
 
 // Number returns a cryptographically random integer in [0, max).

@@ -42,7 +42,12 @@ func key(method *Method) (ctypes.Bytes, error) {
 		return nil, ErrNonceSizeInvalid
 	}
 
-	return crandom.Bytes(method.keySize), nil
+	out, err := crandom.Bytes(method.keySize)
+	if err != nil {
+		return nil, cerrs.Wrap(ErrKeyGenerationFailed, err)
+	}
+
+	return out, nil
 }
 
 func encrypt(method *Method, key ctypes.Bytes, data ctypes.Bytes, aad ctypes.Bytes) (ctypes.Bytes, error) {
@@ -59,7 +64,11 @@ func encrypt(method *Method, key ctypes.Bytes, data ctypes.Bytes, aad ctypes.Byt
 		return nil, cerrs.Wrap(ErrCipherInitFailed, err)
 	}
 
-	nonce := crandom.Bytes(method.nonceSize)
+	nonce, nonceErr := crandom.Bytes(method.nonceSize)
+	if nonceErr != nil {
+		return nil, cerrs.Wrap(ErrNonceGenerationFailed, nonceErr)
+	}
+
 	ciphered := aead.Seal(nil, nonce, data, aad)
 
 	out := make([]byte, 0, len(nonce)+len(ciphered))

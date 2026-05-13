@@ -23,7 +23,7 @@ func TestRegister(t *testing.T) {
 	defer restoreMethods(snap)
 
 	t.Run("registers new UID generator", func(t *testing.T) {
-		u := NewUID("CUSTOM", func() string { return "custom" })
+		u := NewUID("CUSTOM", func() (string, error) { return "custom", nil })
 		Register(u)
 
 		got, err := Get("CUSTOM")
@@ -31,22 +31,32 @@ func TestRegister(t *testing.T) {
 			t.Fatalf("Get after Register: %v", err)
 		}
 
-		if got.Generate() != "custom" {
-			t.Fatalf("Generate() = %q, want %q", got.Generate(), "custom")
+		generated, genErr := got.Generate()
+		if genErr != nil {
+			t.Fatalf("Generate after Register: %v", genErr)
+		}
+
+		if generated != "custom" {
+			t.Fatalf("Generate() = %q, want %q", generated, "custom")
 		}
 	})
 
 	t.Run("overwrites existing registration", func(t *testing.T) {
-		Register(NewUID("OVER", func() string { return "v1" }))
-		Register(NewUID("OVER", func() string { return "v2" }))
+		Register(NewUID("OVER", func() (string, error) { return "v1", nil }))
+		Register(NewUID("OVER", func() (string, error) { return "v2", nil }))
 
 		got, err := Get("OVER")
 		if err != nil {
 			t.Fatalf("Get after overwrite: %v", err)
 		}
 
-		if got.Generate() != "v2" {
-			t.Fatalf("Generate() = %q, want %q", got.Generate(), "v2")
+		generated, genErr := got.Generate()
+		if genErr != nil {
+			t.Fatalf("Generate after overwrite: %v", genErr)
+		}
+
+		if generated != "v2" {
+			t.Fatalf("Generate() = %q, want %q", generated, "v2")
 		}
 	})
 }
@@ -124,23 +134,54 @@ func TestGenerate(t *testing.T) {
 	}()
 
 	t.Run("delegates to current default generator", func(t *testing.T) {
-		id := Generate()
+		id, err := Generate()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
 		if id == "" {
 			t.Fatal("Generate() returned empty string")
 		}
 	})
 
 	t.Run("uses selected generator after Use", func(t *testing.T) {
-		Register(NewUID("FIXED", func() string { return "fixed-id" }))
+		Register(NewUID("FIXED", func() (string, error) { return "fixed-id", nil }))
 
 		err := Use("FIXED")
 		if err != nil {
 			t.Fatalf("Use(FIXED) error: %v", err)
 		}
 
-		got := Generate()
+		got, genErr := Generate()
+		if genErr != nil {
+			t.Fatalf("unexpected error: %v", genErr)
+		}
+
 		if got != "fixed-id" {
 			t.Fatalf("Generate() = %q, want %q", got, "fixed-id")
+		}
+	})
+
+	t.Run("propagates error from current generator", func(t *testing.T) {
+		want := errors.New("entropy source failed")
+		Register(NewUID("BROKEN", func() (string, error) { return "", want }))
+
+		err := Use("BROKEN")
+		if err != nil {
+			t.Fatalf("Use(BROKEN) error: %v", err)
+		}
+
+		got, genErr := Generate()
+		if genErr == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		if !errors.Is(genErr, want) {
+			t.Fatalf("expected wrapped error, got %v", genErr)
+		}
+
+		if got != "" {
+			t.Fatalf("expected empty string on error, got %q", got)
 		}
 	})
 }
@@ -157,7 +198,7 @@ func TestSupported(t *testing.T) {
 	})
 
 	t.Run("includes newly registered UID", func(t *testing.T) {
-		Register(NewUID("NEW", func() string { return "new" }))
+		Register(NewUID("NEW", func() (string, error) { return "new", nil }))
 
 		list := Supported()
 		found := false

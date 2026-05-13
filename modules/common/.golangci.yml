@@ -259,6 +259,13 @@ linters:
       - path: uids/(uids|extensions)\.go
         linters:
           - gochecknoglobals
+      # uids/extensions.go: Generate delegates to the current UID.Generate; the
+      # wrapping happens inside the predefined generators (uids/functions.go).
+      # uids/functions.go: external library errors are wrapped with ErrGenerationFailed
+      # via cerrs.Wrap; wrapcheck does not detect Join-style wrapping.
+      - path: uids/(extensions|functions)\.go
+        linters:
+          - wrapcheck
       # extensions_test.go cannot be parallel: tests modify the global methods registry
       - path: uids/extensions_test\.go
         linters:
