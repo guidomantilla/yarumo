@@ -188,15 +188,23 @@ linters:
       - path: cast/functions\.go
         linters:
           - wrapcheck
-      # randInt package-level var is required for testing crypto/rand error paths
-      - path: random/functions\.go
+      # crypto/random: randInt/randRead package-level vars are required for
+      # testing crypto/rand error paths.
+      - path: crypto/random/functions\.go
         linters:
           - gochecknoglobals
-      # TestNumber and TestString cannot be parallel: they mock the package-level randInt
-      - path: random/functions_test\.go
+      # crypto/random: TestNumber and TestString cannot be parallel — they mock
+      # the package-level randInt.
+      - path: crypto/random/functions_test\.go
         linters:
           - paralleltest
           - tparallel
+      # random (fast, math/rand/v2-backed): gosec G404 fires by design — this
+      # package is the non-secure variant of crypto/random. Misuse is guarded
+      # by the import path and the per-function doc warnings.
+      - path: random/functions\.go
+        linters:
+          - gosec
       # log package globals (mu, current, osExit) are required for thread-safe singleton logger
       - path: log/functions\.go
         linters:

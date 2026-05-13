@@ -66,7 +66,7 @@
 // This package does not expose a public salt generator. Callers that need
 // cryptographically-secure random bytes for adjacent purposes — a non-password
 // KDF, a token nonce, a session id, etc. — should use
-// [github.com/guidomantilla/yarumo/common/random.Bytes] directly. The
+// [github.com/guidomantilla/yarumo/common/crypto/random.Bytes] directly. The
 // passwords package itself sources salt entropy from that same primitive, so
 // there is a single source of truth for random-bytes generation in the
 // workspace.

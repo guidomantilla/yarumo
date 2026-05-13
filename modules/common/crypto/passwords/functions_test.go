@@ -1067,7 +1067,7 @@ func Test_upgradeNeeded_returns_error_for_no_config(t *testing.T) {
 // section of the expected length and that two consecutive encodes of the same
 // raw password produce distinct outputs (i.e. the salt entropy source is
 // actually wired up). This replaces the previous unit test against the now-
-// removed private generateSalt helper; entropy now flows from common/random.
+// removed private generateSalt helper; entropy now flows from common/crypto/random.
 func Test_saltEntropy_viaPublicAPI(t *testing.T) {
 	t.Parallel()
 

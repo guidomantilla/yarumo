@@ -8,14 +8,14 @@
 // The package lives at common/crypto/passwords/generator/ — a sibling of
 // the password hasher at common/crypto/passwords/. The two packages are
 // independent: this one synthesises passwords, the parent one stores them.
-// Generator imports common/random for its crypto/rand-backed alphabet
+// Generator imports common/crypto/random for its crypto/rand-backed alphabet
 // primitives; there is no import cycle (random has no upward dependencies).
 //
 // # Security model
 //
 // The generator is CSPRNG-backed end-to-end. Character selection uses
-// common/random.Text* helpers (crypto/rand via math/big.Int.SetBits), and
-// the final shuffle is a Fisher-Yates pass driven by common/random.Number
+// common/crypto/random.Text* helpers (crypto/rand via math/big.Int.SetBits), and
+// the final shuffle is a Fisher-Yates pass driven by common/crypto/random.Number
 // — never math/rand. Treating the generator output as unpredictable
 // therefore depends only on the platform crypto/rand entropy source.
 //
@@ -30,7 +30,7 @@
 // This implementation deliberately addresses issues documented in the
 // archived legacy package (gist cf0b78c1acb1ca704cd4e40e33788473):
 //
-//   - No math/rand shuffle — Fisher-Yates uses common/random.Number.
+//   - No math/rand shuffle — Fisher-Yates uses common/crypto/random.Number.
 //   - No silent option rejection — With<Field> options accept any value;
 //     NewGenerator returns a typed error when the sum of minimums exceeds
 //     the total length.
@@ -46,7 +46,7 @@ import (
 )
 
 // Character sets used to compose generated passwords. They mirror the
-// alphabets exposed by common/random and are duplicated here as private
+// alphabets exposed by common/crypto/random and are duplicated here as private
 // constants only to keep Validate independent of import-time changes.
 const (
 	lowerCharSet   = "abcdefghijklmnopqrstuvwxyz"

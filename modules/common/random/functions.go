@@ -1,19 +1,11 @@
 package random
 
 import (
-	"crypto/rand"
-	"errors"
-	"math/big"
+	"math/rand/v2"
 	"strings"
 
 	ctypes "github.com/guidomantilla/yarumo/common/types"
 )
-
-// ErrShortRead is returned when crypto/rand.Read returns fewer bytes than
-// requested. crypto/rand.Read should never return a short read on the
-// supported platforms, but the contract allows it and Bytes refuses to
-// silently return a partial buffer.
-var ErrShortRead = errors.New("crypto/rand short read")
 
 // Character sets for random string generation.
 const (
@@ -26,107 +18,101 @@ const (
 	AllCharSet     = AlphaNumSet + SpecialCharSet
 )
 
-// randInt is an indirection to crypto/rand.Int to allow error-path testing.
-// Tests may override this variable within the package to simulate failures.
-var randInt = rand.Int
-
-// randRead is an indirection to crypto/rand.Read to allow error-path testing.
-// Tests may override this variable within the package to simulate failures.
-var randRead = rand.Read
-
-// Bytes returns cryptographically random bytes. It returns a nil slice with a
-// nil error when size is non-positive, and a non-nil error when the underlying
-// crypto/rand source fails to deliver the requested number of bytes.
-func Bytes(size int) (ctypes.Bytes, error) {
+// Bytes returns size random bytes using math/rand/v2.
+// NOT cryptographically secure — use common/crypto/random for secrets, tokens,
+// or any value that must be unpredictable.
+func Bytes(size int) ctypes.Bytes {
 	if size <= 0 {
-		return nil, nil
+		return nil
 	}
 
-	key := make([]byte, size)
-
-	n, err := randRead(key)
-	if err != nil {
-		return nil, err
+	out := make([]byte, size)
+	for i := range out {
+		out[i] = byte(rand.Uint32())
 	}
 
-	if n != size {
-		return nil, ErrShortRead
-	}
-
-	return key, nil
+	return out
 }
 
-// Number returns a cryptographically random integer in [0, max).
-func Number(limit int64) (int64, error) {
+// Number returns a non-secure random integer in [0, limit).
+// NOT cryptographically secure — use common/crypto/random for secrets, tokens,
+// or any value that must be unpredictable.
+func Number(limit int64) int64 {
 	if limit <= 0 {
-		return 0, nil
+		return 0
 	}
 
-	n, err := randInt(rand.Reader, big.NewInt(limit))
-	if err != nil {
-		return 0, err
-	}
-
-	return n.Int64(), nil
+	return rand.Int64N(limit)
 }
 
-// String returns a cryptographically random string with custom charset.
-func String(size int, charset string) (string, error) {
+// String returns a non-secure random string with custom charset.
+// NOT cryptographically secure — use common/crypto/random for secrets, tokens,
+// or any value that must be unpredictable.
+func String(size int, charset string) string {
 	if size <= 0 || len(charset) == 0 {
-		return "", nil
+		return ""
 	}
 
-	charsetRunes := []rune(charset)
-	charsetLen := int64(len(charsetRunes))
+	runes := []rune(charset)
+	n := len(runes)
 
 	var out strings.Builder
 	out.Grow(size)
 
 	for range size {
-		random, err := Number(charsetLen)
-		if err != nil {
-			return "", err
-		}
-
-		out.WriteRune(charsetRunes[random])
+		out.WriteRune(runes[rand.IntN(n)])
 	}
 
-	return out.String(), nil
+	return out.String()
 }
 
 // --- Convenience functions ---
 
-// TextLower returns a cryptographically random lowercase alphabetic string of the specified size.
-func TextLower(size int) (string, error) {
+// TextLower returns a non-secure random lowercase alphabetic string of the specified size.
+// NOT cryptographically secure — use common/crypto/random for secrets, tokens,
+// or any value that must be unpredictable.
+func TextLower(size int) string {
 	return String(size, LowerCharSet)
 }
 
-// TextUpper returns a cryptographically random uppercase alphabetic string of the specified size.
-func TextUpper(size int) (string, error) {
+// TextUpper returns a non-secure random uppercase alphabetic string of the specified size.
+// NOT cryptographically secure — use common/crypto/random for secrets, tokens,
+// or any value that must be unpredictable.
+func TextUpper(size int) string {
 	return String(size, UpperCharSet)
 }
 
-// TextNumber returns a cryptographically random numeric string of the specified size.
-func TextNumber(size int) (string, error) {
+// TextNumber returns a non-secure random numeric string of the specified size.
+// NOT cryptographically secure — use common/crypto/random for secrets, tokens,
+// or any value that must be unpredictable.
+func TextNumber(size int) string {
 	return String(size, NumberSet)
 }
 
-// TextSpecial returns a cryptographically random special character string of the specified size.
-func TextSpecial(size int) (string, error) {
+// TextSpecial returns a non-secure random special character string of the specified size.
+// NOT cryptographically secure — use common/crypto/random for secrets, tokens,
+// or any value that must be unpredictable.
+func TextSpecial(size int) string {
 	return String(size, SpecialCharSet)
 }
 
-// TextAlpha returns a cryptographically random alphabetic string of the specified size.
-func TextAlpha(size int) (string, error) {
+// TextAlpha returns a non-secure random alphabetic string of the specified size.
+// NOT cryptographically secure — use common/crypto/random for secrets, tokens,
+// or any value that must be unpredictable.
+func TextAlpha(size int) string {
 	return String(size, AlphaSet)
 }
 
-// TextAlphaNum returns a cryptographically random alphanumeric string of the specified size.
-func TextAlphaNum(size int) (string, error) {
+// TextAlphaNum returns a non-secure random alphanumeric string of the specified size.
+// NOT cryptographically secure — use common/crypto/random for secrets, tokens,
+// or any value that must be unpredictable.
+func TextAlphaNum(size int) string {
 	return String(size, AlphaNumSet)
 }
 
-// TextAll returns a cryptographically random string of the specified size.
-func TextAll(size int) (string, error) {
+// TextAll returns a non-secure random string of the specified size.
+// NOT cryptographically secure — use common/crypto/random for secrets, tokens,
+// or any value that must be unpredictable.
+func TextAll(size int) string {
 	return String(size, AllCharSet)
 }

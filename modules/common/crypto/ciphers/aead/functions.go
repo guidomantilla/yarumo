@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	crandom "github.com/guidomantilla/yarumo/common/random"
+	crandom "github.com/guidomantilla/yarumo/common/crypto/random"
 	ctypes "github.com/guidomantilla/yarumo/common/types"
 	cutils "github.com/guidomantilla/yarumo/common/utils"
 )
