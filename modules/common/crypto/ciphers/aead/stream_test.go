@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	crandom "github.com/guidomantilla/yarumo/common/random"
+	crandom "github.com/guidomantilla/yarumo/common/crypto/random"
 )
 
 func TestMethod_EncryptStream_DecryptStream_RoundTrip(t *testing.T) {

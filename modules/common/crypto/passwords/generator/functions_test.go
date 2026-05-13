@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	crandom "github.com/guidomantilla/yarumo/common/random"
+	crandom "github.com/guidomantilla/yarumo/common/crypto/random"
 )
 
 // withRandomOverrides swaps every package-level CSPRNG indirection for the

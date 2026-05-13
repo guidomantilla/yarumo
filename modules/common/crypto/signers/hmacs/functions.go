@@ -4,7 +4,7 @@ import (
 	"crypto/hmac"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	crandom "github.com/guidomantilla/yarumo/common/random"
+	crandom "github.com/guidomantilla/yarumo/common/crypto/random"
 	ctypes "github.com/guidomantilla/yarumo/common/types"
 )
 

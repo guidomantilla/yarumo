@@ -3,13 +3,13 @@ package generator
 import (
 	"strings"
 
-	crandom "github.com/guidomantilla/yarumo/common/random"
+	crandom "github.com/guidomantilla/yarumo/common/crypto/random"
 )
 
 // Package-level indirections to the crypto/rand-backed alphabet helpers in
-// common/random. Tests may override these to exercise error paths from the
-// upstream CSPRNG without forking the dependency. The same pattern is used
-// by common/random.randInt.
+// common/crypto/random. Tests may override these to exercise error paths
+// from the upstream CSPRNG without forking the dependency. The same pattern
+// is used by common/crypto/random.randInt.
 var (
 	textSpecial = crandom.TextSpecial
 	textNumber  = crandom.TextNumber
@@ -107,7 +107,7 @@ func validate(g *Generator, rawPassword string) error {
 }
 
 // shuffleRunes performs an in-place Fisher-Yates shuffle backed by
-// crypto/rand via common/random.Number. It replaces the legacy code's
+// crypto/rand via common/crypto/random.Number. It replaces the legacy code's
 // math/rand/v2.Shuffle, which produced predictable orderings unsuitable
 // for a security-sensitive generator.
 //

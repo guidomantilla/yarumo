@@ -98,6 +98,10 @@ import (
 - The alias is `c` + the last segment of the import path (e.g., `common/crypto/hashes` → `chashes`).
 - Blank imports (`_ "..."`) do not need aliases.
 
+**Override**: when two packages share the same last segment (e.g., `common/random` and `common/crypto/random`), an explicit non-default alias is used:
+- `common/crypto/random` → `crandom` (canonical — frequent inside `common/crypto/*`).
+- `common/random` → `cfrandom` ("common-fast-random") — reserved for the `math/rand/v2`-backed fast variant; signals non-secure at a glance.
+
 ## No Inline Assignments
 
 Never combine assignment and condition in a single `if` statement. Always separate the assignment from the check. This rule applies to **every** form of `if init; cond`, regardless of what the init is — error returns, map lookups, type assertions, function-call results, anything. There is no test-code exception.
@@ -351,7 +355,7 @@ Organizational rules:
 - [x] common/cast
 - [x] common/constraints
 - [x] common/cron
-- [x] common/crypto (hashes, signers/*, ciphers/aead, ciphers/rsaoaep, certs, passwords, tokens)
+- [x] common/crypto (hashes, signers/*, ciphers/aead, ciphers/rsaoaep, certs, passwords, random, tokens)
 - [x] common/diagnostics
 - [x] common/errs
 - [x] common/grpc

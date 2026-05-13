@@ -4,7 +4,7 @@ import (
 	"time"
 
 	cpointer "github.com/guidomantilla/yarumo/common/pointer"
-	crandom "github.com/guidomantilla/yarumo/common/random"
+	crandom "github.com/guidomantilla/yarumo/common/crypto/random"
 )
 
 // Option is a functional option for configuring tokens Options.
