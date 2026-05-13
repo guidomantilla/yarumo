@@ -12,6 +12,7 @@ import (
 	_ "github.com/guidomantilla/yarumo/common/crypto/hashes"
 	_ "github.com/guidomantilla/yarumo/common/crypto/kdfs"
 	_ "github.com/guidomantilla/yarumo/common/crypto/passwords"
+	_ "github.com/guidomantilla/yarumo/common/crypto/passwords/generator"
 	_ "github.com/guidomantilla/yarumo/common/crypto/signers/ecdsas"
 	_ "github.com/guidomantilla/yarumo/common/crypto/signers/ed25519"
 	_ "github.com/guidomantilla/yarumo/common/crypto/signers/hmacs"
