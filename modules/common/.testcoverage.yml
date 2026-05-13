@@ -54,6 +54,7 @@ exclude:
     - ^crypto/signers/examples/main.go
     - ^crypto/tokens/examples/main.go
     - ^diagnostics/examples/main.go
+    - ^resilience/examples/main.go
     - ^validation/examples/main.go
 
 # NOTES:

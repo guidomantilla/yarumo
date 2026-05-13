@@ -154,6 +154,7 @@ linters:
         - github\.com/guidomantilla/yarumo/common/diagnostics\.TraceFlightRecorder
         - github\.com/guidomantilla/yarumo/common/grpc\.Server
         - github\.com/guidomantilla/yarumo/common/http\.(Client|Server)
+        - github\.com/guidomantilla/yarumo/common/resilience\.(CircuitBreaker|CircuitBreakerRegistry|RateLimiter|RateLimiterRegistry)
         - github\.com/guidomantilla/yarumo/common/uids\.UID
 
   exclusions:
@@ -417,6 +418,26 @@ linters:
         linters:
           - goconst
           - staticcheck
+      # resilience: registry singletons (DefaultCircuitBreakerRegistry,
+      # DefaultRateLimiterRegistry) are required package-level vars; cassert
+      # methods inside CircuitBreaker/RateLimiter receive ctx via Execute/Wait
+      # but the receiver-nil assertion is a struct invariant, not a context-aware
+      # check.
+      - path: resilience/(extensions|circuitbreaker|ratelimiter)\.go
+        linters:
+          - gochecknoglobals
+          - contextcheck
+      # resilience tests intentionally pass nil context to validate guard
+      # behavior (staticcheck SA1012) and return nil,nil from disposable
+      # closures (nilnil) used only to satisfy func types.
+      - path: resilience/.*_test\.go
+        linters:
+          - staticcheck
+          - nilnil
+      # resilience examples use fmt.Print* for runnable demonstration output.
+      - path: resilience/examples/
+        linters:
+          - forbidigo
       # validation examples use println for demonstration purposes
       - path: validation/examples/
         linters:
