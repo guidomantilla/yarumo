@@ -38,3 +38,24 @@ func TestErrTemporal_type(t *testing.T) {
 		t.Fatalf("expected type %s, got %s", TemporalType, tempErr.Type)
 	}
 }
+
+func TestErrTemporal_zeroArgs(t *testing.T) {
+	t.Parallel()
+
+	err := ErrTemporal()
+	if !errors.Is(err, ErrTemporalFailed) {
+		t.Fatal("expected ErrTemporalFailed in chain")
+	}
+}
+
+func TestErrTemporalFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrTemporalFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrTemporalFailed.Error() != "temporal operation failed" {
+		t.Fatalf("unexpected message: %s", ErrTemporalFailed.Error())
+	}
+}

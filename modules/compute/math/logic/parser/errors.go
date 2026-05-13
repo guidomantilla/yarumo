@@ -4,6 +4,7 @@ package parser
 import (
 	"errors"
 
+	cassert "github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
@@ -25,6 +26,9 @@ type ParseError struct {
 
 // Error returns the error message.
 func (e *ParseError) Error() string {
+	cassert.NotNil(e, "error is nil")
+	cassert.NotNil(e.Err, "internal error is nil")
+
 	return e.Msg
 }
 
@@ -34,6 +38,7 @@ var (
 	ErrUnexpectedToken = errors.New("unexpected token")
 	ErrUnclosedParen   = errors.New("unclosed parenthesis")
 	ErrEmptyInput      = errors.New("empty input")
+	ErrParseFailed     = errors.New("parser operation failed")
 )
 
 // ErrParse creates a parse error with position information.
@@ -41,7 +46,7 @@ func ErrParse(pos, col int, msg string, causes ...error) *ParseError {
 	return &ParseError{
 		TypedError: cerrs.TypedError{
 			Type: ParserType,
-			Err:  errors.Join(causes...),
+			Err:  errors.Join(append(causes, ErrParseFailed)...),
 		},
 		Pos: pos,
 		Col: col,

@@ -23,6 +23,7 @@ type Error struct {
 var (
 	ErrVariableNotFound = errors.New("variable not found")
 	ErrNoRules          = errors.New("no rules provided")
+	ErrFuzzyFailed      = errors.New("fuzzy inference failed")
 )
 
 // ErrFuzzy creates a fuzzy domain error joining the given causes.
@@ -30,7 +31,7 @@ func ErrFuzzy(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: FuzzyType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrFuzzyFailed)...),
 		},
 	}
 }

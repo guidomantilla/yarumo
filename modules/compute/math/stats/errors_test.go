@@ -186,3 +186,24 @@ func TestErrStats_isErrorType(t *testing.T) {
 		t.Fatalf("expected type %s, got %s", StatsType, statsErr.Type)
 	}
 }
+
+func TestErrStats_zeroArgs(t *testing.T) {
+	t.Parallel()
+
+	err := ErrStats()
+	if !errors.Is(err, ErrStatsFailed) {
+		t.Fatal("expected ErrStatsFailed in chain")
+	}
+}
+
+func TestErrStatsFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrStatsFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrStatsFailed.Error() != "stats operation failed" {
+		t.Fatalf("unexpected message: %s", ErrStatsFailed.Error())
+	}
+}

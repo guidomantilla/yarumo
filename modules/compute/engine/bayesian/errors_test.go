@@ -105,3 +105,45 @@ func TestError_type(t *testing.T) {
 		t.Fatalf("expected type %s, got %s", BayesianType, bayesErr.Type)
 	}
 }
+
+func TestErrQuery_zeroArgs(t *testing.T) {
+	t.Parallel()
+
+	err := ErrQuery()
+	if !errors.Is(err, ErrBayesianQueryFailed) {
+		t.Fatal("expected ErrBayesianQueryFailed in chain")
+	}
+}
+
+func TestErrValidation_zeroArgs(t *testing.T) {
+	t.Parallel()
+
+	err := ErrValidation()
+	if !errors.Is(err, ErrBayesianValidationFailed) {
+		t.Fatal("expected ErrBayesianValidationFailed in chain")
+	}
+}
+
+func TestErrBayesianQueryFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrBayesianQueryFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrBayesianQueryFailed.Error() != "bayesian query failed" {
+		t.Fatalf("unexpected: %s", ErrBayesianQueryFailed.Error())
+	}
+}
+
+func TestErrBayesianValidationFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrBayesianValidationFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrBayesianValidationFailed.Error() != "bayesian validation failed" {
+		t.Fatalf("unexpected: %s", ErrBayesianValidationFailed.Error())
+	}
+}

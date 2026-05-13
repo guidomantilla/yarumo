@@ -53,3 +53,24 @@ func TestErrFuzzy_type(t *testing.T) {
 		t.Fatalf("expected type %s, got %s", FuzzyType, fuzzyErr.Type)
 	}
 }
+
+func TestErrFuzzy_zeroArgs(t *testing.T) {
+	t.Parallel()
+
+	err := ErrFuzzy()
+	if !errors.Is(err, ErrFuzzyFailed) {
+		t.Fatal("expected ErrFuzzyFailed in chain")
+	}
+}
+
+func TestErrFuzzyFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrFuzzyFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrFuzzyFailed.Error() != "fuzzy operation failed" {
+		t.Fatalf("unexpected message: %s", ErrFuzzyFailed.Error())
+	}
+}

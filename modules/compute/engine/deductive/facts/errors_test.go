@@ -60,4 +60,25 @@ func TestErrQuery(t *testing.T) {
 			t.Fatalf("expected type %s, got %s", FactType, factErr.Type)
 		}
 	})
+
+	t.Run("zero args still wraps ErrFactQueryFailed", func(t *testing.T) {
+		t.Parallel()
+
+		err := ErrQuery()
+		if !errors.Is(err, ErrFactQueryFailed) {
+			t.Fatal("expected ErrFactQueryFailed in chain")
+		}
+	})
+}
+
+func TestErrFactQueryFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrFactQueryFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrFactQueryFailed.Error() != "fact query failed" {
+		t.Fatalf("unexpected message: %s", ErrFactQueryFailed.Error())
+	}
 }

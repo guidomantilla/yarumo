@@ -59,4 +59,25 @@ func TestErrEngine(t *testing.T) {
 			t.Fatalf("expected type %s, got %s", EngineType, engineErr.Type)
 		}
 	})
+
+	t.Run("zero args still wraps ErrEngineFailed", func(t *testing.T) {
+		t.Parallel()
+
+		err := ErrEngine()
+		if !errors.Is(err, ErrEngineFailed) {
+			t.Fatal("expected ErrEngineFailed in chain")
+		}
+	})
+}
+
+func TestErrEngineFailed(t *testing.T) {
+	t.Parallel()
+
+	if ErrEngineFailed == nil {
+		t.Fatal("expected non-nil error")
+	}
+
+	if ErrEngineFailed.Error() != "engine operation failed" {
+		t.Fatalf("unexpected message: %s", ErrEngineFailed.Error())
+	}
 }

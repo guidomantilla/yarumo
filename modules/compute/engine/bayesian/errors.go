@@ -21,9 +21,11 @@ type Error struct {
 
 // Sentinel errors for Bayesian inference failure modes.
 var (
-	ErrNetworkInvalid    = errors.New("network is invalid")
-	ErrCyclicNetwork     = errors.New("network contains a cycle")
-	ErrQueryNotInNetwork = errors.New("query variable not in network")
+	ErrNetworkInvalid           = errors.New("network is invalid")
+	ErrCyclicNetwork            = errors.New("network contains a cycle")
+	ErrQueryNotInNetwork        = errors.New("query variable not in network")
+	ErrBayesianQueryFailed      = errors.New("bayesian query failed")
+	ErrBayesianValidationFailed = errors.New("bayesian validation failed")
 )
 
 // ErrQuery creates a Bayesian domain error joining the given causes.
@@ -31,7 +33,7 @@ func ErrQuery(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: BayesianType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrBayesianQueryFailed)...),
 		},
 	}
 }
@@ -41,7 +43,7 @@ func ErrValidation(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: BayesianType,
-			Err:  errors.Join(errs...),
+			Err:  errors.Join(append(errs, ErrBayesianValidationFailed)...),
 		},
 	}
 }

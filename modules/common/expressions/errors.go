@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 
+	cassert "github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
@@ -25,6 +26,9 @@ type ParseError struct {
 
 // Error returns the error message with position.
 func (e *ParseError) Error() string {
+	cassert.NotNil(e, "error is nil")
+	cassert.NotNil(e.Err, "internal error is nil")
+
 	return "parse error at " + strconv.Itoa(e.Pos) + ": " + e.Msg
 }
 
@@ -37,6 +41,9 @@ type EvalError struct {
 
 // Error returns the error message.
 func (e *EvalError) Error() string {
+	cassert.NotNil(e, "error is nil")
+	cassert.NotNil(e.Err, "internal error is nil")
+
 	return "eval error: " + e.Msg
 }
 
@@ -55,6 +62,8 @@ var (
 	ErrUnknownFunc     = errors.New("unknown function")
 	ErrArgCount        = errors.New("wrong argument count")
 	ErrNilAccess       = errors.New("nil access")
+	ErrParseFailed     = errors.New("expression parse failed")
+	ErrEvalFailed      = errors.New("expression eval failed")
 )
 
 // ErrParse creates a parse error with position information.
@@ -62,7 +71,7 @@ func ErrParse(pos, end int, msg string, causes ...error) *ParseError {
 	return &ParseError{
 		TypedError: cerrs.TypedError{
 			Type: ExpressionType,
-			Err:  errors.Join(causes...),
+			Err:  errors.Join(append(causes, ErrParseFailed)...),
 		},
 		Pos: pos,
 		End: end,
@@ -75,7 +84,7 @@ func ErrEval(msg string, causes ...error) *EvalError {
 	return &EvalError{
 		TypedError: cerrs.TypedError{
 			Type: ExpressionType,
-			Err:  errors.Join(causes...),
+			Err:  errors.Join(append(causes, ErrEvalFailed)...),
 		},
 		Msg: msg,
 	}

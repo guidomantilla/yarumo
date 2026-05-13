@@ -662,7 +662,7 @@ func TestParseError(t *testing.T) {
 	t.Run("error message", func(t *testing.T) {
 		t.Parallel()
 
-		e := &ParseError{Pos: 5, Col: 6, Msg: "test error"}
+		e := ErrParse(5, 6, "test error")
 
 		got := e.Error()
 		if got != "test error" {

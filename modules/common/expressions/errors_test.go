@@ -69,6 +69,14 @@ func TestParseError(t *testing.T) {
 			t.Fatal("expected ErrUnexpectedToken in chain")
 		}
 	})
+
+	t.Run("zero args still wraps ErrParseFailed", func(t *testing.T) {
+		t.Parallel()
+		pe := ErrParse(0, 0, "test")
+		if !errors.Is(pe, ErrParseFailed) {
+			t.Fatal("expected ErrParseFailed in chain")
+		}
+	})
 }
 
 func TestEvalError(t *testing.T) {
@@ -112,6 +120,14 @@ func TestEvalError(t *testing.T) {
 		ee := ErrEval("custom msg", ErrNilAccess)
 		if ee.Msg != "custom msg" {
 			t.Fatalf("expected 'custom msg', got %s", ee.Msg)
+		}
+	})
+
+	t.Run("zero args still wraps ErrEvalFailed", func(t *testing.T) {
+		t.Parallel()
+		ee := ErrEval("test")
+		if !errors.Is(ee, ErrEvalFailed) {
+			t.Fatal("expected ErrEvalFailed in chain")
 		}
 	})
 }
@@ -206,6 +222,20 @@ func TestSentinelErrors(t *testing.T) {
 	t.Run("ErrNilAccess", func(t *testing.T) {
 		t.Parallel()
 		if ErrNilAccess.Error() != "nil access" {
+			t.Fatal("unexpected message")
+		}
+	})
+
+	t.Run("ErrParseFailed", func(t *testing.T) {
+		t.Parallel()
+		if ErrParseFailed.Error() != "expression parse failed" {
+			t.Fatal("unexpected message")
+		}
+	})
+
+	t.Run("ErrEvalFailed", func(t *testing.T) {
+		t.Parallel()
+		if ErrEvalFailed.Error() != "expression eval failed" {
 			t.Fatal("unexpected message")
 		}
 	})

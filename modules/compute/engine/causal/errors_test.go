@@ -61,6 +61,15 @@ func TestErrCausal(t *testing.T) {
 			t.Fatalf("expected type %s, got %s", CausalType, causalErr.Type)
 		}
 	})
+
+	t.Run("zero args still wraps ErrCausalFailed", func(t *testing.T) {
+		t.Parallel()
+
+		err := ErrCausal()
+		if !errors.Is(err, ErrCausalFailed) {
+			t.Fatal("expected ErrCausalFailed in chain")
+		}
+	})
 }
 
 func TestSentinelErrors(t *testing.T) {
@@ -103,6 +112,14 @@ func TestSentinelErrors(t *testing.T) {
 
 		if ErrParentNotFound.Error() != "parent variable not found" {
 			t.Fatalf("unexpected: %s", ErrParentNotFound.Error())
+		}
+	})
+
+	t.Run("ErrCausalFailed", func(t *testing.T) {
+		t.Parallel()
+
+		if ErrCausalFailed.Error() != "causal inference failed" {
+			t.Fatalf("unexpected: %s", ErrCausalFailed.Error())
 		}
 	})
 }
