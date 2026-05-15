@@ -3,6 +3,7 @@ package validation
 import (
 	"net/mail"
 	"net/url"
+	"reflect"
 	"regexp"
 
 	"github.com/google/uuid"
@@ -212,4 +213,33 @@ func Each[T any](xs []T, check func(T) error) error {
 	causes = append(causes, ErrEachFailed)
 
 	return ErrValidation(causes...)
+}
+
+// GetField walks obj along a dotted path and returns the resolved value.
+// Path segments may be plain identifiers ("Owner.Email") or include slice
+// indices ("Items[0].Name"). The traversal supports structs, maps keyed by
+// string, slices, arrays, and pointers (auto-dereferenced).
+func GetField(obj any, path string) (any, error) {
+	if cutils.Nil(obj) {
+		return nil, ErrValidation(ErrObjectNil)
+	}
+
+	if path == "" {
+		return nil, ErrValidation(ErrPathInvalid)
+	}
+
+	segments, err := parsePath(path)
+	if err != nil {
+		return nil, err
+	}
+
+	current := reflect.ValueOf(obj)
+	for _, seg := range segments {
+		current, err = walkSegment(current, seg)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return current.Interface(), nil
 }

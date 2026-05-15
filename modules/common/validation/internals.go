@@ -6,37 +6,7 @@ import (
 	"strings"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cutils "github.com/guidomantilla/yarumo/common/utils"
 )
-
-// GetField walks obj along a dotted path and returns the resolved value.
-// Path segments may be plain identifiers ("Owner.Email") or include slice
-// indices ("Items[0].Name"). The traversal supports structs, maps keyed by
-// string, slices, arrays, and pointers (auto-dereferenced).
-func GetField(obj any, path string) (any, error) {
-	if cutils.Nil(obj) {
-		return nil, ErrValidation(ErrObjectNil)
-	}
-
-	if path == "" {
-		return nil, ErrValidation(ErrPathInvalid)
-	}
-
-	segments, err := parsePath(path)
-	if err != nil {
-		return nil, err
-	}
-
-	current := reflect.ValueOf(obj)
-	for _, seg := range segments {
-		current, err = walkSegment(current, seg)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return current.Interface(), nil
-}
 
 // pathSegment is a parsed step from a dotted path.
 type pathSegment struct {
@@ -46,6 +16,7 @@ type pathSegment struct {
 
 // parsePath splits "A.B[0][1].C" into [{A}, {B,[0,1]}, {C}].
 func parsePath(path string) ([]pathSegment, error) {
+
 	rawParts := strings.Split(path, ".")
 
 	segments := make([]pathSegment, 0, len(rawParts))

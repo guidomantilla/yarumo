@@ -10,8 +10,6 @@ import (
 
 var _ Scheduler = (*cron.Cron)(nil)
 
-var _ cron.Job = (*cron.FuncJob)(nil)
-
 // Scheduler defines the interface for a cron job scheduler.
 // The caller must call Stop to release resources when the scheduler is no longer needed.
 // Implementations must be safe for concurrent use.

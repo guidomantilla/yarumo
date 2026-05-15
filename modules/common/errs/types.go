@@ -4,6 +4,7 @@ package errs
 
 var (
 	_ error             = (*TypedError)(nil)
+	_ NewTypedErrorFn   = NewTypedError
 	_ AsFn[error]       = As[error]
 	_ MatchFn[error]    = Match[error]
 	_ WrapFn            = Wrap
@@ -12,6 +13,9 @@ var (
 	_ HasErrorMessageFn = HasErrorMessage
 	_ AsErrorInfoFn     = AsErrorInfo
 )
+
+// NewTypedErrorFn is the function type for NewTypedError.
+type NewTypedErrorFn func(typ string, err error) error
 
 // AsFn is the function type for As.
 type AsFn[T error] func(err error) (T, bool)

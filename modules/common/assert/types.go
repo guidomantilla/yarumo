@@ -3,6 +3,7 @@
 package assert
 
 var (
+	_ EnableFn   = Enable
 	_ NotEmptyFn = NotEmpty
 	_ NotNilFn   = NotNil
 	_ EqualFn    = Equal
@@ -10,6 +11,9 @@ var (
 	_ TrueFn     = True
 	_ FalseFn    = False
 )
+
+// EnableFn is the function type for Enable.
+type EnableFn func(v bool)
 
 // NotEmptyFn is the function type for NotEmpty.
 type NotEmptyFn func(object any, message string)

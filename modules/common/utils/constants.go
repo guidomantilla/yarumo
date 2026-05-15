@@ -1,4 +1,3 @@
-// Package utils provides general-purpose utility functions for predicates, strings, slices, and maps.
 package utils
 
 // Character sets for random string generation.
