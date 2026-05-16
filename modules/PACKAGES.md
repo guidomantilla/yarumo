@@ -4,9 +4,10 @@
 
 ### Cómo se reconocen
 
-- API solo de funciones libres. Mismos args ⇒ mismo resultado.
-- Ningún `New<X>(...)`, ningún tipo con métodos de negocio.
-- Ejemplos en el repo: `common/assert/`, `common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `common/validation/`.
+- API expone funciones libres como superficie principal. El consumidor llama funciones del paquete, no construye y opera sobre tipos del paquete.
+- No exporta structs con invariantes mutables ni constructores `NewXxx(opts ...Option) Interface` con Options pattern. Pueden existir constructores triviales que devuelven valores inmutables bajo interface (ej. `NewUID(name, fn) UID`) sin descalificar el shape.
+- Pueden mantener **estado mutable interno** detrás de las funciones libres (PRNG state, slot `current` swappable vía `Use`, registry map, regex caches). La pureza "mismos args ⇒ mismo resultado" es ideal pero no requisito: ver bloque "Estado mutable de paquete" al final de esta sección.
+- Ejemplos en el repo: `common/assert/`, `common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `common/validation/`, `common/log/`, `common/uids/`.
 
 ### Inventario en `modules/common/`
 
@@ -16,22 +17,27 @@
 | `cast/` | Type-safe casting (`ToInt`, `ToString`, `ToTime`, `ToDuration`, …) — wrappa `spf13/cast`. |
 | `crypto/random/` | Generación crypto-segura de bytes, números y strings. |
 | `errs/` | Typed errors + error-chain helpers (`As`, `Match`, `Wrap`, `Unwrap`, `ErrorMessages`, `AsErrorInfo`) + JSON-serializable info. |
+| `log/` | Facade de logging estructurado (`Trace`/`Debug`/`Info`/`Warn`/`Error`/`Fatal`) sobre slot mutable swappable vía `Use(Logger)`. Singleton interno detrás de funciones libres. |
 | `log/slog/slogctx/` | Bag context-bound de `slog.Attr` (`WithAttrs`, `SetAttrs`, `Attrs`) para propagar atributos por `context.Context`. |
 | `pointer/` | Helpers para pointers (deref con default, take-address, comparación). |
 | `random/` | Generación pseudoaleatoria no-crypto (`Bytes`, `Number`, `String`, `Text*`). |
 | `rest/` | Cliente REST stateless (`Call`, `CallStream`, `DecodeHTTPError`) con DTOs `RequestSpec`/`ResponseSpec[T]`/`StreamResponseSpec`; concurrency-safe. |
+| `uids/` | Generadores (`UUIDv4`/`UUIDv7`/`ULID`/`NanoID`/`CUID2`/`XID`) + validadores (`IsUUID`/…) + registry global swappable de algoritmos vía `Register`/`Use`/`Generate`. Concern "valor UID" en `uids.go`; concern "registry" en `extensions.go`. |
 | `utils/` | Funciones genéricas (`Coalesce`, `Ternary`, `Empty`, `RandomString`, case-helpers `PascalCase`/`SnakeCase`/…). |
 | `validation/` | Leaves de validación (`IsRequired`, `MinLen`, `IsEmail`, `IsUUID`, …) + reflexión por dotted path (`GetField`). |
 
 ### Extensiones a las reglas
 
-Aplican las 4 reglas universales con las siguientes extensiones cuando el paquete necesita exponer DTOs (data transfer objects) además de funciones libres:
+Aplican las 4 reglas universales con las siguientes extensiones cuando el paquete necesita exponer concerns con tipos asociados además de funciones libres:
 
-- **R1 (DTOs por concern)** — un paquete puede exponer **structs públicos de datos** con métodos puros (transformaciones sin estado mutable). Esos DTOs viven en su propio archivo nombrado por el concern (ej. `specs.go` para `RequestSpec`/`ResponseSpec`), separado de `functions.go` e `internals.go`. Los métodos privados auxiliares de un DTO van **con el DTO en el mismo archivo**, no en `internals.go` — la partición visibility de R1 es para funciones libres, no para métodos.
-- **R2 (Métodos sobre DTOs)** — los métodos (públicos o privados) sobre DTOs no necesitan `Fn` alias ni compliance. Su signatura está atada al receiver type; cualquier drift cae en compile-time vía consumers. Aplica también a métodos sobre `Error` struct en `errors.go`.
-- **R4 (Métodos sobre DTOs)** — cada método (público o privado) sobre un DTO lleva su doc-comment, mismo rigor que las funciones libres.
+- **R1 (Concern por archivo)** — un paquete puede agrupar un concern en su propio archivo, nombrado por el concern (ej. `specs.go`, `uids.go`, `extensions.go`). El archivo de concern reúne **todo** lo que pertenece a ese concern: struct (público o privado), constructores, métodos, singletons preconfigurados, vars privadas de estado, regexes/constantes privadas. La partición visibility (functions.go/internals.go) **no aplica dentro de un archivo de concern**: públicos y privados conviven porque la unidad es el concern.
+  - **Variante DTO público con métodos puros**: ej. `rest/specs.go` — `RequestSpec`/`ResponseSpec` públicos con `Build` (pública) + 3 helpers privados (`buildHeaders`, `marshalBody`, `buildURL`).
+  - **Variante struct privado expuesto vía interface pública**: ej. `uids/uids.go` — struct `uid` privado, interface `UID` pública, `NewUID` (constructor trivial) + métodos + singletons preconfigurados (`UuidV4`, `NanoID`, …).
+  - **Variante funciones libres de un concern ajeno al resto del paquete**: ej. `uids/extensions.go` — registry global del paquete con state (`methods` map, `current`, `lock`) + funciones de registro (`Register`/`Get`/`Use`/`Generate`/`Supported`). Las funciones públicas no se mueven a `functions.go` porque pertenecen al concern del archivo, no al pool general de funciones libres.
+- **R2 (Métodos sobre tipos del concern)** — los métodos (públicos o privados) sobre tipos del concern no necesitan `Fn` alias ni compliance. Su signatura está atada al receiver type; cualquier drift cae en compile-time vía consumers. Aplica también a métodos sobre `Error` struct en `errors.go`.
+- **R4 (Métodos sobre tipos del concern)** — cada método (público o privado) sobre un tipo del concern lleva su doc-comment, mismo rigor que las funciones libres.
 
-**Referencia**: `modules/common/rest/specs.go` — `RequestSpec` con `Build` (pública) + 3 helpers privados (`buildHeaders`, `marshalBody`, `buildURL`).
+**Estado mutable de paquete (singleton interno) no descalifica de Shape A.** Un paquete sigue siendo Shape A cuando su API son funciones libres aunque internamente mantenga estado (`current` slot swappable vía `Use`, registry map, PRNG state, regex caches). Las reglas "mismos args ⇒ mismo resultado" y "ningún `New<X>(...)`" son guías sobre la **forma de la API pública**, no prohibiciones sobre la implementación. Precedentes: `random/` (PRNG interno, `randInt` mockeable), `log/` (slot `current atomic.Value` swappable vía `Use(Logger)`), `uids/` (registry global swappable vía `Use(name)`). Un constructor trivial que devuelve un valor inmutable bajo interface (ej. `NewUID(name, fn) UID`) tampoco descalifica — no hay invariantes mutables ni Options pattern.
 
 
 ## Paquetes-librería con estado
@@ -52,7 +58,7 @@ Aplican las 4 reglas universales con las siguientes extensiones cuando el paquet
 | `http/` | `Client` + `Server` HTTP con retry/limiter, defaults seguros para timeouts/headers. |
 | `resilience/` | `CircuitBreaker` + `RateLimiter` (instancias) con registry lazy goroutine-free. |
 
-**Excepción puntual de layout — `diagnostics/`**: además de `functions.go` (capturas de profile), tiene `handlers.go` (HTTP handlers tipo `NewPprofHandler`). Los dos grupos son funciones libres pero pertenecen a concerns ajenos entre sí, por lo que se separan en archivos `<concern>.go`. **No es regla general**: aplica solo a `diagnostics/` mientras no aparezca un segundo caso que justifique generalizarlo.
+**Concerns ajenos en archivos `<concern>.go`** — mismo principio que R1 de Shape A (concern por archivo) aplicado a funciones libres: cuando dos grupos de funciones libres pertenecen a concerns ajenos entre sí, se separan en archivos `<concern>.go` en vez de mezclarse en `functions.go`. Precedentes: `diagnostics/handlers.go` (HTTP handlers `NewPprofHandler` distintos de las capturas de profile en `functions.go`); `uids/extensions.go` (registry global del paquete con state + `Register`/`Get`/`Use`/`Generate`/`Supported`, distinto de los generadores/validadores libres en `functions.go`).
 
 ### Diferencias con las reglas
 
@@ -77,13 +83,14 @@ Aplican las 4 reglas universales del documento con las siguientes extensiones:
 ### 1. Layout de archivos
 
 - **Trío base**: `types.go` + `functions.go` + `functions_test.go`.
-- **Partición por visibilidad**:
-  - `functions.go` → todo lo público (funciones exportadas).
-  - `internals.go` → todo lo privado (funciones helpers no exportados). Su test file gemelo es `internals_test.go`.
+- **Partición por visibilidad** (aplica **solo a funciones libres**, no a métodos sobre tipos ni a vars/structs/constantes asociadas a un concern):
+  - `functions.go` → funciones libres públicas (exportadas).
+  - `internals.go` → **exclusivamente funciones libres privadas** (helpers no exportados, consumidos por las funciones públicas). Su test file gemelo es `internals_test.go`. **No es vertedero de "todo lo privado"**: vars privadas de paquete (`current`, `methods`, regexes, mutex), structs privados con métodos, y constantes privadas asociadas a un concern viven con su consumidor (archivo de concern correspondiente o el archivo de la función pública que las usa). Ver R1 de Shape A para archivos de concern.
 - **Test del archivo `internals.go`: opcional.** La cobertura vía API público suele bastar. Solo crear `internals_test.go` (white-box) cuando un helper sea lo suficientemente complejo o independiente como para que probar transitivamente oculte gaps de cobertura.
 - **Todos los archivos `_test.go` usan `package <name>` (internal).** El sufijo `_test` en el package (`package <name>_test`) **no está permitido**. La separación external/internal complica el layout sin beneficio claro y obliga a tener dos archivos por source. Un único test file por source, en el mismo package, cubre todos los casos. Aplica también a directorios test-only (ej. `compute/tests/acceptance/` usa `package acceptance`, no `acceptance_test`).
 - **Si `functions.go` queda vacío** (todas sus privadas se movieron a `internals.go` y no hay públicas libres) → no debe existir. La regla del trío base no obliga a mantener un archivo vacío.
-- **Excepción**: un struct privado cuyo único propósito es soportar a los helpers de `internals.go` (ej. `pathSegment` en `validation/internals.go`, que parametriza a `parsePath`/`walkSegment`/etc.) puede convivir con ellos en el mismo archivo. No aplica a types privados de otra naturaleza.
+- **Si no hay funciones privadas helpers**, `internals.go` no existe. No se crea para albergar vars o structs privados — esos van con su consumidor.
+- **Excepción al alcance de `internals.go`**: un struct privado cuyo único propósito es soportar a los helpers de `internals.go` (ej. `pathSegment` en `validation/internals.go`, que parametriza a `parsePath`/`walkSegment`/etc.) puede convivir con ellos en el mismo archivo. **No aplica a types privados de otra naturaleza** — si el struct privado tiene métodos que satisfacen una interface pública del paquete, va a su propio archivo de concern (ver R1 de Shape A).
 - **Opcionales según necesidad del paquete**:
   - `constants.go` — constantes públicas o privadas que no sean sentinel-errors.
   - `options.go` / `options_test.go` — si alguna pública toma el patrón Options.
@@ -121,8 +128,11 @@ Las reglas universales del repo (doc terminado en punto, comenzar por el nombre 
 
 ## Excepciones a los shapes
 
-Algunos paquetes bajo `common/` no encajan en ningún shape porque son envoltorios delgados sobre una librería externa o tienen un constraint de dependencias que justifica la desviación. Quedan fuera del inventario y de las reglas.
+Algunos paquetes bajo `common/` no encajan en ningún shape — porque son envoltorios delgados sobre una librería externa, tienen un constraint de dependencias que justifica la desviación, o su superficie es exclusivamente declaración de tipos (sin funciones libres como API principal). Quedan fuera del inventario de Shape A y Shape B, y de sus reglas.
 
 - `common/cron/` — wrapper sobre `github.com/robfig/cron/v3`. Solo expone una abstracción `Scheduler` para desacoplar al consumidor de la librería concreta.
 - `common/log/slog/` — adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `Logger` como **struct público concreto** (no como interface) para que el paquete padre `common/log/` pueda declarar `_ log.Logger = (*cslog.Logger)(nil)` contra su propia interface vía typing estructural, sin cerrar un ciclo de imports. Esta forma encaja en la excepción 4 de `CODING_STANDARDS.md` (criterio 4) y rompe también el patrón Shape B clásico, así que vive acá.
+- `common/constraints/` — solo declara type constraints genéricas (`Signed`, `Unsigned`, `Integer`, `Float`, `Complex`, `Number`) + aliases (`Comparable`, `Ordenable`). Sin funciones libres, sin métodos, sin estado. Análogo a `golang.org/x/exp/constraints`. No tiene `functions.go` (no hay funciones); el package doc + declaraciones viven en `types.go` (único archivo).
+- `common/types/` — solo declara el tipo `Bytes []byte` con métodos puros (`ToHex`, `ToBase64Std`/`ToBase64RawStd`/`ToBase64Url`/`ToBase64RawUrl`). Sin funciones libres del paquete. Encaja parcialmente en R1 variante 1 de Shape A (DTO público con métodos puros), pero no cumple el trío base porque no hay funciones libres que justifiquen `functions.go` ni un `types.go` separado del concern: el package doc + tipo + métodos viven todos en `bytes.go` (único archivo).
+- **Subpaquetes de `common/crypto/`** (excepto `common/crypto/random/`, que es Shape A) — siguen el **Crypto Subpackage Standard** documentado en `modules/common/CODING_STANDARDS.md` (sección "Crypto Subpackage Standard", líneas 231-350). El standard define file structure propia (`types.go`, `errors.go`, `<name>.go`, `functions.go`, `options.go`, `extensions.go`) y overrides explícitos a 3 criterios del documento: criterion 3 (struct público concreto, no interface), criterion 4 (constructor devuelve `*Method` con pluggable function fields), criterion 6 (registry multi-instance, no singleton `Use`). Aplica a: `certs/` (utility, no usa Method pattern), `ciphers/aead/`, `ciphers/hybrid/`, `ciphers/rsaoaep/`, `hashes/`, `kdfs/`, `passwords/`, `passwords/generator/`, `signers/ecdsas/`, `signers/ed25519/`, `signers/hmacs/`, `signers/rsassas/`, `tokens/`. Para detalles y compliance ver el standard; PACKAGES.md no duplica esas reglas.
 
