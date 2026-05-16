@@ -13,16 +13,7 @@ type lexer struct {
 	err    *ParseError
 }
 
-// lex tokenizes the input and returns the token stream plus any error.
-func lex(input string) ([]token, *ParseError) {
-	l := &lexer{input: input}
-	l.run()
-	if l.err != nil {
-		return nil, l.err
-	}
-	return l.tokens, nil
-}
-
+// run iterates over the input runes and dispatches each to the matching lex* method.
 func (l *lexer) run() { //nolint:cyclop,funlen // lexer dispatch requires one case per token type
 	for l.pos < len(l.input) {
 		if l.err != nil {
@@ -82,11 +73,13 @@ func (l *lexer) run() { //nolint:cyclop,funlen // lexer dispatch requires one ca
 	l.tokens = append(l.tokens, token{kind: tokEOF, pos: l.pos})
 }
 
+// emit appends a token to the buffer and advances the position cursor.
 func (l *lexer) emit(kind tokenKind, val string, advance int) {
 	l.tokens = append(l.tokens, token{kind: kind, val: val, pos: l.pos})
 	l.pos += advance
 }
 
+// lexDot emits a dot token.
 func (l *lexer) lexDot() {
 	if l.pos+1 < len(l.input) && l.input[l.pos+1] == '.' {
 		l.emit(tokDotDot, "..", 2)
@@ -95,6 +88,7 @@ func (l *lexer) lexDot() {
 	l.emit(tokDot, ".", 1)
 }
 
+// lexBang emits ! or != depending on the next rune.
 func (l *lexer) lexBang() {
 	if l.pos+1 < len(l.input) && l.input[l.pos+1] == '=' {
 		l.emit(tokNeq, "!=", 2)
@@ -103,6 +97,7 @@ func (l *lexer) lexBang() {
 	l.emit(tokNot, "!", 1)
 }
 
+// lexEquals emits == when the input is well formed; otherwise records a parse error.
 func (l *lexer) lexEquals() {
 	if l.pos+1 < len(l.input) && l.input[l.pos+1] == '=' {
 		l.emit(tokEq, "==", 2)
@@ -111,6 +106,7 @@ func (l *lexer) lexEquals() {
 	l.err = ErrParse(l.pos, l.pos+1, "expected '==' after '='", ErrUnexpectedToken)
 }
 
+// lexLessThan emits < or <= depending on the next rune.
 func (l *lexer) lexLessThan() {
 	if l.pos+1 < len(l.input) && l.input[l.pos+1] == '=' {
 		l.emit(tokLte, "<=", 2)
@@ -119,6 +115,7 @@ func (l *lexer) lexLessThan() {
 	l.emit(tokLt, "<", 1)
 }
 
+// lexGreaterThan emits > or >= depending on the next rune.
 func (l *lexer) lexGreaterThan() {
 	if l.pos+1 < len(l.input) && l.input[l.pos+1] == '=' {
 		l.emit(tokGte, ">=", 2)
@@ -127,6 +124,7 @@ func (l *lexer) lexGreaterThan() {
 	l.emit(tokGt, ">", 1)
 }
 
+// lexAmpersand emits && when the input is well formed; otherwise records a parse error.
 func (l *lexer) lexAmpersand() {
 	if l.pos+1 < len(l.input) && l.input[l.pos+1] == '&' {
 		l.emit(tokAnd, "&&", 2)
@@ -135,6 +133,7 @@ func (l *lexer) lexAmpersand() {
 	l.err = ErrParse(l.pos, l.pos+1, "expected '&&' after '&'", ErrUnexpectedToken)
 }
 
+// lexPipe emits || when the input is well formed; otherwise records a parse error.
 func (l *lexer) lexPipe() {
 	if l.pos+1 < len(l.input) && l.input[l.pos+1] == '|' {
 		l.emit(tokOr, "||", 2)
@@ -143,6 +142,7 @@ func (l *lexer) lexPipe() {
 	l.err = ErrParse(l.pos, l.pos+1, "expected '||' after '|'", ErrUnexpectedToken)
 }
 
+// lexString consumes a quoted string literal and emits a string token.
 func (l *lexer) lexString(quote rune) {
 	start := l.pos
 	l.pos++ // skip opening quote
@@ -167,6 +167,7 @@ func (l *lexer) lexString(quote rune) {
 	l.err = ErrParse(start, l.pos, "unclosed string", ErrUnclosedString)
 }
 
+// lexNumber consumes a numeric literal and emits a number token.
 func (l *lexer) lexNumber() {
 	start := l.pos
 	hasDot := false
@@ -208,6 +209,7 @@ var keywords = map[string]tokenKind{
 	"nil":   tokNil,
 }
 
+// lexWord consumes an identifier or keyword and emits the appropriate token.
 func (l *lexer) lexWord() {
 	start := l.pos
 

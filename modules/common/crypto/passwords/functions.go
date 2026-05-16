@@ -12,8 +12,8 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 	"golang.org/x/crypto/scrypt"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	crandom "github.com/guidomantilla/yarumo/common/crypto/random"
+	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	cutils "github.com/guidomantilla/yarumo/common/utils"
 )
 

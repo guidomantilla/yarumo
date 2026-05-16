@@ -1,4 +1,4 @@
-package log_test
+package log
 
 import (
 	"bytes"
@@ -6,10 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"go.opentelemetry.io/otel/trace"
-
 	cslog "github.com/guidomantilla/yarumo/common/log/slog"
-	otellog "github.com/guidomantilla/yarumo/telemetry/otel/log"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // ExampleWithOtelTraceFn demonstrates trace ↔ log correlation. When a span is
@@ -19,7 +17,7 @@ func ExampleWithOtelTraceFn() {
 	logger := cslog.NewLogger(
 		cslog.WithWriter(buf),
 		cslog.WithLevel(cslog.LevelInfo),
-		otellog.WithOtelTraceFn(),
+		WithOtelTraceFn(),
 	)
 
 	traceID, _ := trace.TraceIDFromHex("0102030405060708090a0b0c0d0e0f10")
@@ -43,9 +41,9 @@ func ExampleWithOtelTraceFn() {
 		return
 	}
 
-	fmt.Printf("trace_id=%v\n", got[otellog.AttrTraceID])
-	fmt.Printf("span_id=%v\n", got[otellog.AttrSpanID])
-	fmt.Printf("trace_flags=%v\n", got[otellog.AttrTraceFlags])
+	fmt.Printf("trace_id=%v\n", got[AttrTraceID])
+	fmt.Printf("span_id=%v\n", got[AttrSpanID])
+	fmt.Printf("trace_flags=%v\n", got[AttrTraceFlags])
 
 	// Output:
 	// trace_id=0102030405060708090a0b0c0d0e0f10

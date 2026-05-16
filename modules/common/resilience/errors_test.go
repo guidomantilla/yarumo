@@ -1,11 +1,9 @@
-package resilience_test
+package resilience
 
 import (
 	"errors"
 	"strings"
 	"testing"
-
-	cresilience "github.com/guidomantilla/yarumo/common/resilience"
 )
 
 func TestError_Error(t *testing.T) {
@@ -15,12 +13,12 @@ func TestError_Error(t *testing.T) {
 		t.Parallel()
 
 		cause := errors.New("inner failure")
-		err := cresilience.ErrCircuitBreakerExecute(cause)
+		err := ErrCircuitBreakerExecute(cause)
 
 		got := err.Error()
 
-		if !strings.Contains(got, cresilience.CircuitBreakerType) {
-			t.Fatalf("expected error to contain type %q, got %s", cresilience.CircuitBreakerType, got)
+		if !strings.Contains(got, CircuitBreakerType) {
+			t.Fatalf("expected error to contain type %q, got %s", CircuitBreakerType, got)
 		}
 
 		if !strings.Contains(got, "inner failure") {
@@ -32,12 +30,12 @@ func TestError_Error(t *testing.T) {
 		t.Parallel()
 
 		cause := errors.New("dial timeout")
-		err := cresilience.ErrRateLimiterWait(cause)
+		err := ErrRateLimiterWait(cause)
 
 		got := err.Error()
 
-		if !strings.Contains(got, cresilience.RateLimiterType) {
-			t.Fatalf("expected error to contain type %q, got %s", cresilience.RateLimiterType, got)
+		if !strings.Contains(got, RateLimiterType) {
+			t.Fatalf("expected error to contain type %q, got %s", RateLimiterType, got)
 		}
 
 		if !strings.Contains(got, "rate limiter wait failed") {
@@ -48,15 +46,15 @@ func TestError_Error(t *testing.T) {
 	t.Run("registry error includes type", func(t *testing.T) {
 		t.Parallel()
 
-		err := cresilience.ErrRegistryUse(cresilience.ErrRegistryNameEmpty)
+		err := ErrRegistryUse(ErrRegistryNameEmpty)
 
 		got := err.Error()
 
-		if !strings.Contains(got, cresilience.RegistryType) {
-			t.Fatalf("expected error to contain type %q, got %s", cresilience.RegistryType, got)
+		if !strings.Contains(got, RegistryType) {
+			t.Fatalf("expected error to contain type %q, got %s", RegistryType, got)
 		}
 
-		if !errors.Is(err, cresilience.ErrRegistryNameEmpty) {
+		if !errors.Is(err, ErrRegistryNameEmpty) {
 			t.Fatalf("expected errors.Is to match ErrRegistryNameEmpty")
 		}
 	})
@@ -65,9 +63,9 @@ func TestError_Error(t *testing.T) {
 func TestErrCircuitBreakerExecute_IsSentinel(t *testing.T) {
 	t.Parallel()
 
-	err := cresilience.ErrCircuitBreakerExecute(cresilience.ErrCircuitBreakerOpen)
+	err := ErrCircuitBreakerExecute(ErrCircuitBreakerOpen)
 
-	if !errors.Is(err, cresilience.ErrCircuitBreakerOpen) {
+	if !errors.Is(err, ErrCircuitBreakerOpen) {
 		t.Fatalf("expected errors.Is to match ErrCircuitBreakerOpen")
 	}
 }
@@ -75,9 +73,9 @@ func TestErrCircuitBreakerExecute_IsSentinel(t *testing.T) {
 func TestErrRateLimiterWait_IsSentinel(t *testing.T) {
 	t.Parallel()
 
-	err := cresilience.ErrRateLimiterWait()
+	err := ErrRateLimiterWait()
 
-	if !errors.Is(err, cresilience.ErrRateLimiterWaitFailed) {
+	if !errors.Is(err, ErrRateLimiterWaitFailed) {
 		t.Fatalf("expected errors.Is to match ErrRateLimiterWaitFailed")
 	}
 }
@@ -85,9 +83,9 @@ func TestErrRateLimiterWait_IsSentinel(t *testing.T) {
 func TestErrRegistryUse_IsSentinel(t *testing.T) {
 	t.Parallel()
 
-	err := cresilience.ErrRegistryUse(cresilience.ErrRegistryNameEmpty)
+	err := ErrRegistryUse(ErrRegistryNameEmpty)
 
-	if !errors.Is(err, cresilience.ErrRegistryNameEmpty) {
+	if !errors.Is(err, ErrRegistryNameEmpty) {
 		t.Fatalf("expected errors.Is to match ErrRegistryNameEmpty")
 	}
 }

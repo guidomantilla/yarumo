@@ -11,9 +11,11 @@ import (
 // ExpressionType is the error type for expression errors.
 const ExpressionType = "expression"
 
-var _ error = (*ParseError)(nil)
-
-var _ error = (*EvalError)(nil)
+// Interface compliance for the package's domain error types.
+var (
+	_ error = (*ParseError)(nil)
+	_ error = (*EvalError)(nil)
+)
 
 // ParseError represents a parsing error with position information.
 type ParseError struct {

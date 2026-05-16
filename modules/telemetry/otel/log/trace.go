@@ -13,9 +13,8 @@ import (
 	"context"
 	"log/slog"
 
-	"go.opentelemetry.io/otel/trace"
-
 	cslog "github.com/guidomantilla/yarumo/common/log/slog"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Field keys used for OTel trace correlation. They follow the OpenTelemetry

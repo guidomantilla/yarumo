@@ -1,8 +1,28 @@
 package expressions
 
+import (
+	"strconv"
+	"strings"
+)
+
+// NumberLit is a numeric literal.
+type NumberLit struct {
+	Value float64
+}
+
 // Eval returns the numeric value.
 func (n *NumberLit) Eval(_ Context, _ map[string]Func) (any, error) {
 	return n.Value, nil
+}
+
+// String returns the string representation of a NumberLit.
+func (n *NumberLit) String() string {
+	return strconv.FormatFloat(n.Value, 'g', -1, 64)
+}
+
+// StringLit is a string literal.
+type StringLit struct {
+	Value string
 }
 
 // Eval returns the string value.
@@ -10,14 +30,45 @@ func (s *StringLit) Eval(_ Context, _ map[string]Func) (any, error) {
 	return s.Value, nil
 }
 
+// String returns the string representation of a StringLit.
+func (s *StringLit) String() string {
+	return strconv.Quote(s.Value)
+}
+
+// BoolLit is a boolean literal.
+type BoolLit struct {
+	Value bool
+}
+
 // Eval returns the boolean value.
 func (b *BoolLit) Eval(_ Context, _ map[string]Func) (any, error) {
 	return b.Value, nil
 }
 
+// String returns the string representation of a BoolLit.
+func (b *BoolLit) String() string {
+	if b.Value {
+		return "true"
+	}
+	return "false"
+}
+
+// NilLit is a nil literal.
+type NilLit struct{}
+
 // Eval returns nil.
 func (n *NilLit) Eval(_ Context, _ map[string]Func) (any, error) {
 	return nil, nil //nolint:nilnil // nil is the valid result for a nil literal
+}
+
+// String returns the string representation of a NilLit.
+func (n *NilLit) String() string {
+	return "nil"
+}
+
+// Ident is an identifier referencing a context variable.
+type Ident struct {
+	Name string
 }
 
 // Eval looks up the identifier in the context.
@@ -29,6 +80,17 @@ func (i *Ident) Eval(ctx Context, _ map[string]Func) (any, error) {
 	return v, nil
 }
 
+// String returns the string representation of an Ident.
+func (i *Ident) String() string {
+	return i.Name
+}
+
+// Property is a property access expression (e.g. customer.age).
+type Property struct {
+	Object Expr
+	Field  string
+}
+
 // Eval navigates the property access chain.
 func (p *Property) Eval(ctx Context, funcs map[string]Func) (any, error) {
 	obj, err := p.Object.Eval(ctx, funcs)
@@ -36,6 +98,18 @@ func (p *Property) Eval(ctx Context, funcs map[string]Func) (any, error) {
 		return nil, err
 	}
 	return resolveProperty(obj, p.Field)
+}
+
+// String returns the string representation of a Property.
+func (p *Property) String() string {
+	return p.Object.String() + "." + p.Field
+}
+
+// BinaryOp is a binary operator expression.
+type BinaryOp struct {
+	Op OpKind
+	L  Expr
+	R  Expr
 }
 
 // Eval evaluates the binary operation.
@@ -51,6 +125,17 @@ func (b *BinaryOp) Eval(ctx Context, funcs map[string]Func) (any, error) {
 	}
 
 	return evalBinaryOp(b.Op, lv, rv)
+}
+
+// String returns the string representation of a BinaryOp.
+func (b *BinaryOp) String() string {
+	return "(" + b.L.String() + " " + b.Op.Symbol() + " " + b.R.String() + ")"
+}
+
+// UnaryOp is a unary operator expression.
+type UnaryOp struct {
+	Op OpKind
+	X  Expr
 }
 
 // Eval evaluates the unary operation.
@@ -76,6 +161,17 @@ func (u *UnaryOp) Eval(ctx Context, funcs map[string]Func) (any, error) {
 	default:
 		return nil, ErrEval("unknown unary operator: "+u.Op.Symbol(), ErrTypeMismatch)
 	}
+}
+
+// String returns the string representation of a UnaryOp.
+func (u *UnaryOp) String() string {
+	return "(" + u.Op.Symbol() + u.X.String() + ")"
+}
+
+// AndExpr is a logical AND expression.
+type AndExpr struct {
+	L Expr
+	R Expr
 }
 
 // Eval evaluates the logical AND.
@@ -107,6 +203,17 @@ func (a *AndExpr) Eval(ctx Context, funcs map[string]Func) (any, error) {
 	return rb, nil
 }
 
+// String returns the string representation of an AndExpr.
+func (a *AndExpr) String() string {
+	return "(" + a.L.String() + " AND " + a.R.String() + ")"
+}
+
+// OrExpr is a logical OR expression.
+type OrExpr struct {
+	L Expr
+	R Expr
+}
+
 // Eval evaluates the logical OR.
 func (o *OrExpr) Eval(ctx Context, funcs map[string]Func) (any, error) {
 	lv, err := o.L.Eval(ctx, funcs)
@@ -136,6 +243,16 @@ func (o *OrExpr) Eval(ctx Context, funcs map[string]Func) (any, error) {
 	return rb, nil
 }
 
+// String returns the string representation of an OrExpr.
+func (o *OrExpr) String() string {
+	return "(" + o.L.String() + " OR " + o.R.String() + ")"
+}
+
+// NotExpr is a logical NOT expression.
+type NotExpr struct {
+	X Expr
+}
+
 // Eval evaluates the logical NOT.
 func (n *NotExpr) Eval(ctx Context, funcs map[string]Func) (any, error) {
 	xv, err := n.X.Eval(ctx, funcs)
@@ -149,6 +266,20 @@ func (n *NotExpr) Eval(ctx Context, funcs map[string]Func) (any, error) {
 	}
 
 	return !bv, nil
+}
+
+// String returns the string representation of a NotExpr.
+func (n *NotExpr) String() string {
+	return "(NOT " + n.X.String() + ")"
+}
+
+// RangeExpr tests whether a value falls within a range.
+type RangeExpr struct {
+	X      Expr
+	Lo     Expr
+	Hi     Expr
+	LoIncl bool
+	HiIncl bool
 }
 
 // Eval evaluates the range membership test.
@@ -189,6 +320,25 @@ func (r *RangeExpr) Eval(ctx Context, funcs map[string]Func) (any, error) { //no
 	return loOk && hiOk, nil
 }
 
+// String returns the string representation of a RangeExpr.
+func (r *RangeExpr) String() string {
+	lo := "("
+	if r.LoIncl {
+		lo = "["
+	}
+	hi := ")"
+	if r.HiIncl {
+		hi = "]"
+	}
+	return "(" + r.X.String() + " IN " + lo + r.Lo.String() + ".." + r.Hi.String() + hi + ")"
+}
+
+// CallExpr is a function call expression.
+type CallExpr struct {
+	Name string
+	Args []Expr
+}
+
 // Eval evaluates the function call.
 func (c *CallExpr) Eval(ctx Context, funcs map[string]Func) (any, error) {
 	fn, ok := funcs[c.Name]
@@ -208,101 +358,11 @@ func (c *CallExpr) Eval(ctx Context, funcs map[string]Func) (any, error) {
 	return fn(args...)
 }
 
-// evalBinaryOp dispatches binary operator evaluation.
-func evalBinaryOp(op OpKind, lv, rv any) (any, error) {
-	switch op { //nolint:exhaustive // only arithmetic, comparison, and equality operators are valid binary operators
-	case OpAdd:
-		return evalAdd(lv, rv)
-	case OpSub, OpMul, OpDiv, OpMod:
-		return evalArithmetic(op, lv, rv)
-	case OpEq:
-		return lv == rv, nil
-	case OpNeq:
-		return lv != rv, nil
-	case OpLt, OpLte, OpGt, OpGte:
-		return evalComparison(op, lv, rv)
-	default:
-		return nil, ErrEval("unknown operator: "+op.Symbol(), ErrTypeMismatch)
+// String returns the string representation of a CallExpr.
+func (c *CallExpr) String() string {
+	args := make([]string, len(c.Args))
+	for i, a := range c.Args {
+		args[i] = a.String()
 	}
-}
-
-// evalAdd handles + for numbers (addition) and strings (concatenation).
-func evalAdd(lv, rv any) (any, error) {
-	ln, lok := toFloat64(lv)
-	rn, rok := toFloat64(rv)
-	if lok && rok {
-		return ln + rn, nil
-	}
-
-	ls, lok := toString(lv)
-	rs, rok := toString(rv)
-	if lok && rok {
-		return ls + rs, nil
-	}
-
-	return nil, ErrEval("+: incompatible types "+formatValue(lv)+" and "+formatValue(rv), ErrTypeMismatch)
-}
-
-// evalArithmetic handles -, *, /, %.
-func evalArithmetic(op OpKind, lv, rv any) (any, error) {
-	ln, lok := toFloat64(lv)
-	if !lok {
-		return nil, ErrEval(op.Symbol()+": left operand expected numeric, got "+formatValue(lv), ErrTypeMismatch)
-	}
-
-	rn, rok := toFloat64(rv)
-	if !rok {
-		return nil, ErrEval(op.Symbol()+": right operand expected numeric, got "+formatValue(rv), ErrTypeMismatch)
-	}
-
-	switch op { //nolint:exhaustive // only Sub, Mul, Div, Mod reach this function
-	case OpSub:
-		return ln - rn, nil
-	case OpMul:
-		return ln * rn, nil
-	case OpDiv:
-		if rn == 0 {
-			return nil, ErrEval("division by zero", ErrDivisionByZero)
-		}
-		return ln / rn, nil
-	case OpMod:
-		if rn == 0 {
-			return nil, ErrEval("division by zero", ErrDivisionByZero)
-		}
-		return float64(int64(ln) % int64(rn)), nil
-	default:
-		return nil, ErrEval("unknown arithmetic operator: "+op.Symbol(), ErrTypeMismatch)
-	}
-}
-
-// evalComparison handles <, <=, >, >=.
-func evalComparison(op OpKind, lv, rv any) (any, error) {
-	ln, lok := toFloat64(lv)
-	rn, rok := toFloat64(rv)
-	if lok && rok {
-		return compare(op, ln, rn)
-	}
-
-	ls, lok := toString(lv)
-	rs, rok := toString(rv)
-	if lok && rok {
-		return compare(op, ls, rs)
-	}
-
-	return nil, ErrEval(op.Symbol()+": incompatible types "+formatValue(lv)+" and "+formatValue(rv), ErrTypeMismatch)
-}
-
-func compare[T ~float64 | ~string](op OpKind, l, r T) (any, error) {
-	switch op { //nolint:exhaustive // only comparison operators reach this function
-	case OpLt:
-		return l < r, nil
-	case OpLte:
-		return l <= r, nil
-	case OpGt:
-		return l > r, nil
-	case OpGte:
-		return l >= r, nil
-	default:
-		return nil, ErrEval("unsupported comparison op: "+op.Symbol(), ErrTypeMismatch)
-	}
+	return c.Name + "(" + strings.Join(args, ", ") + ")"
 }

@@ -18,7 +18,10 @@ const (
 	RegistryType = "resilience-registry"
 )
 
-var _ error = (*Error)(nil)
+// Interface compliance for the package's domain error type.
+var (
+	_ error = (*Error)(nil)
+)
 
 // Error is the domain error for resilience operations.
 type Error struct {

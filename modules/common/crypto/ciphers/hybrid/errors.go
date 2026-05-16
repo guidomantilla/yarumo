@@ -33,17 +33,17 @@ func (e *Error) Error() string {
 
 // Sentinel errors for the hybrid package.
 var (
-	ErrMethodIsNil          = errors.New("method is nil")
-	ErrPublicKeyIsNil       = errors.New("public key is nil")
-	ErrPrivateKeyIsNil      = errors.New("private key is nil")
-	ErrSuiteSetupFailed     = errors.New("hpke suite setup failed")
-	ErrEncapsulationFailed  = errors.New("hpke encapsulation failed")
-	ErrDecapsulationFailed  = errors.New("hpke decapsulation failed")
-	ErrCiphertextTooShort   = errors.New("ciphertext too short for encapsulated key")
-	ErrKeyGenerationFailed  = errors.New("key generation failed")
-	ErrEncryptionFailed     = errors.New("encryption failed")
-	ErrDecryptionFailed     = errors.New("decryption failed")
-	ErrKeyTypeMismatch      = errors.New("key type does not match method KEM")
+	ErrMethodIsNil         = errors.New("method is nil")
+	ErrPublicKeyIsNil      = errors.New("public key is nil")
+	ErrPrivateKeyIsNil     = errors.New("private key is nil")
+	ErrSuiteSetupFailed    = errors.New("hpke suite setup failed")
+	ErrEncapsulationFailed = errors.New("hpke encapsulation failed")
+	ErrDecapsulationFailed = errors.New("hpke decapsulation failed")
+	ErrCiphertextTooShort  = errors.New("ciphertext too short for encapsulated key")
+	ErrKeyGenerationFailed = errors.New("key generation failed")
+	ErrEncryptionFailed    = errors.New("encryption failed")
+	ErrDecryptionFailed    = errors.New("decryption failed")
+	ErrKeyTypeMismatch     = errors.New("key type does not match method KEM")
 )
 
 // ErrAlgorithmNotSupported returns an error indicating the named hybrid

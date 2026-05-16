@@ -34,9 +34,13 @@ type stackCapturingLogger struct {
 }
 
 func (l *stackCapturingLogger) Trace(_ context.Context, _ string, _ ...any) {}
+
 func (l *stackCapturingLogger) Debug(_ context.Context, _ string, _ ...any) {}
-func (l *stackCapturingLogger) Info(_ context.Context, _ string, _ ...any)  {}
-func (l *stackCapturingLogger) Warn(_ context.Context, _ string, _ ...any)  {}
+
+func (l *stackCapturingLogger) Info(_ context.Context, _ string, _ ...any) {}
+
+func (l *stackCapturingLogger) Warn(_ context.Context, _ string, _ ...any) {}
+
 func (l *stackCapturingLogger) Fatal(_ context.Context, _ string, _ ...any) {}
 
 func (l *stackCapturingLogger) Error(_ context.Context, _ string, args ...any) {

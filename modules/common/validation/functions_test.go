@@ -1,11 +1,9 @@
-package validation_test
+package validation
 
 import (
 	"errors"
 	"strings"
 	"testing"
-
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
 )
 
 func TestIsRequired(t *testing.T) {
@@ -14,7 +12,7 @@ func TestIsRequired(t *testing.T) {
 	t.Run("happy path string", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsRequired("hello")
+		err := IsRequired("hello")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -23,7 +21,7 @@ func TestIsRequired(t *testing.T) {
 	t.Run("happy path int", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsRequired(42)
+		err := IsRequired(42)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -32,8 +30,8 @@ func TestIsRequired(t *testing.T) {
 	t.Run("error empty string", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsRequired("")
-		if !errors.Is(err, cvalidation.ErrFieldRequired) {
+		err := IsRequired("")
+		if !errors.Is(err, ErrFieldRequired) {
 			t.Fatalf("expected ErrFieldRequired, got %v", err)
 		}
 	})
@@ -41,8 +39,8 @@ func TestIsRequired(t *testing.T) {
 	t.Run("error zero int", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsRequired(0)
-		if !errors.Is(err, cvalidation.ErrFieldRequired) {
+		err := IsRequired(0)
+		if !errors.Is(err, ErrFieldRequired) {
 			t.Fatalf("expected ErrFieldRequired, got %v", err)
 		}
 	})
@@ -54,7 +52,7 @@ func TestMustBeUndefined(t *testing.T) {
 	t.Run("happy path empty string", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MustBeUndefined("")
+		err := MustBeUndefined("")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -63,8 +61,8 @@ func TestMustBeUndefined(t *testing.T) {
 	t.Run("error non-empty string", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MustBeUndefined("hello")
-		if !errors.Is(err, cvalidation.ErrFieldMustBeUndefined) {
+		err := MustBeUndefined("hello")
+		if !errors.Is(err, ErrFieldMustBeUndefined) {
 			t.Fatalf("expected ErrFieldMustBeUndefined, got %v", err)
 		}
 	})
@@ -72,7 +70,7 @@ func TestMustBeUndefined(t *testing.T) {
 	t.Run("happy path zero int", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MustBeUndefined(0)
+		err := MustBeUndefined(0)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -85,7 +83,7 @@ func TestMinLen(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MinLen("hello", 3)
+		err := MinLen("hello", 3)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -94,8 +92,8 @@ func TestMinLen(t *testing.T) {
 	t.Run("error below", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MinLen("hi", 5)
-		if !errors.Is(err, cvalidation.ErrMinLen) {
+		err := MinLen("hi", 5)
+		if !errors.Is(err, ErrMinLen) {
 			t.Fatalf("expected ErrMinLen, got %v", err)
 		}
 	})
@@ -103,7 +101,7 @@ func TestMinLen(t *testing.T) {
 	t.Run("negative threshold accepts empty", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MinLen("", -3)
+		err := MinLen("", -3)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -116,7 +114,7 @@ func TestMaxLen(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MaxLen("hello", 10)
+		err := MaxLen("hello", 10)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -125,8 +123,8 @@ func TestMaxLen(t *testing.T) {
 	t.Run("error above", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MaxLen("hello world", 5)
-		if !errors.Is(err, cvalidation.ErrMaxLen) {
+		err := MaxLen("hello world", 5)
+		if !errors.Is(err, ErrMaxLen) {
 			t.Fatalf("expected ErrMaxLen, got %v", err)
 		}
 	})
@@ -134,8 +132,8 @@ func TestMaxLen(t *testing.T) {
 	t.Run("negative threshold rejects non-empty", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MaxLen("x", -1)
-		if !errors.Is(err, cvalidation.ErrMaxLen) {
+		err := MaxLen("x", -1)
+		if !errors.Is(err, ErrMaxLen) {
 			t.Fatalf("expected ErrMaxLen, got %v", err)
 		}
 	})
@@ -147,7 +145,7 @@ func TestMatchesRegex(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MatchesRegex("abc123", `^[a-z]+\d+$`)
+		err := MatchesRegex("abc123", `^[a-z]+\d+$`)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -156,8 +154,8 @@ func TestMatchesRegex(t *testing.T) {
 	t.Run("error mismatch", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MatchesRegex("ABC", `^[a-z]+$`)
-		if !errors.Is(err, cvalidation.ErrRegexMismatch) {
+		err := MatchesRegex("ABC", `^[a-z]+$`)
+		if !errors.Is(err, ErrRegexMismatch) {
 			t.Fatalf("expected ErrRegexMismatch, got %v", err)
 		}
 	})
@@ -165,8 +163,8 @@ func TestMatchesRegex(t *testing.T) {
 	t.Run("error invalid pattern", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.MatchesRegex("x", `[`)
-		if !errors.Is(err, cvalidation.ErrRegexInvalid) {
+		err := MatchesRegex("x", `[`)
+		if !errors.Is(err, ErrRegexInvalid) {
 			t.Fatalf("expected ErrRegexInvalid, got %v", err)
 		}
 	})
@@ -178,7 +176,7 @@ func TestIsEmail(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsEmail("a@b.com")
+		err := IsEmail("a@b.com")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -187,8 +185,8 @@ func TestIsEmail(t *testing.T) {
 	t.Run("error empty", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsEmail("")
-		if !errors.Is(err, cvalidation.ErrEmailInvalid) {
+		err := IsEmail("")
+		if !errors.Is(err, ErrEmailInvalid) {
 			t.Fatalf("expected ErrEmailInvalid, got %v", err)
 		}
 	})
@@ -196,8 +194,8 @@ func TestIsEmail(t *testing.T) {
 	t.Run("error malformed", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsEmail("not-an-email")
-		if !errors.Is(err, cvalidation.ErrEmailInvalid) {
+		err := IsEmail("not-an-email")
+		if !errors.Is(err, ErrEmailInvalid) {
 			t.Fatalf("expected ErrEmailInvalid, got %v", err)
 		}
 	})
@@ -205,8 +203,8 @@ func TestIsEmail(t *testing.T) {
 	t.Run("error with display name", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsEmail("Name <a@b.com>")
-		if !errors.Is(err, cvalidation.ErrEmailInvalid) {
+		err := IsEmail("Name <a@b.com>")
+		if !errors.Is(err, ErrEmailInvalid) {
 			t.Fatalf("expected ErrEmailInvalid, got %v", err)
 		}
 	})
@@ -218,7 +216,7 @@ func TestIsURL(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsURL("https://example.com/path")
+		err := IsURL("https://example.com/path")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -227,8 +225,8 @@ func TestIsURL(t *testing.T) {
 	t.Run("error empty", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsURL("")
-		if !errors.Is(err, cvalidation.ErrURLInvalid) {
+		err := IsURL("")
+		if !errors.Is(err, ErrURLInvalid) {
 			t.Fatalf("expected ErrURLInvalid, got %v", err)
 		}
 	})
@@ -236,8 +234,8 @@ func TestIsURL(t *testing.T) {
 	t.Run("error missing scheme", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsURL("example.com")
-		if !errors.Is(err, cvalidation.ErrURLInvalid) {
+		err := IsURL("example.com")
+		if !errors.Is(err, ErrURLInvalid) {
 			t.Fatalf("expected ErrURLInvalid, got %v", err)
 		}
 	})
@@ -245,8 +243,8 @@ func TestIsURL(t *testing.T) {
 	t.Run("error unparseable", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsURL("http://[::1")
-		if !errors.Is(err, cvalidation.ErrURLInvalid) {
+		err := IsURL("http://[::1")
+		if !errors.Is(err, ErrURLInvalid) {
 			t.Fatalf("expected ErrURLInvalid, got %v", err)
 		}
 	})
@@ -258,7 +256,7 @@ func TestMin(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.Min(10, 5)
+		err := Min(10, 5)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -267,8 +265,8 @@ func TestMin(t *testing.T) {
 	t.Run("error below", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.Min(3, 10)
-		if !errors.Is(err, cvalidation.ErrMinValue) {
+		err := Min(3, 10)
+		if !errors.Is(err, ErrMinValue) {
 			t.Fatalf("expected ErrMinValue, got %v", err)
 		}
 	})
@@ -276,7 +274,7 @@ func TestMin(t *testing.T) {
 	t.Run("happy path float", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.Min(1.5, 1.0)
+		err := Min(1.5, 1.0)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -289,7 +287,7 @@ func TestMax(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.Max(3, 10)
+		err := Max(3, 10)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -298,8 +296,8 @@ func TestMax(t *testing.T) {
 	t.Run("error above", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.Max(20, 10)
-		if !errors.Is(err, cvalidation.ErrMaxValue) {
+		err := Max(20, 10)
+		if !errors.Is(err, ErrMaxValue) {
 			t.Fatalf("expected ErrMaxValue, got %v", err)
 		}
 	})
@@ -311,7 +309,7 @@ func TestInRange(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.InRange(5, 0, 10)
+		err := InRange(5, 0, 10)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -320,8 +318,8 @@ func TestInRange(t *testing.T) {
 	t.Run("error below", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.InRange(-1, 0, 10)
-		if !errors.Is(err, cvalidation.ErrOutOfRange) {
+		err := InRange(-1, 0, 10)
+		if !errors.Is(err, ErrOutOfRange) {
 			t.Fatalf("expected ErrOutOfRange, got %v", err)
 		}
 	})
@@ -329,8 +327,8 @@ func TestInRange(t *testing.T) {
 	t.Run("error above", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.InRange(20, 0, 10)
-		if !errors.Is(err, cvalidation.ErrOutOfRange) {
+		err := InRange(20, 0, 10)
+		if !errors.Is(err, ErrOutOfRange) {
 			t.Fatalf("expected ErrOutOfRange, got %v", err)
 		}
 	})
@@ -338,8 +336,8 @@ func TestInRange(t *testing.T) {
 	t.Run("error invalid range", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.InRange(5, 10, 0)
-		if !errors.Is(err, cvalidation.ErrInvalidRange) {
+		err := InRange(5, 10, 0)
+		if !errors.Is(err, ErrInvalidRange) {
 			t.Fatalf("expected ErrInvalidRange, got %v", err)
 		}
 	})
@@ -351,7 +349,7 @@ func TestIsUUID(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsUUID("550e8400-e29b-41d4-a716-446655440000")
+		err := IsUUID("550e8400-e29b-41d4-a716-446655440000")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -360,8 +358,8 @@ func TestIsUUID(t *testing.T) {
 	t.Run("error empty", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsUUID("")
-		if !errors.Is(err, cvalidation.ErrUUIDInvalid) {
+		err := IsUUID("")
+		if !errors.Is(err, ErrUUIDInvalid) {
 			t.Fatalf("expected ErrUUIDInvalid, got %v", err)
 		}
 	})
@@ -369,8 +367,8 @@ func TestIsUUID(t *testing.T) {
 	t.Run("error malformed", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsUUID("not-a-uuid")
-		if !errors.Is(err, cvalidation.ErrUUIDInvalid) {
+		err := IsUUID("not-a-uuid")
+		if !errors.Is(err, ErrUUIDInvalid) {
 			t.Fatalf("expected ErrUUIDInvalid, got %v", err)
 		}
 	})
@@ -382,7 +380,7 @@ func TestIsULID(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsULID("01ARZ3NDEKTSV4RRFFQ69G5FAV")
+		err := IsULID("01ARZ3NDEKTSV4RRFFQ69G5FAV")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -391,8 +389,8 @@ func TestIsULID(t *testing.T) {
 	t.Run("error empty", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsULID("")
-		if !errors.Is(err, cvalidation.ErrULIDInvalid) {
+		err := IsULID("")
+		if !errors.Is(err, ErrULIDInvalid) {
 			t.Fatalf("expected ErrULIDInvalid, got %v", err)
 		}
 	})
@@ -400,8 +398,8 @@ func TestIsULID(t *testing.T) {
 	t.Run("error malformed", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.IsULID("not-a-ulid")
-		if !errors.Is(err, cvalidation.ErrULIDInvalid) {
+		err := IsULID("not-a-ulid")
+		if !errors.Is(err, ErrULIDInvalid) {
 			t.Fatalf("expected ErrULIDInvalid, got %v", err)
 		}
 	})
@@ -413,7 +411,7 @@ func TestNonEmpty(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.NonEmpty([]int{1, 2, 3})
+		err := NonEmpty([]int{1, 2, 3})
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -422,8 +420,8 @@ func TestNonEmpty(t *testing.T) {
 	t.Run("error empty", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.NonEmpty([]int{})
-		if !errors.Is(err, cvalidation.ErrCollectionEmpty) {
+		err := NonEmpty([]int{})
+		if !errors.Is(err, ErrCollectionEmpty) {
 			t.Fatalf("expected ErrCollectionEmpty, got %v", err)
 		}
 	})
@@ -433,8 +431,8 @@ func TestNonEmpty(t *testing.T) {
 
 		var xs []string
 
-		err := cvalidation.NonEmpty(xs)
-		if !errors.Is(err, cvalidation.ErrCollectionEmpty) {
+		err := NonEmpty(xs)
+		if !errors.Is(err, ErrCollectionEmpty) {
 			t.Fatalf("expected ErrCollectionEmpty, got %v", err)
 		}
 	})
@@ -446,7 +444,7 @@ func TestEach(t *testing.T) {
 	t.Run("happy path all pass", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.Each([]string{"a@b.com", "c@d.com"}, cvalidation.IsEmail)
+		err := Each([]string{"a@b.com", "c@d.com"}, IsEmail)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -455,12 +453,12 @@ func TestEach(t *testing.T) {
 	t.Run("error one fails", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.Each([]string{"a@b.com", "not-an-email"}, cvalidation.IsEmail)
-		if !errors.Is(err, cvalidation.ErrEachFailed) {
+		err := Each([]string{"a@b.com", "not-an-email"}, IsEmail)
+		if !errors.Is(err, ErrEachFailed) {
 			t.Fatalf("expected ErrEachFailed, got %v", err)
 		}
 
-		if !errors.Is(err, cvalidation.ErrEmailInvalid) {
+		if !errors.Is(err, ErrEmailInvalid) {
 			t.Fatalf("expected ErrEmailInvalid to be wrapped, got %v", err)
 		}
 	})
@@ -468,7 +466,7 @@ func TestEach(t *testing.T) {
 	t.Run("nil check no-ops", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.Each([]int{1, 2, 3}, nil)
+		err := Each([]int{1, 2, 3}, nil)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -477,7 +475,7 @@ func TestEach(t *testing.T) {
 	t.Run("empty slice trivially passes", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.Each([]int{}, func(int) error { return errors.New("never called") })
+		err := Each([]int{}, func(int) error { return errors.New("never called") })
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -503,7 +501,7 @@ func TestGetField(t *testing.T) {
 
 		p := pokemon{Name: "pikachu", Owner: owner{Email: "ash@kanto.com"}}
 
-		v, err := cvalidation.GetField(p, "Owner.Email")
+		v, err := GetField(p, "Owner.Email")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -519,7 +517,7 @@ func TestGetField(t *testing.T) {
 
 		p := pokemon{IDs: []int{10, 20, 30}}
 
-		v, err := cvalidation.GetField(p, "IDs[1]")
+		v, err := GetField(p, "IDs[1]")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -535,7 +533,7 @@ func TestGetField(t *testing.T) {
 
 		p := pokemon{Owner: owner{Tags: []string{"trainer", "champion"}}}
 
-		v, err := cvalidation.GetField(p, "Owner.Tags[0]")
+		v, err := GetField(p, "Owner.Tags[0]")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -551,7 +549,7 @@ func TestGetField(t *testing.T) {
 
 		p := &pokemon{Name: "snorlax"}
 
-		v, err := cvalidation.GetField(p, "Name")
+		v, err := GetField(p, "Name")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -567,7 +565,7 @@ func TestGetField(t *testing.T) {
 
 		m := map[string]any{"key": "value"}
 
-		v, err := cvalidation.GetField(m, "key")
+		v, err := GetField(m, "key")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -581,8 +579,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error nil object", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(nil, "X")
-		if !errors.Is(err, cvalidation.ErrObjectNil) {
+		_, err := GetField(nil, "X")
+		if !errors.Is(err, ErrObjectNil) {
 			t.Fatalf("expected ErrObjectNil, got %v", err)
 		}
 	})
@@ -590,8 +588,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error empty path", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{}, "")
-		if !errors.Is(err, cvalidation.ErrPathInvalid) {
+		_, err := GetField(pokemon{}, "")
+		if !errors.Is(err, ErrPathInvalid) {
 			t.Fatalf("expected ErrPathInvalid, got %v", err)
 		}
 	})
@@ -599,8 +597,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error missing field", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{}, "Nope")
-		if !errors.Is(err, cvalidation.ErrPathNotFound) {
+		_, err := GetField(pokemon{}, "Nope")
+		if !errors.Is(err, ErrPathNotFound) {
 			t.Fatalf("expected ErrPathNotFound, got %v", err)
 		}
 	})
@@ -608,8 +606,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error type mismatch", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{Name: "x"}, "Name.Inner")
-		if !errors.Is(err, cvalidation.ErrPathTypeMismatch) {
+		_, err := GetField(pokemon{Name: "x"}, "Name.Inner")
+		if !errors.Is(err, ErrPathTypeMismatch) {
 			t.Fatalf("expected ErrPathTypeMismatch, got %v", err)
 		}
 	})
@@ -617,8 +615,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error index out of range", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{IDs: []int{1}}, "IDs[5]")
-		if !errors.Is(err, cvalidation.ErrIndexOutOfRange) {
+		_, err := GetField(pokemon{IDs: []int{1}}, "IDs[5]")
+		if !errors.Is(err, ErrIndexOutOfRange) {
 			t.Fatalf("expected ErrIndexOutOfRange, got %v", err)
 		}
 	})
@@ -626,8 +624,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error index on non-slice", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{Name: "x"}, "Name[0]")
-		if !errors.Is(err, cvalidation.ErrPathTypeMismatch) {
+		_, err := GetField(pokemon{Name: "x"}, "Name[0]")
+		if !errors.Is(err, ErrPathTypeMismatch) {
 			t.Fatalf("expected ErrPathTypeMismatch, got %v", err)
 		}
 	})
@@ -635,8 +633,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error malformed bracket", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{}, "IDs[")
-		if !errors.Is(err, cvalidation.ErrPathInvalid) {
+		_, err := GetField(pokemon{}, "IDs[")
+		if !errors.Is(err, ErrPathInvalid) {
 			t.Fatalf("expected ErrPathInvalid, got %v", err)
 		}
 	})
@@ -644,8 +642,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error empty index", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{}, "IDs[]")
-		if !errors.Is(err, cvalidation.ErrPathInvalid) {
+		_, err := GetField(pokemon{}, "IDs[]")
+		if !errors.Is(err, ErrPathInvalid) {
 			t.Fatalf("expected ErrPathInvalid, got %v", err)
 		}
 	})
@@ -653,8 +651,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error non-numeric index", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{}, "IDs[abc]")
-		if !errors.Is(err, cvalidation.ErrPathInvalid) {
+		_, err := GetField(pokemon{}, "IDs[abc]")
+		if !errors.Is(err, ErrPathInvalid) {
 			t.Fatalf("expected ErrPathInvalid, got %v", err)
 		}
 	})
@@ -662,8 +660,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error negative index", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{}, "IDs[-1]")
-		if !errors.Is(err, cvalidation.ErrPathInvalid) {
+		_, err := GetField(pokemon{}, "IDs[-1]")
+		if !errors.Is(err, ErrPathInvalid) {
 			t.Fatalf("expected ErrPathInvalid, got %v", err)
 		}
 	})
@@ -671,8 +669,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error leading bracket", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{}, "[0]")
-		if !errors.Is(err, cvalidation.ErrPathInvalid) {
+		_, err := GetField(pokemon{}, "[0]")
+		if !errors.Is(err, ErrPathInvalid) {
 			t.Fatalf("expected ErrPathInvalid, got %v", err)
 		}
 	})
@@ -684,8 +682,8 @@ func TestGetField(t *testing.T) {
 			P *pokemon
 		}
 
-		_, err := cvalidation.GetField(wrapper{}, "P.Name")
-		if !errors.Is(err, cvalidation.ErrPathNotFound) {
+		_, err := GetField(wrapper{}, "P.Name")
+		if !errors.Is(err, ErrPathNotFound) {
 			t.Fatalf("expected ErrPathNotFound, got %v", err)
 		}
 	})
@@ -695,8 +693,8 @@ func TestGetField(t *testing.T) {
 
 		m := map[int]string{1: "x"}
 
-		_, err := cvalidation.GetField(m, "1")
-		if !errors.Is(err, cvalidation.ErrPathTypeMismatch) {
+		_, err := GetField(m, "1")
+		if !errors.Is(err, ErrPathTypeMismatch) {
 			t.Fatalf("expected ErrPathTypeMismatch, got %v", err)
 		}
 	})
@@ -706,8 +704,8 @@ func TestGetField(t *testing.T) {
 
 		m := map[string]any{"a": 1}
 
-		_, err := cvalidation.GetField(m, "missing")
-		if !errors.Is(err, cvalidation.ErrPathNotFound) {
+		_, err := GetField(m, "missing")
+		if !errors.Is(err, ErrPathNotFound) {
 			t.Fatalf("expected ErrPathNotFound, got %v", err)
 		}
 	})
@@ -715,8 +713,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error trailing chars after bracket", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{}, "IDs[0]junk")
-		if !errors.Is(err, cvalidation.ErrPathInvalid) {
+		_, err := GetField(pokemon{}, "IDs[0]junk")
+		if !errors.Is(err, ErrPathInvalid) {
 			t.Fatalf("expected ErrPathInvalid, got %v", err)
 		}
 	})
@@ -724,8 +722,8 @@ func TestGetField(t *testing.T) {
 	t.Run("error empty dotted segment", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := cvalidation.GetField(pokemon{}, "Owner..Email")
-		if !errors.Is(err, cvalidation.ErrPathInvalid) {
+		_, err := GetField(pokemon{}, "Owner..Email")
+		if !errors.Is(err, ErrPathInvalid) {
 			t.Fatalf("expected ErrPathInvalid, got %v", err)
 		}
 	})
@@ -737,8 +735,8 @@ func TestGetField(t *testing.T) {
 			V any
 		}
 
-		_, err := cvalidation.GetField(box{V: nil}, "V[0]")
-		if !errors.Is(err, cvalidation.ErrPathNotFound) {
+		_, err := GetField(box{V: nil}, "V[0]")
+		if !errors.Is(err, ErrPathNotFound) {
 			t.Fatalf("expected ErrPathNotFound, got %v", err)
 		}
 	})
@@ -752,7 +750,7 @@ func TestGetField(t *testing.T) {
 
 		m := matrix{Rows: [][]int{{1, 2}, {3, 4}}}
 
-		v, err := cvalidation.GetField(m, "Rows[1][0]")
+		v, err := GetField(m, "Rows[1][0]")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -771,9 +769,9 @@ func TestErrValidation(t *testing.T) {
 		t.Parallel()
 
 		inner := errors.New("inner")
-		err := cvalidation.ErrValidation(inner)
+		err := ErrValidation(inner)
 
-		if !errors.Is(err, cvalidation.ErrValidationFailed) {
+		if !errors.Is(err, ErrValidationFailed) {
 			t.Fatalf("expected ErrValidationFailed, got %v", err)
 		}
 
@@ -785,7 +783,7 @@ func TestErrValidation(t *testing.T) {
 	t.Run("error string format", func(t *testing.T) {
 		t.Parallel()
 
-		err := cvalidation.ErrValidation(cvalidation.ErrFieldRequired)
+		err := ErrValidation(ErrFieldRequired)
 		msg := err.Error()
 		if !strings.Contains(msg, "validation") {
 			t.Fatalf("expected message to contain validation, got %q", msg)

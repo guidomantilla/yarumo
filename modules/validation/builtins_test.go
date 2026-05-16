@@ -1,12 +1,10 @@
-package validation_test
+package validation
 
 import (
 	"errors"
 	"testing"
 
 	cvalidation "github.com/guidomantilla/yarumo/common/validation"
-
-	"github.com/guidomantilla/yarumo/validation"
 )
 
 // runByName looks up a leaf in the default registry and runs it. It
@@ -15,7 +13,7 @@ import (
 func runByName(t *testing.T, name string, value any, params []any) error {
 	t.Helper()
 
-	reg := validation.DefaultRegistry()
+	reg := DefaultRegistry()
 
 	fn, ok := reg.Get(name)
 	if !ok {
@@ -90,7 +88,7 @@ func TestBuiltin_StringLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "min_len", 42, []any{1})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -99,7 +97,7 @@ func TestBuiltin_StringLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "min_len", "hi", nil)
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -126,7 +124,7 @@ func TestBuiltin_StringLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "max_len", 42, []any{1})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -153,7 +151,7 @@ func TestBuiltin_StringLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "regex", 42, []any{`^x$`})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -162,7 +160,7 @@ func TestBuiltin_StringLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "regex", "x", []any{42})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -189,7 +187,7 @@ func TestBuiltin_StringLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "email", 42, nil)
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -216,7 +214,7 @@ func TestBuiltin_StringLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "url", 42, nil)
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -247,7 +245,7 @@ func TestBuiltin_NumericLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "min", "x", []any{5})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -256,7 +254,7 @@ func TestBuiltin_NumericLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "min", 5, nil)
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -283,7 +281,7 @@ func TestBuiltin_NumericLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "max", "x", []any{10})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -292,7 +290,7 @@ func TestBuiltin_NumericLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "max", 5, nil)
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -319,7 +317,7 @@ func TestBuiltin_NumericLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "in_range", 50, []any{1})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -328,7 +326,7 @@ func TestBuiltin_NumericLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "in_range", "x", []any{1, 100})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -337,7 +335,7 @@ func TestBuiltin_NumericLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "in_range", 50, []any{"x", 100})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -359,7 +357,7 @@ func TestBuiltin_IDLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "uuid", 42, nil)
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -377,7 +375,7 @@ func TestBuiltin_IDLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "ulid", 42, nil)
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -417,7 +415,7 @@ func TestBuiltin_NonEmpty(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "non_empty", 42, nil)
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -435,7 +433,7 @@ func TestBuiltin_NonEmpty(t *testing.T) {
 func TestCoerce_AsInt(t *testing.T) {
 	t.Parallel()
 
-	reg := validation.DefaultRegistry()
+	reg := DefaultRegistry()
 
 	fn, _ := reg.Get("min_len")
 
@@ -444,7 +442,7 @@ func TestCoerce_AsInt(t *testing.T) {
 
 		// asInt does not have int8; this exercises the default branch.
 		err := fn("hello", []any{int8(3)})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -516,7 +514,7 @@ func TestCoerce_AsInt(t *testing.T) {
 func TestCoerce_AsFloat(t *testing.T) {
 	t.Parallel()
 
-	reg := validation.DefaultRegistry()
+	reg := DefaultRegistry()
 
 	fn, _ := reg.Get("min")
 
@@ -578,7 +576,7 @@ func TestCoerce_AsFloat(t *testing.T) {
 		t.Parallel()
 
 		err := fn(nil, []any{5})
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -587,7 +585,7 @@ func TestCoerce_AsFloat(t *testing.T) {
 func TestCoerce_AsSliceArray(t *testing.T) {
 	t.Parallel()
 
-	reg := validation.DefaultRegistry()
+	reg := DefaultRegistry()
 
 	fn, _ := reg.Get("non_empty")
 
@@ -604,7 +602,7 @@ func TestCoerce_AsSliceArray(t *testing.T) {
 		t.Parallel()
 
 		err := fn(nil, nil)
-		if !errors.Is(err, validation.ErrBadParams) {
+		if !errors.Is(err, ErrBadParams) {
 			t.Fatalf("expected ErrBadParams, got %v", err)
 		}
 	})
@@ -613,7 +611,7 @@ func TestCoerce_AsSliceArray(t *testing.T) {
 func TestRegistry_Names(t *testing.T) {
 	t.Parallel()
 
-	reg := validation.NewRegistry()
+	reg := NewRegistry()
 	reg.Register("a", func(any, []any) error { return nil })
 	reg.Register("b", func(any, []any) error { return nil })
 
@@ -628,14 +626,14 @@ func TestOptions_WithEvaluator(t *testing.T) {
 
 	// WithEvaluator(nil) should silently keep the default; pass a non-nil
 	// evaluator and verify the engine still runs.
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{
+	rs := Ruleset{Rules: []RuleNode{{
 		Field: "Name",
-		Rules: []validation.RuleNode{{Name: "required"}},
+		Rules: []RuleNode{{Name: "required"}},
 	}}}
 
-	eng := validation.NewEngine(rs,
-		validation.WithEvaluator(nil),
-		validation.WithRegistry(nil),
+	eng := NewEngine(rs,
+		WithEvaluator(nil),
+		WithRegistry(nil),
 	)
 
 	err := eng.Validate(struct{ Name string }{Name: "x"}, nil)
@@ -650,7 +648,7 @@ func TestErrors_ErrorMethods(t *testing.T) {
 	t.Run("engine error", func(t *testing.T) {
 		t.Parallel()
 
-		err := validation.ErrEngine(validation.ErrBadRule)
+		err := ErrEngine(ErrBadRule)
 
 		msg := err.Error()
 		if msg == "" {
@@ -661,7 +659,7 @@ func TestErrors_ErrorMethods(t *testing.T) {
 	t.Run("load error", func(t *testing.T) {
 		t.Parallel()
 
-		err := validation.ErrLoad(validation.ErrDataNil)
+		err := ErrLoad(ErrDataNil)
 
 		msg := err.Error()
 		if msg == "" {

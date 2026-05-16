@@ -48,10 +48,13 @@ type parser struct {
 	input  string
 }
 
+// peek returns the current token without advancing the cursor.
 func (p *parser) peek() token { return p.tokens[p.pos] }
 
+// advance returns the current token and moves the cursor forward.
 func (p *parser) advance() token { t := p.tokens[p.pos]; p.pos++; return t }
 
+// expect advances if the current token matches kind, otherwise returns a parse error.
 func (p *parser) expect(kind tokenKind) (token, error) {
 	tok := p.peek()
 	if tok.kind != kind {
@@ -348,35 +351,5 @@ func (p *parser) parseAtom() (Expr, error) { //nolint:cyclop // atom parsing req
 
 	default:
 		return nil, ErrParse(tok.pos, tok.pos+len(tok.val), "unexpected token: "+tok.val, ErrUnexpectedToken)
-	}
-}
-
-// tokenToOp converts a token kind to an OpKind.
-func tokenToOp(kind tokenKind) OpKind { //nolint:cyclop // mapping function needs one case per token
-	switch kind { //nolint:exhaustive // only operator tokens are mapped
-	case tokPlus:
-		return OpAdd
-	case tokMinus:
-		return OpSub
-	case tokStar:
-		return OpMul
-	case tokSlash:
-		return OpDiv
-	case tokPercent:
-		return OpMod
-	case tokEq:
-		return OpEq
-	case tokNeq:
-		return OpNeq
-	case tokLt:
-		return OpLt
-	case tokLte:
-		return OpLte
-	case tokGt:
-		return OpGt
-	case tokGte:
-		return OpGte
-	default:
-		return OpAdd
 	}
 }

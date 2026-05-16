@@ -16,10 +16,60 @@
 | `cast/` | Type-safe casting (`ToInt`, `ToString`, `ToTime`, `ToDuration`, …) — wrappa `spf13/cast`. |
 | `crypto/random/` | Generación crypto-segura de bytes, números y strings. |
 | `errs/` | Typed errors + error-chain helpers (`As`, `Match`, `Wrap`, `Unwrap`, `ErrorMessages`, `AsErrorInfo`) + JSON-serializable info. |
+| `log/slog/slogctx/` | Bag context-bound de `slog.Attr` (`WithAttrs`, `SetAttrs`, `Attrs`) para propagar atributos por `context.Context`. |
 | `pointer/` | Helpers para pointers (deref con default, take-address, comparación). |
 | `random/` | Generación pseudoaleatoria no-crypto (`Bytes`, `Number`, `String`, `Text*`). |
+| `rest/` | Cliente REST stateless (`Call`, `CallStream`, `DecodeHTTPError`) con DTOs `RequestSpec`/`ResponseSpec[T]`/`StreamResponseSpec`; concurrency-safe. |
 | `utils/` | Funciones genéricas (`Coalesce`, `Ternary`, `Empty`, `RandomString`, case-helpers `PascalCase`/`SnakeCase`/…). |
 | `validation/` | Leaves de validación (`IsRequired`, `MinLen`, `IsEmail`, `IsUUID`, …) + reflexión por dotted path (`GetField`). |
+
+### Extensiones a las reglas
+
+Aplican las 4 reglas universales con las siguientes extensiones cuando el paquete necesita exponer DTOs (data transfer objects) además de funciones libres:
+
+- **R1 (DTOs por concern)** — un paquete puede exponer **structs públicos de datos** con métodos puros (transformaciones sin estado mutable). Esos DTOs viven en su propio archivo nombrado por el concern (ej. `specs.go` para `RequestSpec`/`ResponseSpec`), separado de `functions.go` e `internals.go`. Los métodos privados auxiliares de un DTO van **con el DTO en el mismo archivo**, no en `internals.go` — la partición visibility de R1 es para funciones libres, no para métodos.
+- **R2 (Métodos sobre DTOs)** — los métodos (públicos o privados) sobre DTOs no necesitan `Fn` alias ni compliance. Su signatura está atada al receiver type; cualquier drift cae en compile-time vía consumers. Aplica también a métodos sobre `Error` struct en `errors.go`.
+- **R4 (Métodos sobre DTOs)** — cada método (público o privado) sobre un DTO lleva su doc-comment, mismo rigor que las funciones libres.
+
+**Referencia**: `modules/common/rest/specs.go` — `RequestSpec` con `Build` (pública) + 3 helpers privados (`buildHeaders`, `marshalBody`, `buildURL`).
+
+
+## Paquetes-librería con estado
+
+### Cómo se reconocen
+
+- Expone tipos con estado: structs que mantienen invariantes entre llamadas (claves, contadores, buffers, conexiones, configuración) y se operan a través de métodos.
+- El API entra por uno o más constructores `NewXxx(opts ...Option) Interface` que devuelven una **interface** declarada en `types.go`. El struct concreto la implementa.
+
+### Inventario en `modules/common/`
+
+| Paquete | Qué hace |
+|---|---|
+| `diagnostics/` | Captures de runtime (`Captures`, `Pprof`, `Trace`) con configuración de salida. |
+| `expressions/` | `Evaluator` de expresiones — lexer/parser/eval sobre AST con scope. |
+| `grpc/` | Server gRPC con defaults seguros y errores tipados. |
+| `health/` | Aggregator de health checks que orquesta múltiples sondas. |
+| `http/` | `Client` + `Server` HTTP con retry/limiter, defaults seguros para timeouts/headers. |
+| `resilience/` | `CircuitBreaker` + `RateLimiter` (instancias) con registry lazy goroutine-free. |
+
+**Excepción puntual de layout — `diagnostics/`**: además de `functions.go` (capturas de profile), tiene `handlers.go` (HTTP handlers tipo `NewPprofHandler`). Los dos grupos son funciones libres pero pertenecen a concerns ajenos entre sí, por lo que se separan en archivos `<concern>.go`. **No es regla general**: aplica solo a `diagnostics/` mientras no aparezca un segundo caso que justifique generalizarlo.
+
+### Diferencias con las reglas
+
+Aplican las 4 reglas universales del documento con las siguientes extensiones:
+
+- **R1 (Layout)** — además del trío base, cada struct stateful tiene su **propio archivo nombrado como el struct** (minúsculas: `client.go`, `server.go`). Ese archivo contiene declaración del struct + constructor `NewXxx` + métodos. `functions.go` sigue siendo para funciones libres públicas (típicamente helpers o defaults usados para configurar Options).
+- **R1 (Naming de structs multi-palabra)** — si el struct tiene nombre CamelCase compuesto:
+  - Implementación única o canónica de una interface → `<nombre>.go` con todo en minúsculas y sin separadores (ej. `CircuitBreaker` → `circuitbreaker.go`).
+  - Variante alternativa de una interface que ya tiene archivo canónico → `<canonical>_<variante>.go`, agrupando por la interface (ej. `PluggableClient`, variante de la implementación de `Client`, vive en `client_pluggable.go`).
+  - **Múltiples peers de una interface sin canónica** — cuando el paquete expone N implementaciones equivalentes de la misma interface (típicamente stdlib o externa, como `slog.Handler`) y ninguna es "la canónica", se nombran `<role>_<variante>.go` donde `<role>` es el role compartido en minúsculas y `<variante>` distingue cada impl. Ej.: `fanoutHandler` y `contextHandler` ambos implementan `slog.Handler` y viven en `handler_fanout.go` + `handler_context.go`.
+- **R1 (Singletons preconfigurados)** — instancias `var` construidas en tiempo de carga del paquete (ej. `DefaultClient`, `NoopClient`, `ErrorClient`) van al inicio del archivo de la implementación canónica de su interface, incluso si algún singleton concreto se construye literalmente con una variante (ej. `NoopClient = &PluggableClient{…}` vive en `client.go`, no en `client_pluggable.go`, porque pertenece a la familia "Client").
+- **R1 (Tipos privados compartidos)** — cuando dos o más structs stateful del paquete comparten un tipo privado (struct de datos, enum o ambos) que no es helper de `internals.go` sino estructura común consumida por varios concerns, ese tipo vive en su propio archivo `<concern>.go` junto con sus constantes asociadas. Ej.: `expressions/tokens.go` con `token` struct + `tokenKind` enum + sus constantes `tokEOF`/`tokPlus`/etc., compartidos entre `lexer` y `parser`. No aplica si el tipo privado es usado por un solo consumidor (en ese caso vive con su consumidor o en `internals.go`).
+- **R2 (`types.go`)** — además de los `Fn` aliases, declara las **interfaces** del paquete. Cada implementación tiene su compliance var: `var _ Interface = (*impl)(nil)`.
+- **R2 (Excepción adicional)** — los constructores `NewXxx(opts ...Option) Interface` no necesitan `Fn` alias ni compliance. El contrato ya está fijado por el Options pattern en la entrada y por la interface + su compliance en la salida.
+- **R4 (Interfaces)** — cada interface en `types.go` lleva doc-comment que enuncia el contrato: propósito + expectativas de concurrencia + responsabilidad del caller (cleanup, lifecycle, cancelación). Cada método de la interface lleva su propio doc-comment.
+- **R4 (Métodos)** — la regla "funciones (públicas y privadas) llevan doc" se extiende a métodos: cada método (público o privado) sobre un struct stateful lleva doc-comment con el mismo rigor.
+- **R4 (Singletons preconfigurados)** — el bloque `var (...)` de singletons lleva un comentario de grupo encima describiendo la familia, mismo patrón que sentinels de errores.
 
 
 ## Reglas
@@ -29,7 +79,10 @@
 - **Trío base**: `types.go` + `functions.go` + `functions_test.go`.
 - **Partición por visibilidad**:
   - `functions.go` → todo lo público (funciones exportadas).
-  - `internals.go` → todo lo privado (funciones helpers no exportados).
+  - `internals.go` → todo lo privado (funciones helpers no exportados). Su test file gemelo es `internals_test.go`.
+- **Test del archivo `internals.go`: opcional.** La cobertura vía API público suele bastar. Solo crear `internals_test.go` (white-box) cuando un helper sea lo suficientemente complejo o independiente como para que probar transitivamente oculte gaps de cobertura.
+- **Todos los archivos `_test.go` usan `package <name>` (internal).** El sufijo `_test` en el package (`package <name>_test`) **no está permitido**. La separación external/internal complica el layout sin beneficio claro y obliga a tener dos archivos por source. Un único test file por source, en el mismo package, cubre todos los casos. Aplica también a directorios test-only (ej. `compute/tests/acceptance/` usa `package acceptance`, no `acceptance_test`).
+- **Si `functions.go` queda vacío** (todas sus privadas se movieron a `internals.go` y no hay públicas libres) → no debe existir. La regla del trío base no obliga a mantener un archivo vacío.
 - **Excepción**: un struct privado cuyo único propósito es soportar a los helpers de `internals.go` (ej. `pathSegment` en `validation/internals.go`, que parametriza a `parsePath`/`walkSegment`/etc.) puede convivir con ellos en el mismo archivo. No aplica a types privados de otra naturaleza.
 - **Opcionales según necesidad del paquete**:
   - `constants.go` — constantes públicas o privadas que no sean sentinel-errors.
@@ -57,6 +110,7 @@ Las reglas universales del repo (doc terminado en punto, comenzar por el nombre 
 - **Package doc** vive en `types.go` (único archivo del trío base que siempre está): una frase qué provee, opcionalmente un segundo párrafo de contrato/integración.
 - **`Fn` aliases**: una línea — `// XxxFn is the function type for Xxx.`
 - **Funciones (públicas y privadas)**: describen resultado o condición de error, no implementación. Las privadas de `internals.go` con el mismo rigor que las públicas.
+- **Structs (públicos y privados)**: cada `type Xxx struct` lleva doc-comment de 1-2 líneas describiendo qué representa o qué papel cumple (ej. "client implements Client.", "serviceRegistration carries a service impl + its descriptor for late registration."). Aplica también a los structs auxiliares dentro de `options.go` y a los structs implementadores en archivos per-tipo de Shape B.
 - **`constants.go`**: comentario de grupo encima del bloque `const (...)`. Sin doc por constante salvo que el nombre no sea autoexplicativo.
 - **`options.go`**: cada identificador (`Options`, `NewOptions`, `Option`, cada `WithXxx`) con doc dedicado. Modelo de referencia: `modules/common/utils/options.go`.
 - **`errors.go`**:
@@ -64,4 +118,11 @@ Las reglas universales del repo (doc terminado en punto, comenzar por el nombre 
   - `Error` struct + factory `ErrXxx`: doc-comment dedicado a cada uno.
 
 **Referencia operativa**: `modules/common/utils/` y `modules/common/validation/` cubren entre los dos todos los casos. Si dudás cómo documentar algo, mirá esos paquetes.
+
+## Excepciones a los shapes
+
+Algunos paquetes bajo `common/` no encajan en ningún shape porque son envoltorios delgados sobre una librería externa o tienen un constraint de dependencias que justifica la desviación. Quedan fuera del inventario y de las reglas.
+
+- `common/cron/` — wrapper sobre `github.com/robfig/cron/v3`. Solo expone una abstracción `Scheduler` para desacoplar al consumidor de la librería concreta.
+- `common/log/slog/` — adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `Logger` como **struct público concreto** (no como interface) para que el paquete padre `common/log/` pueda declarar `_ log.Logger = (*cslog.Logger)(nil)` contra su propia interface vía typing estructural, sin cerrar un ciclo de imports. Esta forma encaja en la excepción 4 de `CODING_STANDARDS.md` (criterio 4) y rompe también el patrón Shape B clásico, así que vive acá.
 

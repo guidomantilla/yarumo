@@ -207,8 +207,8 @@ linters:
       - path: random/functions\.go
         linters:
           - gosec
-      # log package globals (mu, current, osExit) are required for thread-safe singleton logger
-      - path: log/functions\.go
+      # log package globals (current, internal) are required for thread-safe singleton logger
+      - path: log/internals\.go
         linters:
           - gochecknoglobals
           - ireturn
@@ -232,14 +232,10 @@ linters:
       - path: crypto/ciphers/hybrid/(functions|hybrid)\.go
         linters:
           - ireturn
-      # log/slog globals are required for the default logger singleton.
-      # ireturn: NewLogger returns the local Logger interface (YA-0039) per
-      # CODING_STANDARDS criterion default rule; structural typing keeps it
-      # compatible with the parent log.Logger without closing an import cycle.
+      # log/slog globals are required for the default logger singleton
       - path: log/slog/logger\.go
         linters:
           - gochecknoglobals
-          - ireturn
       # fanout handler single-path returns error directly from interface method
       - path: log/slog/handler_fanout\.go
         linters:
@@ -278,12 +274,6 @@ linters:
       - path: uids/(uids|extensions)\.go
         linters:
           - gochecknoglobals
-      # health package-level singleton: DefaultHealth is the on-demand
-      # aggregator registered by application code; required for the YA-0077
-      # primitives package.
-      - path: health/extensions\.go
-        linters:
-          - gochecknoglobals
       # health/health.go: NewHealth follows criterion 4 (constructor returns
       # interface — Health is a public abstraction with a private impl).
       # cassert.NotNil does not accept context; runProbes receives ctx but the
@@ -292,11 +282,6 @@ linters:
         linters:
           - ireturn
           - contextcheck
-      # health/extensions_test.go: tests modify the global DefaultHealth and
-      # cannot run in parallel.
-      - path: health/extensions_test\.go
-        linters:
-          - paralleltest
           - tparallel
       # health examples use fmt.Print* for demonstration purposes
       - path: health/examples/
@@ -429,8 +414,8 @@ linters:
       - path: expressions/(errors|types|lexer)\.go
         linters:
           - gochecknoglobals
-      # expressions eval/parser propagate errors from Expr.Eval without wrapping (by design)
-      - path: expressions/(eval|evaluator|parser)\.go
+      # expressions ast/evaluator/parser propagate errors from Expr.Eval without wrapping (by design)
+      - path: expressions/(ast|evaluator|parser)\.go
         linters:
           - wrapcheck
       # expressions nolintlint: exhaustive directives are valid for SDK linter config, not common
@@ -447,7 +432,7 @@ linters:
       # methods inside CircuitBreaker/RateLimiter receive ctx via Execute/Wait
       # but the receiver-nil assertion is a struct invariant, not a context-aware
       # check.
-      - path: resilience/(extensions|circuitbreaker|ratelimiter)\.go
+      - path: resilience/(circuit_breaker|rate_limiter|registry_circuit_breaker|registry_rate_limiter)\.go
         linters:
           - gochecknoglobals
           - contextcheck

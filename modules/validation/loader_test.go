@@ -1,11 +1,9 @@
-package validation_test
+package validation
 
 import (
 	"errors"
 	"strings"
 	"testing"
-
-	"github.com/guidomantilla/yarumo/validation"
 )
 
 func TestLoadYAML(t *testing.T) {
@@ -14,7 +12,7 @@ func TestLoadYAML(t *testing.T) {
 	t.Run("list shape", func(t *testing.T) {
 		t.Parallel()
 
-		rs, err := validation.LoadYAML([]byte(`
+		rs, err := LoadYAML([]byte(`
 - field: Name
   rules:
     - required
@@ -39,7 +37,7 @@ func TestLoadYAML(t *testing.T) {
 	t.Run("mapping shape", func(t *testing.T) {
 		t.Parallel()
 
-		rs, err := validation.LoadYAML([]byte(`
+		rs, err := LoadYAML([]byte(`
 rules:
   - field: Name
     rules: [required]
@@ -56,7 +54,7 @@ rules:
 	t.Run("scalar leaf", func(t *testing.T) {
 		t.Parallel()
 
-		rs, err := validation.LoadYAML([]byte(`
+		rs, err := LoadYAML([]byte(`
 - required
 `))
 		if err != nil {
@@ -71,7 +69,7 @@ rules:
 	t.Run("sugar map leaf", func(t *testing.T) {
 		t.Parallel()
 
-		rs, err := validation.LoadYAML([]byte(`
+		rs, err := LoadYAML([]byte(`
 - { min_len: 3 }
 - { in_range: [1, 100] }
 `))
@@ -99,8 +97,8 @@ rules:
 	t.Run("error nil data", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := validation.LoadYAML(nil)
-		if !errors.Is(err, validation.ErrDataNil) {
+		_, err := LoadYAML(nil)
+		if !errors.Is(err, ErrDataNil) {
 			t.Fatalf("expected ErrDataNil, got %v", err)
 		}
 	})
@@ -108,8 +106,8 @@ rules:
 	t.Run("error malformed", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := validation.LoadYAML([]byte(`{`))
-		if !errors.Is(err, validation.ErrLoadFailed) {
+		_, err := LoadYAML([]byte(`{`))
+		if !errors.Is(err, ErrLoadFailed) {
 			t.Fatalf("expected ErrLoadFailed, got %v", err)
 		}
 	})
@@ -121,7 +119,7 @@ func TestLoadJSON(t *testing.T) {
 	t.Run("list shape", func(t *testing.T) {
 		t.Parallel()
 
-		rs, err := validation.LoadJSON([]byte(`[{"field":"Name","rules":["required"]}]`))
+		rs, err := LoadJSON([]byte(`[{"field":"Name","rules":["required"]}]`))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -134,7 +132,7 @@ func TestLoadJSON(t *testing.T) {
 	t.Run("scalar leaf string", func(t *testing.T) {
 		t.Parallel()
 
-		rs, err := validation.LoadJSON([]byte(`["required"]`))
+		rs, err := LoadJSON([]byte(`["required"]`))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -147,7 +145,7 @@ func TestLoadJSON(t *testing.T) {
 	t.Run("sugar map leaf array", func(t *testing.T) {
 		t.Parallel()
 
-		rs, err := validation.LoadJSON([]byte(`[{"in_range":[1,100]}]`))
+		rs, err := LoadJSON([]byte(`[{"in_range":[1,100]}]`))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -164,7 +162,7 @@ func TestLoadJSON(t *testing.T) {
 	t.Run("sugar map leaf single", func(t *testing.T) {
 		t.Parallel()
 
-		rs, err := validation.LoadJSON([]byte(`[{"min_len":3}]`))
+		rs, err := LoadJSON([]byte(`[{"min_len":3}]`))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -177,7 +175,7 @@ func TestLoadJSON(t *testing.T) {
 	t.Run("mapping shape", func(t *testing.T) {
 		t.Parallel()
 
-		rs, err := validation.LoadJSON([]byte(`{"rules":[{"field":"Name","rules":["required"]}]}`))
+		rs, err := LoadJSON([]byte(`{"rules":[{"field":"Name","rules":["required"]}]}`))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -190,8 +188,8 @@ func TestLoadJSON(t *testing.T) {
 	t.Run("error nil data", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := validation.LoadJSON(nil)
-		if !errors.Is(err, validation.ErrDataNil) {
+		_, err := LoadJSON(nil)
+		if !errors.Is(err, ErrDataNil) {
 			t.Fatalf("expected ErrDataNil, got %v", err)
 		}
 	})
@@ -199,8 +197,8 @@ func TestLoadJSON(t *testing.T) {
 	t.Run("error malformed", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := validation.LoadJSON([]byte(`{`))
-		if !errors.Is(err, validation.ErrLoadFailed) {
+		_, err := LoadJSON([]byte(`{`))
+		if !errors.Is(err, ErrLoadFailed) {
 			t.Fatalf("expected ErrLoadFailed, got %v", err)
 		}
 	})
@@ -217,7 +215,7 @@ func TestLoadYAMLReader(t *testing.T) {
   rules: [required]
 `)
 
-		rs, err := validation.LoadYAMLReader(r)
+		rs, err := LoadYAMLReader(r)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -230,8 +228,8 @@ func TestLoadYAMLReader(t *testing.T) {
 	t.Run("error nil reader", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := validation.LoadYAMLReader(nil)
-		if !errors.Is(err, validation.ErrReaderNil) {
+		_, err := LoadYAMLReader(nil)
+		if !errors.Is(err, ErrReaderNil) {
 			t.Fatalf("expected ErrReaderNil, got %v", err)
 		}
 	})
@@ -245,7 +243,7 @@ func TestLoadJSONReader(t *testing.T) {
 
 		r := strings.NewReader(`[{"field":"Name","rules":["required"]}]`)
 
-		rs, err := validation.LoadJSONReader(r)
+		rs, err := LoadJSONReader(r)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -258,8 +256,8 @@ func TestLoadJSONReader(t *testing.T) {
 	t.Run("error nil reader", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := validation.LoadJSONReader(nil)
-		if !errors.Is(err, validation.ErrReaderNil) {
+		_, err := LoadJSONReader(nil)
+		if !errors.Is(err, ErrReaderNil) {
 			t.Fatalf("expected ErrReaderNil, got %v", err)
 		}
 	})
@@ -273,7 +271,7 @@ func TestLoadFromReader(t *testing.T) {
 
 		r := strings.NewReader(`- required`)
 
-		rs, err := validation.LoadFromReader(r, validation.LoadYAML)
+		rs, err := LoadFromReader(r, LoadYAML)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -286,8 +284,8 @@ func TestLoadFromReader(t *testing.T) {
 	t.Run("error nil reader", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := validation.LoadFromReader(nil, validation.LoadYAML)
-		if !errors.Is(err, validation.ErrReaderNil) {
+		_, err := LoadFromReader(nil, LoadYAML)
+		if !errors.Is(err, ErrReaderNil) {
 			t.Fatalf("expected ErrReaderNil, got %v", err)
 		}
 	})
@@ -295,8 +293,8 @@ func TestLoadFromReader(t *testing.T) {
 	t.Run("error nil loader", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := validation.LoadFromReader(strings.NewReader(""), nil)
-		if !errors.Is(err, validation.ErrLoadFailed) {
+		_, err := LoadFromReader(strings.NewReader(""), nil)
+		if !errors.Is(err, ErrLoadFailed) {
 			t.Fatalf("expected ErrLoadFailed, got %v", err)
 		}
 	})

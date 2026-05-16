@@ -611,18 +611,6 @@ func TestMustParse(t *testing.T) {
 	})
 }
 
-func TestTokenToOp(t *testing.T) {
-	t.Parallel()
-
-	t.Run("unknown token returns OpAdd", func(t *testing.T) {
-		t.Parallel()
-		got := tokenToOp(tokEOF)
-		if got != OpAdd {
-			t.Fatalf("expected OpAdd for unknown, got %v", got)
-		}
-	})
-}
-
 func TestParseErrorPropagation(t *testing.T) {
 	t.Parallel()
 

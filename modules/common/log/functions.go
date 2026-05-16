@@ -1,31 +1,6 @@
 package log
 
-import (
-	"context"
-	"sync/atomic"
-
-	cslog "github.com/guidomantilla/yarumo/common/log/slog"
-)
-
-type loggerHolder struct {
-	logger Logger
-}
-
-var (
-	current  atomic.Value
-	internal = cslog.NewLogger()
-)
-
-func load() Logger {
-	value := current.Load()
-	if value == nil {
-		current.Store(&loggerHolder{logger: internal})
-		return internal
-	}
-
-	holder, _ := value.(*loggerHolder)
-	return holder.logger
-}
+import "context"
 
 // Use sets the default logger.
 func Use(logger Logger) {

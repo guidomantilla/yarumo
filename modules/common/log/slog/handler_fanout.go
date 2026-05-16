@@ -6,8 +6,8 @@ import (
 	"log/slog"
 )
 
-var _ slog.Handler = (*fanoutHandler)(nil)
-
+// fanoutHandler implements slog.Handler by delegating each record to every
+// wrapped handler in order, aggregating their errors with errors.Join.
 type fanoutHandler struct {
 	handlers []slog.Handler
 }

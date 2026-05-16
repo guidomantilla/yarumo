@@ -39,7 +39,7 @@ func TestValidateExecute(t *testing.T) {
 	t.Run("nil context returns sentinel", func(t *testing.T) {
 		t.Parallel()
 
-		fn := func() (any, error) { return "noop", errSentinel }
+		fn := func() (any, error) { return noopValue, errSentinel }
 
 		err := validateExecute(nil, fn)
 		if !errors.Is(err, ErrContextNil) {
@@ -59,7 +59,7 @@ func TestValidateExecute(t *testing.T) {
 	t.Run("valid inputs return nil", func(t *testing.T) {
 		t.Parallel()
 
-		fn := func() (any, error) { return "noop", errSentinel }
+		fn := func() (any, error) { return noopValue, errSentinel }
 
 		err := validateExecute(t.Context(), fn)
 		if err != nil {
@@ -71,6 +71,9 @@ func TestValidateExecute(t *testing.T) {
 // errSentinel is a placeholder error used to satisfy linter rules in tests
 // where the function return value is never invoked.
 var errSentinel = errors.New("test sentinel")
+
+// noopValue is the placeholder return value used by no-op test closures.
+const noopValue = "noop"
 
 func TestValidateWait(t *testing.T) {
 	t.Parallel()
@@ -189,4 +192,3 @@ func TestSettingsFor(t *testing.T) {
 		}
 	})
 }
-

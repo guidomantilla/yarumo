@@ -8,6 +8,7 @@ import (
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 )
 
+// server implements Server. It wraps a *grpc.Server and exposes the configured listen address.
 type server struct {
 	inner *grpc.Server
 	addr  string

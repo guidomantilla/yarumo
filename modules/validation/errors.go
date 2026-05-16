@@ -30,16 +30,16 @@ func (e *Error) Error() string {
 
 // Sentinel errors for the engine.
 var (
-	ErrLoadFailed       = errors.New("ruleset load failed")
-	ErrUnknownRule      = errors.New("unknown rule name")
-	ErrBadRule          = errors.New("rule is malformed")
-	ErrBadParams        = errors.New("rule parameters are invalid")
-	ErrWhenEvalFailed   = errors.New("when expression evaluation failed")
-	ErrWhenNotBoolean   = errors.New("when expression must evaluate to a boolean")
+	ErrLoadFailed        = errors.New("ruleset load failed")
+	ErrUnknownRule       = errors.New("unknown rule name")
+	ErrBadRule           = errors.New("rule is malformed")
+	ErrBadParams         = errors.New("rule parameters are invalid")
+	ErrWhenEvalFailed    = errors.New("when expression evaluation failed")
+	ErrWhenNotBoolean    = errors.New("when expression must evaluate to a boolean")
 	ErrFieldLookupFailed = errors.New("field lookup failed")
-	ErrEngineNil        = errors.New("engine is nil")
-	ErrReaderNil        = errors.New("reader is nil")
-	ErrDataNil          = errors.New("data is nil")
+	ErrEngineNil         = errors.New("engine is nil")
+	ErrReaderNil         = errors.New("reader is nil")
+	ErrDataNil           = errors.New("data is nil")
 )
 
 // ErrLoad creates an engine domain error joining the given causes with

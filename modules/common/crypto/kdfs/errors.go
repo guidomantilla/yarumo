@@ -33,13 +33,13 @@ func (e *Error) Error() string {
 
 // Sentinel errors for the kdfs package.
 var (
-	ErrMethodIsNil        = errors.New("method is nil")
-	ErrSecretIsNil        = errors.New("secret is nil")
-	ErrSaltIsNil          = errors.New("salt is nil")
-	ErrLengthInvalid      = errors.New("length is invalid")
-	ErrHashNotAvailable   = errors.New("hash not available")
-	ErrDeriveFailed       = errors.New("derive failed")
-	ErrParamsMissing      = errors.New("method has no algorithm configuration")
+	ErrMethodIsNil      = errors.New("method is nil")
+	ErrSecretIsNil      = errors.New("secret is nil")
+	ErrSaltIsNil        = errors.New("salt is nil")
+	ErrLengthInvalid    = errors.New("length is invalid")
+	ErrHashNotAvailable = errors.New("hash not available")
+	ErrDeriveFailed     = errors.New("derive failed")
+	ErrParamsMissing    = errors.New("method has no algorithm configuration")
 )
 
 // ErrAlgorithmNotSupported returns an error indicating the named KDF algorithm is not registered.

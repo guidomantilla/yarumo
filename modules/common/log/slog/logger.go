@@ -10,18 +10,13 @@ import (
 // Tests may override this variable within the package to simulate failures.
 var osExit = os.Exit
 
-// logger is the concrete slog-backed implementation of Logger.
-type logger struct {
+// Logger is a thin wrapper around slog.Logger.
+type Logger struct {
 	internal *slog.Logger
 }
 
-// NewLogger returns a new Logger backed by log/slog.
-//
-// When one or more context attribute extractors have been registered via
-// WithContextExtractors, the returned logger wraps the fanout root with a
-// context-aware handler that invokes the extractors on every record before
-// dispatching to the underlying handlers.
-func NewLogger(options ...Option) Logger {
+// NewLogger returns a new Logger.
+func NewLogger(options ...Option) *Logger {
 	opts := NewOptions(options...)
 
 	handlers := opts.handlers
@@ -38,54 +33,38 @@ func NewLogger(options ...Option) Logger {
 		root = NewContextHandler(root, opts.extractors...)
 	}
 
-	return &logger{
+	return &Logger{
 		internal: slog.New(root),
 	}
 }
 
 // Trace logs a message at the trace level, including optional key-value pairs for additional context.
-func (l *logger) Trace(ctx context.Context, msg string, args ...any) {
-	l.assertNotNil()
+func (l *Logger) Trace(ctx context.Context, msg string, args ...any) {
 	l.internal.Log(ctx, LevelTrace.toSlog(), msg, args...)
 }
 
 // Debug logs a message at the debug level, including optional key-value pairs for additional context.
-func (l *logger) Debug(ctx context.Context, msg string, args ...any) {
-	l.assertNotNil()
+func (l *Logger) Debug(ctx context.Context, msg string, args ...any) {
 	l.internal.Log(ctx, LevelDebug.toSlog(), msg, args...)
 }
 
 // Info logs a message at the info level, including optional key-value pairs for additional context.
-func (l *logger) Info(ctx context.Context, msg string, args ...any) {
-	l.assertNotNil()
+func (l *Logger) Info(ctx context.Context, msg string, args ...any) {
 	l.internal.Log(ctx, LevelInfo.toSlog(), msg, args...)
 }
 
 // Warn logs a message at the warn level, including optional key-value pairs for additional context.
-func (l *logger) Warn(ctx context.Context, msg string, args ...any) {
-	l.assertNotNil()
+func (l *Logger) Warn(ctx context.Context, msg string, args ...any) {
 	l.internal.Log(ctx, LevelWarn.toSlog(), msg, args...)
 }
 
 // Error logs a message at the error level, including optional key-value pairs for additional context.
-func (l *logger) Error(ctx context.Context, msg string, args ...any) {
-	l.assertNotNil()
+func (l *Logger) Error(ctx context.Context, msg string, args ...any) {
 	l.internal.Log(ctx, LevelError.toSlog(), msg, args...)
 }
 
 // Fatal logs a message at the fatal level, including optional key-value pairs for additional context, and exits the program immediately.
-func (l *logger) Fatal(ctx context.Context, msg string, args ...any) {
-	l.assertNotNil()
+func (l *Logger) Fatal(ctx context.Context, msg string, args ...any) {
 	l.internal.Log(ctx, LevelFatal.toSlog(), msg, args...)
 	osExit(1)
-}
-
-// assertNotNil enforces the nil-receiver invariant. cassert.NotNil cannot be
-// used here because common/assert imports common/log, which would close an
-// import cycle (log -> log/slog -> assert -> log). This local helper mirrors
-// cassert's intent for struct invariants.
-func (l *logger) assertNotNil() {
-	if l == nil {
-		panic("logger is nil")
-	}
 }

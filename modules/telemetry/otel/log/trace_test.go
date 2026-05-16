@@ -6,9 +6,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"go.opentelemetry.io/otel/trace"
-
 	cslog "github.com/guidomantilla/yarumo/common/log/slog"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // newSpanContext returns a deterministic, valid trace.SpanContext for tests.

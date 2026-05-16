@@ -4,6 +4,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// serviceRegistration pairs a service implementation with its descriptor for late registration on the gRPC server.
 type serviceRegistration struct {
 	service    any
 	descriptor *grpc.ServiceDesc

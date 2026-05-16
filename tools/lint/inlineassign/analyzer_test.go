@@ -1,11 +1,10 @@
-package inlineassign_test
+package inlineassign
 
 import (
 	"testing"
 
 	"golang.org/x/tools/go/analysis/analysistest"
 
-	"github.com/guidomantilla/yarumo/tools/lint/inlineassign"
 )
 
 // TestAnalyzer is the smoke test for the inlineassign analyzer. It runs
@@ -17,5 +16,5 @@ import (
 func TestAnalyzer(t *testing.T) {
 	t.Parallel()
 
-	analysistest.Run(t, analysistest.TestData(), inlineassign.Analyzer, "a")
+	analysistest.Run(t, analysistest.TestData(), Analyzer, "a")
 }

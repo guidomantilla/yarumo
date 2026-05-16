@@ -237,4 +237,3 @@ func PathOf(err error) string {
 
 	return ""
 }
-

@@ -189,9 +189,9 @@ func TestProbeOne(t *testing.T) {
 			name:  "canonical",
 			delay: 5 * time.Millisecond,
 			result: Result{
-				Name:     "ignored-name",   // must be overwritten by probeOne
+				Name:     "ignored-name", // must be overwritten by probeOne
 				Status:   StatusHealthy,
-				Duration: 999 * time.Hour,  // must be overwritten by probeOne
+				Duration: 999 * time.Hour, // must be overwritten by probeOne
 			},
 		}
 

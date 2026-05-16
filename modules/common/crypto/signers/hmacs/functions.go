@@ -3,8 +3,8 @@ package hmacs
 import (
 	"crypto/hmac"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	crandom "github.com/guidomantilla/yarumo/common/crypto/random"
+	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	ctypes "github.com/guidomantilla/yarumo/common/types"
 )
 

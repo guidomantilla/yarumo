@@ -3,15 +3,15 @@ package log
 
 import (
 	"context"
+
+	cslog "github.com/guidomantilla/yarumo/common/log/slog"
 )
 
-// LogFn is the function type for package-level logging functions.
-type LogFn func(ctx context.Context, msg string, args ...any)
-
-// UseFn is the function type for Use.
-type UseFn func(l Logger)
-
+// Type compliance: slog adapter satisfies the Logger interface, and the
+// package-level functions match their declared Fn aliases.
 var (
+	_ Logger = (*cslog.Logger)(nil)
+
 	_ UseFn = Use
 	_ LogFn = Trace
 	_ LogFn = Debug
@@ -20,6 +20,12 @@ var (
 	_ LogFn = Error
 	_ LogFn = Fatal
 )
+
+// LogFn is the function type for package-level logging functions.
+type LogFn func(ctx context.Context, msg string, args ...any)
+
+// UseFn is the function type for Use.
+type UseFn func(l Logger)
 
 // Logger defines the interface for structured logging with six severity levels.
 type Logger interface {

@@ -8,18 +8,18 @@ import (
 )
 
 var (
-	_ ClientTlsFn          = ClientTls
-	_ ServerTlsFn          = ServerTls
-	_ ClientTlsFromPEMFn   = ClientTlsFromPEM
-	_ ServerTlsFromPEMFn   = ServerTlsFromPEM
-	_ SelfSignedFn         = SelfSigned
-	_ NewPoolFn            = NewPool
-	_ LoadCertificateFn    = LoadCertificate
+	_ ClientTlsFn           = ClientTls
+	_ ServerTlsFn           = ServerTls
+	_ ClientTlsFromPEMFn    = ClientTlsFromPEM
+	_ ServerTlsFromPEMFn    = ServerTlsFromPEM
+	_ SelfSignedFn          = SelfSigned
+	_ NewPoolFn             = NewPool
+	_ LoadCertificateFn     = LoadCertificate
 	_ ParseCertificatePEMFn = ParseCertificatePEM
-	_ LoadPrivateKeyFn     = LoadPrivateKey
-	_ ParsePEMChainFn      = ParsePEMChain
-	_ GenerateCSRFn        = GenerateCSR
-	_ ParseCSRFn           = ParseCSR
+	_ LoadPrivateKeyFn      = LoadPrivateKey
+	_ ParsePEMChainFn       = ParsePEMChain
+	_ GenerateCSRFn         = GenerateCSR
+	_ ParseCSRFn            = ParseCSR
 )
 
 // ClientTlsFn is the function type for ClientTls.

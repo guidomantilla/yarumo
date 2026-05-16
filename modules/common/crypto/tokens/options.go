@@ -3,8 +3,8 @@ package tokens
 import (
 	"time"
 
-	cpointer "github.com/guidomantilla/yarumo/common/pointer"
 	crandom "github.com/guidomantilla/yarumo/common/crypto/random"
+	cpointer "github.com/guidomantilla/yarumo/common/pointer"
 )
 
 // Option is a functional option for configuring tokens Options.

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	caead "github.com/guidomantilla/yarumo/common/crypto/ciphers/aead"
-	ctokens "github.com/guidomantilla/yarumo/common/crypto/tokens"
 	rsassas "github.com/guidomantilla/yarumo/common/crypto/signers/rsassas"
+	ctokens "github.com/guidomantilla/yarumo/common/crypto/tokens"
 )
 
 func main() {

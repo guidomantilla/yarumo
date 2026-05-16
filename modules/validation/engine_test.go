@@ -1,4 +1,4 @@
-package validation_test
+package validation
 
 import (
 	"errors"
@@ -7,8 +7,6 @@ import (
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	cvalidation "github.com/guidomantilla/yarumo/common/validation"
-
-	"github.com/guidomantilla/yarumo/validation"
 )
 
 type pokemon struct {
@@ -37,7 +35,7 @@ func TestEngine_SimpleFieldRules(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		p := pokemon{Name: "Pikachu", Email: "ash@kanto.com"}
 
@@ -55,7 +53,7 @@ func TestEngine_SimpleFieldRules(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		p := pokemon{Name: "", Email: ""}
 
@@ -81,7 +79,7 @@ func TestEngine_Conditional(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		// POST with no ID passes.
 		p := pokemon{}
@@ -100,7 +98,7 @@ func TestEngine_Conditional(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		p := pokemon{ID: "abc"}
 
@@ -122,7 +120,7 @@ func TestEngine_Conditional(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		p := pokemon{ID: "550e8400-e29b-41d4-a716-446655440000"}
 
@@ -140,7 +138,7 @@ func TestEngine_Conditional(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		p := pokemon{ID: "not-a-uuid"}
 
@@ -162,7 +160,7 @@ func TestEngine_Conditional(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		p := pokemon{Phone: "+571234567890"}
 
@@ -180,7 +178,7 @@ func TestEngine_Conditional(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		p := pokemon{Phone: "abc"}
 
@@ -202,7 +200,7 @@ func TestEngine_Conditional(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		// No context at all: every when-block evaluates to false, no rule fires.
 		err = eng.Validate(pokemon{}, nil)
@@ -224,7 +222,7 @@ func TestEngine_Nested(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		p := pokemon{
 			Name: "Pikachu",
@@ -249,7 +247,7 @@ func TestEngine_Nested(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		p := pokemon{
 			Name: "Pikachu",
@@ -282,7 +280,7 @@ func TestEngine_Nested(t *testing.T) {
 			t.Fatalf("load: %v", err)
 		}
 
-		eng := validation.NewEngine(rs)
+		eng := NewEngine(rs)
 
 		p := pokemon{
 			Name: "Pikachu",
@@ -303,11 +301,11 @@ func TestEngine_Nested(t *testing.T) {
 func TestEngine_UnknownRule(t *testing.T) {
 	t.Parallel()
 
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{Name: "no_such_rule"}}}
-	eng := validation.NewEngine(rs)
+	rs := Ruleset{Rules: []RuleNode{{Name: "no_such_rule"}}}
+	eng := NewEngine(rs)
 
 	err := eng.Validate(pokemon{}, nil)
-	if !errors.Is(err, validation.ErrUnknownRule) {
+	if !errors.Is(err, ErrUnknownRule) {
 		t.Fatalf("expected ErrUnknownRule, got %v", err)
 	}
 
@@ -320,11 +318,11 @@ func TestEngine_UnknownRule(t *testing.T) {
 func TestEngine_WhenInvalidExpression(t *testing.T) {
 	t.Parallel()
 
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{When: "bad syntax !!!"}}}
-	eng := validation.NewEngine(rs)
+	rs := Ruleset{Rules: []RuleNode{{When: "bad syntax !!!"}}}
+	eng := NewEngine(rs)
 
 	err := eng.Validate(pokemon{}, nil)
-	if !errors.Is(err, validation.ErrWhenEvalFailed) {
+	if !errors.Is(err, ErrWhenEvalFailed) {
 		t.Fatalf("expected ErrWhenEvalFailed, got %v", err)
 	}
 }
@@ -332,11 +330,11 @@ func TestEngine_WhenInvalidExpression(t *testing.T) {
 func TestEngine_WhenNonBoolean(t *testing.T) {
 	t.Parallel()
 
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{When: "1 + 2"}}}
-	eng := validation.NewEngine(rs)
+	rs := Ruleset{Rules: []RuleNode{{When: "1 + 2"}}}
+	eng := NewEngine(rs)
 
 	err := eng.Validate(pokemon{}, nil)
-	if !errors.Is(err, validation.ErrWhenNotBoolean) {
+	if !errors.Is(err, ErrWhenNotBoolean) {
 		t.Fatalf("expected ErrWhenNotBoolean, got %v", err)
 	}
 }
@@ -344,11 +342,11 @@ func TestEngine_WhenNonBoolean(t *testing.T) {
 func TestEngine_BadRuleEmptyNode(t *testing.T) {
 	t.Parallel()
 
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{}}}
-	eng := validation.NewEngine(rs)
+	rs := Ruleset{Rules: []RuleNode{{}}}
+	eng := NewEngine(rs)
 
 	err := eng.Validate(pokemon{}, nil)
-	if !errors.Is(err, validation.ErrBadRule) {
+	if !errors.Is(err, ErrBadRule) {
 		t.Fatalf("expected ErrBadRule, got %v", err)
 	}
 }
@@ -356,11 +354,11 @@ func TestEngine_BadRuleEmptyNode(t *testing.T) {
 func TestEngine_BadFieldPath(t *testing.T) {
 	t.Parallel()
 
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{
+	rs := Ruleset{Rules: []RuleNode{{
 		Field: "Nonexistent",
-		Rules: []validation.RuleNode{{Name: "required"}},
+		Rules: []RuleNode{{Name: "required"}},
 	}}}
-	eng := validation.NewEngine(rs)
+	eng := NewEngine(rs)
 
 	err := eng.Validate(pokemon{}, nil)
 	if !errors.Is(err, cvalidation.ErrPathNotFound) {
@@ -373,12 +371,12 @@ func TestEngine_GroupNode(t *testing.T) {
 
 	// A top-level group with no field/when, just nested rules: every nested
 	// rule applies to the root value.
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{
-		Rules: []validation.RuleNode{
-			{Field: "Name", Rules: []validation.RuleNode{{Name: "required"}}},
+	rs := Ruleset{Rules: []RuleNode{{
+		Rules: []RuleNode{
+			{Field: "Name", Rules: []RuleNode{{Name: "required"}}},
 		},
 	}}}
-	eng := validation.NewEngine(rs)
+	eng := NewEngine(rs)
 
 	err := eng.Validate(pokemon{}, nil)
 	if err == nil {
@@ -391,8 +389,8 @@ func TestEngine_LeafAtRoot(t *testing.T) {
 
 	// Leaf at the top level: current.path is empty, annotatePath returns the
 	// raw error.
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{Name: "required"}}}
-	eng := validation.NewEngine(rs)
+	rs := Ruleset{Rules: []RuleNode{{Name: "required"}}}
+	eng := NewEngine(rs)
 
 	err := eng.Validate("", nil)
 	if !errors.Is(err, cvalidation.ErrFieldRequired) {
@@ -404,12 +402,12 @@ func TestEngine_PathOfNoPath(t *testing.T) {
 	t.Parallel()
 
 	// A leaf that fails without a field annotation should yield empty PathOf.
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{Name: "required"}}}
-	eng := validation.NewEngine(rs)
+	rs := Ruleset{Rules: []RuleNode{{Name: "required"}}}
+	eng := NewEngine(rs)
 
 	err := eng.Validate("", nil)
 
-	path := validation.PathOf(err)
+	path := PathOf(err)
 	if path != "" {
 		t.Fatalf("expected empty path, got %q", path)
 	}
@@ -418,7 +416,7 @@ func TestEngine_PathOfNoPath(t *testing.T) {
 func TestEngine_PathOfNil(t *testing.T) {
 	t.Parallel()
 
-	path := validation.PathOf(nil)
+	path := PathOf(nil)
 	if path != "" {
 		t.Fatalf("expected empty path, got %q", path)
 	}
@@ -427,18 +425,18 @@ func TestEngine_PathOfNil(t *testing.T) {
 func TestEngine_PathOf(t *testing.T) {
 	t.Parallel()
 
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{
+	rs := Ruleset{Rules: []RuleNode{{
 		Field: "Name",
-		Rules: []validation.RuleNode{{Name: "required"}},
+		Rules: []RuleNode{{Name: "required"}},
 	}}}
-	eng := validation.NewEngine(rs)
+	eng := NewEngine(rs)
 
 	err := eng.Validate(pokemon{}, nil)
 	if err == nil {
 		t.Fatalf("expected error")
 	}
 
-	path := validation.PathOf(err)
+	path := PathOf(err)
 	if path != "Name" {
 		t.Fatalf("expected Name, got %q", path)
 	}
@@ -447,7 +445,7 @@ func TestEngine_PathOf(t *testing.T) {
 func TestEngine_RegistryCustomRule(t *testing.T) {
 	t.Parallel()
 
-	reg := validation.DefaultRegistry()
+	reg := DefaultRegistry()
 	reg.Register("is_pikachu", func(value any, _ []any) error {
 		s, ok := value.(string)
 		if !ok || s != "Pikachu" {
@@ -457,11 +455,11 @@ func TestEngine_RegistryCustomRule(t *testing.T) {
 		return nil
 	})
 
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{
+	rs := Ruleset{Rules: []RuleNode{{
 		Field: "Name",
-		Rules: []validation.RuleNode{{Name: "is_pikachu"}},
+		Rules: []RuleNode{{Name: "is_pikachu"}},
 	}}}
-	eng := validation.NewEngine(rs, validation.WithRegistry(reg))
+	eng := NewEngine(rs, WithRegistry(reg))
 
 	err := eng.Validate(pokemon{Name: "Pikachu"}, nil)
 	if err != nil {
@@ -477,14 +475,14 @@ func TestEngine_RegistryCustomRule(t *testing.T) {
 func TestEngine_AsErrorInfo(t *testing.T) {
 	t.Parallel()
 
-	rs := validation.Ruleset{Rules: []validation.RuleNode{{
+	rs := Ruleset{Rules: []RuleNode{{
 		Field: "Name",
-		Rules: []validation.RuleNode{{Name: "required"}},
+		Rules: []RuleNode{{Name: "required"}},
 	}, {
 		Field: "Email",
-		Rules: []validation.RuleNode{{Name: "email"}},
+		Rules: []RuleNode{{Name: "email"}},
 	}}}
-	eng := validation.NewEngine(rs)
+	eng := NewEngine(rs)
 
 	err := eng.Validate(pokemon{Email: "bad"}, nil)
 	if err == nil {
@@ -508,13 +506,13 @@ func TestEngine_AsErrorInfo(t *testing.T) {
 	}
 }
 
-func loadFile(t *testing.T, path string) (validation.Ruleset, error) {
+func loadFile(t *testing.T, path string) (Ruleset, error) {
 	t.Helper()
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return validation.Ruleset{}, err
+		return Ruleset{}, err
 	}
 
-	return validation.LoadYAML(data)
+	return LoadYAML(data)
 }

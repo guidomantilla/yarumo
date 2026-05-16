@@ -1,7 +1,7 @@
 package random
 
 import (
-	"math/rand/v2"
+	rand "math/rand/v2"
 	"strings"
 
 	ctypes "github.com/guidomantilla/yarumo/common/types"

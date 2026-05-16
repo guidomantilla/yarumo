@@ -364,7 +364,7 @@ func TestPublicKeyPEMRoundTrip(t *testing.T) {
 			t.Fatal("expected verification to succeed")
 		}
 
-		var _ *ecdsa.PublicKey = parsedPub
+		var _ = parsedPub
 	})
 }
 

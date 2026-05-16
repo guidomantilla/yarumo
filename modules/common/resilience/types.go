@@ -33,34 +33,11 @@ var (
 	_ StateFn   = (*circuitBreaker)(nil).State
 	_ AllowFn   = (*rateLimiter)(nil).Allow
 	_ WaitFn    = (*rateLimiter)(nil).Wait
+
+	_ ErrCircuitBreakerExecuteFn = ErrCircuitBreakerExecute
+	_ ErrRateLimiterWaitFn       = ErrRateLimiterWait
+	_ ErrRegistryUseFn           = ErrRegistryUse
 )
-
-// State represents the operating state of a CircuitBreaker.
-type State int
-
-// State values for a CircuitBreaker, mirroring github.com/sony/gobreaker.
-const (
-	// StateClosed indicates the breaker passes all calls through.
-	StateClosed State = iota
-	// StateHalfOpen indicates the breaker is probing a limited number of calls.
-	StateHalfOpen
-	// StateOpen indicates the breaker is failing fast without invoking the call.
-	StateOpen
-)
-
-// String returns the human-readable name of the state.
-func (s State) String() string {
-	switch s {
-	case StateClosed:
-		return "closed"
-	case StateHalfOpen:
-		return "half-open"
-	case StateOpen:
-		return "open"
-	default:
-		return "unknown"
-	}
-}
 
 // ExecuteFn is the function type for CircuitBreaker.Execute.
 type ExecuteFn func(ctx context.Context, fn func() (any, error)) (any, error)
@@ -73,6 +50,15 @@ type AllowFn func() bool
 
 // WaitFn is the function type for RateLimiter.Wait.
 type WaitFn func(ctx context.Context) error
+
+// ErrCircuitBreakerExecuteFn is the function type for ErrCircuitBreakerExecute.
+type ErrCircuitBreakerExecuteFn func(errs ...error) error
+
+// ErrRateLimiterWaitFn is the function type for ErrRateLimiterWait.
+type ErrRateLimiterWaitFn func(errs ...error) error
+
+// ErrRegistryUseFn is the function type for ErrRegistryUse.
+type ErrRegistryUseFn func(errs ...error) error
 
 // CircuitBreaker defines the interface for a single named circuit breaker.
 //
