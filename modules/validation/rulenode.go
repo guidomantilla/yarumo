@@ -7,6 +7,42 @@ import (
 	yaml "go.yaml.in/yaml/v3"
 )
 
+// Ruleset is the in-memory shape of a validation configuration. A Ruleset is
+// a flat list of top-level rule nodes; each node may itself be a group with
+// nested children.
+type Ruleset struct {
+	Rules []RuleNode `json:"rules,omitempty" yaml:"rules,omitempty"`
+}
+
+// RuleNode is a node in the rule tree.
+//
+// Exactly one of the following shapes is meaningful per node:
+//   - Group: Field or When (or both) set and Rules is non-empty.
+//   - Leaf:  Name set; Params optional.
+//
+// Mixing a Group-shaped node with a Name field is not supported and produces
+// a configuration error at load time.
+type RuleNode struct {
+	// Field selects a value out of the target object via dotted path. When
+	// empty the group operates on the current value (root or the field of an
+	// outer group).
+	Field string `json:"field,omitempty" yaml:"field,omitempty"`
+
+	// When is an optional boolean expression. The group only runs when the
+	// expression evaluates to a truthy value against the engine context.
+	When string `json:"when,omitempty" yaml:"when,omitempty"`
+
+	// Name selects a leaf validator registered with the engine.
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+
+	// Params carries optional positional arguments for the leaf validator.
+	Params []any `json:"params,omitempty" yaml:"params,omitempty"`
+
+	// Rules holds nested rule nodes. Only meaningful when this node is a
+	// group.
+	Rules []RuleNode `json:"rules,omitempty" yaml:"rules,omitempty"`
+}
+
 // reservedKeys lists the structural keys that, when present, force a node to
 // be parsed as a full RuleNode rather than as a sugar-style leaf.
 var reservedKeys = map[string]struct{}{

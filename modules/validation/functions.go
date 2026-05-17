@@ -2,6 +2,7 @@ package validation
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
@@ -81,36 +82,38 @@ func LoadJSONReader(r io.Reader) (Ruleset, error) {
 	return LoadJSON(data)
 }
 
-// tryParseYAMLList attempts to decode data as a sequence of rule nodes.
-// Returns the parsed nodes and true on success.
-func tryParseYAMLList(data []byte) ([]RuleNode, bool) {
-	var nodes []RuleNode
+// LoadFromReader parses a ruleset from r using the given Load function.
+func LoadFromReader(r io.Reader, load LoadFn) (Ruleset, error) {
+	if r == nil {
+		return Ruleset{}, ErrLoad(ErrReaderNil)
+	}
 
-	err := yaml.Unmarshal(data, &nodes)
+	if load == nil {
+		return Ruleset{}, ErrLoad(ErrLoadFailed)
+	}
+
+	data, err := io.ReadAll(r)
 	if err != nil {
-		return nil, false
+		return Ruleset{}, ErrLoad(err)
 	}
 
-	if len(nodes) == 0 {
-		return nil, false
-	}
-
-	return nodes, true
+	return load(data)
 }
 
-// tryParseJSONList attempts to decode data as a JSON array of rule nodes.
-// Returns the parsed nodes and true on success.
-func tryParseJSONList(data []byte) ([]RuleNode, bool) {
-	var nodes []RuleNode
+// PathOf extracts the field path from a violation produced by the engine,
+// or returns an empty string when the violation does not carry a path. It is
+// a small convenience for consumers building UI feedback maps.
+func PathOf(err error) string {
+	for _, leaf := range cerrs.Unwrap(err) {
+		var pe *pathError
 
-	err := json.Unmarshal(data, &nodes)
-	if err != nil {
-		return nil, false
+		ok := errors.As(leaf, &pe)
+		if !ok {
+			continue
+		}
+
+		return pe.path
 	}
 
-	if len(nodes) == 0 {
-		return nil, false
-	}
-
-	return nodes, true
+	return ""
 }

@@ -1,9 +1,6 @@
 package validation
 
 import (
-	"errors"
-
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	cvalidation "github.com/guidomantilla/yarumo/common/validation"
 )
 
@@ -182,16 +179,3 @@ func ruleNonEmpty(value any, _ []any) error {
 	return cvalidation.NonEmpty(xs)
 }
 
-// errBadParam is the package-internal sentinel for parameter conversion
-// failures.
-var errBadParam = errors.New("parameter conversion failed")
-
-// asString coerces value into a string, otherwise returns an engine error.
-func asString(value any) (string, error) {
-	s, ok := value.(string)
-	if !ok {
-		return "", ErrEngine(cerrs.Wrap(ErrBadParams, errBadParam))
-	}
-
-	return s, nil
-}

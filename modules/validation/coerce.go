@@ -1,10 +1,25 @@
 package validation
 
 import (
+	"errors"
 	"reflect"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
+
+// errBadParam is the package-internal sentinel for parameter conversion
+// failures.
+var errBadParam = errors.New("parameter conversion failed")
+
+// asString coerces value into a string, otherwise returns an engine error.
+func asString(value any) (string, error) {
+	s, ok := value.(string)
+	if !ok {
+		return "", ErrEngine(cerrs.Wrap(ErrBadParams, errBadParam))
+	}
+
+	return s, nil
+}
 
 // asInt coerces params[i] into an int. YAML numerics arrive as int or
 // float64 depending on whether the literal has a decimal point.

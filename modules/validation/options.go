@@ -15,14 +15,14 @@ type Option func(*Options)
 
 // NewOptions creates Options from the given functional options. Sensible
 // defaults are installed for any unset field.
-func NewOptions(opts ...Option) Options {
-	o := Options{
+func NewOptions(opts ...Option) *Options {
+	o := &Options{
 		registry:  DefaultRegistry(),
 		evaluator: cexpressions.NewEvaluator(),
 	}
 
 	for _, opt := range opts {
-		opt(&o)
+		opt(o)
 	}
 
 	return o

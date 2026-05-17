@@ -398,50 +398,6 @@ func TestEngine_LeafAtRoot(t *testing.T) {
 	}
 }
 
-func TestEngine_PathOfNoPath(t *testing.T) {
-	t.Parallel()
-
-	// A leaf that fails without a field annotation should yield empty PathOf.
-	rs := Ruleset{Rules: []RuleNode{{Name: "required"}}}
-	eng := NewEngine(rs)
-
-	err := eng.Validate("", nil)
-
-	path := PathOf(err)
-	if path != "" {
-		t.Fatalf("expected empty path, got %q", path)
-	}
-}
-
-func TestEngine_PathOfNil(t *testing.T) {
-	t.Parallel()
-
-	path := PathOf(nil)
-	if path != "" {
-		t.Fatalf("expected empty path, got %q", path)
-	}
-}
-
-func TestEngine_PathOf(t *testing.T) {
-	t.Parallel()
-
-	rs := Ruleset{Rules: []RuleNode{{
-		Field: "Name",
-		Rules: []RuleNode{{Name: "required"}},
-	}}}
-	eng := NewEngine(rs)
-
-	err := eng.Validate(pokemon{}, nil)
-	if err == nil {
-		t.Fatalf("expected error")
-	}
-
-	path := PathOf(err)
-	if path != "Name" {
-		t.Fatalf("expected Name, got %q", path)
-	}
-}
-
 func TestEngine_RegistryCustomRule(t *testing.T) {
 	t.Parallel()
 

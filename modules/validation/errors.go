@@ -62,3 +62,36 @@ func ErrEngine(causes ...error) error {
 		},
 	}
 }
+
+// pathError carries a field path in error form so AsErrorInfo lists it as a
+// leaf message under the "validation" type.
+type pathError struct {
+	path string
+}
+
+// Error returns the path-prefixed marker.
+func (p *pathError) Error() string {
+	return "field=" + p.path
+}
+
+// errPathPrefix builds a sentinel-shaped error that carries the field path
+// so AsErrorInfo aggregates it next to the violation.
+func errPathPrefix(path string) error {
+	return &pathError{path: path}
+}
+
+// unknownRuleError carries the offending rule name as a leaf error so it
+// shows up under AsErrorInfo.
+type unknownRuleError struct {
+	name string
+}
+
+// Error returns the formatted unknown-rule message.
+func (u *unknownRuleError) Error() string {
+	return "unknown rule: " + u.name
+}
+
+// errUnknownRuleName creates a leaf error tagged with the offending rule name.
+func errUnknownRuleName(name string) error {
+	return &unknownRuleError{name: name}
+}

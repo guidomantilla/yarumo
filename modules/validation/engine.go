@@ -12,7 +12,13 @@ import (
 // engine is the default Engine implementation.
 type engine struct {
 	ruleset Ruleset
-	options Options
+	options *Options
+}
+
+// nodeContext is the internal context threaded through ruleset walking.
+type nodeContext struct {
+	value any
+	path  string
 }
 
 // NewEngine creates an Engine bound to the given ruleset.
@@ -165,75 +171,4 @@ func (e *engine) evalWhen(expr string, ctx map[string]any) (bool, error) {
 	}
 
 	return b, nil
-}
-
-// annotatePath prefixes a violation message with the field path so callers
-// can identify the offending field in aggregated output. When path is empty
-// the error is returned unchanged. Callers must not pass a nil err.
-func annotatePath(path string, err error) error {
-	if path == "" {
-		return err
-	}
-
-	return cvalidation.ErrValidation(cerrs.Wrap(errPathPrefix(path), err))
-}
-
-// joinPath concatenates a parent path with a child field name.
-func joinPath(parent, child string) string {
-	if parent == "" {
-		return child
-	}
-
-	return parent + "." + child
-}
-
-// errPathPrefix builds a sentinel-shaped error that carries the field path
-// so AsErrorInfo aggregates it next to the violation.
-func errPathPrefix(path string) error {
-	return &pathError{path: path}
-}
-
-// pathError carries a field path in error form so AsErrorInfo lists it as a
-// leaf message under the "validation" type.
-type pathError struct {
-	path string
-}
-
-// Error returns the path-prefixed marker.
-func (p *pathError) Error() string {
-	return "field=" + p.path
-}
-
-// errUnknownRuleName carries the offending rule name as a leaf error so it
-// shows up under AsErrorInfo.
-type unknownRuleError struct {
-	name string
-}
-
-// Error returns the formatted unknown-rule message.
-func (u *unknownRuleError) Error() string {
-	return "unknown rule: " + u.name
-}
-
-// errUnknownRuleName creates a leaf error tagged with the offending rule name.
-func errUnknownRuleName(name string) error {
-	return &unknownRuleError{name: name}
-}
-
-// PathOf extracts the field path from a violation produced by the engine,
-// or returns an empty string when the violation does not carry a path. It is
-// a small convenience for consumers building UI feedback maps.
-func PathOf(err error) string {
-	for _, leaf := range cerrs.Unwrap(err) {
-		var pe *pathError
-
-		ok := errors.As(leaf, &pe)
-		if !ok {
-			continue
-		}
-
-		return pe.path
-	}
-
-	return ""
 }

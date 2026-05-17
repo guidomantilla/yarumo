@@ -15,51 +15,37 @@
 package validation
 
 import (
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	"io"
 )
 
-// Engine defines the public abstraction for a config-driven validator.
+var (
+	_ Engine = (*engine)(nil)
+
+	_ LoadFn           = LoadYAML
+	_ LoadFn           = LoadJSON
+	_ LoadReaderFn     = LoadYAMLReader
+	_ LoadReaderFn     = LoadJSONReader
+	_ LoadFromReaderFn = LoadFromReader
+	_ PathOfFn         = PathOf
+	_ NewRegistryFn    = NewRegistry
+	_ NewRegistryFn    = DefaultRegistry
+
+	_ ErrLoadFn   = ErrLoad
+	_ ErrEngineFn = ErrEngine
+)
+
+// Engine is the public abstraction for a config-driven validator.
+//
+// Implementations must be safe for concurrent use by multiple goroutines:
+// callers may share a single Engine across handlers and invoke Validate
+// concurrently against different objects. The Engine retains a reference to
+// the Ruleset and Options supplied at construction time; the caller must not
+// mutate them after the Engine has been built.
 type Engine interface {
 	// Validate runs the loaded ruleset against obj. ctx exposes variables to
 	// any "when" expressions evaluated during the run. The returned error, if
 	// non-nil, is the domain *cvalidation.Error joining every violation.
 	Validate(obj any, ctx map[string]any) error
-}
-
-// Ruleset is the in-memory shape of a validation configuration. A Ruleset is
-// a flat list of top-level rule nodes; each node may itself be a group with
-// nested children.
-type Ruleset struct {
-	Rules []RuleNode `json:"rules,omitempty" yaml:"rules,omitempty"`
-}
-
-// RuleNode is a node in the rule tree.
-//
-// Exactly one of the following shapes is meaningful per node:
-//   - Group: Field or When (or both) set and Rules is non-empty.
-//   - Leaf:  Name set; Params optional.
-//
-// Mixing a Group-shaped node with a Name field is not supported and produces
-// a configuration error at load time.
-type RuleNode struct {
-	// Field selects a value out of the target object via dotted path. When
-	// empty the group operates on the current value (root or the field of an
-	// outer group).
-	Field string `json:"field,omitempty" yaml:"field,omitempty"`
-
-	// When is an optional boolean expression. The group only runs when the
-	// expression evaluates to a truthy value against the engine context.
-	When string `json:"when,omitempty" yaml:"when,omitempty"`
-
-	// Name selects a leaf validator registered with the engine.
-	Name string `json:"name,omitempty" yaml:"name,omitempty"`
-
-	// Params carries optional positional arguments for the leaf validator.
-	Params []any `json:"params,omitempty" yaml:"params,omitempty"`
-
-	// Rules holds nested rule nodes. Only meaningful when this node is a
-	// group.
-	Rules []RuleNode `json:"rules,omitempty" yaml:"rules,omitempty"`
 }
 
 // RuleFn is the function signature for engine leaves. It receives the
@@ -69,24 +55,20 @@ type RuleFn func(value any, params []any) error
 // LoadFn is the function type for loading rulesets from bytes.
 type LoadFn func(data []byte) (Ruleset, error)
 
-// EngineFactoryFn is the function type for constructing an engine.
-type EngineFactoryFn func(rs Ruleset, opts ...Option) Engine
+// LoadReaderFn is the function type for loading rulesets from an io.Reader.
+type LoadReaderFn func(r io.Reader) (Ruleset, error)
 
-var (
-	_ Engine          = (*engine)(nil)
-	_ EngineFactoryFn = NewEngine
-	_ LoadFn          = LoadYAML
-	_ LoadFn          = LoadJSON
-)
+// LoadFromReaderFn is the function type for LoadFromReader.
+type LoadFromReaderFn func(r io.Reader, load LoadFn) (Ruleset, error)
 
-// nodeContext is the internal context threaded through ruleset walking.
-type nodeContext struct {
-	value any
-	path  string
-}
+// PathOfFn is the function type for PathOf.
+type PathOfFn func(err error) string
 
-// Type-compliance vars: keep cvalidation referenced so reflect.GetField stays
-// a compile-time dependency of the engine.
-var (
-	_ cvalidation.FieldFn = cvalidation.GetField
-)
+// NewRegistryFn is the function type for NewRegistry and DefaultRegistry.
+type NewRegistryFn func() *Registry
+
+// ErrLoadFn is the function type for ErrLoad.
+type ErrLoadFn func(causes ...error) error
+
+// ErrEngineFn is the function type for ErrEngine.
+type ErrEngineFn func(causes ...error) error
