@@ -3,80 +3,179 @@ package cache
 import (
 	"errors"
 	"testing"
+
+	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
-func TestErrCache(t *testing.T) {
+func TestErrInit(t *testing.T) {
 	t.Parallel()
 
-	t.Run("wraps causes with ErrCacheFailed", func(t *testing.T) {
+	t.Run("wraps ErrRistrettoInitFailed without causes", func(t *testing.T) {
+		t.Parallel()
+
+		err := ErrInit()
+		if !errors.Is(err, ErrRistrettoInitFailed) {
+			t.Fatalf("expected wrap of ErrRistrettoInitFailed, got %v", err)
+		}
+	})
+
+	t.Run("wraps additional causes", func(t *testing.T) {
 		t.Parallel()
 
 		cause := errors.New("boom")
-		err := ErrCache(cause)
-		if err == nil {
-			t.Fatal("expected error")
-		}
-		if !errors.Is(err, ErrCacheFailed) {
-			t.Fatal("expected wrapped ErrCacheFailed")
-		}
+		err := ErrInit(cause)
+
 		if !errors.Is(err, cause) {
-			t.Fatal("expected wrapped cause")
+			t.Fatalf("expected wrap of cause, got %v", err)
+		}
+
+		if !errors.Is(err, ErrRistrettoInitFailed) {
+			t.Fatalf("expected wrap of ErrRistrettoInitFailed, got %v", err)
 		}
 	})
 
-	t.Run("no causes still wraps ErrCacheFailed", func(t *testing.T) {
+	t.Run("returns *Error with CacheRistrettoType tag", func(t *testing.T) {
 		t.Parallel()
 
-		err := ErrCache()
-		if !errors.Is(err, ErrCacheFailed) {
-			t.Fatal("expected wrapped ErrCacheFailed")
+		err := ErrInit()
+
+		var e *Error
+		ok := errors.As(err, &e)
+		if !ok {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+
+		if e.Type != CacheRistrettoType {
+			t.Fatalf("Type = %q, want %q", e.Type, CacheRistrettoType)
 		}
 	})
 }
 
-func TestErrMiss(t *testing.T) {
+func TestErrSet(t *testing.T) {
 	t.Parallel()
 
-	err := ErrMiss()
-	if !errors.Is(err, ErrCacheMiss) {
-		t.Fatal("expected wrapped ErrCacheMiss")
-	}
+	t.Run("wraps ErrRistrettoSetRejected without causes", func(t *testing.T) {
+		t.Parallel()
+
+		err := ErrSet()
+		if !errors.Is(err, ErrRistrettoSetRejected) {
+			t.Fatalf("expected wrap of ErrRistrettoSetRejected, got %v", err)
+		}
+	})
+
+	t.Run("wraps additional causes", func(t *testing.T) {
+		t.Parallel()
+
+		cause := errors.New("admission rejected")
+		err := ErrSet(cause)
+
+		if !errors.Is(err, cause) {
+			t.Fatalf("expected wrap of cause, got %v", err)
+		}
+	})
+
+	t.Run("returns *Error with CacheRistrettoType tag", func(t *testing.T) {
+		t.Parallel()
+
+		err := ErrSet()
+
+		var e *Error
+		ok := errors.As(err, &e)
+		if !ok {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+
+		if e.Type != CacheRistrettoType {
+			t.Fatalf("Type = %q, want %q", e.Type, CacheRistrettoType)
+		}
+	})
 }
 
-func TestErrSerialize(t *testing.T) {
+func TestErrCommand(t *testing.T) {
 	t.Parallel()
 
-	err := ErrSerialize(errors.New("bad value"))
-	if !errors.Is(err, ErrSerialization) {
-		t.Fatal("expected wrapped ErrSerialization")
-	}
+	t.Run("wraps ErrRedisCommandFailed with CacheRedisType tag", func(t *testing.T) {
+		t.Parallel()
+
+		cause := errors.New("conn reset")
+		err := ErrCommand(cause)
+
+		if !errors.Is(err, ErrRedisCommandFailed) {
+			t.Fatalf("expected wrap of ErrRedisCommandFailed, got %v", err)
+		}
+
+		if !errors.Is(err, cause) {
+			t.Fatalf("expected wrap of cause, got %v", err)
+		}
+
+		var e *Error
+		ok := errors.As(err, &e)
+		if !ok {
+			t.Fatalf("expected *Error, got %T", err)
+		}
+
+		if e.Type != CacheRedisType {
+			t.Fatalf("Type = %q, want %q", e.Type, CacheRedisType)
+		}
+	})
 }
 
-func TestErrBackend(t *testing.T) {
+func TestErrEncode(t *testing.T) {
 	t.Parallel()
 
-	err := ErrBackend(errors.New("conn refused"))
-	if !errors.Is(err, ErrBackendUnavailable) {
-		t.Fatal("expected wrapped ErrBackendUnavailable")
-	}
+	t.Run("wraps ErrRedisEncodeFailed", func(t *testing.T) {
+		t.Parallel()
+
+		cause := errors.New("json marshal failed")
+		err := ErrEncode(cause)
+
+		if !errors.Is(err, ErrRedisEncodeFailed) {
+			t.Fatalf("expected wrap of ErrRedisEncodeFailed, got %v", err)
+		}
+
+		if !errors.Is(err, cause) {
+			t.Fatalf("expected wrap of cause, got %v", err)
+		}
+	})
 }
 
-func TestErrUnsupported(t *testing.T) {
+func TestErrDecode(t *testing.T) {
 	t.Parallel()
 
-	err := ErrUnsupported()
-	if !errors.Is(err, ErrUnsupportedBackend) {
-		t.Fatal("expected wrapped ErrUnsupportedBackend")
-	}
+	t.Run("wraps ErrRedisDecodeFailed", func(t *testing.T) {
+		t.Parallel()
+
+		cause := errors.New("invalid json")
+		err := ErrDecode(cause)
+
+		if !errors.Is(err, ErrRedisDecodeFailed) {
+			t.Fatalf("expected wrap of ErrRedisDecodeFailed, got %v", err)
+		}
+
+		if !errors.Is(err, cause) {
+			t.Fatalf("expected wrap of cause, got %v", err)
+		}
+	})
 }
 
-func TestError_Unwrap(t *testing.T) {
+func TestError_Error(t *testing.T) {
 	t.Parallel()
 
-	cause := errors.New("inner")
-	err := ErrCache(cause)
-	unwrapped := errors.Unwrap(err)
-	if unwrapped == nil {
-		t.Fatal("expected non-nil unwrap result")
-	}
+	t.Run("formats type and inner error", func(t *testing.T) {
+		t.Parallel()
+
+		e := &Error{
+			TypedError: cerrs.TypedError{
+				Type: CacheRistrettoType,
+				Err:  errors.New("boom"),
+			},
+		}
+
+		got := e.Error()
+		want := CacheRistrettoType + " error: boom"
+
+		if got != want {
+			t.Fatalf("Error() = %q, want %q", got, want)
+		}
+	})
 }

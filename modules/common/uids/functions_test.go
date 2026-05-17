@@ -11,7 +11,7 @@ import (
 func generateFor(t *testing.T, name string) string {
 	t.Helper()
 
-	algo, err := Get(name)
+	algo, err := Lookup(name)
 	if err != nil {
 		t.Fatalf("Get(%q) error: %v", name, err)
 	}

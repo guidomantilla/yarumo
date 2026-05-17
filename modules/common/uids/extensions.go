@@ -8,18 +8,15 @@ import (
 
 // Preconfigured registry of available UID generators.
 var methods = map[string]UID{
-	"UUIDv4": UuidV4,
-	"NanoID": NanoID,
-	"CUID2":  Cuid2,
-	"UUIDv7": UuidV7,
-	"ULID":   Ulid,
-	"XID":    XId,
+	UuidV4.Name(): UuidV4,
+	NanoID.Name(): NanoID,
+	Cuid2.Name():  Cuid2,
+	UuidV7.Name(): UuidV7,
+	Ulid.Name():   Ulid,
+	XId.Name():    XId,
 }
 
-var (
-	lock    = new(sync.RWMutex)
-	current = UuidV7
-)
+var lock = new(sync.RWMutex)
 
 // Register adds a UID generator to the registry.
 func Register(uid UID) {
@@ -31,8 +28,8 @@ func Register(uid UID) {
 	methods[uid.Name()] = uid
 }
 
-// Get retrieves a registered UID generator by name.
-func Get(name string) (UID, error) {
+// Lookup retrieves a registered UID generator by name.
+func Lookup(name string) (UID, error) {
 	cassert.NotEmpty(name, "name is empty")
 
 	lock.RLock()
@@ -44,32 +41,6 @@ func Get(name string) (UID, error) {
 	}
 
 	return alg, nil
-}
-
-// Use selects the default UID generator from the registry by name.
-func Use(name string) error {
-	cassert.NotEmpty(name, "name is empty")
-
-	lock.Lock()
-	defer lock.Unlock()
-
-	alg, ok := methods[name]
-	if !ok {
-		return ErrAlgorithmNotSupported(name)
-	}
-
-	current = alg
-
-	return nil
-}
-
-// Generate delegates to the current default UID generator, returning any
-// error surfaced by the underlying entropy source.
-func Generate() (string, error) {
-	lock.RLock()
-	defer lock.RUnlock()
-
-	return current.Generate()
 }
 
 // Supported returns a slice of all registered UID generators.

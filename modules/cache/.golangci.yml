@@ -116,22 +116,19 @@ linters:
       - path: graph\.go
         linters:
           - revive
-      # cache.go uses cassert.NotNil which does not accept a context.
-      - path: cache\.go
+      # ristrettocache.go and rediscache.go use cassert.NotNil/NotEmpty which
+      # do not accept a context; the receiver is what they guard, not the
+      # operation's ctx. The test excludes are required because callers of
+      # BuildRistrettoCache/BuildRedisCache transitively inherit the same
+      # false positive.
+      - path: (ristretto|redis)cache(_test)?\.go
         linters:
           - contextcheck
-      # backends.go: newGoCacheCache returns (cache, nil) so its caller can
-      # share a single signature with the ristretto/bigcache factories that
-      # genuinely return errors. The constant-nil error is intentional.
-      - path: backends\.go
-        text: "newGoCacheCache - result 1"
+      # codec.go returns encoding/json errors directly; the redis backend
+      # wraps them with ErrEncode/ErrDecode at the call site.
+      - path: codec\.go
         linters:
-          - unparam
-      # The OTel metrics test mutates the global MeterProvider and cannot be parallel.
-      - path: cache_test\.go
-        linters:
-          - paralleltest
-          - tparallel
+          - wrapcheck
       # Examples are runnable demos.
       - path: examples/
         linters:

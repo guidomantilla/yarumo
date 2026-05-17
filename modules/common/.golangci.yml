@@ -156,6 +156,7 @@ linters:
         - github\.com/guidomantilla/yarumo/common/http\.(Client|Server)
         - github\.com/guidomantilla/yarumo/common/resilience\.(CircuitBreaker|CircuitBreakerRegistry|RateLimiter|RateLimiterRegistry)
         - github\.com/guidomantilla/yarumo/common/uids\.UID
+        - github\.com/guidomantilla/yarumo/common/cache\.Cache
 
   exclusions:
     rules:
@@ -296,6 +297,32 @@ linters:
           - wrapcheck
       # extensions_test.go cannot be parallel: tests modify the global methods registry
       - path: uids/extensions_test\.go
+        linters:
+          - paralleltest
+      # cache package-level registry (caches map) and the preconfigured
+      # INMEMORY_CACHE singleton (declared in cache.go) are required for the
+      # default-and-register pattern.
+      - path: cache/(cache|extensions)\.go
+        linters:
+          - gochecknoglobals
+      # cache: cassert.NotNil does not accept context; the methods receive ctx but
+      # the assert guards the receiver. Facade and registry delegate to the Cache
+      # interface; wrapping errors at the facade level would obscure the
+      # underlying cache's diagnostics.
+      - path: cache/(cache|functions|extensions)\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      # cache/codec.go returns encoding/json errors directly; backends that
+      # use the Codec are responsible for wrapping them with their own
+      # domain errors at the call site.
+      - path: cache/codec\.go
+        linters:
+          - wrapcheck
+      # cache facade and registry tests cannot be parallel: they mutate the
+      # global caches map (extensions_test.go) and the package-level
+      # INMEMORY_CACHE contents (functions_test.go).
+      - path: cache/(functions|extensions)_test\.go
         linters:
           - paralleltest
       # errors.go files define factory functions that may use fmt.Errorf for contextual messages

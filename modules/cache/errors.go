@@ -2,77 +2,90 @@ package cache
 
 import (
 	"errors"
+	"fmt"
 
+	cassert "github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
-// Error domain type for cache operation errors.
-const (
-	CacheType = "cache"
-)
+// CacheRistrettoType is the domain type tag attached to every Error produced for the ristretto backend.
+const CacheRistrettoType = "cache-ristretto"
 
-var _ error = (*Error)(nil)
+// CacheRedisType is the domain type tag attached to every Error produced for the redis backend.
+const CacheRedisType = "cache-redis"
 
-// Error is the domain error for cache operations.
+// Error is the domain error for cache backend operations.
 type Error struct {
 	cerrs.TypedError
 }
 
-// Sentinel errors for cache failure modes.
+// Error returns the formatted error string.
+func (e *Error) Error() string {
+	cassert.NotNil(e, "error is nil")
+	cassert.NotNil(e.Err, "internal error is nil")
+
+	return fmt.Sprintf("%s error: %s", e.Type, e.Err)
+}
+
+// Sentinel errors for ristretto backend failure modes.
 var (
-	ErrCacheMiss          = errors.New("cache miss")
-	ErrSerialization      = errors.New("serialization failed")
-	ErrBackendUnavailable = errors.New("cache backend unavailable")
-	ErrCacheFailed        = errors.New("cache operation failed")
-	ErrUnsupportedBackend = errors.New("unsupported cache backend")
+	ErrRistrettoInitFailed  = errors.New("ristretto cache init failed")
+	ErrRistrettoSetRejected = errors.New("ristretto cache rejected the set")
 )
 
-// ErrCache creates a cache domain error joining the given causes with ErrCacheFailed.
-func ErrCache(causes ...error) error {
+// Sentinel errors for redis backend failure modes.
+var (
+	ErrRedisCommandFailed = errors.New("redis command failed")
+	ErrRedisEncodeFailed  = errors.New("redis codec encode failed")
+	ErrRedisDecodeFailed  = errors.New("redis codec decode failed")
+)
+
+// ErrInit creates a ristretto cache domain error joining the given causes with ErrRistrettoInitFailed.
+func ErrInit(causes ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: CacheType,
-			Err:  errors.Join(append(causes, ErrCacheFailed)...),
+			Type: CacheRistrettoType,
+			Err:  errors.Join(append(causes, ErrRistrettoInitFailed)...),
 		},
 	}
 }
 
-// ErrMiss creates a cache domain error joining the given causes with ErrCacheMiss.
-func ErrMiss(causes ...error) error {
+// ErrSet creates a ristretto cache domain error joining the given causes with ErrRistrettoSetRejected.
+func ErrSet(causes ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: CacheType,
-			Err:  errors.Join(append(causes, ErrCacheMiss)...),
+			Type: CacheRistrettoType,
+			Err:  errors.Join(append(causes, ErrRistrettoSetRejected)...),
 		},
 	}
 }
 
-// ErrSerialize creates a cache domain error joining the given causes with ErrSerialization.
-func ErrSerialize(causes ...error) error {
+// ErrCommand creates a redis cache domain error joining the given causes with ErrRedisCommandFailed.
+func ErrCommand(causes ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: CacheType,
-			Err:  errors.Join(append(causes, ErrSerialization)...),
+			Type: CacheRedisType,
+			Err:  errors.Join(append(causes, ErrRedisCommandFailed)...),
 		},
 	}
 }
 
-// ErrBackend creates a cache domain error joining the given causes with ErrBackendUnavailable.
-func ErrBackend(causes ...error) error {
+// ErrEncode creates a redis cache domain error joining the given causes with ErrRedisEncodeFailed.
+func ErrEncode(causes ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: CacheType,
-			Err:  errors.Join(append(causes, ErrBackendUnavailable)...),
+			Type: CacheRedisType,
+			Err:  errors.Join(append(causes, ErrRedisEncodeFailed)...),
 		},
 	}
 }
 
-// ErrUnsupported creates a cache domain error joining the given causes with ErrUnsupportedBackend.
-func ErrUnsupported(causes ...error) error {
+// ErrDecode creates a redis cache domain error joining the given causes with ErrRedisDecodeFailed.
+func ErrDecode(causes ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: CacheType,
-			Err:  errors.Join(append(causes, ErrUnsupportedBackend)...),
+			Type: CacheRedisType,
+			Err:  errors.Join(append(causes, ErrRedisDecodeFailed)...),
 		},
 	}
 }

@@ -26,9 +26,9 @@ func TestRegister(t *testing.T) {
 		u := NewUID("CUSTOM", func() (string, error) { return "custom", nil })
 		Register(u)
 
-		got, err := Get("CUSTOM")
+		got, err := Lookup("CUSTOM")
 		if err != nil {
-			t.Fatalf("Get after Register: %v", err)
+			t.Fatalf("Lookup after Register: %v", err)
 		}
 
 		generated, genErr := got.Generate()
@@ -45,9 +45,9 @@ func TestRegister(t *testing.T) {
 		Register(NewUID("OVER", func() (string, error) { return "v1", nil }))
 		Register(NewUID("OVER", func() (string, error) { return "v2", nil }))
 
-		got, err := Get("OVER")
+		got, err := Lookup("OVER")
 		if err != nil {
-			t.Fatalf("Get after overwrite: %v", err)
+			t.Fatalf("Lookup after overwrite: %v", err)
 		}
 
 		generated, genErr := got.Generate()
@@ -61,14 +61,14 @@ func TestRegister(t *testing.T) {
 	})
 }
 
-func TestGet(t *testing.T) {
+func TestLookup(t *testing.T) {
 	snap := snapshotMethods()
 	defer restoreMethods(snap)
 
 	t.Run("returns registered UID", func(t *testing.T) {
-		uid, err := Get("UUIDv4")
+		uid, err := Lookup("UUIDv4")
 		if err != nil {
-			t.Fatalf("Get(UUIDv4) error: %v", err)
+			t.Fatalf("Lookup(UUIDv4) error: %v", err)
 		}
 
 		if uid.Name() != "UUIDv4" {
@@ -77,7 +77,7 @@ func TestGet(t *testing.T) {
 	})
 
 	t.Run("returns error for unknown name", func(t *testing.T) {
-		_, err := Get("DOES_NOT_EXIST")
+		_, err := Lookup("DOES_NOT_EXIST")
 		if err == nil {
 			t.Fatal("expected error for unknown name")
 		}
@@ -85,103 +85,6 @@ func TestGet(t *testing.T) {
 		var e *Error
 		if !errors.As(err, &e) {
 			t.Fatalf("expected *Error, got %T", err)
-		}
-	})
-}
-
-func TestUse(t *testing.T) {
-	snap := snapshotMethods()
-	origCurrent := current
-
-	defer func() {
-		restoreMethods(snap)
-
-		current = origCurrent
-	}()
-
-	t.Run("selects registered generator as default", func(t *testing.T) {
-		err := Use("UUIDv4")
-		if err != nil {
-			t.Fatalf("Use(UUIDv4) error: %v", err)
-		}
-
-		if current.Name() != "UUIDv4" {
-			t.Fatalf("current.Name() = %q, want %q", current.Name(), "UUIDv4")
-		}
-	})
-
-	t.Run("returns error for unknown name", func(t *testing.T) {
-		err := Use("DOES_NOT_EXIST")
-		if err == nil {
-			t.Fatal("expected error for unknown name")
-		}
-
-		var e *Error
-		if !errors.As(err, &e) {
-			t.Fatalf("expected *Error, got %T", err)
-		}
-	})
-}
-
-func TestGenerate(t *testing.T) {
-	snap := snapshotMethods()
-	origCurrent := current
-
-	defer func() {
-		restoreMethods(snap)
-
-		current = origCurrent
-	}()
-
-	t.Run("delegates to current default generator", func(t *testing.T) {
-		id, err := Generate()
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		if id == "" {
-			t.Fatal("Generate() returned empty string")
-		}
-	})
-
-	t.Run("uses selected generator after Use", func(t *testing.T) {
-		Register(NewUID("FIXED", func() (string, error) { return "fixed-id", nil }))
-
-		err := Use("FIXED")
-		if err != nil {
-			t.Fatalf("Use(FIXED) error: %v", err)
-		}
-
-		got, genErr := Generate()
-		if genErr != nil {
-			t.Fatalf("unexpected error: %v", genErr)
-		}
-
-		if got != "fixed-id" {
-			t.Fatalf("Generate() = %q, want %q", got, "fixed-id")
-		}
-	})
-
-	t.Run("propagates error from current generator", func(t *testing.T) {
-		want := errors.New("entropy source failed")
-		Register(NewUID("BROKEN", func() (string, error) { return "", want }))
-
-		err := Use("BROKEN")
-		if err != nil {
-			t.Fatalf("Use(BROKEN) error: %v", err)
-		}
-
-		got, genErr := Generate()
-		if genErr == nil {
-			t.Fatal("expected error, got nil")
-		}
-
-		if !errors.Is(genErr, want) {
-			t.Fatalf("expected wrapped error, got %v", genErr)
-		}
-
-		if got != "" {
-			t.Fatalf("expected empty string on error, got %q", got)
 		}
 	})
 }

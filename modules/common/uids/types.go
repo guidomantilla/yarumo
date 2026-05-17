@@ -18,9 +18,7 @@ var (
 	_ IsUIDFn                    = IsCUID2
 	_ IsUIDFn                    = IsXID
 	_ RegisterFn                 = Register
-	_ GetFn                      = Get
-	_ UseFn                      = Use
-	_ GenerateFn                 = Generate
+	_ LookupFn                   = Lookup
 	_ SupportedFn                = Supported
 	_ ErrAlgorithmNotSupportedFn = ErrAlgorithmNotSupported
 )
@@ -48,14 +46,8 @@ type IsUIDFn func(s string) bool
 // RegisterFn is the function type for Register.
 type RegisterFn func(uid UID)
 
-// GetFn is the function type for Get.
-type GetFn func(name string) (UID, error)
-
-// UseFn is the function type for Use.
-type UseFn func(name string) error
-
-// GenerateFn is the function type for Generate.
-type GenerateFn func() (string, error)
+// LookupFn is the function type for Get.
+type LookupFn func(name string) (UID, error)
 
 // SupportedFn is the function type for Supported.
 type SupportedFn func() []UID

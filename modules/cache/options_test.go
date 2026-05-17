@@ -3,84 +3,74 @@ package cache
 import (
 	"testing"
 	"time"
+
+	ccache "github.com/guidomantilla/yarumo/common/cache"
 )
 
 func TestNewOptions(t *testing.T) {
 	t.Parallel()
 
-	t.Run("defaults", func(t *testing.T) {
+	t.Run("applies safe defaults when no options given", func(t *testing.T) {
 		t.Parallel()
 
 		opts := NewOptions()
-		if opts.backend != BackendRistretto {
-			t.Fatalf("got backend %q, want ristretto", opts.backend)
-		}
-		if opts.ttl <= 0 {
-			t.Fatalf("expected positive default ttl, got %v", opts.ttl)
-		}
-		if opts.otelEnabled {
-			t.Fatal("OTel should be disabled by default")
-		}
-		if opts.slogEnabled {
-			t.Fatal("slog should be disabled by default")
-		}
-	})
 
-	t.Run("applies options in order", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithBackend(BackendBigcache), WithTTL(30*time.Second), WithOTel(), WithSlog())
-		if opts.backend != BackendBigcache {
-			t.Fatalf("got backend %q, want bigcache", opts.backend)
+		if opts.ttl != 5*time.Minute {
+			t.Fatalf("ttl = %v, want %v", opts.ttl, 5*time.Minute)
 		}
-		if opts.ttl != 30*time.Second {
-			t.Fatalf("got ttl %v, want 30s", opts.ttl)
-		}
-		if !opts.otelEnabled {
-			t.Fatal("expected OTel enabled")
-		}
-		if !opts.slogEnabled {
-			t.Fatal("expected slog enabled")
-		}
-	})
-}
 
-func TestWithBackend(t *testing.T) {
-	t.Parallel()
+		if opts.keyPrefix != "" {
+			t.Fatalf("keyPrefix = %q, want empty", opts.keyPrefix)
+		}
 
-	t.Run("ristretto", func(t *testing.T) {
-		t.Parallel()
+		if opts.lazyInit {
+			t.Fatal("lazyInit = true, want false")
+		}
 
-		opts := NewOptions(WithBackend(BackendRistretto))
-		if opts.backend != BackendRistretto {
-			t.Fatalf("got %q, want ristretto", opts.backend)
+		if opts.ristrettoNumCtrs != 1_000_000 {
+			t.Fatalf("ristrettoNumCtrs = %d, want %d", opts.ristrettoNumCtrs, 1_000_000)
+		}
+
+		if opts.ristrettoMaxCost != 100<<20 {
+			t.Fatalf("ristrettoMaxCost = %d, want %d", opts.ristrettoMaxCost, 100<<20)
+		}
+
+		if opts.ristrettoBufItems != 64 {
+			t.Fatalf("ristrettoBufItems = %d, want %d", opts.ristrettoBufItems, 64)
+		}
+
+		if opts.redisAddr != "" {
+			t.Fatalf("redisAddr = %q, want empty", opts.redisAddr)
+		}
+
+		if opts.redisPassword != "" {
+			t.Fatalf("redisPassword = %q, want empty", opts.redisPassword)
+		}
+
+		if opts.redisDB != 0 {
+			t.Fatalf("redisDB = %d, want 0", opts.redisDB)
+		}
+
+		_, ok := opts.codec.(ccache.JSONCodec)
+		if !ok {
+			t.Fatalf("codec = %T, want JSONCodec", opts.codec)
 		}
 	})
 
-	t.Run("bigcache", func(t *testing.T) {
+	t.Run("applies each option in order", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithBackend(BackendBigcache))
-		if opts.backend != BackendBigcache {
-			t.Fatalf("got %q, want bigcache", opts.backend)
+		opts := NewOptions(
+			WithTTL(10*time.Minute),
+			WithRistrettoCapacity(2_000_000, 200<<20, 128),
+		)
+
+		if opts.ttl != 10*time.Minute {
+			t.Fatalf("ttl = %v, want %v", opts.ttl, 10*time.Minute)
 		}
-	})
 
-	t.Run("go-cache", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithBackend(BackendGoCache))
-		if opts.backend != BackendGoCache {
-			t.Fatalf("got %q, want go-cache", opts.backend)
-		}
-	})
-
-	t.Run("unknown backend is ignored", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithBackend(Backend("redis")))
-		if opts.backend != BackendRistretto {
-			t.Fatalf("got %q, want ristretto fallback", opts.backend)
+		if opts.ristrettoNumCtrs != 2_000_000 {
+			t.Fatalf("ristrettoNumCtrs = %d, want %d", opts.ristrettoNumCtrs, 2_000_000)
 		}
 	})
 }
@@ -88,157 +78,218 @@ func TestWithBackend(t *testing.T) {
 func TestWithTTL(t *testing.T) {
 	t.Parallel()
 
-	t.Run("positive is applied", func(t *testing.T) {
+	t.Run("sets the ttl when positive", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithTTL(time.Second))
-		if opts.ttl != time.Second {
-			t.Fatalf("got %v, want 1s", opts.ttl)
+		opts := NewOptions(WithTTL(30 * time.Second))
+		if opts.ttl != 30*time.Second {
+			t.Fatalf("ttl = %v, want %v", opts.ttl, 30*time.Second)
 		}
 	})
 
-	t.Run("zero is ignored", func(t *testing.T) {
+	t.Run("ignores zero ttl, preserves default", func(t *testing.T) {
 		t.Parallel()
 
 		opts := NewOptions(WithTTL(0))
-		if opts.ttl <= 0 {
-			t.Fatal("expected positive ttl preserved")
+		if opts.ttl != 5*time.Minute {
+			t.Fatalf("ttl = %v, want default %v", opts.ttl, 5*time.Minute)
 		}
 	})
 
-	t.Run("negative is ignored", func(t *testing.T) {
+	t.Run("ignores negative ttl, preserves default", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithTTL(-time.Second))
-		if opts.ttl <= 0 {
-			t.Fatal("expected positive ttl preserved")
+		opts := NewOptions(WithTTL(-1 * time.Second))
+		if opts.ttl != 5*time.Minute {
+			t.Fatalf("ttl = %v, want default %v", opts.ttl, 5*time.Minute)
 		}
 	})
-}
-
-func TestWithOTel(t *testing.T) {
-	t.Parallel()
-
-	opts := NewOptions(WithOTel())
-	if !opts.otelEnabled {
-		t.Fatal("expected OTel enabled")
-	}
-}
-
-func TestWithOTelMeterName(t *testing.T) {
-	t.Parallel()
-
-	t.Run("custom name is applied", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithOTelMeterName("my-cache"))
-		if opts.otelMeterName != "my-cache" {
-			t.Fatalf("got %q, want my-cache", opts.otelMeterName)
-		}
-	})
-
-	t.Run("empty name is ignored", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithOTelMeterName(""))
-		if opts.otelMeterName == "" {
-			t.Fatal("expected default meter name preserved")
-		}
-	})
-}
-
-func TestWithSlog(t *testing.T) {
-	t.Parallel()
-
-	opts := NewOptions(WithSlog())
-	if !opts.slogEnabled {
-		t.Fatal("expected slog enabled")
-	}
 }
 
 func TestWithRistrettoCapacity(t *testing.T) {
 	t.Parallel()
 
-	t.Run("positive values are applied", func(t *testing.T) {
+	t.Run("sets every parameter when all positive", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithRistrettoCapacity(10, 1000, 4))
-		if opts.ristrettoNumCtrs != 10 {
-			t.Fatalf("got num counters %d, want 10", opts.ristrettoNumCtrs)
+		opts := NewOptions(WithRistrettoCapacity(500_000, 50<<20, 32))
+
+		if opts.ristrettoNumCtrs != 500_000 {
+			t.Fatalf("numCounters = %d, want %d", opts.ristrettoNumCtrs, 500_000)
 		}
-		if opts.ristrettoMaxCost != 1000 {
-			t.Fatalf("got max cost %d, want 1000", opts.ristrettoMaxCost)
+
+		if opts.ristrettoMaxCost != 50<<20 {
+			t.Fatalf("maxCost = %d, want %d", opts.ristrettoMaxCost, 50<<20)
 		}
-		if opts.ristrettoBufItems != 4 {
-			t.Fatalf("got buffer items %d, want 4", opts.ristrettoBufItems)
+
+		if opts.ristrettoBufItems != 32 {
+			t.Fatalf("bufferItems = %d, want %d", opts.ristrettoBufItems, 32)
 		}
 	})
 
-	t.Run("non-positive values are ignored", func(t *testing.T) {
+	t.Run("ignores non-positive numCounters", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithRistrettoCapacity(0, -1, 0))
-		if opts.ristrettoNumCtrs <= 0 || opts.ristrettoMaxCost <= 0 || opts.ristrettoBufItems <= 0 {
-			t.Fatal("expected defaults preserved")
-		}
-	})
-}
-
-func TestWithBigcacheCapacity(t *testing.T) {
-	t.Parallel()
-
-	t.Run("positive values are applied", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithBigcacheCapacity(8, time.Second, time.Second, 16, 1024))
-		if opts.bigcacheShards != 8 {
-			t.Fatalf("got shards %d, want 8", opts.bigcacheShards)
-		}
-		if opts.bigcacheLifeWin != time.Second {
-			t.Fatalf("got life window %v, want 1s", opts.bigcacheLifeWin)
-		}
-		if opts.bigcacheCleanWin != time.Second {
-			t.Fatalf("got clean window %v, want 1s", opts.bigcacheCleanWin)
-		}
-		if opts.bigcacheMaxSize != 16 {
-			t.Fatalf("got max size %d, want 16", opts.bigcacheMaxSize)
-		}
-		if opts.bigcacheMaxEntry != 1024 {
-			t.Fatalf("got max entry %d, want 1024", opts.bigcacheMaxEntry)
+		opts := NewOptions(WithRistrettoCapacity(0, 50<<20, 32))
+		if opts.ristrettoNumCtrs != 1_000_000 {
+			t.Fatalf("numCounters = %d, want default %d", opts.ristrettoNumCtrs, 1_000_000)
 		}
 	})
 
-	t.Run("non-positive values are ignored", func(t *testing.T) {
+	t.Run("ignores non-positive maxCost", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithBigcacheCapacity(0, 0, 0, 0, 0))
-		if opts.bigcacheShards <= 0 {
-			t.Fatal("expected default shards preserved")
+		opts := NewOptions(WithRistrettoCapacity(500_000, 0, 32))
+		if opts.ristrettoMaxCost != 100<<20 {
+			t.Fatalf("maxCost = %d, want default %d", opts.ristrettoMaxCost, 100<<20)
+		}
+	})
+
+	t.Run("ignores non-positive bufferItems", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithRistrettoCapacity(500_000, 50<<20, 0))
+		if opts.ristrettoBufItems != 64 {
+			t.Fatalf("bufferItems = %d, want default %d", opts.ristrettoBufItems, 64)
 		}
 	})
 }
 
-func TestWithGoCacheCapacity(t *testing.T) {
+func TestWithKeyPrefix(t *testing.T) {
 	t.Parallel()
 
-	t.Run("positive values are applied", func(t *testing.T) {
+	t.Run("sets prefix when non-empty", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithGoCacheCapacity(2*time.Second, 3*time.Second))
-		if opts.gocacheDefault != 2*time.Second {
-			t.Fatalf("got default %v, want 2s", opts.gocacheDefault)
-		}
-		if opts.gocacheCleanup != 3*time.Second {
-			t.Fatalf("got cleanup %v, want 3s", opts.gocacheCleanup)
+		opts := NewOptions(WithKeyPrefix("svc::"))
+		if opts.keyPrefix != "svc::" {
+			t.Fatalf("keyPrefix = %q, want %q", opts.keyPrefix, "svc::")
 		}
 	})
 
-	t.Run("non-positive values are ignored", func(t *testing.T) {
+	t.Run("ignores empty prefix, preserves default", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithGoCacheCapacity(0, 0))
-		if opts.gocacheDefault <= 0 || opts.gocacheCleanup <= 0 {
-			t.Fatal("expected defaults preserved")
+		opts := NewOptions(WithKeyPrefix(""))
+		if opts.keyPrefix != "" {
+			t.Fatalf("keyPrefix = %q, want empty", opts.keyPrefix)
+		}
+	})
+}
+
+func TestWithLazyInit(t *testing.T) {
+	t.Parallel()
+
+	t.Run("sets lazyInit to true", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithLazyInit())
+		if !opts.lazyInit {
+			t.Fatal("lazyInit = false, want true")
+		}
+	})
+}
+
+func TestWithRedisAddr(t *testing.T) {
+	t.Parallel()
+
+	t.Run("sets addr when non-empty", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithRedisAddr("redis.local:6379"))
+		if opts.redisAddr != "redis.local:6379" {
+			t.Fatalf("redisAddr = %q, want %q", opts.redisAddr, "redis.local:6379")
+		}
+	})
+
+	t.Run("ignores empty addr, preserves default", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithRedisAddr(""))
+		if opts.redisAddr != "" {
+			t.Fatalf("redisAddr = %q, want empty", opts.redisAddr)
+		}
+	})
+}
+
+func TestWithRedisPassword(t *testing.T) {
+	t.Parallel()
+
+	t.Run("sets password when non-empty", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithRedisPassword("secret"))
+		if opts.redisPassword != "secret" {
+			t.Fatalf("redisPassword = %q, want %q", opts.redisPassword, "secret")
+		}
+	})
+
+	t.Run("ignores empty password, preserves default", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithRedisPassword(""))
+		if opts.redisPassword != "" {
+			t.Fatalf("redisPassword = %q, want empty", opts.redisPassword)
+		}
+	})
+}
+
+func TestWithRedisDB(t *testing.T) {
+	t.Parallel()
+
+	t.Run("sets DB index when non-negative", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithRedisDB(3))
+		if opts.redisDB != 3 {
+			t.Fatalf("redisDB = %d, want 3", opts.redisDB)
+		}
+	})
+
+	t.Run("accepts zero DB index", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithRedisDB(0))
+		if opts.redisDB != 0 {
+			t.Fatalf("redisDB = %d, want 0", opts.redisDB)
+		}
+	})
+
+	t.Run("ignores negative DB index, preserves default", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithRedisDB(-1))
+		if opts.redisDB != 0 {
+			t.Fatalf("redisDB = %d, want default 0", opts.redisDB)
+		}
+	})
+}
+
+type stubCodec struct{}
+
+func (stubCodec) Encode(any) ([]byte, error)   { return nil, nil }
+func (stubCodec) Decode([]byte, any) error     { return nil }
+
+func TestWithCodec(t *testing.T) {
+	t.Parallel()
+
+	t.Run("sets codec when non-nil", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithCodec(stubCodec{}))
+		_, ok := opts.codec.(stubCodec)
+		if !ok {
+			t.Fatalf("codec = %T, want stubCodec", opts.codec)
+		}
+	})
+
+	t.Run("ignores nil codec, preserves JSONCodec default", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithCodec(nil))
+		_, ok := opts.codec.(ccache.JSONCodec)
+		if !ok {
+			t.Fatalf("codec = %T, want JSONCodec", opts.codec)
 		}
 	})
 }
