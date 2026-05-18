@@ -26,7 +26,6 @@ var (
 	ErrLoggerFailed   = errors.New("logger setup failed")
 	ErrHookFailed     = errors.New("logger hook failed")
 	ErrObserveFailed  = errors.New("observe setup failed")
-	ErrProfilerFailed = errors.New("profiler setup failed")
 )
 
 // ErrResource creates an otel domain error joining the given causes with ErrResourceFailed.
@@ -65,6 +64,16 @@ func ErrLogger(errs ...error) error {
 		TypedError: cerrs.TypedError{
 			Type: OtelType,
 			Err:  errors.Join(append(errs, ErrLoggerFailed)...),
+		},
+	}
+}
+
+// ErrHook creates an otel domain error joining the given causes with ErrHookFailed.
+func ErrHook(errs ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: OtelType,
+			Err:  errors.Join(append(errs, ErrHookFailed)...),
 		},
 	}
 }

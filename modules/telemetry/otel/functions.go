@@ -22,43 +22,37 @@ import (
 
 func noopStop(_ context.Context, _ time.Duration) {}
 
-// Observe sets up full OpenTelemetry observability (logging, tracing, metrics, profiling) and returns a combined stop function.
+// Observe sets up full OpenTelemetry observability (logging, tracing, metrics) and returns a combined stop function.
 func Observe(ctx context.Context, serviceName string, serviceVersion string, env string, hookFn LoggerHookFn, options ...Option) (context.Context, managed.StopFn, error) {
 
 	res, err := Resources(ctx, serviceName, serviceVersion, env)
 	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrResourceFailed, err)
+		return ctx, noopStop, ErrObserve(ErrResource(err))
 	}
 
 	options = append(options, WithResource(res))
 
 	stopLogger, err := Logger(ctx, options...)
 	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrLoggerFailed, err)
+		return ctx, noopStop, ErrObserve(ErrLogger(err))
 	}
 
 	hookedCtx, err := hookFn(ctx)
 	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrHookFailed, err)
+		return ctx, noopStop, ErrObserve(ErrHook(err))
 	}
 
 	stopTracer, err := Tracer(ctx, options...)
 	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrTracerFailed, err)
+		return ctx, noopStop, ErrObserve(ErrTracer(err))
 	}
 
 	stopMetrics, err := Meter(ctx, options...)
 	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrMeterFailed, err)
-	}
-
-	stopProfiler, err := Profiler(ctx, options...)
-	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrProfilerFailed, err)
+		return ctx, noopStop, ErrObserve(ErrMeter(err))
 	}
 
 	stopFn := func(ctx context.Context, timeout time.Duration) {
-		stopProfiler(ctx, timeout)
 		stopMetrics(ctx, timeout)
 		stopTracer(ctx, timeout)
 		stopLogger(ctx, timeout)
@@ -120,11 +114,6 @@ func Tracer(ctx context.Context, options ...Option) (managed.StopFn, error) {
 	}
 
 	return stopFn, nil
-}
-
-// Profiler is a placeholder for future profiling provider setup.
-func Profiler(_ context.Context, _ ...Option) (managed.StopFn, error) {
-	return noopStop, nil
 }
 
 // Meter sets up an OpenTelemetry meter provider with OTLP gRPC exporter.

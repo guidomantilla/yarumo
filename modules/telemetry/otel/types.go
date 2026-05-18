@@ -26,5 +26,4 @@ var (
 	_ ProviderFn  = Tracer
 	_ ProviderFn  = Meter
 	_ ProviderFn  = Logger
-	_ ProviderFn  = Profiler
 )
