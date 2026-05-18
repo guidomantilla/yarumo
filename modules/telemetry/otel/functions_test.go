@@ -170,14 +170,29 @@ func TestObserve(t *testing.T) {
 		stopFn(context.Background(), time.Second)
 	})
 
-	t.Run("hook failure", func(t *testing.T) {
+	t.Run("hook failure unwinds and returns original ctx", func(t *testing.T) {
 		hookFn := func(_ context.Context) (context.Context, error) {
 			return nil, errors.New("hook failed")
 		}
 
-		_, _, err := Observe(context.Background(), "test-service", "1.0.0", "test", hookFn, WithInsecure(), WithEndpoint("localhost:4317"))
+		// Use a sentinel ctx value to verify Observe returns the *original*
+		// ctx (not the partial nil from hookFn) on failure, per the YA-0068
+		// unwind contract.
+		type ctxKey struct{}
+		origCtx := context.WithValue(context.Background(), ctxKey{}, "sentinel")
+
+		gotCtx, gotStop, err := Observe(origCtx, "test-service", "1.0.0", "test", hookFn, WithInsecure(), WithEndpoint("localhost:4317"))
 		if err == nil {
 			t.Fatal("expected error from hook failure")
 		}
+		if !errors.Is(err, ErrHookFailed) {
+			t.Fatalf("expected ErrHookFailed in chain, got %v", err)
+		}
+		if gotCtx.Value(ctxKey{}) != "sentinel" {
+			t.Fatalf("expected original ctx returned; sentinel missing")
+		}
+		// stop must be safely callable (noopStop), even though Logger was
+		// already torn down internally during unwind.
+		gotStop(context.Background(), time.Second)
 	})
 }
