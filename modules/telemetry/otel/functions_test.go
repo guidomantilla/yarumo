@@ -25,17 +25,6 @@ func TestResources(t *testing.T) {
 	}
 }
 
-func TestProfiler(t *testing.T) {
-	t.Parallel()
-
-	stopFn, err := Profiler(context.Background())
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	stopFn(context.Background(), time.Second)
-}
-
 func TestTracer(t *testing.T) {
 	t.Run("insecure", func(t *testing.T) {
 		stopFn, err := Tracer(context.Background(), WithInsecure(), WithEndpoint("localhost:4317"))

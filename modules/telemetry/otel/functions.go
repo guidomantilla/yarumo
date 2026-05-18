@@ -44,7 +44,7 @@ func Observe(ctx context.Context, serviceName string, serviceVersion string, env
 
 	res, err := Resources(ctx, serviceName, serviceVersion, env)
 	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrResourceFailed, err)
+		return ctx, noopStop, ErrObserve(ErrResource(err))
 	}
 
 	options = append(options, WithResource(res))
@@ -58,7 +58,7 @@ func Observe(ctx context.Context, serviceName string, serviceVersion string, env
 
 	stopLogger, err := Logger(ctx, options...)
 	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrLoggerFailed, err)
+		return ctx, noopStop, ErrObserve(ErrLogger(err))
 	}
 	stopFns = append(stopFns, stopLogger)
 
@@ -151,11 +151,6 @@ func Tracer(ctx context.Context, options ...Option) (managed.StopFn, error) {
 	}
 
 	return stopFn, nil
-}
-
-// Profiler is a placeholder for future profiling provider setup.
-func Profiler(_ context.Context, _ ...Option) (managed.StopFn, error) {
-	return noopStop, nil
 }
 
 // Meter sets up an OpenTelemetry meter provider with OTLP gRPC exporter.
