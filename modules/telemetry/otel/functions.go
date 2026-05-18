@@ -22,7 +22,24 @@ import (
 
 func noopStop(_ context.Context, _ time.Duration) {}
 
-// Observe sets up full OpenTelemetry observability (logging, tracing, metrics) and returns a combined stop function.
+// unwindTimeout is the per-provider shutdown budget used when Observe tears
+// down already-started providers after a later step fails. Chosen to be
+// large enough for an OTLP collector flush but small enough that a startup
+// failure does not block boot for long.
+const unwindTimeout = 5 * time.Second
+
+// Observe sets up full OpenTelemetry observability (logging, tracing, metrics,
+// profiling) and returns the hook-modified context, a combined stop function,
+// and any setup error.
+//
+// On success it returns hookedCtx (the context as modified by hookFn) plus a
+// stop function that tears down all four providers in reverse-startup order
+// (LIFO).
+//
+// On error it unwinds every provider that had already started before the
+// failing step, returns the *original* ctx (not any partial hookedCtx so the
+// caller can safely keep using it), a noop StopFn, and an error chain wrapping
+// the failing step via the matching Err* factory.
 func Observe(ctx context.Context, serviceName string, serviceVersion string, env string, hookFn LoggerHookFn, options ...Option) (context.Context, managed.StopFn, error) {
 
 	res, err := Resources(ctx, serviceName, serviceVersion, env)
@@ -32,30 +49,50 @@ func Observe(ctx context.Context, serviceName string, serviceVersion string, env
 
 	options = append(options, WithResource(res))
 
+	var stopFns []managed.StopFn
+	unwind := func() {
+		for i := len(stopFns) - 1; i >= 0; i-- {
+			stopFns[i](ctx, unwindTimeout)
+		}
+	}
+
 	stopLogger, err := Logger(ctx, options...)
 	if err != nil {
 		return ctx, noopStop, ErrObserve(ErrLogger(err))
 	}
+	stopFns = append(stopFns, stopLogger)
 
 	hookedCtx, err := hookFn(ctx)
 	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrHook(err))
+		unwind()
+		return ctx, noopStop, ErrObserve(ErrHookFailed, err)
 	}
 
 	stopTracer, err := Tracer(ctx, options...)
 	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrTracer(err))
+		unwind()
+		return ctx, noopStop, ErrObserve(ErrTracerFailed, err)
 	}
+	stopFns = append(stopFns, stopTracer)
 
 	stopMetrics, err := Meter(ctx, options...)
 	if err != nil {
-		return ctx, noopStop, ErrObserve(ErrMeter(err))
+		unwind()
+		return ctx, noopStop, ErrObserve(ErrMeterFailed, err)
 	}
+	stopFns = append(stopFns, stopMetrics)
+
+	stopProfiler, err := Profiler(ctx, options...)
+	if err != nil {
+		unwind()
+		return ctx, noopStop, ErrObserve(ErrProfilerFailed, err)
+	}
+	stopFns = append(stopFns, stopProfiler)
 
 	stopFn := func(ctx context.Context, timeout time.Duration) {
-		stopMetrics(ctx, timeout)
-		stopTracer(ctx, timeout)
-		stopLogger(ctx, timeout)
+		for i := len(stopFns) - 1; i >= 0; i-- {
+			stopFns[i](ctx, timeout)
+		}
 	}
 
 	return hookedCtx, stopFn, nil
