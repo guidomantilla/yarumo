@@ -1,4 +1,4 @@
-// Package log provides OpenTelemetry-aware adapters for the project's
+// Package slog provides OpenTelemetry-aware adapters for the project's
 // common/log/slog package. It exposes:
 //
 //   - TraceExtractor: an attribute extractor that pulls trace_id / span_id /
@@ -10,7 +10,10 @@
 // Keeping the OTel dependency out of common/log/slog is intentional: common/
 // must remain free of any telemetry SDK so it can be imported by very small
 // services that do not run OTel.
-package log
+//
+// Recommended import alias by callers: otelslog (to disambiguate from the
+// stdlib log/slog and from common/log/slog).
+package slog
 
 import (
 	"log/slog"
