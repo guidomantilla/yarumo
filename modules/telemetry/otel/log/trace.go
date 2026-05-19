@@ -1,12 +1,3 @@
-// Package log provides OpenTelemetry-aware adapters for the project's
-// common/log/slog package. It exposes attribute extractors that pull data
-// from an active OTel context (the trace span context, today) and surface
-// them on every log record emitted by a Logger configured with
-// slog.WithContextExtractors.
-//
-// Keeping the OTel dependency out of the common/log/slog package is
-// intentional: common/ must remain free of any telemetry SDK so it can be
-// imported by very small services that do not run OTel.
 package log
 
 import (
@@ -56,11 +47,11 @@ func TraceExtractor() cslog.AttrExtractor {
 	}
 }
 
-// WithOtelTraceFn returns a slog Option that registers TraceExtractor on the
+// WithOtelTrace returns a slog Option that registers TraceExtractor on the
 // resulting Logger. It is the convenience wrapper most callers want: pass it
 // to slog.NewLogger to enable trace ↔ log correlation in a single line.
 //
-//	logger := slog.NewLogger(slog.WithLevel(slog.LevelInfo), otellog.WithOtelTraceFn())
-func WithOtelTraceFn() cslog.Option {
+//	logger := slog.NewLogger(slog.WithLevel(slog.LevelInfo), otellog.WithOtelTrace())
+func WithOtelTrace() cslog.Option {
 	return cslog.WithContextExtractors(TraceExtractor())
 }

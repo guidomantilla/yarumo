@@ -102,7 +102,7 @@ func TestTraceExtractor_ActiveSpan(t *testing.T) {
 	})
 }
 
-func TestWithOtelTraceFn_LoggerIntegration(t *testing.T) {
+func TestWithOtelTrace_LoggerIntegration(t *testing.T) {
 	t.Parallel()
 
 	t.Run("trace ids land on every record", func(t *testing.T) {
@@ -112,7 +112,7 @@ func TestWithOtelTraceFn_LoggerIntegration(t *testing.T) {
 		logger := cslog.NewLogger(
 			cslog.WithWriter(buf),
 			cslog.WithLevel(cslog.LevelInfo),
-			WithOtelTraceFn(),
+			WithOtelTrace(),
 		)
 
 		sc := newSpanContext(t)
@@ -147,7 +147,7 @@ func TestWithOtelTraceFn_LoggerIntegration(t *testing.T) {
 		logger := cslog.NewLogger(
 			cslog.WithWriter(buf),
 			cslog.WithLevel(cslog.LevelInfo),
-			WithOtelTraceFn(),
+			WithOtelTrace(),
 		)
 
 		logger.Info(context.Background(), "no span")

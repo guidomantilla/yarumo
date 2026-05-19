@@ -20,6 +20,9 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
+// noopStop is the StopFn returned when Observe fails before any provider has
+// started successfully, or by each provider's setup function on error. It is
+// a no-op that ignores its arguments and never panics.
 func noopStop(_ context.Context, _ time.Duration) {}
 
 // unwindTimeout is the per-provider shutdown budget used when Observe tears

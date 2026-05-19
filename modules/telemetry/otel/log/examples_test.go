@@ -10,14 +10,14 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// ExampleWithOtelTraceFn demonstrates trace ↔ log correlation. When a span is
+// ExampleWithOtelTrace demonstrates trace ↔ log correlation. When a span is
 // active in the context, the logger emits trace_id and span_id on every record.
-func ExampleWithOtelTraceFn() {
+func ExampleWithOtelTrace() {
 	buf := &bytes.Buffer{}
 	logger := cslog.NewLogger(
 		cslog.WithWriter(buf),
 		cslog.WithLevel(cslog.LevelInfo),
-		WithOtelTraceFn(),
+		WithOtelTrace(),
 	)
 
 	traceID, _ := trace.TraceIDFromHex("0102030405060708090a0b0c0d0e0f10")
