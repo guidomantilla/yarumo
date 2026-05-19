@@ -103,11 +103,12 @@ func Tracer(ctx context.Context, options ...Option) (managed.StopFn, error) {
 	} else {
 		opts.tracerExporterOptions = append(opts.tracerExporterOptions, otlptracegrpc.WithEndpoint(opts.endpoint), otlptracegrpc.WithInsecure())
 	}
-	exporter, err := otlptracegrpc.New(ctx, opts.tracerExporterOptions...)
+	rawExporter, err := otlptracegrpc.New(ctx, opts.tracerExporterOptions...)
 	if err != nil {
 		clog.Error(ctx, "error starting tracer", "stage", "startup", "component", "otel tracer", "error", err)
 		return noopStop, ErrTracer(err)
 	}
+	exporter := &recordingTraceExporter{inner: rawExporter}
 
 	opts.tracerProviderOptions = append(opts.tracerProviderOptions, sdktrace.WithResource(opts.resource), sdktrace.WithBatcher(exporter))
 	tracerProvider := sdktrace.NewTracerProvider(opts.tracerProviderOptions...)
@@ -141,11 +142,12 @@ func Meter(ctx context.Context, options ...Option) (managed.StopFn, error) {
 	} else {
 		opts.meterExporterOptions = append(opts.meterExporterOptions, otlpmetricgrpc.WithEndpoint(opts.endpoint), otlpmetricgrpc.WithInsecure())
 	}
-	exporter, err := otlpmetricgrpc.New(ctx, opts.meterExporterOptions...)
+	rawExporter, err := otlpmetricgrpc.New(ctx, opts.meterExporterOptions...)
 	if err != nil {
 		clog.Error(ctx, "error starting meter", "stage", "startup", "component", "otel meter", "error", err)
 		return noopStop, ErrMeter(err)
 	}
+	exporter := &recordingMeterExporter{inner: rawExporter}
 
 	opts.meterProviderOptions = append(opts.meterProviderOptions, sdkmetric.WithResource(opts.resource), sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(opts.meterInterval))))
 	meterProvider := sdkmetric.NewMeterProvider(opts.meterProviderOptions...)
@@ -188,11 +190,12 @@ func Logger(ctx context.Context, options ...Option) (managed.StopFn, error) {
 	} else {
 		opts.loggerExporterOptions = append(opts.loggerExporterOptions, otlploggrpc.WithEndpoint(opts.endpoint), otlploggrpc.WithInsecure())
 	}
-	exporter, err := otlploggrpc.New(ctx, opts.loggerExporterOptions...)
+	rawExporter, err := otlploggrpc.New(ctx, opts.loggerExporterOptions...)
 	if err != nil {
 		clog.Error(ctx, "error starting logger", "stage", "startup", "component", "otel logger", "error", err)
 		return noopStop, ErrLogger(err)
 	}
+	exporter := &recordingLogExporter{inner: rawExporter}
 
 	opts.loggerProviderOptions = append(opts.loggerProviderOptions, sdklog.WithResource(opts.resource), sdklog.WithProcessor(sdklog.NewSimpleProcessor(exporter)))
 	loggerProvider := sdklog.NewLoggerProvider(opts.loggerProviderOptions...)
