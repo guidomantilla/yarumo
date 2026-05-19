@@ -8,11 +8,8 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 )
 
-// LoggerHookFn is the function type for hooking into the logger setup.
-type LoggerHookFn func(ctx context.Context) (context.Context, error)
-
 // ObserveFn is the function type for setting up full observability (tracing, metrics, logging).
-type ObserveFn func(ctx context.Context, serviceName string, serviceVersion string, env string, hookFn LoggerHookFn, options ...Option) (context.Context, managed.StopFn, error)
+type ObserveFn func(ctx context.Context, serviceName string, serviceVersion string, env string, options ...Option) (context.Context, managed.StopFn, error)
 
 // ResourcesFn is the function type for creating an OpenTelemetry resource.
 type ResourcesFn func(ctx context.Context, serviceName string, serviceVersion string, env string) (*resource.Resource, error)

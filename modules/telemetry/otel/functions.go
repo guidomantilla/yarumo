@@ -29,17 +29,16 @@ func noopStop(_ context.Context, _ time.Duration) {}
 const unwindTimeout = 5 * time.Second
 
 // Observe sets up full OpenTelemetry observability (logging, tracing, metrics)
-// and returns the hook-modified context, a combined stop function, and any
-// setup error.
+// and returns ctx, a combined stop function, and any setup error.
 //
-// On success it returns hookedCtx (the context as modified by hookFn) plus a
-// stop function that tears down all providers in reverse-startup order (LIFO).
+// On success the returned ctx is the same ctx that was passed in; callers may
+// keep using it. The returned StopFn tears down all providers in reverse-
+// startup order (LIFO).
 //
 // On error it unwinds every provider that had already started before the
-// failing step, returns the *original* ctx (not any partial hookedCtx so the
-// caller can safely keep using it), a noop StopFn, and an error chain wrapping
-// the failing step via the matching Err* factory.
-func Observe(ctx context.Context, serviceName string, serviceVersion string, env string, hookFn LoggerHookFn, options ...Option) (context.Context, managed.StopFn, error) {
+// failing step, returns the original ctx, a noop StopFn, and an error chain
+// wrapping the failing step via the matching Err* factory.
+func Observe(ctx context.Context, serviceName string, serviceVersion string, env string, options ...Option) (context.Context, managed.StopFn, error) {
 
 	res, err := Resources(ctx, serviceName, serviceVersion, env)
 	if err != nil {
@@ -61,12 +60,6 @@ func Observe(ctx context.Context, serviceName string, serviceVersion string, env
 	}
 	stopFns = append(stopFns, stopLogger)
 
-	hookedCtx, err := hookFn(ctx)
-	if err != nil {
-		unwind()
-		return ctx, noopStop, ErrObserve(ErrHook(err))
-	}
-
 	stopTracer, err := Tracer(ctx, options...)
 	if err != nil {
 		unwind()
@@ -87,7 +80,7 @@ func Observe(ctx context.Context, serviceName string, serviceVersion string, env
 		}
 	}
 
-	return hookedCtx, stopFn, nil
+	return ctx, stopFn, nil
 }
 
 // Resources creates an OpenTelemetry resource with the given service name, version, and environment.

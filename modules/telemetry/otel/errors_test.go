@@ -149,42 +149,6 @@ func TestErrLogger(t *testing.T) {
 	})
 }
 
-func TestErrHook(t *testing.T) {
-	t.Parallel()
-
-	t.Run("joins errors with type", func(t *testing.T) {
-		t.Parallel()
-
-		cause := errors.New("hook error")
-		err := ErrHook(cause)
-
-		var oe *Error
-
-		ok := errors.As(err, &oe)
-		if !ok {
-			t.Fatalf("errors.As to *Error failed: %T", err)
-		}
-
-		if oe.Type != OtelType {
-			t.Fatalf("Type = %q, want %q", oe.Type, OtelType)
-		}
-
-		if !errors.Is(err, cause) || !errors.Is(err, ErrHookFailed) {
-			t.Fatalf("joined error does not match components: %v", err)
-		}
-	})
-
-	t.Run("no args wraps sentinel", func(t *testing.T) {
-		t.Parallel()
-
-		err := ErrHook()
-
-		if !errors.Is(err, ErrHookFailed) {
-			t.Fatalf("expected ErrHookFailed in chain: %v", err)
-		}
-	})
-}
-
 func TestErrObserve(t *testing.T) {
 	t.Parallel()
 
