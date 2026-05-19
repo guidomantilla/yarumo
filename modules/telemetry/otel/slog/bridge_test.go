@@ -352,5 +352,3 @@ func TestBridge_LazyLookup_PicksUpNewProvider(t *testing.T) {
 	}
 }
 
-// Compile-time assertion that *Bridge satisfies slog.Handler.
-var _ slog.Handler = (*Bridge)(nil)

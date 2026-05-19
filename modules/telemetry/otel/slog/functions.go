@@ -8,18 +8,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// Field keys used for OTel trace correlation. They follow the OpenTelemetry
-// log semantic conventions so that downstream collectors and dashboards can
-// link log records to their parent trace.
-const (
-	// AttrTraceID is the attribute key for the OTel trace identifier.
-	AttrTraceID = "trace_id"
-	// AttrSpanID is the attribute key for the OTel span identifier.
-	AttrSpanID = "span_id"
-	// AttrTraceFlags is the attribute key for the OTel trace flags (sampling bits).
-	AttrTraceFlags = "trace_flags"
-)
-
 // TraceExtractor returns a slog attribute extractor that, when a span is
 // active in the supplied context, emits trace_id, span_id, and trace_flags
 // attributes per the OTel logging semantic conventions. If no span is active
@@ -49,9 +37,9 @@ func TraceExtractor() cslog.AttrExtractor {
 
 // WithOtelTrace returns a slog Option that registers TraceExtractor on the
 // resulting Logger. It is the convenience wrapper most callers want: pass it
-// to slog.NewLogger to enable trace ↔ log correlation in a single line.
+// to cslog.NewLogger to enable trace ↔ log correlation in a single line.
 //
-//	logger := slog.NewLogger(slog.WithLevel(slog.LevelInfo), otellog.WithOtelTrace())
+//	logger := cslog.NewLogger(cslog.WithLevel(cslog.LevelInfo), otelslog.WithOtelTrace())
 func WithOtelTrace() cslog.Option {
 	return cslog.WithContextExtractors(TraceExtractor())
 }

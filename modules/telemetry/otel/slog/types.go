@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	_ slog.Handler = (*Bridge)(nil)
+	_ slog.Handler = (*bridge)(nil)
 
 	_ TraceExtractorFn = TraceExtractor
 	_ WithOtelTraceFn  = WithOtelTrace
@@ -36,4 +36,4 @@ type TraceExtractorFn func() cslog.AttrExtractor
 type WithOtelTraceFn func() cslog.Option
 
 // NewBridgeFn is the function type for NewBridge.
-type NewBridgeFn func(name string, minLevel slog.Level) *Bridge
+type NewBridgeFn func(name string, minLevel slog.Level) slog.Handler
