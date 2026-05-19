@@ -1,25 +1,9 @@
-// Package config provides application bootstrap configuration.
-//
-// Environment variables read by Default:
-//
-//	ENABLE_ASSERTS      Toggles cassert.Enable. Truthy: "1", "true", "yes"
-//	                    (case-insensitive). Anything else (including unset)
-//	                    leaves assertions disabled.
-//	LOG_LEVEL           One of: trace, debug, info, warn, warning, error,
-//	                    fatal, off, disabled (case-insensitive). Unknown
-//	                    values silently fall back to "info". Empty/unset
-//	                    defaults to "info".
-//	DEBUG               Boolean parsed by viper. When true, the slog handler
-//	                    sets AddSource so logs include source file/line.
-//	ENABLE_CONFIG_DUMP  Toggles a full environment dump at startup (sensitive
-//	                    keys masked). Same truthy values as ENABLE_ASSERTS.
 package config
 
 import (
 	"context"
 	"log/slog"
 	"os"
-	"sort"
 	"strings"
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
@@ -71,63 +55,4 @@ func Default(ctx context.Context, name string, version string, env string) conte
 	}
 
 	return ctx
-}
-
-const maskedValue = "********"
-
-func dump(ctx context.Context) {
-
-	envs := os.Environ()
-	sort.Strings(envs)
-
-	args := make([]any, 0, len(envs)*2)
-	for _, env := range envs {
-		parts := strings.SplitN(env, "=", 2)
-		key := parts[0]
-		value := parts[1]
-
-		if shouldMask(key) {
-			value = maskValue(value)
-		}
-
-		args = append(args, key, value)
-	}
-
-	clog.Info(ctx, "config dump", args...)
-}
-
-func shouldMask(key string) bool {
-	upper := strings.ToUpper(key)
-
-	return strings.Contains(upper, "PASSWORD") ||
-		strings.Contains(upper, "SECRET") ||
-		strings.Contains(upper, "TOKEN") ||
-		strings.Contains(upper, "KEY") ||
-		strings.Contains(upper, "CREDENTIAL") ||
-		strings.Contains(upper, "PRIVATE")
-}
-
-func maskValue(_ string) string {
-	return maskedValue
-}
-
-func parseLevel(s string) cslog.Level {
-	switch strings.ToLower(s) {
-	case "trace":
-		return cslog.LevelTrace
-	case "debug":
-		return cslog.LevelDebug
-	case "info":
-		return cslog.LevelInfo
-	case "warn", "warning":
-		return cslog.LevelWarn
-	case "error":
-		return cslog.LevelError
-	case "fatal":
-		return cslog.LevelFatal
-	case "off", "disabled":
-		return cslog.LevelOff
-	default:
-		return cslog.LevelInfo
-	}
 }
