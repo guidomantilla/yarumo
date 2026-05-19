@@ -53,7 +53,6 @@ Aplican las 4 reglas universales con las siguientes extensiones cuando el paquet
 |---|---|
 | `diagnostics/` | Captures de runtime (`Captures`, `Pprof`, `Trace`) con configuración de salida. |
 | `expressions/` | `Evaluator` de expresiones — lexer/parser/eval sobre AST con scope. |
-| `grpc/` | Server gRPC con defaults seguros y errores tipados. |
 | `health/` | Aggregator de health checks que orquesta múltiples sondas. |
 | `http/` | `Client` + `Server` HTTP con retry/limiter, defaults seguros para timeouts/headers. |
 | `resilience/` | `CircuitBreaker` + `RateLimiter` (instancias) con registry lazy goroutine-free. |
