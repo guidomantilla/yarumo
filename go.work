@@ -13,6 +13,7 @@ use (
 	./modules/compute/math
 	./modules/compute/tests/acceptance
 	./modules/config
+	./modules/grpc
 	./modules/managed
 	./modules/telemetry/otel
 	./modules/validation

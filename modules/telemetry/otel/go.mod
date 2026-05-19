@@ -4,6 +4,8 @@ go 1.25.5
 
 replace github.com/guidomantilla/yarumo/common => ../../common
 
+replace github.com/guidomantilla/yarumo/grpc => ../../grpc
+
 replace github.com/guidomantilla/yarumo/managed => ../../managed
 
 require (
@@ -30,6 +32,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.4 // indirect
+	github.com/guidomantilla/yarumo/grpc v0.0.0-00010101000000-000000000000 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.39.0 // indirect

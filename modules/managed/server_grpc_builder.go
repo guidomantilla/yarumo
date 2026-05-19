@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	cgrpc "github.com/guidomantilla/yarumo/common/grpc"
+	cgrpc "github.com/guidomantilla/yarumo/grpc"
 	clog "github.com/guidomantilla/yarumo/common/log"
 )
 

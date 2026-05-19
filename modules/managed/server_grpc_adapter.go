@@ -5,7 +5,7 @@ import (
 	"net"
 	"sync"
 
-	cgrpc "github.com/guidomantilla/yarumo/common/grpc"
+	cgrpc "github.com/guidomantilla/yarumo/grpc"
 )
 
 type grpcAdapter struct {
