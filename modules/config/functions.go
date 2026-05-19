@@ -6,11 +6,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/viper"
+
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	clog "github.com/guidomantilla/yarumo/common/log"
 	cslog "github.com/guidomantilla/yarumo/common/log/slog"
 	cutils "github.com/guidomantilla/yarumo/common/utils"
-	"github.com/spf13/viper"
 )
 
 // Default configures the application's cross-cutting concerns: environment variable loading,
@@ -43,6 +44,7 @@ func Default(ctx context.Context, name string, version string, env string) conte
 	if cutils.NotEmpty(env) {
 		attrs = append(attrs, slog.String("env", env))
 	}
+
 	if len(attrs) > 0 {
 		handler = handler.WithAttrs(attrs)
 	}
