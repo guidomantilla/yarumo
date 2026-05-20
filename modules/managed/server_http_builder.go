@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	chttp "github.com/guidomantilla/yarumo/common/http"
+	chttp "github.com/guidomantilla/yarumo/http"
 	clog "github.com/guidomantilla/yarumo/common/log"
 )
 

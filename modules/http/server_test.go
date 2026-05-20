@@ -65,12 +65,12 @@ func TestNewServer(t *testing.T) {
 		tlsCfg := &tls.Config{MinVersion: tls.VersionTLS13}
 
 		srv := NewServer("0.0.0.0", "9091", handler,
-			WithServerReadHeaderTimeout(10*time.Second),
-			WithServerReadTimeout(30*time.Second),
-			WithServerWriteTimeout(45*time.Second),
-			WithServerIdleTimeout(120*time.Second),
-			WithServerMaxHeaderBytes(2<<20),
-			WithServerTLSConfig(tlsCfg),
+			WithReadHeaderTimeout(10*time.Second),
+			WithReadTimeout(30*time.Second),
+			WithWriteTimeout(45*time.Second),
+			WithIdleTimeout(120*time.Second),
+			WithMaxHeaderBytes(2<<20),
+			WithTLSConfig(tlsCfg),
 		)
 
 		s := srv.(*server)

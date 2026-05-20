@@ -1,4 +1,4 @@
-// Package http provides a small wrapper around the standard *http.Client and *http.Server.
+// Package http provides a small wrapper around the standard *http.Client.
 //
 // This custom implementation/extension of *http.Client optionally adds rate limiting and retry capabilities while keeping
 // full API compatibility through a minimal Client interface.
@@ -9,8 +9,8 @@
 //   - When a *http.Transport is provided, selected transport timeouts are capped to not exceed the client Timeout
 //     (TLSHandshakeTimeout, ResponseHeaderTimeout, ExpectContinueTimeout). Stricter values provided by the transport are kept.
 //
-// This custom implementation/extension of *http.Server provides a thin wrapper with secure defaults for timeouts and
-// header sizes, configurable via Options.
+// The HTTP server wrapper has been split out to modules/http because it carries lifecycle
+// (listener goroutines, graceful shutdown) which violates modules/common/'s no-lifecycle clause.
 //
 // Error contract: implementations may wrap underlying errors. Callers should prefer errors.Is/As instead of relying on string messages.
 // Responsibility: the caller must close res.Body when err == nil.
@@ -18,7 +18,6 @@
 package http
 
 import (
-	"context"
 	"net/http"
 
 	retry "github.com/avast/retry-go/v4"
@@ -27,7 +26,6 @@ import (
 var (
 	_ Client = (*client)(nil)
 	_ Client = (*PluggableClient)(nil)
-	_ Server = (*server)(nil)
 
 	_ ErrDoFn           = ErrDo
 	_ DoFn              = ErrorDo
@@ -83,21 +81,4 @@ type Client interface {
 	LimiterEnabled() bool
 	// RetrierEnabled reports whether automatic retries are active.
 	RetrierEnabled() bool
-}
-
-// Server defines the interface for HTTP server lifecycle management.
-//
-// The caller is responsible for calling Shutdown or Close to release resources.
-// Implementations must be safe for concurrent use by multiple goroutines.
-type Server interface {
-	// Address returns the network address the server is configured to listen on.
-	Address() string
-	// ListenAndServe starts the server on the configured address.
-	ListenAndServe() error
-	// ListenAndServeTLS starts the server with TLS using the provided certificate and key files.
-	ListenAndServeTLS(certFile string, keyFile string) error
-	// Shutdown gracefully shuts down the server without interrupting active connections.
-	Shutdown(ctx context.Context) error
-	// Close immediately closes the server.
-	Close() error
 }

@@ -152,7 +152,7 @@ linters:
         - github\.com/guidomantilla/yarumo/common/expressions\.Expr
         - github\.com/guidomantilla/yarumo/common/cron\.Scheduler
         - github\.com/guidomantilla/yarumo/common/diagnostics\.TraceFlightRecorder
-        - github\.com/guidomantilla/yarumo/common/http\.(Client|Server)
+        - github\.com/guidomantilla/yarumo/common/http\.Client
         - github\.com/guidomantilla/yarumo/common/resilience\.(CircuitBreaker|CircuitBreakerRegistry|RateLimiter|RateLimiterRegistry)
         - github\.com/guidomantilla/yarumo/common/uids\.UID
         - github\.com/guidomantilla/yarumo/common/cache\.Cache
@@ -400,12 +400,6 @@ linters:
           - contextcheck
           - gosec
           - wrapcheck
-      # server delegates directly to *http.Server; wrapping errors adds no value
-      # assert.NotNil does not accept context; Shutdown receives ctx but the assert guards the receiver
-      - path: http/server\.go
-        linters:
-          - wrapcheck
-          - contextcheck
       # retry.DoWithData wraps errors internally; Do delegates to DefaultClient
       - path: http/functions\.go
         linters:

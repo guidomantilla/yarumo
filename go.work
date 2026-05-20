@@ -14,6 +14,7 @@ use (
 	./modules/compute/tests/acceptance
 	./modules/config
 	./modules/grpc
+	./modules/http
 	./modules/managed
 	./modules/telemetry/otel
 	./modules/validation

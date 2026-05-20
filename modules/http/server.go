@@ -24,12 +24,12 @@ func NewServer(host string, port string, handler http.Handler, options ...Option
 		inner: &http.Server{
 			Addr:              net.JoinHostPort(host, port),
 			Handler:           handler,
-			ReadHeaderTimeout: opts.serverReadHeaderTimeout,
-			ReadTimeout:       opts.serverReadTimeout,
-			WriteTimeout:      opts.serverWriteTimeout,
-			IdleTimeout:       opts.serverIdleTimeout,
-			MaxHeaderBytes:    opts.serverMaxHeaderBytes,
-			TLSConfig:         opts.serverTLSConfig,
+			ReadHeaderTimeout: opts.readHeaderTimeout,
+			ReadTimeout:       opts.readTimeout,
+			WriteTimeout:      opts.writeTimeout,
+			IdleTimeout:       opts.idleTimeout,
+			MaxHeaderBytes:    opts.maxHeaderBytes,
+			TLSConfig:         opts.tlsConfig,
 		},
 	}
 }

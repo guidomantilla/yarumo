@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	chttp "github.com/guidomantilla/yarumo/common/http"
+	chttp "github.com/guidomantilla/yarumo/http"
 )
 
 type httpAdapter struct {
