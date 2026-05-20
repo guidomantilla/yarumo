@@ -5,7 +5,6 @@ import (
 	_ "github.com/guidomantilla/yarumo/common/cache"
 	_ "github.com/guidomantilla/yarumo/common/cast"
 	_ "github.com/guidomantilla/yarumo/common/constraints"
-	_ "github.com/guidomantilla/yarumo/common/cron"
 	_ "github.com/guidomantilla/yarumo/common/crypto/certs"
 	_ "github.com/guidomantilla/yarumo/common/crypto/ciphers/aead"
 	_ "github.com/guidomantilla/yarumo/common/crypto/ciphers/hybrid"

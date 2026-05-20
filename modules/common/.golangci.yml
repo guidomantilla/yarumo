@@ -150,7 +150,6 @@ linters:
         - generic
         - github\.com/guidomantilla/yarumo/common/expressions\.Evaluator
         - github\.com/guidomantilla/yarumo/common/expressions\.Expr
-        - github\.com/guidomantilla/yarumo/common/cron\.Scheduler
         - github\.com/guidomantilla/yarumo/common/diagnostics\.TraceFlightRecorder
         - github\.com/guidomantilla/yarumo/common/http\.(Client|Server)
         - github\.com/guidomantilla/yarumo/common/resilience\.(CircuitBreaker|CircuitBreakerRegistry|RateLimiter|RateLimiterRegistry)
