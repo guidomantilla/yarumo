@@ -2,24 +2,24 @@
 package cron
 
 import (
-	"context"
 	"time"
 
 	cron "github.com/robfig/cron/v3"
+
+	"github.com/guidomantilla/yarumo/common/lifecycle"
 )
 
-var _ Scheduler = (*cron.Cron)(nil)
+var (
+	_ Scheduler = (*scheduler)(nil)
+)
 
 // Scheduler defines the interface for a cron job scheduler.
-// The caller must call Stop to release resources when the scheduler is no longer needed.
-// Implementations must be safe for concurrent use.
+//
+// The caller must call Stop to release resources when the scheduler is no
+// longer needed. Implementations must be safe for concurrent use by multiple
+// goroutines.
 type Scheduler interface {
-	// Start begins the cron scheduler in a separate goroutine.
-	Start()
-	// Run starts the cron scheduler and blocks until stopped.
-	Run()
-	// Stop halts the cron scheduler and returns a context that completes when running jobs finish.
-	Stop() context.Context
+	lifecycle.Component
 	// AddFunc registers a function to run on the given cron schedule.
 	AddFunc(spec string, cmd func()) (cron.EntryID, error)
 	// AddJob registers a Job to run on the given cron schedule.

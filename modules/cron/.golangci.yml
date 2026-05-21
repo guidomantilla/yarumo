@@ -102,3 +102,34 @@ linters:
       - path: types\.go
         linters:
           - gochecknoglobals
+      # scheduler.go: cassert.NotNil guards the receiver invariant on
+      # lifecycle methods; contextcheck false positive. wrapcheck: Stop
+      # wraps ctx.Err with lifecycle.ErrShutdown — that is the domain
+      # factory, additional wrapping adds no value.
+      - path: scheduler\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      # functions.go: BuildScheduler delegates to NewScheduler which calls
+      # cassert.NotEmpty on the name (receiver-style invariant); ctx is
+      # not part of the assertion semantics.
+      - path: functions\.go
+        linters:
+          - contextcheck
+      # Examples are runnable demos.
+      - path: examples/
+        linters:
+          - forbidigo
+          - gochecknoglobals
+          - gochecknoinits
+          - errcheck
+          - wrapcheck
+          - noctx
+          - gosec
+          - funlen
+          - mnd
+          - lll
+          - gocyclo
+          - maintidx
+          - perfsprint
+          - staticcheck

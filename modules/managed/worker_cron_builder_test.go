@@ -39,7 +39,7 @@ func TestBuildCronWorker(t *testing.T) {
 	t.Run("stop with short timeout logs error", func(t *testing.T) {
 		errCh := make(chan error, 1)
 
-		sched := newMockSchedulerNeverDone()
+		sched := newMockSchedulerStopFails()
 
 		_, stopFn, err := BuildCronWorker(context.Background(), "test-cron-timeout", sched, errCh)
 		if err != nil {

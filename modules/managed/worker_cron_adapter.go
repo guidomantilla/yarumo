@@ -21,21 +21,19 @@ func NewCronWorker(c ccron.Scheduler) CronWorker {
 	}
 }
 
-func (c *cronWorker) Start(_ context.Context) error {
-	c.c.Start()
-	return nil
+func (c *cronWorker) Start(ctx context.Context) error {
+	return c.c.Start(ctx)
 }
 
 func (c *cronWorker) Stop(ctx context.Context) error {
 	defer c.once.Do(func() { close(c.done) })
 
-	stopCtx := c.c.Stop()
-	select {
-	case <-stopCtx.Done():
-		return nil
-	case <-ctx.Done():
+	err := c.c.Stop(ctx)
+	if err != nil {
 		return ErrShutdown(ErrShutdownTimeout, ctx.Err())
 	}
+
+	return nil
 }
 
 func (c *cronWorker) Done() <-chan struct{} {

@@ -107,3 +107,9 @@ linters:
         linters:
           - paralleltest
           - tparallel
+      # worker_cron_adapter.go: Start delegates directly to the embedded
+      # cron.Scheduler (which is itself a lifecycle.Component) — wrapping
+      # its interface error adds no value.
+      - path: worker_cron_adapter\.go
+        linters:
+          - wrapcheck

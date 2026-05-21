@@ -47,6 +47,11 @@ type ErrShutdownFn func(errs ...error) error
 // ErrChan is a send-only error channel used by callers to report runtime errors.
 type ErrChan chan<- error
 
+// CloseFn is the teardown callback returned by component builders. Callers
+// invoke it to drain in-flight work bounded by the given timeout. It does
+// not return an error: shutdown errors are logged at the builder boundary.
+type CloseFn func(ctx context.Context, timeout time.Duration)
+
 // Component is the contract for entities tied to the application's lifecycle.
 //
 // Implementations must be safe for concurrent use by multiple goroutines.

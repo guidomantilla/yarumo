@@ -2,6 +2,7 @@ package managed
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -9,15 +10,25 @@ import (
 )
 
 type mockScheduler struct {
+	name        string
 	startCalled bool
-	stopCtx     context.Context
+	stopErr     error
+	done        chan struct{}
 }
 
-func (m *mockScheduler) Start() { m.startCalled = true }
+func (m *mockScheduler) Name() string { return m.name }
 
-func (m *mockScheduler) Run() {}
+func (m *mockScheduler) Start(_ context.Context) error {
+	m.startCalled = true
+	return nil
+}
 
-func (m *mockScheduler) Stop() context.Context { return m.stopCtx }
+func (m *mockScheduler) Stop(_ context.Context) error {
+	close(m.done)
+	return m.stopErr
+}
+
+func (m *mockScheduler) Done() <-chan struct{} { return m.done }
 
 func (m *mockScheduler) AddFunc(_ string, _ func()) (cron.EntryID, error) { return 0, nil }
 
@@ -34,13 +45,11 @@ func (m *mockScheduler) Entry(_ cron.EntryID) cron.Entry { return cron.Entry{} }
 func (m *mockScheduler) Remove(_ cron.EntryID) {}
 
 func newMockSchedulerDoneImmediately() *mockScheduler {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	return &mockScheduler{stopCtx: ctx}
+	return &mockScheduler{name: "mock-cron", done: make(chan struct{})}
 }
 
-func newMockSchedulerNeverDone() *mockScheduler {
-	return &mockScheduler{stopCtx: context.Background()}
+func newMockSchedulerStopFails() *mockScheduler {
+	return &mockScheduler{name: "mock-cron-fail", done: make(chan struct{}), stopErr: errors.New("scheduler stop failed")}
 }
 
 func TestNewCronWorker(t *testing.T) {
@@ -72,7 +81,7 @@ func Test_cronWorker_Start(t *testing.T) {
 func Test_cronWorker_Stop(t *testing.T) {
 	t.Parallel()
 
-	t.Run("stop completes when scheduler stops", func(t *testing.T) {
+	t.Run("stop completes when scheduler stops cleanly", func(t *testing.T) {
 		t.Parallel()
 
 		sched := newMockSchedulerDoneImmediately()
@@ -90,16 +99,13 @@ func Test_cronWorker_Stop(t *testing.T) {
 		}
 	})
 
-	t.Run("stop with canceled context returns error and closes done", func(t *testing.T) {
+	t.Run("stop with failing scheduler returns error and closes done", func(t *testing.T) {
 		t.Parallel()
 
-		sched := newMockSchedulerNeverDone()
+		sched := newMockSchedulerStopFails()
 		worker := NewCronWorker(sched)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-
-		err := worker.Stop(ctx)
+		err := worker.Stop(context.Background())
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -107,7 +113,7 @@ func Test_cronWorker_Stop(t *testing.T) {
 		select {
 		case <-worker.Done():
 		default:
-			t.Fatal("expected done channel to be closed after timeout")
+			t.Fatal("expected done channel to be closed after stop")
 		}
 	})
 }
