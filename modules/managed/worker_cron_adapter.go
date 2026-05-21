@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	ccron "github.com/guidomantilla/yarumo/common/cron"
+	ccron "github.com/guidomantilla/yarumo/cron"
 )
 
 type cronWorker struct {

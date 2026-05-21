@@ -5,10 +5,10 @@ import (
 	"context"
 	"time"
 
-	ccron "github.com/guidomantilla/yarumo/common/cron"
 	cdiagnostics "github.com/guidomantilla/yarumo/common/diagnostics"
-	cgrpc "github.com/guidomantilla/yarumo/grpc"
 	chttp "github.com/guidomantilla/yarumo/common/http"
+	ccron "github.com/guidomantilla/yarumo/cron"
+	cgrpc "github.com/guidomantilla/yarumo/grpc"
 )
 
 // Worker defines the interface for a managed worker with start, stop, and done lifecycle methods.

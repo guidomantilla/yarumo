@@ -354,7 +354,6 @@ Organizational rules:
 - [x] common/assert
 - [x] common/cast
 - [x] common/constraints
-- [x] common/cron
 - [x] common/crypto (hashes, signers/*, ciphers/aead, ciphers/rsaoaep, certs, passwords, random, tokens)
 - [x] common/diagnostics
 - [x] common/errs

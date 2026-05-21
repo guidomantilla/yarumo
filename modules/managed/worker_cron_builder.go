@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	ccron "github.com/guidomantilla/yarumo/common/cron"
 	clog "github.com/guidomantilla/yarumo/common/log"
+	ccron "github.com/guidomantilla/yarumo/cron"
 )
 
 // BuildCronWorker creates a managed cron worker component, starts it in a background goroutine, and returns a stop function.
