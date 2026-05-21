@@ -150,6 +150,7 @@ linters:
         - generic
         - github\.com/guidomantilla/yarumo/common/expressions\.Evaluator
         - github\.com/guidomantilla/yarumo/common/expressions\.Expr
+        - github\.com/guidomantilla/yarumo/common/lifecycle\.Component
         - github\.com/guidomantilla/yarumo/common/diagnostics\.TraceFlightRecorder
         - github\.com/guidomantilla/yarumo/common/http\.(Client|Server)
         - github\.com/guidomantilla/yarumo/common/resilience\.(CircuitBreaker|CircuitBreakerRegistry|RateLimiter|RateLimiterRegistry)
@@ -331,6 +332,17 @@ linters:
       - path: rest/specs\.go
         linters:
           - contextcheck
+      # lifecycle/component.go: cassert.NotNil guards the receiver invariant,
+      # not a ctx-bound operation; contextcheck false positive.
+      - path: lifecycle/component\.go
+        linters:
+          - contextcheck
+      # lifecycle/functions.go: Start/Stop delegate directly to the Component
+      # interface methods; the caller is the contract owner so wrapping its
+      # error adds no value.
+      - path: lifecycle/functions\.go
+        linters:
+          - wrapcheck
       # crypto subpackage globals: predefined methods, registry map, sync mutex, sentinel errors
       - path: crypto/
         linters:
