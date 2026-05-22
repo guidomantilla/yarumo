@@ -1,7 +1,6 @@
 package http
 
 import (
-	"crypto/tls"
 	"errors"
 	stdhttp "net/http"
 	"testing"
@@ -42,36 +41,6 @@ func TestNewOptions(t *testing.T) {
 
 		if o.clientLimiterBurst != 0 {
 			t.Fatalf("default clientLimiterBurst = %d, want 0", o.clientLimiterBurst)
-		}
-	})
-
-	t.Run("applies server defaults", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions()
-
-		if o.serverReadHeaderTimeout != 5*time.Second {
-			t.Fatalf("serverReadHeaderTimeout = %v, want 5s", o.serverReadHeaderTimeout)
-		}
-
-		if o.serverReadTimeout != 15*time.Second {
-			t.Fatalf("serverReadTimeout = %v, want 15s", o.serverReadTimeout)
-		}
-
-		if o.serverWriteTimeout != 15*time.Second {
-			t.Fatalf("serverWriteTimeout = %v, want 15s", o.serverWriteTimeout)
-		}
-
-		if o.serverIdleTimeout != 60*time.Second {
-			t.Fatalf("serverIdleTimeout = %v, want 60s", o.serverIdleTimeout)
-		}
-
-		if o.serverMaxHeaderBytes != 1<<20 {
-			t.Fatalf("serverMaxHeaderBytes = %d, want %d", o.serverMaxHeaderBytes, 1<<20)
-		}
-
-		if o.serverTLSConfig != nil {
-			t.Fatalf("serverTLSConfig = %v, want nil", o.serverTLSConfig)
 		}
 	})
 
@@ -414,140 +383,6 @@ func TestWithClientLimiterBurst(t *testing.T) {
 		)
 		if o.clientLimiterBurst != 7 {
 			t.Fatalf("clientLimiterBurst should be preserved when >0; got %d", o.clientLimiterBurst)
-		}
-	})
-}
-
-func TestWithServerReadHeaderTimeout(t *testing.T) {
-	t.Parallel()
-
-	t.Run("applies positive value", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerReadHeaderTimeout(10 * time.Second))
-		if o.serverReadHeaderTimeout != 10*time.Second {
-			t.Fatalf("serverReadHeaderTimeout = %v, want 10s", o.serverReadHeaderTimeout)
-		}
-	})
-
-	t.Run("ignores zero", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerReadHeaderTimeout(0))
-		if o.serverReadHeaderTimeout != 5*time.Second {
-			t.Fatalf("WithServerReadHeaderTimeout(0) should keep default; got %v", o.serverReadHeaderTimeout)
-		}
-	})
-}
-
-func TestWithServerReadTimeout(t *testing.T) {
-	t.Parallel()
-
-	t.Run("applies positive value", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerReadTimeout(30 * time.Second))
-		if o.serverReadTimeout != 30*time.Second {
-			t.Fatalf("serverReadTimeout = %v, want 30s", o.serverReadTimeout)
-		}
-	})
-
-	t.Run("ignores zero", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerReadTimeout(0))
-		if o.serverReadTimeout != 15*time.Second {
-			t.Fatalf("WithServerReadTimeout(0) should keep default; got %v", o.serverReadTimeout)
-		}
-	})
-}
-
-func TestWithServerWriteTimeout(t *testing.T) {
-	t.Parallel()
-
-	t.Run("applies positive value", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerWriteTimeout(45 * time.Second))
-		if o.serverWriteTimeout != 45*time.Second {
-			t.Fatalf("serverWriteTimeout = %v, want 45s", o.serverWriteTimeout)
-		}
-	})
-
-	t.Run("ignores zero", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerWriteTimeout(0))
-		if o.serverWriteTimeout != 15*time.Second {
-			t.Fatalf("WithServerWriteTimeout(0) should keep default; got %v", o.serverWriteTimeout)
-		}
-	})
-}
-
-func TestWithServerIdleTimeout(t *testing.T) {
-	t.Parallel()
-
-	t.Run("applies positive value", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerIdleTimeout(120 * time.Second))
-		if o.serverIdleTimeout != 120*time.Second {
-			t.Fatalf("serverIdleTimeout = %v, want 120s", o.serverIdleTimeout)
-		}
-	})
-
-	t.Run("ignores zero", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerIdleTimeout(0))
-		if o.serverIdleTimeout != 60*time.Second {
-			t.Fatalf("WithServerIdleTimeout(0) should keep default; got %v", o.serverIdleTimeout)
-		}
-	})
-}
-
-func TestWithServerMaxHeaderBytes(t *testing.T) {
-	t.Parallel()
-
-	t.Run("applies positive value", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerMaxHeaderBytes(2 << 20))
-		if o.serverMaxHeaderBytes != 2<<20 {
-			t.Fatalf("serverMaxHeaderBytes = %d, want %d", o.serverMaxHeaderBytes, 2<<20)
-		}
-	})
-
-	t.Run("ignores zero", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerMaxHeaderBytes(0))
-		if o.serverMaxHeaderBytes != 1<<20 {
-			t.Fatalf("WithServerMaxHeaderBytes(0) should keep default; got %d", o.serverMaxHeaderBytes)
-		}
-	})
-}
-
-func TestWithServerTLSConfig(t *testing.T) {
-	t.Parallel()
-
-	t.Run("applies config", func(t *testing.T) {
-		t.Parallel()
-
-		cfg := &tls.Config{MinVersion: tls.VersionTLS13}
-
-		o := NewOptions(WithServerTLSConfig(cfg))
-		if o.serverTLSConfig != cfg {
-			t.Fatalf("serverTLSConfig not set")
-		}
-	})
-
-	t.Run("ignores nil", func(t *testing.T) {
-		t.Parallel()
-
-		o := NewOptions(WithServerTLSConfig(nil))
-		if o.serverTLSConfig != nil {
-			t.Fatalf("WithServerTLSConfig(nil) should keep default nil; got %v", o.serverTLSConfig)
 		}
 	})
 }

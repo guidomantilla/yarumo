@@ -6,7 +6,6 @@ import (
 	"time"
 
 	cdiagnostics "github.com/guidomantilla/yarumo/common/diagnostics"
-	chttp "github.com/guidomantilla/yarumo/common/http"
 )
 
 // Worker defines the interface for a managed worker with start, stop, and done lifecycle methods.
@@ -17,16 +16,6 @@ type Worker interface {
 	Stop(ctx context.Context) error
 	// Done returns a channel that is closed when the worker has stopped.
 	Done() <-chan struct{}
-}
-
-// HttpServer defines the interface for a managed HTTP server.
-type HttpServer interface {
-	// ListenAndServe starts the HTTP server.
-	ListenAndServe(ctx context.Context) error
-	// ListenAndServeTLS starts the HTTP server with TLS.
-	ListenAndServeTLS(ctx context.Context, certFile string, keyFile string) error
-	// Stop gracefully stops the HTTP server.
-	Stop(ctx context.Context) error
 }
 
 // BaseWorker defines the interface for a basic managed worker.
@@ -55,13 +44,11 @@ type Component[T any] struct {
 type BuildFn[I any, C any] func(ctx context.Context, name string, internal I, errChan ErrChan) (Component[C], StopFn, error)
 
 var (
-	_ BuildFn[chttp.Server, HttpServer]                                    = BuildHttpServer
 	_ BuildFn[any, BaseWorker]                                             = BuildBaseWorker
 	_ BuildFn[cdiagnostics.TraceFlightRecorder, TraceFlightRecorderWorker] = BuildTraceFlightRecorderWorker
 )
 
 var (
-	_ HttpServer                = (*httpAdapter)(nil)
 	_ BaseWorker                = (*baseWorker)(nil)
 	_ TraceFlightRecorderWorker = (*traceFlightRecorderWorker)(nil)
 )

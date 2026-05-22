@@ -24,6 +24,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/guidomantilla/yarumo/config"
 	cghttp "github.com/guidomantilla/yarumo/http"
 )
 
@@ -38,7 +39,8 @@ func main() {
 }
 
 func run() error {
-	ctx := context.Background()
+	name, version, env := "modules/http/examples/main.go", "1.0", "examples"
+	ctx := config.Default(context.Background(), name, version, env)
 
 	baseline := runtime.NumGoroutine()
 
