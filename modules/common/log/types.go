@@ -1,16 +1,11 @@
-// Package log provides a structured logging abstraction with support for
-// multiple log levels via a process-global default Logger swappable through
-// Use. Concrete Logger implementations live in separate modules (e.g.
-// modules/log/slog) and depend on this package, never the reverse.
+// Package log provides a structured logging abstraction with support for multiple log levels.
 //
-// Until Use is called, the default slot serves a noopLogger that discards
-// Trace/Debug/Info/Warn/Error and exits the process on Fatal (writing the
-// message to stderr first) so that "no logger configured" cannot hide a
-// fatal condition triggered by assert or any other caller.
-//
-// Tests in this package are intentionally serial (no t.Parallel()) because
-// they mutate the slot; downstream packages and the modules/log subpackages
-// own no global state and run fully parallel.
+// The package-level helpers (Trace/Debug/Info/Warn/Error/Fatal) delegate
+// to a process-global Logger swappable via Use. Concrete implementations
+// live in modules/log/<impl>; they depend on this package, never the
+// reverse. Until Use is called, the default slot serves a noopLogger that
+// discards Trace/Debug/Info/Warn/Error and exits the process on Fatal so
+// that a missing Use call cannot hide a fatal condition.
 package log
 
 import "context"
