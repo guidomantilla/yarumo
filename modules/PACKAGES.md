@@ -15,7 +15,6 @@
 |---|---|
 | `assert/` | Assertions runtime (`NotNil`, `NotEmpty`, `Equal`, `True`, `False`) — modo log o fatal según config. |
 | `cast/` | Type-safe casting (`ToInt`, `ToString`, `ToTime`, `ToDuration`, …) — wrappa `spf13/cast`. |
-| `crypto/random/` | Generación crypto-segura de bytes, números y strings. |
 | `errs/` | Typed errors + error-chain helpers (`As`, `Match`, `Wrap`, `Unwrap`, `ErrorMessages`, `AsErrorInfo`) + JSON-serializable info. |
 | `log/` | Facade abstracta de logging estructurado (`Logger` interface + `Use`/`Default` + helpers `Trace`/`Debug`/`Info`/`Warn`/`Error`/`Fatal`) sobre slot mutable. Trío base (`types.go`/`functions.go`/`functions_test.go`) + `internals.go` con `loggerHolder` (struct sin métodos, excepción del consumidor de `load`) + vars `current`/`internal`/`osExit` + helper `load`. Concern del default `noopLogger` (struct privado con métodos que implementa `Logger`) aislado en `noop.go`. Implementaciones concretas viven en `modules/log/`; este paquete no depende de ninguna. Default noopLogger (Fatal escribe a stderr y exit) hasta que el consumer llame `Use(...)`. |
 | `pointer/` | Helpers para pointers (deref con default, take-address, comparación). |
@@ -130,7 +129,30 @@ Algunos paquetes bajo `common/` no encajan en ningún shape — porque son envol
 - `modules/log/slog/` — adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `Logger` como **struct público concreto** (no como interface) e implementa la interface `common/log.Logger` (typing estructural). Vive como módulo top-level porque depende de `common/log` (interface) en dirección consumer → abstracción; el ciclo arquitectónico inverso (common → impl) queda eliminado. Esta forma encaja en la excepción 4 de `CODING_STANDARDS.md` (criterio 4) y rompe también el patrón Shape B clásico, así que vive acá.
 - `common/constraints/` — solo declara type constraints genéricas (`Signed`, `Unsigned`, `Integer`, `Float`, `Complex`, `Number`) + aliases (`Comparable`, `Ordenable`). Sin funciones libres, sin métodos, sin estado. Análogo a `golang.org/x/exp/constraints`. No tiene `functions.go` (no hay funciones); el package doc + declaraciones viven en `types.go` (único archivo).
 - `common/types/` — solo declara el tipo `Bytes []byte` con métodos puros (`ToHex`, `ToBase64Std`/`ToBase64RawStd`/`ToBase64Url`/`ToBase64RawUrl`). Sin funciones libres del paquete. Encaja parcialmente en R1 variante 1 de Shape A (DTO público con métodos puros), pero no cumple el trío base porque no hay funciones libres que justifiquen `functions.go` ni un `types.go` separado del concern: el package doc + tipo + métodos viven todos en `bytes.go` (único archivo).
-- **Subpaquetes de `common/crypto/`** (excepto `common/crypto/random/`, que es Shape A) — siguen el **Crypto Subpackage Standard** documentado en `modules/common/CODING_STANDARDS.md` (sección "Crypto Subpackage Standard", líneas 231-350). El standard define file structure propia (`types.go`, `errors.go`, `<name>.go`, `functions.go`, `options.go`, `extensions.go`) y overrides explícitos a 3 criterios del documento: criterion 3 (struct público concreto, no interface), criterion 4 (constructor devuelve `*Method` con pluggable function fields), criterion 6 (registry multi-instance, no singleton `Use`). Aplica a: `certs/` (utility, no usa Method pattern), `ciphers/aead/`, `ciphers/hybrid/`, `ciphers/rsaoaep/`, `hashes/`, `kdfs/`, `passwords/`, `passwords/generator/`, `signers/ecdsas/`, `signers/ed25519/`, `signers/hmacs/`, `signers/rsassas/`, `tokens/`. Para detalles y compliance ver el standard; PACKAGES.md no duplica esas reglas.
+- **Subpaquetes de `modules/crypto/`** (14 paquetes — ver inventario abajo) — siguen el **Crypto Subpackage Standard** documentado en `modules/crypto/CODING_STANDARDS.md`. El standard define file structure propia (`types.go`, `errors.go`, `<name>.go`, `functions.go`, `options.go`, `extensions.go`, `text_codec.go`) y overrides explícitos a 3 criterios del documento general: criterion 3 (struct público concreto, no interface), criterion 4 (constructor devuelve `*Method` con pluggable function fields), criterion 6 (registry multi-instance, no singleton `Use`). Aplica al universo crypto completo, con 3 utility packages (`random/`, `certs/`, `passwords/generator/`) que no usan el Method pattern y siguen Shape A. Para detalles y compliance ver el standard; PACKAGES.md no duplica esas reglas.
+
+## Módulo `modules/crypto/`
+
+Módulo top-level extraído de `modules/common/crypto/` (issue #170). Reúne 14 subpaquetes con un único `go.mod` y un standard propio (`modules/crypto/CODING_STANDARDS.md`).
+
+### Inventario
+
+| Subpaquete | Tipo | Qué hace |
+|---|---|---|
+| `random/` | Utility (Shape A) | Generación crypto-segura de bytes, números y strings. |
+| `certs/` | Utility | Helpers TLS/x509 (CSR, self-signed certs, pool builders, PEM I/O). |
+| `passwords/generator/` | Utility (`*Generator`) | Constructor de passwords aleatorios configurable (longitud, charset, política). |
+| `hashes/` | Method | Hash funcs registradas (SHA-2/3, BLAKE2, …) + `Hash`/`Compute` libres. |
+| `kdfs/` | Method | Key derivation functions (HKDF, PBKDF2, scrypt, argon2id). |
+| `passwords/` | Method | Password hashing/verification (bcrypt, scrypt, argon2, pbkdf2) + delegating encoder. |
+| `tokens/` | Method | JWT signing/verification sobre `golang-jwt/jwt/v5` con algoritmos registrables. |
+| `ciphers/aead/` | Method | AEAD (AES-GCM, ChaCha20-Poly1305) + streaming. |
+| `ciphers/hybrid/` | Method | HPKE (X25519 + AEAD vía circl). |
+| `ciphers/rsaoaep/` | Method | RSA-OAEP encryption. |
+| `signers/ecdsas/` | Method | ECDSA con curvas P-256/384/521. |
+| `signers/ed25519/` | Method | Ed25519. |
+| `signers/hmacs/` | Method | HMAC (SHA-256/384/512). |
+| `signers/rsassas/` | Method | RSASSA (PKCS#1 v1.5 + PSS, SHA-256/384/512). |
 
 ## Módulo `modules/log/`
 

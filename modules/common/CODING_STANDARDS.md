@@ -16,11 +16,11 @@ Conventions and standards for all packages under `modules/common`:
 
    1. **Options structs.** `NewOptions` returns `*Options`. Options carry configuration data, not an abstraction; the Options pattern requires the struct exposed directly. Same for variants like `*CSROptions`, `*SelfSignedOptions`.
 
-   2. **Concrete data structures with rich method sets.** Containers, graphs, trees, FSMs, accumulators — the type IS the data, there is no abstraction to hide. Hiding it behind an interface would be ceremony with zero polymorphism. Canonical examples: `compute/math/graph/` (`*DAG`, `*Directed`, `*Bipartite`, `*Undirected`, `*Tree`, `*MultigraphDirected`, `*MultigraphUndirected`), `compute/math/fsm/` (`*Machine`), `compute/math/stats/` (`*WindowedStats`), `compute/math/markov/` (`*Chain`). Plus crypto helpers: `*Generator` (`passwords/generator/`), `*DelegatingEncoder` (`passwords/`).
+   2. **Concrete data structures with rich method sets.** Containers, graphs, trees, FSMs, accumulators — the type IS the data, there is no abstraction to hide. Hiding it behind an interface would be ceremony with zero polymorphism. Canonical examples: `compute/math/graph/` (`*DAG`, `*Directed`, `*Bipartite`, `*Undirected`, `*Tree`, `*MultigraphDirected`, `*MultigraphUndirected`), `compute/math/fsm/` (`*Machine`), `compute/math/stats/` (`*WindowedStats`), `compute/math/markov/` (`*Chain`). Plus crypto helpers: `*Generator` (`modules/crypto/passwords/generator/`), `*DelegatingEncoder` (`modules/crypto/passwords/`).
 
-   3. **"Pluggable struct" pattern.** When the type achieves polymorphism via **function fields configured through Options**, the struct itself plays the role of both public type and mock point — no separate interface is needed. Different "implementations" appear as different **instances** of the same struct, configured differently. Canonical example: crypto's `*Method` (10 packages: `hashes`, `kdfs`, `ciphers/{aead,hybrid,rsaoaep}`, `signers/{hmacs,ecdsas,ed25519,rsassas}`, `passwords`, `tokens`). The function field (`hashFn`, `kdfFn`, `signFn`, …) is the mockability mechanism; the `With<Xxx>Fn(...)` option is how callers swap behavior. There is intentionally no `Pluggable<X>` wrapper in these packages — the struct IS the pluggable.
+   3. **"Pluggable struct" pattern.** When the type achieves polymorphism via **function fields configured through Options**, the struct itself plays the role of both public type and mock point — no separate interface is needed. Different "implementations" appear as different **instances** of the same struct, configured differently. Canonical example: crypto's `*Method` (11 packages in `modules/crypto/`: `hashes`, `kdfs`, `ciphers/{aead,hybrid,rsaoaep}`, `signers/{hmacs,ecdsas,ed25519,rsassas}`, `passwords`, `tokens`). The function field (`hashFn`, `kdfFn`, `signFn`, …) is the mockability mechanism; the `With<Xxx>Fn(...)` option is how callers swap behavior. There is intentionally no `Pluggable<X>` wrapper in these packages — the struct IS the pluggable.
 
-   4. **Wrappers over stdlib / external types.** When the constructor's job is to compose / validate inputs and hand back a type owned by another package, return that external type directly. Example: `NewPool(...) (*x509.CertPool, error)` in `crypto/certs/`. This exception also covers wrappers that **extend** the stdlib type with extra methods (e.g. `Trace`, `Fatal`) and return a **package-owned struct mirror** instead of the stdlib type — declaring an interface in the wrapper package would force the parent (the one that owns the abstract contract) to import the wrapper for compliance, closing an import cycle. Canonical example: `modules/log/slog/` returns `*Logger` (own struct) so `modules/log/` can declare `_ Logger = (*cslog.Logger)(nil)` against its own `Logger` interface via structural typing, keeping the import flow one-way.
+   4. **Wrappers over stdlib / external types.** When the constructor's job is to compose / validate inputs and hand back a type owned by another package, return that external type directly. Example: `NewPool(...) (*x509.CertPool, error)` in `modules/crypto/certs/`. This exception also covers wrappers that **extend** the stdlib type with extra methods (e.g. `Trace`, `Fatal`) and return a **package-owned struct mirror** instead of the stdlib type — declaring an interface in the wrapper package would force the parent (the one that owns the abstract contract) to import the wrapper for compliance, closing an import cycle. Canonical example: `modules/log/slog/` returns `*Logger` (own struct) so `modules/common/log/` can declare `_ Logger = (*cslog.Logger)(nil)` against its own `Logger` interface via structural typing, keeping the import flow one-way.
 
    In all four cases:
    * `assert.NotNil` / `assert.NotEmpty` still applies to non-variadic required parameters.
@@ -49,7 +49,7 @@ Conventions and standards for all packages under `modules/common`:
        }
    }
    ```
-6. **Preconfigured Default Singletons** - Check if having a default singleton is necessary or adds value. Check common/crypto package for examples.
+6. **Preconfigured Default Singletons** - Check if having a default singleton is necessary or adds value. Check `modules/crypto` package for examples.
    * The function that sets or selects the active default must be named `Use`.
    * If the package has a registry, `Use` selects from it by name. A package-level function (e.g. `Generate`) delegates to the current default.
    * Singleton variables must use Go MixedCaps naming (e.g. `DefaultClient`, `NoopClient`), not `SCREAMING_SNAKE_CASE`.
@@ -84,7 +84,7 @@ import (
     cassert "github.com/guidomantilla/yarumo/common/assert"
     cerrs   "github.com/guidomantilla/yarumo/common/errs"
     ctypes  "github.com/guidomantilla/yarumo/common/types"
-    chashes "github.com/guidomantilla/yarumo/common/crypto/hashes"
+    chashes "github.com/guidomantilla/yarumo/crypto/hashes"
     cslog   "github.com/guidomantilla/yarumo/log/slog"
 )
 
@@ -95,11 +95,11 @@ import (
 )
 ```
 
-- The alias is `c` + the last segment of the import path (e.g., `common/crypto/hashes` → `chashes`).
+- The alias is `c` + the last segment of the import path (e.g., `crypto/hashes` → `chashes`).
 - Blank imports (`_ "..."`) do not need aliases.
 
-**Override**: when two packages share the same last segment (e.g., `common/random` and `common/crypto/random`), an explicit non-default alias is used:
-- `common/crypto/random` → `crandom` (canonical — frequent inside `common/crypto/*`).
+**Override**: when two packages share the same last segment (e.g., `common/random` and `crypto/random`), an explicit non-default alias is used:
+- `crypto/random` → `crandom` (canonical — frequent inside `modules/crypto/*`).
 - `common/random` → `cfrandom` ("common-fast-random") — reserved for the `math/rand/v2`-backed fast variant; signals non-secure at a glance.
 
 ## No Inline Assignments
@@ -230,131 +230,15 @@ Packages that contain logic returning errors must follow the `common/errs` patte
 
 ## Crypto Subpackage Standard
 
-Subpackages under `common/crypto` (hashes, signers/hmacs, signers/ecdsas, signers/ed25519, signers/rsapss, ciphers/aead, ciphers/rsaoaep, passwords, tokens, certs) follow the general review criteria above with these **overrides and additions**:
-
-> **Note:** `certs` is a utility package — it provides standalone functions instead of the `Method` + registry pattern. The file structure, Method overrides, and registry sections do not apply to `certs`; it uses `types.go`, `errors.go`, `functions.go`, and `options.go` only.
-
-### File Structure
-
-Each crypto subpackage must contain exactly these files:
-
-| File | Purpose |
-|------|---------|
-| `types.go` | Package doc, type compliance vars, function type definitions |
-| `errors.go` | Error domain constant, `Error` struct, sentinel errors, `Err<Operation>` factories |
-| `<name>.go` | `Method` struct, `NewMethod` constructor, predefined method vars, delegating methods |
-| `functions.go` | Private implementation functions (`key`, `sign`, `verify`, `digest`, etc.) |
-| `options.go` | `Option`, `Options`, `NewOptions`, `With<Fn>` functions |
-| `extensions.go` | Thread-safe registry: `Register`, `Get`, `Supported` |
-
-### Override: Criterion 3 — Public Struct, not Interface
-
-Crypto does **not** use public interfaces with private implementations. Instead:
-
-- `Method` is a **public struct** with **private fields**.
-- There is no interface to implement — `Method` is the API.
-- Pluggable behavior is achieved via function fields injected through Options.
-
-### Override: Criterion 4 — Constructor returns `*Method`
-
-> This is a concrete instance of Exception 3 (Pluggable struct pattern) from criterion 4 above.
-
-`NewMethod` returns `*Method`, not an interface. Parameters vary by algorithm:
-
-```go
-// hashes
-func NewMethod(name string, kind crypto.Hash, options ...Option) *Method
-
-// signers (hmacs, ecdsas, rsapss)
-func NewMethod(name string, kind crypto.Hash, keySize int, ..., options ...Option) *Method
-
-// signers (ed25519)
-func NewMethod(name string, options ...Option) *Method
-```
-
-All constructors must take `name` as the first parameter and `...Option` as the last.
-
-### Override: Criterion 6 — Registry, not Singleton
-
-Crypto uses a **multi-instance registry** instead of the `Use` singleton pattern:
-
-```go
-// Predefined method vars (package-level)
-var SHA256 = NewMethod("SHA256", crypto.SHA256)
-
-// Thread-safe registry in extension.go
-func Register(method Method)              // adds to registry
-func Get(name string) (*Method, error)    // looks up by name
-func Supported() []Method                 // lists all registered
-
-// Registry internals
-var methods = map[string]Method{ ... }
-var lock = new(sync.RWMutex)
-```
-
-- `Register` must use `lock.Lock()`.
-- `Get` and `Supported` must use `lock.RLock()` / `lock.RUnlock()` (read-only operations).
-
-`Get(name)` returns a **snapshot** of the registered `Method`: the returned `*Method` points to a copy taken at lookup time, so later `Register` calls do not mutate previously returned pointers, and callers needing fresh state must call `Get` again. This contract is documented canonically on each subpackage's `Get` doc comment (see `extensions.go` in `hashes`, `passwords`, `tokens`, `ciphers/aead`, `ciphers/rsaoaep`, `signers/hmacs`, `signers/ecdsas`, `signers/rsassas`, `signers/ed25519`).
-
-### Error Pattern (crypto-specific)
-
-Follows the general error handling pattern with one addition:
-
-- **`ErrAlgorithmNotSupported(name string)`** — contextual factory that includes the algorithm name in the error message. Must return a domain `*Error` wrapping `TypedError` (not plain `fmt.Errorf`).
-- **Type constant naming**: `<Algorithm>Method` (e.g., `HmacMethod`, `EcdsaMethod`, `RsaPssMethod`). Exception: hashes uses `HashNotFound`.
-- **Operation factories**: `ErrKeyGeneration`, `ErrSigning`, `ErrVerification`, `ErrDigest` — variadic `(errs ...error)`.
-
-### Method Operations
-
-Each `Method` struct delegates to pluggable function fields:
-
-```go
-func (m *Method) <Operation>(...) (..., error) {
-    assert.NotNil(m, "method is nil")
-    assert.NotNil(m.<fn>, "method <fn> is nil")
-
-    result, err := m.<fn>(m, ...)
-    if err != nil {
-        return ..., Err<Operation>(err)
-    }
-
-    return result, nil
-}
-```
-
-Common operations by category:
-- **hashes**: `Hash(data) (Bytes, error)`
-- **symmetric signers** (hmacs): `GenerateKey()`, `Digest(key, data)`, `Validate(key, digest, data)`
-- **asymmetric signers** (ecdsas, ed25519, rsapss): `GenerateKey(...)`, `Sign(key, data, ...)`, `Verify(key, signature, data, ...)`
-
-### Examples Package
-
-Each crypto subpackage (or group of related subpackages) must include an `examples/` directory with a `main.go` that serves as a runnable demonstration:
-
-| File | Purpose |
-|------|---------|
-| `examples/main.go` | `package main` with `main()` — executable demonstration of the package API |
-
-The examples `main.go` must demonstrate:
-1. **Predefined methods** — direct use of package-level vars (e.g., `hashes.SHA256`, `caead.AES_256_GCM`).
-2. **Standalone functions** — calling public functions directly when available.
-3. **Registry lookup** — using `Get(name)` to retrieve a method by name, including error case for unknown names.
-4. **Listing supported methods** — using `Supported()` to enumerate all registered methods.
-
-Organizational rules:
-- Subpackages at the same level share one examples directory (e.g., `signers/examples/` covers hmacs, ecdsas, ed25519, rsapss; `ciphers/examples/` covers aead, rsaoaep).
-- Leaf subpackages get their own (e.g., `hashes/examples/`).
-- Examples are **excluded** from `graph.go` imports (not part of the module API).
-- Examples are **excluded** from `.testcoverage.yml` paths (no coverage enforcement).
-- Examples are **excluded** from `forbidigo` linter in `.golangci.yml` (allowed to use `fmt.Print*`).
+The crypto subpackage standard previously documented here has moved to its
+own module: see [`modules/crypto/CODING_STANDARDS.md`](../crypto/CODING_STANDARDS.md).
+Crypto is no longer part of `modules/common`.
 
 ## Reviewed Packages
 
 - [x] common/assert
 - [x] common/cast
 - [x] common/constraints
-- [x] common/crypto (hashes, signers/*, ciphers/aead, ciphers/rsaoaep, certs, passwords, random, tokens)
 - [x] common/diagnostics
 - [x] common/errs
 - [x] common/grpc

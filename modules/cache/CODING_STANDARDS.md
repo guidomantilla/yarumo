@@ -34,7 +34,7 @@ This release implements `ristretto`, `bigcache`, and `go-cache` only. Redis, mem
 
 The private `cache[K, V]` implementation holds the backend behaviour in **function fields** (`getFn`, `setFn`, `deleteFn`, `hasFn`, `clearFn`, `stopFn`) populated by per-backend factories in `backends.go` (`newRistrettoCache`, `newBigcacheCache`, `newGoCacheCache`). This is a concrete instance of Exception 3 from criterion 4 of `modules/common/CODING_STANDARDS.md` — different "implementations" are different instances of the same struct, configured differently. The public `Cache[K, V]` interface stays unchanged.
 
-There is intentionally **no internal `backendCache` interface**. The pattern mirrors crypto's `*Method` (10 packages under `modules/common/crypto/`).
+There is intentionally **no internal `backendCache` interface**. The pattern mirrors crypto's `*Method` (11 packages under `modules/crypto/`).
 
 ## Reviewed Packages
 
