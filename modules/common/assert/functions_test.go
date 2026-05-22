@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	clog "github.com/guidomantilla/yarumo/common/log"
-	cslog "github.com/guidomantilla/yarumo/common/log/slog"
 )
 
 var _ clog.Logger = (*spyLogger)(nil)
@@ -55,9 +54,11 @@ func (s *spyLogger) Fatal(_ context.Context, msg string, _ ...any) {
 func withSpy(fn func(spy *spyLogger)) {
 	spy := &spyLogger{}
 
+	orig := clog.Default()
+
 	clog.Use(spy)
 
-	defer clog.Use(cslog.NewLogger())
+	defer clog.Use(orig)
 
 	fn(spy)
 }

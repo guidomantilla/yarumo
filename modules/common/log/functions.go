@@ -11,6 +11,14 @@ func Use(logger Logger) {
 	current.Store(&loggerHolder{logger: logger})
 }
 
+// Default returns the currently active default logger, initialising the
+// slot with the internal noop logger on first access. Callers that need to
+// capture-and-restore the slot (typically tests) should pair Default with
+// Use.
+func Default() Logger {
+	return load()
+}
+
 // Trace logs a message at trace level.
 func Trace(ctx context.Context, msg string, args ...any) {
 	load().Trace(ctx, msg, args...)

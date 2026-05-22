@@ -6,6 +6,8 @@ replace github.com/guidomantilla/yarumo/grpc => ../
 
 replace github.com/guidomantilla/yarumo/common => ../../common
 
+replace github.com/guidomantilla/yarumo/log => ../../log
+
 require (
 	github.com/guidomantilla/yarumo/grpc v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.79.1

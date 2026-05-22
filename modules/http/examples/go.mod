@@ -6,6 +6,8 @@ replace github.com/guidomantilla/yarumo/http => ../
 
 replace github.com/guidomantilla/yarumo/common => ../../common
 
+replace github.com/guidomantilla/yarumo/log => ../../log
+
 require github.com/guidomantilla/yarumo/http v0.0.0-00010101000000-000000000000
 
 require (

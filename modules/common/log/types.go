@@ -1,24 +1,27 @@
 // Package log provides a structured logging abstraction with support for multiple log levels.
+//
+// The package-level helpers (Trace/Debug/Info/Warn/Error/Fatal) delegate
+// to a process-global Logger swappable via Use. Concrete implementations
+// live in modules/log/<impl>; they depend on this package, never the
+// reverse. Until Use is called, the default slot serves a noopLogger that
+// discards Trace/Debug/Info/Warn/Error and exits the process on Fatal so
+// that a missing Use call cannot hide a fatal condition.
 package log
 
-import (
-	"context"
+import "context"
 
-	cslog "github.com/guidomantilla/yarumo/common/log/slog"
-)
-
-// Type compliance: slog adapter satisfies the Logger interface, and the
-// package-level functions match their declared Fn aliases.
+// Type compliance for the package-level logging functions and the bundled
+// Logger interface. Concrete Logger implementations live in separate
+// modules and assert compliance against this interface there.
 var (
-	_ Logger = (*cslog.Logger)(nil)
-
-	_ UseFn = Use
-	_ LogFn = Trace
-	_ LogFn = Debug
-	_ LogFn = Info
-	_ LogFn = Warn
-	_ LogFn = Error
-	_ LogFn = Fatal
+	_ UseFn     = Use
+	_ DefaultFn = Default
+	_ LogFn     = Trace
+	_ LogFn     = Debug
+	_ LogFn     = Info
+	_ LogFn     = Warn
+	_ LogFn     = Error
+	_ LogFn     = Fatal
 )
 
 // LogFn is the function type for package-level logging functions.
@@ -27,7 +30,12 @@ type LogFn func(ctx context.Context, msg string, args ...any)
 // UseFn is the function type for Use.
 type UseFn func(l Logger)
 
-// Logger defines the interface for structured logging with six severity levels.
+// DefaultFn is the function type for Default.
+type DefaultFn func() Logger
+
+// Logger defines the interface for structured logging with six severity
+// levels. Implementations must be safe for concurrent use by multiple
+// goroutines.
 type Logger interface {
 	// Trace logs a message at trace level.
 	Trace(ctx context.Context, msg string, args ...any)
