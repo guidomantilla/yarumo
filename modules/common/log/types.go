@@ -1,23 +1,19 @@
 package log
 
-import (
-	"context"
+import "context"
 
-	cslog "github.com/guidomantilla/yarumo/log/slog"
-)
-
-// Type compliance: slog adapter satisfies the Logger interface, and the
-// package-level functions match their declared Fn aliases.
+// Type compliance: the package-level functions match their declared Fn
+// aliases. Concrete Logger implementations live in separate modules (e.g.
+// modules/log/slog) and assert compliance against this interface there.
 var (
-	_ Logger = (*cslog.Logger)(nil)
-
-	_ UseFn = Use
-	_ LogFn = Trace
-	_ LogFn = Debug
-	_ LogFn = Info
-	_ LogFn = Warn
-	_ LogFn = Error
-	_ LogFn = Fatal
+	_ UseFn     = Use
+	_ DefaultFn = Default
+	_ LogFn     = Trace
+	_ LogFn     = Debug
+	_ LogFn     = Info
+	_ LogFn     = Warn
+	_ LogFn     = Error
+	_ LogFn     = Fatal
 )
 
 // LogFn is the function type for package-level logging functions.
@@ -25,6 +21,9 @@ type LogFn func(ctx context.Context, msg string, args ...any)
 
 // UseFn is the function type for Use.
 type UseFn func(l Logger)
+
+// DefaultFn is the function type for Default.
+type DefaultFn func() Logger
 
 // Logger defines the interface for structured logging with six severity levels.
 type Logger interface {

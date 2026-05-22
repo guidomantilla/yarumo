@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	clog "github.com/guidomantilla/yarumo/log"
+	clog "github.com/guidomantilla/yarumo/common/log"
 	cslog "github.com/guidomantilla/yarumo/log/slog"
 )
 

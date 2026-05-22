@@ -4,11 +4,17 @@ package slog
 import (
 	"context"
 	"log/slog"
+
+	clog "github.com/guidomantilla/yarumo/common/log"
 )
 
-// Interface compliance for the package's slog.Handler implementations and
-// the bundled AttrExtractor adapter.
+// Interface compliance: this package's Logger satisfies the Logger
+// interface declared by modules/common/log, the package's slog.Handler
+// implementations match the stdlib interface, and the bundled
+// AttrExtractor adapter is registered.
 var (
+	_ clog.Logger = (*Logger)(nil)
+
 	_ slog.Handler = (*fanoutHandler)(nil)
 	_ slog.Handler = (*contextHandler)(nil)
 

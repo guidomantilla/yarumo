@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	clog "github.com/guidomantilla/yarumo/log"
+	clog "github.com/guidomantilla/yarumo/common/log"
 	cslog "github.com/guidomantilla/yarumo/log/slog"
 )
 

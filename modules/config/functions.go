@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
-	clog "github.com/guidomantilla/yarumo/log"
+	clog "github.com/guidomantilla/yarumo/common/log"
 	cslog "github.com/guidomantilla/yarumo/log/slog"
 	cutils "github.com/guidomantilla/yarumo/common/utils"
 )

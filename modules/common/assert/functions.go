@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	clog "github.com/guidomantilla/yarumo/log"
+	clog "github.com/guidomantilla/yarumo/common/log"
 	cutils "github.com/guidomantilla/yarumo/common/utils"
 )
 

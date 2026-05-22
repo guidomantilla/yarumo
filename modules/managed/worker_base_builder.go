@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	clog "github.com/guidomantilla/yarumo/log"
+	clog "github.com/guidomantilla/yarumo/common/log"
 )
 
 // BuildBaseWorker creates a managed base worker component, starts it in a background goroutine, and returns a stop function.

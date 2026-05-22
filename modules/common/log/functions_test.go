@@ -4,9 +4,9 @@
 // Running them concurrently would race against any other parallel
 // test in the same package that observes the slot.
 //
-// The subpackages (log/slog and log/slog/slogctx) own no global
-// state and their tests run with t.Parallel() on every test and
-// subtest. Tracked in #168 (MAJOR_DRIFT root-package parallelism).
+// The subpackages (modules/log/slog and modules/log/slog/slogctx) own
+// no global state and their tests run with t.Parallel() on every test
+// and subtest. Tracked in #168 (MAJOR_DRIFT root-package parallelism).
 
 package log
 
