@@ -17,6 +17,8 @@ use (
 	./modules/cron/examples
 	./modules/grpc
 	./modules/grpc/examples
+	./modules/http
+	./modules/http/examples
 	./modules/managed
 	./modules/telemetry/otel
 	./modules/validation
