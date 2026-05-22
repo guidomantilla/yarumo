@@ -20,7 +20,7 @@ Conventions and standards for all packages under `modules/common`:
 
    3. **"Pluggable struct" pattern.** When the type achieves polymorphism via **function fields configured through Options**, the struct itself plays the role of both public type and mock point — no separate interface is needed. Different "implementations" appear as different **instances** of the same struct, configured differently. Canonical example: crypto's `*Method` (10 packages: `hashes`, `kdfs`, `ciphers/{aead,hybrid,rsaoaep}`, `signers/{hmacs,ecdsas,ed25519,rsassas}`, `passwords`, `tokens`). The function field (`hashFn`, `kdfFn`, `signFn`, …) is the mockability mechanism; the `With<Xxx>Fn(...)` option is how callers swap behavior. There is intentionally no `Pluggable<X>` wrapper in these packages — the struct IS the pluggable.
 
-   4. **Wrappers over stdlib / external types.** When the constructor's job is to compose / validate inputs and hand back a type owned by another package, return that external type directly. Example: `NewPool(...) (*x509.CertPool, error)` in `crypto/certs/`. This exception also covers wrappers that **extend** the stdlib type with extra methods (e.g. `Trace`, `Fatal`) and return a **package-owned struct mirror** instead of the stdlib type — declaring an interface in the wrapper package would force the parent (the one that owns the abstract contract) to import the wrapper for compliance, closing an import cycle. Canonical example: `common/log/slog/` returns `*Logger` (own struct) so `common/log/` can declare `_ Logger = (*cslog.Logger)(nil)` against its own `Logger` interface via structural typing, keeping the import flow one-way.
+   4. **Wrappers over stdlib / external types.** When the constructor's job is to compose / validate inputs and hand back a type owned by another package, return that external type directly. Example: `NewPool(...) (*x509.CertPool, error)` in `crypto/certs/`. This exception also covers wrappers that **extend** the stdlib type with extra methods (e.g. `Trace`, `Fatal`) and return a **package-owned struct mirror** instead of the stdlib type — declaring an interface in the wrapper package would force the parent (the one that owns the abstract contract) to import the wrapper for compliance, closing an import cycle. Canonical example: `modules/log/slog/` returns `*Logger` (own struct) so `modules/log/` can declare `_ Logger = (*cslog.Logger)(nil)` against its own `Logger` interface via structural typing, keeping the import flow one-way.
 
    In all four cases:
    * `assert.NotNil` / `assert.NotEmpty` still applies to non-variadic required parameters.
@@ -85,7 +85,7 @@ import (
     cerrs   "github.com/guidomantilla/yarumo/common/errs"
     ctypes  "github.com/guidomantilla/yarumo/common/types"
     chashes "github.com/guidomantilla/yarumo/common/crypto/hashes"
-    cslog   "github.com/guidomantilla/yarumo/common/log/slog"
+    cslog   "github.com/guidomantilla/yarumo/log/slog"
 )
 
 // Bad — missing alias
@@ -359,7 +359,6 @@ Organizational rules:
 - [x] common/errs
 - [x] common/grpc
 - [x] common/http
-- [x] common/log
 - [x] common/pointer
 - [x] common/random
 - [x] common/rest

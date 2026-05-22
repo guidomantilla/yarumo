@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/log"
 	"github.com/guidomantilla/yarumo/managed"
 	runtimemetrics "go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"

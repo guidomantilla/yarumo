@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	cslogctx "github.com/guidomantilla/yarumo/common/log/slog/slogctx"
+	cslogctx "github.com/guidomantilla/yarumo/log/slog/slogctx"
 )
 
 // SlogctxExtractor is an AttrExtractor that reads the attribute bag bound to

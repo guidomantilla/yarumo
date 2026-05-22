@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/guidomantilla/yarumo/common/lifecycle"
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/log"
 )
 
 // BuildServer creates a managed gRPC Server, starts it in a background

@@ -3,7 +3,7 @@ package log
 import (
 	"sync/atomic"
 
-	cslog "github.com/guidomantilla/yarumo/common/log/slog"
+	cslog "github.com/guidomantilla/yarumo/log/slog"
 )
 
 // loggerHolder wraps a Logger inside an atomic.Value cell so that Use can swap

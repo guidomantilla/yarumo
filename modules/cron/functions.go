@@ -7,7 +7,7 @@ import (
 	cron "github.com/robfig/cron/v3"
 
 	"github.com/guidomantilla/yarumo/common/lifecycle"
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/log"
 )
 
 // BuildScheduler creates a managed cron Scheduler, starts it in a background

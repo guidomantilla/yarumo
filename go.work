@@ -19,6 +19,7 @@ use (
 	./modules/grpc/examples
 	./modules/http
 	./modules/http/examples
+	./modules/log
 	./modules/managed
 	./modules/telemetry/otel
 	./modules/validation

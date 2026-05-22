@@ -1,10 +1,9 @@
-// Package log provides a structured logging abstraction with support for multiple log levels.
 package log
 
 import (
 	"context"
 
-	cslog "github.com/guidomantilla/yarumo/common/log/slog"
+	cslog "github.com/guidomantilla/yarumo/log/slog"
 )
 
 // Type compliance: slog adapter satisfies the Logger interface, and the

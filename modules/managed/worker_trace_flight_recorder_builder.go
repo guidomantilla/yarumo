@@ -5,7 +5,7 @@ import (
 	"time"
 
 	cdiagnostics "github.com/guidomantilla/yarumo/common/diagnostics"
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/log"
 )
 
 // BuildTraceFlightRecorderWorker creates a managed trace flight recorder worker component, starts it in a background goroutine, and returns a stop function.

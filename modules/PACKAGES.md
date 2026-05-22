@@ -7,7 +7,7 @@
 - API expone funciones libres como superficie principal. El consumidor llama funciones del paquete, no construye y opera sobre tipos del paquete.
 - No exporta structs con invariantes mutables ni constructores `NewXxx(opts ...Option) Interface` con Options pattern. Pueden existir constructores triviales que devuelven valores inmutables bajo interface (ej. `NewUID(name, fn) UID`) sin descalificar el shape.
 - Pueden mantener **estado mutable interno** detrás de las funciones libres (PRNG state, slot `current` swappable vía `Use`, registry map, regex caches). La pureza "mismos args ⇒ mismo resultado" es ideal pero no requisito: ver bloque "Estado mutable de paquete" al final de esta sección.
-- Ejemplos en el repo: `common/assert/`, `common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `common/validation/`, `common/log/`, `common/uids/`.
+- Ejemplos en el repo: `common/assert/`, `common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `common/validation/`, `log/`, `common/uids/`.
 
 ### Inventario en `modules/common/`
 
@@ -17,8 +17,6 @@
 | `cast/` | Type-safe casting (`ToInt`, `ToString`, `ToTime`, `ToDuration`, …) — wrappa `spf13/cast`. |
 | `crypto/random/` | Generación crypto-segura de bytes, números y strings. |
 | `errs/` | Typed errors + error-chain helpers (`As`, `Match`, `Wrap`, `Unwrap`, `ErrorMessages`, `AsErrorInfo`) + JSON-serializable info. |
-| `log/` | Facade de logging estructurado (`Trace`/`Debug`/`Info`/`Warn`/`Error`/`Fatal`) sobre slot mutable swappable vía `Use(Logger)`. Singleton interno detrás de funciones libres. |
-| `log/slog/slogctx/` | Bag context-bound de `slog.Attr` (`WithAttrs`, `SetAttrs`, `Attrs`) para propagar atributos por `context.Context`. |
 | `pointer/` | Helpers para pointers (deref con default, take-address, comparación). |
 | `random/` | Generación pseudoaleatoria no-crypto (`Bytes`, `Number`, `String`, `Text*`). |
 | `rest/` | Cliente REST stateless (`Call`, `CallStream`, `DecodeHTTPError`) con DTOs `RequestSpec`/`ResponseSpec[T]`/`StreamResponseSpec`; concurrency-safe. |
@@ -37,7 +35,7 @@ Aplican las 4 reglas universales con las siguientes extensiones cuando el paquet
 - **R2 (Métodos sobre tipos del concern)** — los métodos (públicos o privados) sobre tipos del concern no necesitan `Fn` alias ni compliance. Su signatura está atada al receiver type; cualquier drift cae en compile-time vía consumers. Aplica también a métodos sobre `Error` struct en `errors.go`.
 - **R4 (Métodos sobre tipos del concern)** — cada método (público o privado) sobre un tipo del concern lleva su doc-comment, mismo rigor que las funciones libres.
 
-**Estado mutable de paquete (singleton interno) no descalifica de Shape A.** Un paquete sigue siendo Shape A cuando su API son funciones libres aunque internamente mantenga estado (`current` slot swappable vía `Use`, registry map, PRNG state, regex caches). Las reglas "mismos args ⇒ mismo resultado" y "ningún `New<X>(...)`" son guías sobre la **forma de la API pública**, no prohibiciones sobre la implementación. Precedentes: `random/` (PRNG interno, `randInt` mockeable), `log/` (slot `current atomic.Value` swappable vía `Use(Logger)`), `uids/` (registry global swappable vía `Use(name)`). Un constructor trivial que devuelve un valor inmutable bajo interface (ej. `NewUID(name, fn) UID`) tampoco descalifica — no hay invariantes mutables ni Options pattern.
+**Estado mutable de paquete (singleton interno) no descalifica de Shape A.** Un paquete sigue siendo Shape A cuando su API son funciones libres aunque internamente mantenga estado (`current` slot swappable vía `Use`, registry map, PRNG state, regex caches). Las reglas "mismos args ⇒ mismo resultado" y "ningún `New<X>(...)`" son guías sobre la **forma de la API pública**, no prohibiciones sobre la implementación. Precedentes: `random/` (PRNG interno, `randInt` mockeable), `modules/log/` (slot `current atomic.Value` swappable vía `Use(Logger)`), `uids/` (registry global swappable vía `Use(name)`). Un constructor trivial que devuelve un valor inmutable bajo interface (ej. `NewUID(name, fn) UID`) tampoco descalifica — no hay invariantes mutables ni Options pattern.
 
 
 ## Paquetes-librería con estado
@@ -129,8 +127,20 @@ Las reglas universales del repo (doc terminado en punto, comenzar por el nombre 
 
 Algunos paquetes bajo `common/` no encajan en ningún shape — porque son envoltorios delgados sobre una librería externa, tienen un constraint de dependencias que justifica la desviación, o su superficie es exclusivamente declaración de tipos (sin funciones libres como API principal). Quedan fuera del inventario de Shape A y Shape B, y de sus reglas.
 
-- `common/log/slog/` — adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `Logger` como **struct público concreto** (no como interface) para que el paquete padre `common/log/` pueda declarar `_ log.Logger = (*cslog.Logger)(nil)` contra su propia interface vía typing estructural, sin cerrar un ciclo de imports. Esta forma encaja en la excepción 4 de `CODING_STANDARDS.md` (criterio 4) y rompe también el patrón Shape B clásico, así que vive acá.
+- `log/slog/` (módulo top-level `modules/log/`) — adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `Logger` como **struct público concreto** (no como interface) para que el paquete padre `log/` pueda declarar `_ log.Logger = (*cslog.Logger)(nil)` contra su propia interface vía typing estructural, sin cerrar un ciclo de imports. Esta forma encaja en la excepción 4 de `CODING_STANDARDS.md` (criterio 4) y rompe también el patrón Shape B clásico, así que vive acá.
 - `common/constraints/` — solo declara type constraints genéricas (`Signed`, `Unsigned`, `Integer`, `Float`, `Complex`, `Number`) + aliases (`Comparable`, `Ordenable`). Sin funciones libres, sin métodos, sin estado. Análogo a `golang.org/x/exp/constraints`. No tiene `functions.go` (no hay funciones); el package doc + declaraciones viven en `types.go` (único archivo).
 - `common/types/` — solo declara el tipo `Bytes []byte` con métodos puros (`ToHex`, `ToBase64Std`/`ToBase64RawStd`/`ToBase64Url`/`ToBase64RawUrl`). Sin funciones libres del paquete. Encaja parcialmente en R1 variante 1 de Shape A (DTO público con métodos puros), pero no cumple el trío base porque no hay funciones libres que justifiquen `functions.go` ni un `types.go` separado del concern: el package doc + tipo + métodos viven todos en `bytes.go` (único archivo).
 - **Subpaquetes de `common/crypto/`** (excepto `common/crypto/random/`, que es Shape A) — siguen el **Crypto Subpackage Standard** documentado en `modules/common/CODING_STANDARDS.md` (sección "Crypto Subpackage Standard", líneas 231-350). El standard define file structure propia (`types.go`, `errors.go`, `<name>.go`, `functions.go`, `options.go`, `extensions.go`) y overrides explícitos a 3 criterios del documento: criterion 3 (struct público concreto, no interface), criterion 4 (constructor devuelve `*Method` con pluggable function fields), criterion 6 (registry multi-instance, no singleton `Use`). Aplica a: `certs/` (utility, no usa Method pattern), `ciphers/aead/`, `ciphers/hybrid/`, `ciphers/rsaoaep/`, `hashes/`, `kdfs/`, `passwords/`, `passwords/generator/`, `signers/ecdsas/`, `signers/ed25519/`, `signers/hmacs/`, `signers/rsassas/`, `tokens/`. Para detalles y compliance ver el standard; PACKAGES.md no duplica esas reglas.
+
+## Módulo `modules/log/`
+
+Top-level (no bajo `common/`) por la misma razón que `modules/cron/`, `modules/grpc/`, `modules/http/`, `modules/cache/`, `modules/managed/` y `modules/telemetry/`: mantiene un slot mutable de logger global a nivel de proceso (`current` / `internal` en `internals.go`), swappable vía `Use(Logger)`. `common/` queda libre de cualquier estado de proceso. Extraído de `common/log/` en #173.
+
+| Subpaquete | Shape | Qué hace |
+|---|---|---|
+| `log/` | Shape A (sin estado a nivel de API; con singleton interno) | Facade de logging estructurado (`Trace`/`Debug`/`Info`/`Warn`/`Error`/`Fatal`) sobre slot mutable swappable vía `Use(Logger)`. Singleton interno detrás de funciones libres. |
+| `log/slog/` | Excepción (struct público concreto, no interface) | Adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `*Logger` como struct público concreto para que `log/` pueda declarar `_ log.Logger = (*cslog.Logger)(nil)` por typing estructural sin cerrar ciclo de imports. Incluye `Options` (`WithLevel`/`WithWriter`/`WithHandlers`/`WithContextExtractors`), `NewFanoutHandler`, `NewContextHandler`, `ReplaceLevel`, `SlogctxExtractor`. |
+| `log/slog/slogctx/` | Shape A | Bag context-bound de `slog.Attr` (`WithAttrs`, `SetAttrs`, `Attrs`) para propagar atributos por `context.Context`. Sin estado de paquete. |
+
+Los tests del paquete raíz `log/` son intencionalmente seriales (sin `t.Parallel()`) porque mutan el slot global. Documentado en cabecera de `log/functions_test.go` y en `log/doc.go`. Los subpaquetes (`log/slog/`, `log/slog/slogctx/`) corren con `t.Parallel()` en todos sus tests.
 

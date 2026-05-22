@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/common/lifecycle"
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/log"
 )
 
 // BuildServer creates a managed HTTP Server, starts it in a background

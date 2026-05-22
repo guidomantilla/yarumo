@@ -25,7 +25,6 @@ import (
 	_ "github.com/guidomantilla/yarumo/common/health"
 	_ "github.com/guidomantilla/yarumo/common/http"
 	_ "github.com/guidomantilla/yarumo/common/lifecycle"
-	_ "github.com/guidomantilla/yarumo/common/log"
 	_ "github.com/guidomantilla/yarumo/common/pointer"
 	_ "github.com/guidomantilla/yarumo/common/random"
 	_ "github.com/guidomantilla/yarumo/common/resilience"

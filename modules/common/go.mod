@@ -2,6 +2,8 @@ module github.com/guidomantilla/yarumo/common
 
 go 1.25.5
 
+replace github.com/guidomantilla/yarumo/log => ../log
+
 require (
 	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc
 	github.com/avast/retry-go/v4 v4.7.0
@@ -10,6 +12,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
+	github.com/guidomantilla/yarumo/log v0.0.0-00010101000000-000000000000
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/rs/xid v1.6.0
 	github.com/sony/gobreaker v1.0.0
