@@ -19,7 +19,6 @@ import (
 	_ "github.com/guidomantilla/yarumo/common/crypto/signers/hmacs"
 	_ "github.com/guidomantilla/yarumo/common/crypto/signers/rsassas"
 	_ "github.com/guidomantilla/yarumo/common/crypto/tokens"
-	_ "github.com/guidomantilla/yarumo/common/diagnostics"
 	_ "github.com/guidomantilla/yarumo/common/errs"
 	_ "github.com/guidomantilla/yarumo/common/expressions"
 	_ "github.com/guidomantilla/yarumo/common/health"

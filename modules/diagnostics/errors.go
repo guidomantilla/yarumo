@@ -10,11 +10,9 @@ import (
 
 // Error type constants for the diagnostics package.
 const (
-	// ProfileCapture is the error type for pprof capture operations.
 	ProfileCapture = "profile_capture"
 )
 
-// Type compliance.
 var (
 	_ error = (*Error)(nil)
 )

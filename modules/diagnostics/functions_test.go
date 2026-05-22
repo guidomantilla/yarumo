@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/guidomantilla/yarumo/common/lifecycle"
 )
 
 // pprofProfileMagic is the gzip magic number prefix used by all pprof
@@ -322,5 +324,202 @@ func TestNewPprofHandler(t *testing.T) {
 		if rec.Code != http.StatusOK {
 			t.Fatalf("got status %d, want %d", rec.Code, http.StatusOK)
 		}
+	})
+}
+
+func TestBuildTraceFlightRecorder(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns non-nil recorder and closeFn", func(t *testing.T) {
+		t.Parallel()
+
+		errChan := make(chan error, 1)
+
+		// Do not actually call Start on the underlying flight recorder
+		// (only one can be active per process). Calling closeFn straight
+		// away signals Stop and waits for the lifecycle goroutine to exit.
+		// We exercise the wire-up here, not the runtime semantics.
+		recorder, closeFn, err := BuildTraceFlightRecorder(context.Background(), "build-tracefr-1", errChan)
+		if err != nil {
+			t.Fatalf("expected nil error, got %v", err)
+		}
+
+		if recorder == nil {
+			t.Fatal("expected non-nil recorder")
+		}
+
+		if closeFn == nil {
+			t.Fatal("expected non-nil closeFn")
+		}
+
+		closeFn(context.Background(), time.Second)
+	})
+
+	t.Run("recorder carries the given name", func(t *testing.T) {
+		t.Parallel()
+
+		errChan := make(chan error, 1)
+
+		recorder, closeFn, err := BuildTraceFlightRecorder(context.Background(), "build-tracefr-named", errChan)
+		if err != nil {
+			t.Fatalf("expected nil error, got %v", err)
+		}
+
+		defer closeFn(context.Background(), time.Second)
+
+		if recorder.Name() != "build-tracefr-named" {
+			t.Fatalf("expected name %q, got %q", "build-tracefr-named", recorder.Name())
+		}
+	})
+
+	t.Run("returned closeFn drains the background goroutine", func(t *testing.T) {
+		t.Parallel()
+
+		errChan := make(chan error, 1)
+
+		recorder, closeFn, err := BuildTraceFlightRecorder(context.Background(), "build-tracefr-drain", errChan)
+		if err != nil {
+			t.Fatalf("expected nil error, got %v", err)
+		}
+
+		closeFn(context.Background(), time.Second)
+
+		select {
+		case <-recorder.Done():
+		default:
+			t.Fatal("expected recorder Done closed after closeFn returned")
+		}
+	})
+
+	t.Run("matches the BuildTraceFlightRecorderFn signature", func(t *testing.T) {
+		t.Parallel()
+
+		var fn BuildTraceFlightRecorderFn = BuildTraceFlightRecorder
+
+		errChan := make(chan error, 1)
+
+		_, closeFn, err := fn(context.Background(), "build-tracefr-fn", errChan)
+		if err != nil {
+			t.Fatalf("expected nil error, got %v", err)
+		}
+
+		closeFn(context.Background(), time.Second)
+	})
+
+	t.Run("errChan accepts startup errors without blocking", func(t *testing.T) {
+		t.Parallel()
+
+		// Unbuffered channel: a non-blocking send by lifecycle.Start
+		// should fall through the default arm. The build itself must
+		// still succeed.
+		errChan := make(chan error)
+
+		_, closeFn, err := BuildTraceFlightRecorder(context.Background(), "build-tracefr-errchan", lifecycle.ErrChan(errChan))
+		if err != nil {
+			t.Fatalf("expected nil error, got %v", err)
+		}
+
+		closeFn(context.Background(), time.Second)
+	})
+}
+
+func TestBuildBlockProfiling(t *testing.T) {
+	t.Run("returns non-nil sampler and closeFn", func(t *testing.T) {
+		blockProfileMu.Lock()
+		defer blockProfileMu.Unlock()
+		defer runtime.SetBlockProfileRate(0)
+
+		errChan := make(chan error, 1)
+
+		sampler, closeFn, err := BuildBlockProfiling(context.Background(), "build-blockprof-1", errChan)
+		if err != nil {
+			t.Fatalf("expected nil error, got %v", err)
+		}
+
+		if sampler == nil {
+			t.Fatal("expected non-nil sampler")
+		}
+
+		if closeFn == nil {
+			t.Fatal("expected non-nil closeFn")
+		}
+
+		closeFn(context.Background(), time.Second)
+	})
+
+	t.Run("sampler carries the given name and rate", func(t *testing.T) {
+		blockProfileMu.Lock()
+		defer blockProfileMu.Unlock()
+		defer runtime.SetBlockProfileRate(0)
+
+		errChan := make(chan error, 1)
+
+		sampler, closeFn, err := BuildBlockProfiling(context.Background(), "build-blockprof-named", errChan, WithBlockProfileRate(250))
+		if err != nil {
+			t.Fatalf("expected nil error, got %v", err)
+		}
+
+		defer closeFn(context.Background(), time.Second)
+
+		if sampler.Name() != "build-blockprof-named" {
+			t.Fatalf("expected name %q, got %q", "build-blockprof-named", sampler.Name())
+		}
+
+		if sampler.Rate() != 250 {
+			t.Fatalf("expected rate %d, got %d", 250, sampler.Rate())
+		}
+	})
+
+	t.Run("returned closeFn drains the background goroutine", func(t *testing.T) {
+		blockProfileMu.Lock()
+		defer blockProfileMu.Unlock()
+		defer runtime.SetBlockProfileRate(0)
+
+		errChan := make(chan error, 1)
+
+		sampler, closeFn, err := BuildBlockProfiling(context.Background(), "build-blockprof-drain", errChan)
+		if err != nil {
+			t.Fatalf("expected nil error, got %v", err)
+		}
+
+		closeFn(context.Background(), time.Second)
+
+		select {
+		case <-sampler.Done():
+		default:
+			t.Fatal("expected sampler Done closed after closeFn returned")
+		}
+	})
+
+	t.Run("matches the BuildBlockProfilingFn signature", func(t *testing.T) {
+		blockProfileMu.Lock()
+		defer blockProfileMu.Unlock()
+		defer runtime.SetBlockProfileRate(0)
+
+		var fn BuildBlockProfilingFn = BuildBlockProfiling
+
+		errChan := make(chan error, 1)
+
+		_, closeFn, err := fn(context.Background(), "build-blockprof-fn", errChan)
+		if err != nil {
+			t.Fatalf("expected nil error, got %v", err)
+		}
+
+		closeFn(context.Background(), time.Second)
+	})
+
+	t.Run("errChan accepts startup errors without blocking", func(t *testing.T) {
+		blockProfileMu.Lock()
+		defer blockProfileMu.Unlock()
+		defer runtime.SetBlockProfileRate(0)
+
+		errChan := make(chan error)
+
+		_, closeFn, err := BuildBlockProfiling(context.Background(), "build-blockprof-errchan", lifecycle.ErrChan(errChan))
+		if err != nil {
+			t.Fatalf("expected nil error, got %v", err)
+		}
+
+		closeFn(context.Background(), time.Second)
 	})
 }
