@@ -1,0 +1,151 @@
+version: "2"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  default: all
+
+  disable:
+    - dupl
+    - err113
+    - exhaustruct
+    - godot
+    - gomoddirectives
+    - iface
+    - ireturn
+    - lll
+    - mnd
+    - nlreturn
+    - revive
+    - tagliatelle
+    - testpackage
+    - varnamelen
+    - whitespace
+    - wsl
+    - wsl_v5
+
+  settings:
+    depguard:
+      rules:
+        main:
+          list-mode: original
+          deny:
+            # ------------------------------------------------------------------------
+            # LOGGING
+            # ------------------------------------------------------------------------
+            - pkg: "^log$"
+              desc: "use log/slog instead of stdlib log"
+            - pkg: "github.com/sirupsen/logrus"
+              desc: "use log/slog instead of logrus"
+            - pkg: "go.uber.org/zap"
+              desc: "use log/slog instead of zap"
+            - pkg: "github.com/rs/zerolog"
+              desc: "use log/slog instead of zerolog"
+
+            # ------------------------------------------------------------------------
+            # TESTING
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/stretchr/testify"
+              desc: "use t.Fatal/t.Fatalf instead of testify assertions"
+
+            # ------------------------------------------------------------------------
+            # LEGACY ERRORS
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/pkg/errors"
+              desc: "use errs.Wrap(sentinel, err) with a sentinel from errors.go"
+
+            # ------------------------------------------------------------------------
+            # DEPRECATED IO
+            # ------------------------------------------------------------------------
+            - pkg: "io/ioutil"
+              desc: "ioutil is deprecated since Go 1.16"
+
+            # ------------------------------------------------------------------------
+            # DEPRECATED PROTOBUF
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/golang/protobuf"
+              desc: "use google.golang.org/protobuf instead (v1 API is deprecated)"
+
+            # ------------------------------------------------------------------------
+            # BANNED DEPENDENCIES
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/spf13/viper"
+              desc: "viper is not allowed in grpc module"
+
+    forbidigo:
+      forbid:
+        - pattern: ^(fmt\.Print(|f|ln)|fmt\.Fprint(|f|ln)|print|println)$
+          msg: "use the project logger (log/slog) instead of direct print statements"
+
+    funlen:
+      lines: 220
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+  exclusions:
+    rules:
+      # Exclude some linters from running on tests files.
+      - path: _test\.go
+        linters:
+          - cyclop
+          - errcheck
+          - errchkjson
+          - errname
+          - forbidigo
+          - containedctx
+          - funlen
+          - gocognit
+          - gocyclo
+          - gosec
+          - maintidx
+          - noctx
+          - wrapcheck
+          - forcetypeassert
+      # sentinel errors and type compliance vars are package-level by design
+      - path: (errors|types)\.go
+        linters:
+          - gochecknoglobals
+      # interceptors return status.Errorf directly; context comes from gRPC framework
+      # recovery interceptors use named returns so defer can assign the error
+      # recovery interceptors use runtime/debug.Stack() to capture full panic stacks (YA-0037)
+      - path: functions\.go
+        linters:
+          - wrapcheck
+          - contextcheck
+          - nonamedreturns
+          - depguard
+      # stack-capture test mutates the global logger via clog.Use; cannot be parallel
+      - path: functions_test\.go
+        linters:
+          - paralleltest
+          - tparallel
+      # server delegates directly to *grpc.Server; wrapping errors adds no value.
+      # cassert.NotNil guards the receiver invariant, not a ctx-bound operation
+      # (contextcheck false positive). Explicit s.Server.* accessor is preferred
+      # over the promoted form for readability when our Start/Stop shadow the
+      # embedded methods.
+      - path: server\.go
+        linters:
+          - wrapcheck
+          - contextcheck
+          - staticcheck
+      # Examples are runnable demos.
+      - path: examples/
+        linters:
+          - forbidigo
+          - gochecknoglobals
+          - gochecknoinits
+          - errcheck
+          - wrapcheck
+          - noctx
+          - gosec
+          - funlen
+          - mnd
+          - lll
+          - gocyclo
+          - maintidx
+          - perfsprint
+          - staticcheck

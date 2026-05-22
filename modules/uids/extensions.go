@@ -6,19 +6,17 @@ import (
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 )
 
-// Preconfigured registry of available UID generators.
-var methods = map[string]UID{
-	UuidV4.Name(): UuidV4,
-	NanoID.Name(): NanoID,
-	Cuid2.Name():  Cuid2,
-	UuidV7.Name(): UuidV7,
-	Ulid.Name():   Ulid,
-	XId.Name():    XId,
-}
+// methods holds the registry of UID generators. The parent module ships
+// no preconfigured entries; consumers explicitly call Register at startup
+// for the providers they want to look up by name (no init()-based auto
+// registration).
+var methods = map[string]UID{}
 
 var lock = new(sync.RWMutex)
 
-// Register adds a UID generator to the registry.
+// Register adds a UID generator to the registry. Intended to be called
+// explicitly at application startup for each provider singleton the
+// consumer wants to look up by name (e.g. uids.Register(uuid.UuidV4)).
 func Register(uid UID) {
 	cassert.NotNil(uid, "uid is nil")
 

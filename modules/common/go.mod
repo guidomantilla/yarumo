@@ -3,15 +3,12 @@ module github.com/guidomantilla/yarumo/common
 go 1.25.5
 
 require (
-	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc
 	github.com/avast/retry-go/v4 v4.7.0
 	github.com/cloudflare/circl v1.6.3
-	github.com/devmiek/nanoid-go v0.0.0-20241216084707-e17e38258ffc
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/oklog/ulid/v2 v2.1.1
-	github.com/rs/xid v1.6.0
 	github.com/sony/gobreaker v1.0.0
 	github.com/spf13/cast v1.10.0
 	golang.org/x/crypto v0.48.0

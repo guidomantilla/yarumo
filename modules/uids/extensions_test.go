@@ -66,13 +66,15 @@ func TestLookup(t *testing.T) {
 	defer restoreMethods(snap)
 
 	t.Run("returns registered UID", func(t *testing.T) {
-		uid, err := Lookup("UUIDv4")
+		Register(NewUID("REG", func() (string, error) { return "reg", nil }))
+
+		uid, err := Lookup("REG")
 		if err != nil {
-			t.Fatalf("Lookup(UUIDv4) error: %v", err)
+			t.Fatalf("Lookup(REG) error: %v", err)
 		}
 
-		if uid.Name() != "UUIDv4" {
-			t.Fatalf("Name() = %q, want %q", uid.Name(), "UUIDv4")
+		if uid.Name() != "REG" {
+			t.Fatalf("Name() = %q, want %q", uid.Name(), "REG")
 		}
 	})
 
@@ -93,14 +95,17 @@ func TestSupported(t *testing.T) {
 	snap := snapshotMethods()
 	defer restoreMethods(snap)
 
-	t.Run("returns all default UIDs", func(t *testing.T) {
+	t.Run("returns empty list when no providers registered", func(t *testing.T) {
+		methods = map[string]UID{}
+
 		list := Supported()
-		if len(list) != 6 {
-			t.Fatalf("expected 6 UIDs, got %d", len(list))
+		if len(list) != 0 {
+			t.Fatalf("expected 0 UIDs, got %d", len(list))
 		}
 	})
 
 	t.Run("includes newly registered UID", func(t *testing.T) {
+		methods = map[string]UID{}
 		Register(NewUID("NEW", func() (string, error) { return "new", nil }))
 
 		list := Supported()

@@ -7,7 +7,7 @@ import (
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cuids "github.com/guidomantilla/yarumo/common/uids"
+	cuuid "github.com/guidomantilla/yarumo/uids/uuid"
 
 	"github.com/guidomantilla/yarumo/decisions/core/repository"
 )
@@ -87,7 +87,7 @@ func (s *service[D]) Execute(ctx context.Context, request Request[D]) (Result, e
 	}
 
 	if s.options.auditLog != nil {
-		id, idErr := cuids.UuidV7.Generate()
+		id, idErr := cuuid.UuidV7.Generate()
 		if idErr != nil {
 			return result, ErrAudit(idErr)
 		}

@@ -22,6 +22,12 @@ use (
 	./modules/log
 	./modules/managed
 	./modules/telemetry/otel
+	./modules/uids
+	./modules/uids/cuid2
+	./modules/uids/nanoid
+	./modules/uids/ulid
+	./modules/uids/uuid
+	./modules/uids/xid
 	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples

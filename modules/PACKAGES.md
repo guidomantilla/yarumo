@@ -7,7 +7,7 @@
 - API expone funciones libres como superficie principal. El consumidor llama funciones del paquete, no construye y opera sobre tipos del paquete.
 - No exporta structs con invariantes mutables ni constructores `NewXxx(opts ...Option) Interface` con Options pattern. Pueden existir constructores triviales que devuelven valores inmutables bajo interface (ej. `NewUID(name, fn) UID`) sin descalificar el shape.
 - Pueden mantener **estado mutable interno** detrás de las funciones libres (PRNG state, slot `current` swappable vía `Use`, registry map, regex caches). La pureza "mismos args ⇒ mismo resultado" es ideal pero no requisito: ver bloque "Estado mutable de paquete" al final de esta sección.
-- Ejemplos en el repo: `common/assert/`, `common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `common/validation/`, `common/log/`, `common/uids/`.
+- Ejemplos en el repo: `common/assert/`, `common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `common/validation/`, `common/log/`, `uids/` (top-level — ver más abajo).
 
 ### Inventario en `modules/common/`
 
@@ -21,9 +21,36 @@
 | `pointer/` | Helpers para pointers (deref con default, take-address, comparación). |
 | `random/` | Generación pseudoaleatoria no-crypto (`Bytes`, `Number`, `String`, `Text*`). |
 | `rest/` | Cliente REST stateless (`Call`, `CallStream`, `DecodeHTTPError`) con DTOs `RequestSpec`/`ResponseSpec[T]`/`StreamResponseSpec`; concurrency-safe. |
-| `uids/` | Generadores (`UUIDv4`/`UUIDv7`/`ULID`/`NanoID`/`CUID2`/`XID`) + validadores (`IsUUID`/…) + registry global swappable de algoritmos vía `Register`/`Use`/`Generate`. Concern "valor UID" en `uids.go`; concern "registry" en `extensions.go`. |
 | `utils/` | Funciones genéricas (`Coalesce`, `Ternary`, `Empty`, `RandomString`, case-helpers `PascalCase`/`SnakeCase`/…). |
 | `validation/` | Leaves de validación (`IsRequired`, `MinLen`, `IsEmail`, `IsUUID`, …) + reflexión por dotted path (`GetField`). |
+
+### Inventario en `modules/uids/` (top-level — módulo separado de `common/`)
+
+Extraído de `common/uids/` para que cada consumer solo pague por los providers que importa. El parent `modules/uids/` no depende de ningún UID-library externo: solo expone la interface `UID`, el constructor `NewUID`, el registry (`Register`/`Lookup`/`Supported`) y la familia de errores tipados (`Error`/`ErrAlgorithmNotSupported`/`ErrGeneration`). Los providers viven en sub-módulos con su propio `go.mod`. **No hay auto-registración vía `init()`**: el consumer importa el sub-módulo directamente y o bien usa el singleton/funciones, o bien registra explícitamente al startup si necesita lookup por nombre:
+
+```go
+import "github.com/guidomantilla/yarumo/uids/uuid"
+
+// Uso directo del singleton:
+id, err := uuid.UuidV7.Generate()
+
+// O de la función libre:
+id, err := uuid.UUIDv7()
+
+// O registro explícito para lookup centralizado (opt-in, no init):
+uids.Register(uuid.UuidV7)
+```
+
+| Paquete | Qué hace |
+|---|---|
+| `modules/uids/` | Parent: interface `UID`, constructor `NewUID`, registry (`Register`/`Lookup`/`Supported`), domain error type + `ErrAlgorithmNotSupported`/`ErrGeneration` factories. Sin deps de providers. |
+| `modules/uids/cuid2/` | Provider CUID2 (`CUID2`, `IsCUID2`, singleton `Cuid2`); depende de `github.com/akshayvadher/cuid2`. |
+| `modules/uids/nanoid/` | Provider NanoID (`NANOID`, `IsNanoID`, singleton `NanoID`); depende de `github.com/devmiek/nanoid-go`. |
+| `modules/uids/uuid/` | Provider UUID v4 + v7 (`UUIDv4`, `UUIDv7`, `IsUUID`, singletons `UuidV4`/`UuidV7`); depende de `github.com/google/uuid`. |
+| `modules/uids/ulid/` | Provider ULID (`ULID`, `IsULID`, singleton `Ulid`); depende de `github.com/oklog/ulid/v2`. |
+| `modules/uids/xid/` | Provider XID (`XID`, `IsXID`, singleton `XId`); depende de `github.com/rs/xid`. |
+
+El parent es Shape A (registry + interface + factory `NewUID` trivial sin Options); cada leaf es también Shape A puro (solo funciones libres `<ALGO>`/`Is<ALGO>` + singleton preconfigurado en `functions.go`). Sin `extensions.go` y sin `init()` — un sub-módulo provider es un solo concern, no hay funciones libres ajenas que justifiquen un archivo separado, y la auto-registración por side effect de import sería anti-idiomática. El singleton del leaf es un `var Xxx = uids.NewUID(Name, FN)` — sin invariantes mutables.
 
 ### Extensiones a las reglas
 
@@ -31,12 +58,12 @@ Aplican las 4 reglas universales con las siguientes extensiones cuando el paquet
 
 - **R1 (Concern por archivo)** — un paquete puede agrupar un concern en su propio archivo, nombrado por el concern (ej. `specs.go`, `uids.go`, `extensions.go`). El archivo de concern reúne **todo** lo que pertenece a ese concern: struct (público o privado), constructores, métodos, singletons preconfigurados, vars privadas de estado, regexes/constantes privadas. La partición visibility (functions.go/internals.go) **no aplica dentro de un archivo de concern**: públicos y privados conviven porque la unidad es el concern.
   - **Variante DTO público con métodos puros**: ej. `rest/specs.go` — `RequestSpec`/`ResponseSpec` públicos con `Build` (pública) + 3 helpers privados (`buildHeaders`, `marshalBody`, `buildURL`).
-  - **Variante struct privado expuesto vía interface pública**: ej. `uids/uids.go` — struct `uid` privado, interface `UID` pública, `NewUID` (constructor trivial) + métodos + singletons preconfigurados (`UuidV4`, `NanoID`, …).
-  - **Variante funciones libres de un concern ajeno al resto del paquete**: ej. `uids/extensions.go` — registry global del paquete con state (`methods` map, `current`, `lock`) + funciones de registro (`Register`/`Get`/`Use`/`Generate`/`Supported`). Las funciones públicas no se mueven a `functions.go` porque pertenecen al concern del archivo, no al pool general de funciones libres.
+  - **Variante struct privado expuesto vía interface pública**: ej. `modules/uids/uids.go` — struct `uid` privado, interface `UID` pública, `NewUID` (constructor trivial) + métodos. Los singletons preconfigurados (`UuidV4`, `NanoID`, …) viven en los leaves `modules/uids/<provider>/`, no en el parent.
+  - **Variante funciones libres de un concern ajeno al resto del paquete**: ej. `modules/uids/extensions.go` — registry global del paquete con state (`methods` map, `lock`) + funciones de registro (`Register`/`Lookup`/`Supported`). Las funciones públicas no se mueven a `functions.go` porque pertenecen al concern del archivo, no al pool general de funciones libres.
 - **R2 (Métodos sobre tipos del concern)** — los métodos (públicos o privados) sobre tipos del concern no necesitan `Fn` alias ni compliance. Su signatura está atada al receiver type; cualquier drift cae en compile-time vía consumers. Aplica también a métodos sobre `Error` struct en `errors.go`.
 - **R4 (Métodos sobre tipos del concern)** — cada método (público o privado) sobre un tipo del concern lleva su doc-comment, mismo rigor que las funciones libres.
 
-**Estado mutable de paquete (singleton interno) no descalifica de Shape A.** Un paquete sigue siendo Shape A cuando su API son funciones libres aunque internamente mantenga estado (`current` slot swappable vía `Use`, registry map, PRNG state, regex caches). Las reglas "mismos args ⇒ mismo resultado" y "ningún `New<X>(...)`" son guías sobre la **forma de la API pública**, no prohibiciones sobre la implementación. Precedentes: `random/` (PRNG interno, `randInt` mockeable), `common/log/` (slot `current atomic.Value` swappable vía `Use(Logger)`), `uids/` (registry global swappable vía `Use(name)`). Un constructor trivial que devuelve un valor inmutable bajo interface (ej. `NewUID(name, fn) UID`) tampoco descalifica — no hay invariantes mutables ni Options pattern.
+**Estado mutable de paquete (singleton interno) no descalifica de Shape A.** Un paquete sigue siendo Shape A cuando su API son funciones libres aunque internamente mantenga estado (`current` slot swappable vía `Use`, registry map, PRNG state, regex caches). Las reglas "mismos args ⇒ mismo resultado" y "ningún `New<X>(...)`" son guías sobre la **forma de la API pública**, no prohibiciones sobre la implementación. Precedentes: `random/` (PRNG interno, `randInt` mockeable), `common/log/` (slot `current atomic.Value` swappable vía `Use(Logger)`), `modules/uids/` (registry global poblado vía `Register` desde provider leaves). Un constructor trivial que devuelve un valor inmutable bajo interface (ej. `NewUID(name, fn) UID`) tampoco descalifica — no hay invariantes mutables ni Options pattern.
 
 
 ## Paquetes-librería con estado
@@ -56,7 +83,7 @@ Aplican las 4 reglas universales con las siguientes extensiones cuando el paquet
 | `http/` | `Client` + `Server` HTTP con retry/limiter, defaults seguros para timeouts/headers. |
 | `resilience/` | `CircuitBreaker` + `RateLimiter` (instancias) con registry lazy goroutine-free. |
 
-**Concerns ajenos en archivos `<concern>.go`** — mismo principio que R1 de Shape A (concern por archivo) aplicado a funciones libres: cuando dos grupos de funciones libres pertenecen a concerns ajenos entre sí, se separan en archivos `<concern>.go` en vez de mezclarse en `functions.go`. Precedentes: `diagnostics/handlers.go` (HTTP handlers `NewPprofHandler` distintos de las capturas de profile en `functions.go`); `uids/extensions.go` (registry global del paquete con state + `Register`/`Get`/`Use`/`Generate`/`Supported`, distinto de los generadores/validadores libres en `functions.go`).
+**Concerns ajenos en archivos `<concern>.go`** — mismo principio que R1 de Shape A (concern por archivo) aplicado a funciones libres: cuando dos grupos de funciones libres pertenecen a concerns ajenos entre sí, se separan en archivos `<concern>.go` en vez de mezclarse en `functions.go`. Precedentes: `diagnostics/handlers.go` (HTTP handlers `NewPprofHandler` distintos de las capturas de profile en `functions.go`); `modules/uids/extensions.go` (registry global del paquete con state + `Register`/`Lookup`/`Supported`, distinto del constructor `NewUID` en `uids.go`). Los provider leaves de `modules/uids/<provider>/` NO usan `extensions.go` porque cada sub-módulo es un solo concern (ese provider); el singleton preconfigurado vive directamente en `functions.go`.
 
 ### Diferencias con las reglas
 
