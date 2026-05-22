@@ -7,8 +7,6 @@ import (
 
 	cdiagnostics "github.com/guidomantilla/yarumo/common/diagnostics"
 	chttp "github.com/guidomantilla/yarumo/common/http"
-	ccron "github.com/guidomantilla/yarumo/cron"
-	cgrpc "github.com/guidomantilla/yarumo/grpc"
 )
 
 // Worker defines the interface for a managed worker with start, stop, and done lifecycle methods.
@@ -36,19 +34,9 @@ type BaseWorker interface {
 	Worker
 }
 
-// CronWorker defines the interface for a cron-scheduled managed worker.
-type CronWorker interface {
-	Worker
-}
-
 // TraceFlightRecorderWorker defines the interface for a trace flight recorder managed worker.
 type TraceFlightRecorderWorker interface {
 	Worker
-}
-
-// GrpcServer defines the interface for a managed gRPC server.
-type GrpcServer interface {
-	HttpServer
 }
 
 // ErrChan is a send-only error channel used by builders to report startup errors.
@@ -67,17 +55,13 @@ type Component[T any] struct {
 type BuildFn[I any, C any] func(ctx context.Context, name string, internal I, errChan ErrChan) (Component[C], StopFn, error)
 
 var (
-	_ BuildFn[cgrpc.Server, GrpcServer]                                    = BuildGrpcServer
 	_ BuildFn[chttp.Server, HttpServer]                                    = BuildHttpServer
-	_ BuildFn[ccron.Scheduler, CronWorker]                                 = BuildCronWorker
 	_ BuildFn[any, BaseWorker]                                             = BuildBaseWorker
 	_ BuildFn[cdiagnostics.TraceFlightRecorder, TraceFlightRecorderWorker] = BuildTraceFlightRecorderWorker
 )
 
 var (
-	_ GrpcServer                = (*grpcAdapter)(nil)
 	_ HttpServer                = (*httpAdapter)(nil)
 	_ BaseWorker                = (*baseWorker)(nil)
-	_ CronWorker                = (*cronWorker)(nil)
 	_ TraceFlightRecorderWorker = (*traceFlightRecorderWorker)(nil)
 )

@@ -18,12 +18,12 @@ func TestError_Error(t *testing.T) {
 		}
 	})
 
-	t.Run("wraps with ErrGrpcServerFailed sentinel", func(t *testing.T) {
+	t.Run("wraps with ErrServerFailed sentinel", func(t *testing.T) {
 		t.Parallel()
 
 		err := ErrServer(errors.New("inner"))
-		if !errors.Is(err, ErrGrpcServerFailed) {
-			t.Fatal("expected error to wrap ErrGrpcServerFailed")
+		if !errors.Is(err, ErrServerFailed) {
+			t.Fatal("expected error to wrap ErrServerFailed")
 		}
 	})
 
@@ -69,8 +69,8 @@ func TestErrServer(t *testing.T) {
 			t.Fatal("expected error to wrap cause2")
 		}
 
-		if !errors.Is(err, ErrGrpcServerFailed) {
-			t.Fatal("expected error to wrap ErrGrpcServerFailed")
+		if !errors.Is(err, ErrServerFailed) {
+			t.Fatal("expected error to wrap ErrServerFailed")
 		}
 	})
 }
@@ -78,15 +78,15 @@ func TestErrServer(t *testing.T) {
 func TestSentinelErrors(t *testing.T) {
 	t.Parallel()
 
-	t.Run("ErrGrpcServerFailed is not nil", func(t *testing.T) {
+	t.Run("ErrServerFailed is not nil", func(t *testing.T) {
 		t.Parallel()
 
-		if ErrGrpcServerFailed == nil {
-			t.Fatal("ErrGrpcServerFailed should not be nil")
+		if ErrServerFailed == nil {
+			t.Fatal("ErrServerFailed should not be nil")
 		}
 
-		if ErrGrpcServerFailed.Error() == "" {
-			t.Fatal("ErrGrpcServerFailed message should not be empty")
+		if ErrServerFailed.Error() == "" {
+			t.Fatal("ErrServerFailed message should not be empty")
 		}
 	})
 }

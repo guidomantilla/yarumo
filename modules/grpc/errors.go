@@ -30,7 +30,7 @@ func (e *Error) Error() string {
 
 // Sentinel errors for common gRPC server failure modes.
 var (
-	ErrGrpcServerFailed = errors.New("grpc server failed")
+	ErrServerFailed = errors.New("grpc server failed")
 )
 
 // ErrServer wraps one or more errors into a domain Error.
@@ -38,7 +38,7 @@ func ErrServer(errs ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
 			Type: ServerType,
-			Err:  errors.Join(append(errs, ErrGrpcServerFailed)...),
+			Err:  errors.Join(append(errs, ErrServerFailed)...),
 		},
 	}
 }

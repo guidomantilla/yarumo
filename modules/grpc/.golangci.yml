@@ -122,7 +122,30 @@ linters:
         linters:
           - paralleltest
           - tparallel
-      # server delegates directly to *grpc.Server; wrapping errors adds no value
+      # server delegates directly to *grpc.Server; wrapping errors adds no value.
+      # cassert.NotNil guards the receiver invariant, not a ctx-bound operation
+      # (contextcheck false positive). Explicit s.Server.* accessor is preferred
+      # over the promoted form for readability when our Start/Stop shadow the
+      # embedded methods.
       - path: server\.go
         linters:
           - wrapcheck
+          - contextcheck
+          - staticcheck
+      # Examples are runnable demos.
+      - path: examples/
+        linters:
+          - forbidigo
+          - gochecknoglobals
+          - gochecknoinits
+          - errcheck
+          - wrapcheck
+          - noctx
+          - gosec
+          - funlen
+          - mnd
+          - lll
+          - gocyclo
+          - maintidx
+          - perfsprint
+          - staticcheck

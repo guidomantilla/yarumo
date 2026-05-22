@@ -27,8 +27,10 @@ type scheduler struct {
 func NewScheduler(name string, options ...cron.Option) Scheduler {
 	cassert.NotEmpty(name, "name is empty")
 
+	internal := cron.New(options...)
+
 	return &scheduler{
-		Cron: cron.New(options...),
+		Cron: internal,
 		name: name,
 		done: make(chan struct{}),
 	}
