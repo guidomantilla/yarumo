@@ -2,65 +2,107 @@ package cache
 
 import (
 	"context"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/dgraph-io/ristretto/v2"
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	ccache "github.com/guidomantilla/yarumo/common/cache"
+	"github.com/guidomantilla/yarumo/common/lifecycle"
 	cpointer "github.com/guidomantilla/yarumo/common/pointer"
 )
 
 // ristrettoCache is a ristretto-backed Cache[string, V] implementation.
 // Keys are stored under the resolved key prefix (default "<name>:"); the
 // prefix is decorative in ristretto since storage is per-instance, but
-// applied uniformly with the redis backend for consistency.
+// applied uniformly with the redis backend for consistency. The
+// underlying ristretto client is constructed lazily in Start (which can
+// fail with invalid config) and released in Stop.
 type ristrettoCache[V any] struct {
 	name      string
 	keyPrefix string
 	options   *Options
 	client    *ristretto.Cache[string, V]
-	stopped   atomic.Bool
+
+	done chan struct{}
+	once sync.Once
 }
 
-// BuildRistrettoCache builds a ristretto-backed Cache[string, V] under the
-// given name. Options control the per-cache TTL default, the key prefix,
-// and the underlying ristretto admission/eviction tuning. Returns an error
-// wrapping ErrRistrettoInitFailed when ristretto.NewCache rejects the
-// configuration. WithLazyInit, WithRedis*, and WithCodec are accepted but
-// ignored by this backend.
-func BuildRistrettoCache[V any](name string, opts ...Option) (ccache.Cache[string, V], error) {
+// NewRistrettoCache constructs a ristretto-backed Cache[string, V] under
+// the given name. The constructor performs no I/O and cannot fail: the
+// ristretto client is instantiated in Start, where invalid configuration
+// surfaces as a lifecycle.ErrStart wrapping ErrRistrettoInitFailed. The
+// redis-only options (WithRedisAddr, WithRedisPassword, WithRedisDB) and
+// WithCodec are accepted but ignored by this backend.
+func NewRistrettoCache[V any](name string, opts ...Option) ccache.Cache[string, V] {
 	cassert.NotEmpty(name, "name is empty")
 
 	options := NewOptions(opts...)
-
-	client, err := ristretto.NewCache(&ristretto.Config[string, V]{
-		NumCounters: options.ristrettoNumCtrs,
-		MaxCost:     options.ristrettoMaxCost,
-		BufferItems: options.ristrettoBufItems,
-	})
-	if err != nil {
-		return nil, ErrInit(err)
-	}
 
 	return &ristrettoCache[V]{
 		name:      name,
 		keyPrefix: ccache.ResolveKeyPrefix(name, options.keyPrefix),
 		options:   options,
-		client:    client,
-	}, nil
+		done:      make(chan struct{}),
+	}
 }
 
-// Name returns the cache name supplied to BuildRistrettoCache.
+// Name returns the cache name supplied to NewRistrettoCache.
 func (c *ristrettoCache[V]) Name() string {
 	cassert.NotNil(c, "ristretto cache receiver is nil")
 
 	return c.name
 }
 
-// Get returns the value stored at key or an error wrapping ErrCacheMiss when
-// the key is absent or has been evicted by the ristretto admission policy.
+// Start instantiates the underlying ristretto client with the configured
+// counter count, max cost and buffer items. It satisfies the
+// lifecycle.Component worker-style contract: returns immediately on
+// success, or returns a lifecycle.ErrStart wrapping ErrRistrettoInitFailed
+// when ristretto rejects the configuration.
+func (c *ristrettoCache[V]) Start(_ context.Context) error {
+	cassert.NotNil(c, "ristretto cache receiver is nil")
+
+	client, err := ristretto.NewCache(&ristretto.Config[string, V]{
+		NumCounters: c.options.ristrettoNumCtrs,
+		MaxCost:     c.options.ristrettoMaxCost,
+		BufferItems: c.options.ristrettoBufItems,
+	})
+	if err != nil {
+		return lifecycle.ErrStart(ErrInit(err))
+	}
+
+	c.client = client
+
+	return nil
+}
+
+// Stop releases the underlying ristretto client and closes Done. It is
+// idempotent: only the first call closes the client; subsequent calls
+// are no-ops returning nil.
+func (c *ristrettoCache[V]) Stop(_ context.Context) error {
+	cassert.NotNil(c, "ristretto cache receiver is nil")
+
+	c.once.Do(func() {
+		if c.client != nil {
+			c.client.Close()
+		}
+		close(c.done)
+	})
+
+	return nil
+}
+
+// Done returns the channel that is closed after Stop has been called.
+func (c *ristrettoCache[V]) Done() <-chan struct{} {
+	cassert.NotNil(c, "ristretto cache receiver is nil")
+
+	return c.done
+}
+
+// Get returns the value stored at key or an error wrapping ErrCacheMiss
+// when the key is absent or has been evicted by the ristretto admission
+// policy.
 func (c *ristrettoCache[V]) Get(_ context.Context, key string) (V, error) {
 	cassert.NotNil(c, "ristretto cache receiver is nil")
 
@@ -72,9 +114,10 @@ func (c *ristrettoCache[V]) Get(_ context.Context, key string) (V, error) {
 	return value, nil
 }
 
-// Set stores value under key with the given TTL. A non-positive ttl resolves
-// to the cache default configured via WithTTL. Returns an error wrapping
-// ErrRistrettoSetRejected when ristretto rejects the write (admission policy).
+// Set stores value under key with the given TTL. A non-positive ttl
+// resolves to the cache default configured via WithTTL. Returns an error
+// wrapping ErrRistrettoSetRejected when ristretto rejects the write
+// (admission policy).
 func (c *ristrettoCache[V]) Set(_ context.Context, key string, value V, ttl time.Duration) error {
 	cassert.NotNil(c, "ristretto cache receiver is nil")
 
@@ -115,19 +158,5 @@ func (c *ristrettoCache[V]) Clear(_ context.Context) error {
 	cassert.NotNil(c, "ristretto cache receiver is nil")
 
 	c.client.Clear()
-	return nil
-}
-
-// Stop releases the underlying ristretto client. Safe to call more than once;
-// subsequent calls are no-ops.
-func (c *ristrettoCache[V]) Stop(_ context.Context) error {
-	cassert.NotNil(c, "ristretto cache receiver is nil")
-
-	swapped := c.stopped.CompareAndSwap(false, true)
-	if !swapped {
-		return nil
-	}
-
-	c.client.Close()
 	return nil
 }

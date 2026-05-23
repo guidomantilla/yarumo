@@ -8,6 +8,7 @@ import (
 	"github.com/alicebob/miniredis/v2"
 
 	"github.com/guidomantilla/yarumo/cache"
+	"github.com/guidomantilla/yarumo/common/lifecycle"
 )
 
 type user struct {
@@ -25,15 +26,18 @@ func main() {
 
 	ctx := context.Background()
 
-	c, err := cache.BuildRedisCache[user]("users",
+	c := cache.NewRedisCache[user]("users",
 		cache.WithRedisAddr(server.Addr()),
 		cache.WithTTL(time.Minute),
 	)
-	if err != nil {
-		fmt.Println("failed to build redis cache:", err)
+
+	errCh := make(chan error, 1)
+	closeFn, buildErr := lifecycle.Build(ctx, c, errCh)
+	if buildErr != nil {
+		fmt.Println("lifecycle.Build:", buildErr)
 		return
 	}
-	defer func() { _ = c.Stop(ctx) }()
+	defer closeFn(ctx, 5*time.Second)
 
 	err = c.Set(ctx, "42", user{ID: 42, Name: "Ana"}, 0)
 	if err != nil {

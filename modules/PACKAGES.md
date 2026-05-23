@@ -49,6 +49,7 @@ Aplican las 4 reglas universales con las siguientes extensiones cuando el paquet
 
 | Paquete | Qué hace |
 |---|---|
+| `cache/` | `Cache[K, V]` genérico embebiendo `lifecycle.Component` + backend de referencia in-memory (`NewMemoryCache`) + primitivas compartidas `Codec`/`JSONCodec`/`ResolveKeyPrefix`. |
 | `expressions/` | `Evaluator` de expresiones — lexer/parser/eval sobre AST con scope. |
 | `health/` | Aggregator de health checks que orquesta múltiples sondas. |
 | `http/` | `Client` + `Server` HTTP con retry/limiter, defaults seguros para timeouts/headers. |

@@ -6,21 +6,25 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/cache"
+	"github.com/guidomantilla/yarumo/common/lifecycle"
 )
 
 func main() {
 	ctx := context.Background()
 
-	c, err := cache.BuildRistrettoCache[string]("greetings",
+	c := cache.NewRistrettoCache[string]("greetings",
 		cache.WithTTL(time.Minute),
 	)
-	if err != nil {
-		fmt.Println("failed to build ristretto cache:", err)
+
+	errCh := make(chan error, 1)
+	closeFn, buildErr := lifecycle.Build(ctx, c, errCh)
+	if buildErr != nil {
+		fmt.Println("lifecycle.Build:", buildErr)
 		return
 	}
-	defer func() { _ = c.Stop(ctx) }()
+	defer closeFn(ctx, 5*time.Second)
 
-	err = c.Set(ctx, "greeting", "hello from ristretto", 0)
+	err := c.Set(ctx, "greeting", "hello from ristretto", 0)
 	if err != nil {
 		fmt.Println("set failed:", err)
 		return

@@ -29,7 +29,6 @@ var (
 	ErrCacheTypeAssertion = errors.New("cache type assertion failed")
 	ErrCacheMiss          = errors.New("cache miss")
 	ErrCacheFailed        = errors.New("cache operation failed")
-	ErrCacheNotRegistered = errors.New("cache not registered")
 )
 
 // ErrCache creates a cache domain error joining the given causes with ErrCacheFailed.
@@ -62,15 +61,3 @@ func ErrMiss(causes ...error) error {
 	}
 }
 
-// ErrNotRegistered creates a cache domain error indicating that no cache is
-// registered under the given name.
-func ErrNotRegistered(name string) error {
-	cassert.NotEmpty(name, "name is empty")
-
-	return &Error{
-		TypedError: cerrs.TypedError{
-			Type: CacheType,
-			Err:  errors.Join(fmt.Errorf("cache %q", name), ErrCacheNotRegistered),
-		},
-	}
-}

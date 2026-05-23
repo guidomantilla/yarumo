@@ -9,13 +9,6 @@ import (
 	cpointer "github.com/guidomantilla/yarumo/common/pointer"
 )
 
-// INMEMORY_CACHE is the preconfigured Cache[string, any] used as the package
-// seed. It is registered under the names "default" and its own Name() value at
-// package init, so Lookup[string, any]("default") and the facade resolve to it
-// out of the box. TTL is not honored — for TTL/eviction, register a different
-// cache via Register and use Lookup to operate on it.
-var INMEMORY_CACHE = NewMemoryCache[string, any]("INMEMORY_CACHE")
-
 // memoryCache is an in-memory Cache[K, V] implementation backed by sync.Map
 // for concurrent-safe access without explicit locking. TTL is accepted for
 // interface parity but not honored — entries persist until Delete, Clear, or
@@ -23,6 +16,8 @@ var INMEMORY_CACHE = NewMemoryCache[string, any]("INMEMORY_CACHE")
 type memoryCache[K comparable, V any] struct {
 	name string
 	data sync.Map
+	done chan struct{}
+	once sync.Once
 }
 
 // NewMemoryCache constructs a Cache[K, V] backed by sync.Map under the given
@@ -33,6 +28,7 @@ func NewMemoryCache[K comparable, V any](name string) Cache[K, V] {
 	return &memoryCache[K, V]{
 		name: name,
 		data: sync.Map{},
+		done: make(chan struct{}),
 	}
 }
 
@@ -41,6 +37,33 @@ func (c *memoryCache[K, V]) Name() string {
 	cassert.NotNil(c, "memory cache receiver is nil")
 
 	return c.name
+}
+
+// Start is a no-op for the memory cache. It holds no external resources to
+// initialize and returns nil immediately, satisfying the lifecycle.Component
+// worker-style contract; Done is closed after Stop completes.
+func (c *memoryCache[K, V]) Start(_ context.Context) error {
+	cassert.NotNil(c, "memory cache receiver is nil")
+
+	return nil
+}
+
+// Stop closes the Done channel idempotently. The memory cache holds no
+// external resources to release, so Stop returns nil; subsequent calls are
+// no-ops.
+func (c *memoryCache[K, V]) Stop(_ context.Context) error {
+	cassert.NotNil(c, "memory cache receiver is nil")
+
+	defer c.once.Do(func() { close(c.done) })
+
+	return nil
+}
+
+// Done returns the channel that is closed after Stop has been called.
+func (c *memoryCache[K, V]) Done() <-chan struct{} {
+	cassert.NotNil(c, "memory cache receiver is nil")
+
+	return c.done
 }
 
 // Get returns the value stored at key. It returns an error wrapping
@@ -92,13 +115,5 @@ func (c *memoryCache[K, V]) Clear(_ context.Context) error {
 	cassert.NotNil(c, "memory cache receiver is nil")
 
 	c.data.Clear()
-	return nil
-}
-
-// Stop releases the cache's resources. The memory cache holds no external
-// resources, so Stop is a no-op and safe to call more than once.
-func (c *memoryCache[K, V]) Stop(_ context.Context) error {
-	cassert.NotNil(c, "memory cache receiver is nil")
-
 	return nil
 }

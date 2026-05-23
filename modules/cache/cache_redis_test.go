@@ -9,6 +9,8 @@ import (
 	"github.com/alicebob/miniredis/v2"
 
 	ccache "github.com/guidomantilla/yarumo/common/cache"
+	"github.com/guidomantilla/yarumo/common/lifecycle"
+	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
 )
 
 // jsonStringV is the JSON encoding of the string "v" used across Set/Get
@@ -20,9 +22,11 @@ func newTestRedisCache(t *testing.T) (ccache.Cache[string, string], *miniredis.M
 
 	server := miniredis.RunT(t)
 
-	c, err := BuildRedisCache[string]("test", WithRedisAddr(server.Addr()))
+	c := NewRedisCache[string]("test", WithRedisAddr(server.Addr()))
+
+	err := c.Start(context.Background())
 	if err != nil {
-		t.Fatalf("BuildRedisCache: %v", err)
+		t.Fatalf("Start: %v", err)
 	}
 
 	t.Cleanup(func() { _ = c.Stop(context.Background()) })
@@ -30,10 +34,10 @@ func newTestRedisCache(t *testing.T) (ccache.Cache[string, string], *miniredis.M
 	return c, server
 }
 
-func TestBuildRedisCache(t *testing.T) {
+func TestNewRedisCache(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns a usable cache when redis responds to ping", func(t *testing.T) {
+	t.Run("returns a usable cache after Start", func(t *testing.T) {
 		t.Parallel()
 
 		c, _ := newTestRedisCache(t)
@@ -54,14 +58,39 @@ func TestBuildRedisCache(t *testing.T) {
 		}
 	})
 
-	t.Run("fails fast when ping is unreachable and lazy init is off", func(t *testing.T) {
+	t.Run("constructor itself does no I/O against an unreachable address", func(t *testing.T) {
 		t.Parallel()
 
-		// 127.0.0.1:1 is a TCP port reserved as 'tcpmux' (rarely listening);
-		// go-redis dial timeout will surface a connection error quickly.
-		_, err := BuildRedisCache[string]("offline", WithRedisAddr("127.0.0.1:1"))
+		// Constructor is infallible: it builds the go-redis client without
+		// connecting. PING happens in Start.
+		c := NewRedisCache[string]("offline-ctor", WithRedisAddr("127.0.0.1:1"))
+		if c == nil {
+			t.Fatal("expected non-nil cache from constructor")
+		}
+
+		t.Cleanup(func() { _ = c.Stop(context.Background()) })
+	})
+}
+
+func TestRedisCache_Start(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns ErrStart wrapping ErrRedisCommandFailed when PING fails", func(t *testing.T) {
+		t.Parallel()
+
+		c := NewRedisCache[string]("offline", WithRedisAddr("127.0.0.1:1"))
+		t.Cleanup(func() { _ = c.Stop(context.Background()) })
+
+		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancel()
+
+		err := c.Start(ctx)
 		if err == nil {
-			t.Fatal("expected ping error for unreachable redis")
+			t.Fatal("expected Start to fail against unreachable redis")
+		}
+
+		if !errors.Is(err, lifecycle.ErrStartFailed) {
+			t.Fatalf("expected wrap of ErrStartFailed, got %v", err)
 		}
 
 		if !errors.Is(err, ErrRedisCommandFailed) {
@@ -69,26 +98,16 @@ func TestBuildRedisCache(t *testing.T) {
 		}
 	})
 
-	t.Run("WithLazyInit skips the ping, so unreachable addr does not fail Build", func(t *testing.T) {
+	t.Run("succeeds against a reachable server", func(t *testing.T) {
 		t.Parallel()
 
-		c, err := BuildRedisCache[string]("offline-lazy",
-			WithRedisAddr("127.0.0.1:1"),
-			WithLazyInit(),
-		)
-		if err != nil {
-			t.Fatalf("BuildRedisCache with WithLazyInit: %v", err)
-		}
+		server := miniredis.RunT(t)
+		c := NewRedisCache[string]("reachable", WithRedisAddr(server.Addr()))
 		t.Cleanup(func() { _ = c.Stop(context.Background()) })
 
-		// First command surfaces the connection error.
-		_, getErr := c.Get(context.Background(), "k")
-		if getErr == nil {
-			t.Fatal("expected command error on first call against unreachable addr")
-		}
-
-		if !errors.Is(getErr, ErrRedisCommandFailed) {
-			t.Fatalf("expected wrap of ErrRedisCommandFailed, got %v", getErr)
+		err := c.Start(context.Background())
+		if err != nil {
+			t.Fatalf("Start: %v", err)
 		}
 	})
 }
@@ -99,12 +118,7 @@ func TestRedisCache_Name(t *testing.T) {
 	t.Run("returns the configured name", func(t *testing.T) {
 		t.Parallel()
 
-		server := miniredis.RunT(t)
-
-		c, err := BuildRedisCache[string]("alpha", WithRedisAddr(server.Addr()))
-		if err != nil {
-			t.Fatalf("BuildRedisCache: %v", err)
-		}
+		c := NewRedisCache[string]("alpha")
 		t.Cleanup(func() { _ = c.Stop(context.Background()) })
 
 		if c.Name() != "alpha" {
@@ -178,9 +192,11 @@ func TestRedisCache_Get(t *testing.T) {
 
 		server := miniredis.RunT(t)
 
-		c, err := BuildRedisCache[int]("decode-test", WithRedisAddr(server.Addr()))
+		c := NewRedisCache[int]("decode-test", WithRedisAddr(server.Addr()))
+
+		err := c.Start(ctx)
 		if err != nil {
-			t.Fatalf("BuildRedisCache: %v", err)
+			t.Fatalf("Start: %v", err)
 		}
 		t.Cleanup(func() { _ = c.Stop(ctx) })
 
@@ -226,12 +242,14 @@ func TestRedisCache_Set(t *testing.T) {
 		t.Parallel()
 
 		server := miniredis.RunT(t)
-		c, err := BuildRedisCache[string]("default-ttl-test",
+		c := NewRedisCache[string]("default-ttl-test",
 			WithRedisAddr(server.Addr()),
 			WithTTL(30*time.Second),
 		)
+
+		err := c.Start(ctx)
 		if err != nil {
-			t.Fatalf("BuildRedisCache: %v", err)
+			t.Fatalf("Start: %v", err)
 		}
 		t.Cleanup(func() { _ = c.Stop(ctx) })
 
@@ -250,9 +268,11 @@ func TestRedisCache_Set(t *testing.T) {
 		t.Parallel()
 
 		server := miniredis.RunT(t)
-		c, err := BuildRedisCache[chan int]("encode-test", WithRedisAddr(server.Addr()))
+		c := NewRedisCache[chan int]("encode-test", WithRedisAddr(server.Addr()))
+
+		err := c.Start(ctx)
 		if err != nil {
-			t.Fatalf("BuildRedisCache: %v", err)
+			t.Fatalf("Start: %v", err)
 		}
 		t.Cleanup(func() { _ = c.Stop(ctx) })
 
@@ -407,10 +427,11 @@ func TestRedisCache_Clear(t *testing.T) {
 		t.Parallel()
 
 		server := miniredis.RunT(t)
+		c := NewRedisCache[string]("scoped", WithRedisAddr(server.Addr()))
 
-		c, err := BuildRedisCache[string]("scoped", WithRedisAddr(server.Addr()))
+		err := c.Start(ctx)
 		if err != nil {
-			t.Fatalf("BuildRedisCache: %v", err)
+			t.Fatalf("Start: %v", err)
 		}
 		t.Cleanup(func() { _ = c.Stop(ctx) })
 
@@ -464,30 +485,18 @@ func TestRedisCache_Clear(t *testing.T) {
 	})
 }
 
-func TestRedisCache_Stop(t *testing.T) {
+func TestRedisCache_StopIsIdempotent(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	server := miniredis.RunT(t)
+	c := NewRedisCache[string]("idempotent-stop", WithRedisAddr(server.Addr()))
 
-	t.Run("closes the client and is safe to call twice", func(t *testing.T) {
-		t.Parallel()
+	err := c.Start(context.Background())
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
 
-		server := miniredis.RunT(t)
-		c, err := BuildRedisCache[string]("stop-test", WithRedisAddr(server.Addr()))
-		if err != nil {
-			t.Fatalf("BuildRedisCache: %v", err)
-		}
-
-		stopErr := c.Stop(ctx)
-		if stopErr != nil {
-			t.Fatalf("first Stop: %v", stopErr)
-		}
-
-		stopErr = c.Stop(ctx)
-		if stopErr != nil {
-			t.Fatalf("second Stop: %v", stopErr)
-		}
-	})
+	lctests.AssertIdempotentStop(t, c)
 }
 
 func TestRedisCache_KeyPrefix(t *testing.T) {
@@ -499,9 +508,11 @@ func TestRedisCache_KeyPrefix(t *testing.T) {
 		t.Parallel()
 
 		server := miniredis.RunT(t)
-		c, err := BuildRedisCache[string]("alpha", WithRedisAddr(server.Addr()))
+		c := NewRedisCache[string]("alpha", WithRedisAddr(server.Addr()))
+
+		err := c.Start(ctx)
 		if err != nil {
-			t.Fatalf("BuildRedisCache: %v", err)
+			t.Fatalf("Start: %v", err)
 		}
 		t.Cleanup(func() { _ = c.Stop(ctx) })
 
@@ -524,12 +535,14 @@ func TestRedisCache_KeyPrefix(t *testing.T) {
 		t.Parallel()
 
 		server := miniredis.RunT(t)
-		c, err := BuildRedisCache[string]("alpha",
+		c := NewRedisCache[string]("alpha",
 			WithRedisAddr(server.Addr()),
 			WithKeyPrefix("custom::"),
 		)
+
+		err := c.Start(ctx)
 		if err != nil {
-			t.Fatalf("BuildRedisCache: %v", err)
+			t.Fatalf("Start: %v", err)
 		}
 		t.Cleanup(func() { _ = c.Stop(ctx) })
 

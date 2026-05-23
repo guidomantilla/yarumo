@@ -2,7 +2,6 @@ package cache
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
@@ -108,23 +107,6 @@ func TestErrMiss(t *testing.T) {
 
 		if !errors.Is(err, ErrCacheMiss) {
 			t.Fatalf("expected wrap of ErrCacheMiss, got %v", err)
-		}
-	})
-}
-
-func TestErrNotRegistered(t *testing.T) {
-	t.Parallel()
-
-	t.Run("wraps ErrCacheNotRegistered with the given name", func(t *testing.T) {
-		t.Parallel()
-
-		err := ErrNotRegistered("redis")
-		if !errors.Is(err, ErrCacheNotRegistered) {
-			t.Fatalf("expected wrap of ErrCacheNotRegistered, got %v", err)
-		}
-
-		if !strings.Contains(err.Error(), `"redis"`) {
-			t.Fatalf("expected error message to contain name %q, got %q", "redis", err.Error())
 		}
 	})
 }

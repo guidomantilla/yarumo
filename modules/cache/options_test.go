@@ -23,10 +23,6 @@ func TestNewOptions(t *testing.T) {
 			t.Fatalf("keyPrefix = %q, want empty", opts.keyPrefix)
 		}
 
-		if opts.lazyInit {
-			t.Fatal("lazyInit = true, want false")
-		}
-
 		if opts.ristrettoNumCtrs != 1_000_000 {
 			t.Fatalf("ristrettoNumCtrs = %d, want %d", opts.ristrettoNumCtrs, 1_000_000)
 		}
@@ -173,19 +169,6 @@ func TestWithKeyPrefix(t *testing.T) {
 		opts := NewOptions(WithKeyPrefix(""))
 		if opts.keyPrefix != "" {
 			t.Fatalf("keyPrefix = %q, want empty", opts.keyPrefix)
-		}
-	})
-}
-
-func TestWithLazyInit(t *testing.T) {
-	t.Parallel()
-
-	t.Run("sets lazyInit to true", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithLazyInit())
-		if !opts.lazyInit {
-			t.Fatal("lazyInit = false, want true")
 		}
 	})
 }

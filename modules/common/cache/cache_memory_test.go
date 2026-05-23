@@ -294,6 +294,37 @@ func TestMemoryCache_Clear(t *testing.T) {
 	})
 }
 
+func TestMemoryCache_Start(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	t.Run("returns nil with live ctx", func(t *testing.T) {
+		t.Parallel()
+
+		c := NewMemoryCache[string, string]("test")
+
+		err := c.Start(ctx)
+		if err != nil {
+			t.Fatalf("Start: %v", err)
+		}
+	})
+
+	t.Run("returns nil even with cancelled ctx", func(t *testing.T) {
+		t.Parallel()
+
+		cancelled, cancel := context.WithCancel(ctx)
+		cancel()
+
+		c := NewMemoryCache[string, string]("test")
+
+		err := c.Start(cancelled)
+		if err != nil {
+			t.Fatalf("Start: %v", err)
+		}
+	})
+}
+
 func TestMemoryCache_Stop(t *testing.T) {
 	t.Parallel()
 
@@ -312,6 +343,69 @@ func TestMemoryCache_Stop(t *testing.T) {
 		err = c.Stop(ctx)
 		if err != nil {
 			t.Fatalf("second Stop: %v", err)
+		}
+	})
+
+	t.Run("closes Done on first call", func(t *testing.T) {
+		t.Parallel()
+
+		c := NewMemoryCache[string, string]("test")
+
+		err := c.Stop(ctx)
+		if err != nil {
+			t.Fatalf("Stop: %v", err)
+		}
+
+		select {
+		case <-c.Done():
+		default:
+			t.Fatal("expected Done channel closed after Stop")
+		}
+	})
+}
+
+func TestMemoryCache_Done(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	t.Run("is open at construction", func(t *testing.T) {
+		t.Parallel()
+
+		c := NewMemoryCache[string, string]("test")
+
+		select {
+		case <-c.Done():
+			t.Fatal("expected Done channel to be open before Stop")
+		default:
+		}
+	})
+
+	t.Run("unblocks readers after Stop", func(t *testing.T) {
+		t.Parallel()
+
+		c := NewMemoryCache[string, string]("test")
+
+		ready := make(chan struct{})
+		done := make(chan struct{})
+
+		go func() {
+			close(ready)
+			<-c.Done()
+			close(done)
+		}()
+
+		<-ready
+
+		err := c.Stop(ctx)
+		if err != nil {
+			t.Fatalf("Stop: %v", err)
+		}
+
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+			t.Fatal("expected reader to unblock after Stop")
 		}
 	})
 }

@@ -15,7 +15,6 @@ type Option func(opts *Options)
 type Options struct {
 	ttl       time.Duration
 	keyPrefix string
-	lazyInit  bool
 
 	ristrettoNumCtrs  int64
 	ristrettoMaxCost  int64
@@ -33,7 +32,6 @@ func NewOptions(opts ...Option) *Options {
 	options := &Options{
 		ttl:       5 * time.Minute,
 		keyPrefix: "",
-		lazyInit:  false,
 
 		ristrettoNumCtrs:  1_000_000,
 		ristrettoMaxCost:  100 << 20,
@@ -71,16 +69,6 @@ func WithKeyPrefix(prefix string) Option {
 		if prefix != "" {
 			opts.keyPrefix = prefix
 		}
-	}
-}
-
-// WithLazyInit opts out of eager connection checks at construction time.
-// Currently affects only the redis backend: when present, BuildRedisCache
-// skips the post-construction PING. Ignored by the ristretto backend, which
-// has no remote connection to verify.
-func WithLazyInit() Option {
-	return func(opts *Options) {
-		opts.lazyInit = true
 	}
 }
 

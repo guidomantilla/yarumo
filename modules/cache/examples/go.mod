@@ -11,6 +11,7 @@ replace github.com/guidomantilla/yarumo/log => ../../log
 require (
 	github.com/alicebob/miniredis/v2 v2.38.0
 	github.com/guidomantilla/yarumo/cache v0.0.0-00010101000000-000000000000
+	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -18,7 +19,6 @@ require (
 	github.com/dgraph-io/ristretto/v2 v2.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000 // indirect
 	github.com/redis/go-redis/v9 v9.19.0 // indirect
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

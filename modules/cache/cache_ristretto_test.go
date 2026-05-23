@@ -7,14 +7,17 @@ import (
 	"time"
 
 	ccache "github.com/guidomantilla/yarumo/common/cache"
+	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
 )
 
 func newTestRistrettoCache(t *testing.T) ccache.Cache[string, string] {
 	t.Helper()
 
-	c, err := BuildRistrettoCache[string]("test")
+	c := NewRistrettoCache[string]("test")
+
+	err := c.Start(context.Background())
 	if err != nil {
-		t.Fatalf("BuildRistrettoCache: %v", err)
+		t.Fatalf("Start: %v", err)
 	}
 
 	t.Cleanup(func() { _ = c.Stop(context.Background()) })
@@ -22,10 +25,10 @@ func newTestRistrettoCache(t *testing.T) ccache.Cache[string, string] {
 	return c
 }
 
-func TestBuildRistrettoCache(t *testing.T) {
+func TestNewRistrettoCache(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns a usable cache", func(t *testing.T) {
+	t.Run("returns a usable cache after Start", func(t *testing.T) {
 		t.Parallel()
 
 		c := newTestRistrettoCache(t)
@@ -50,17 +53,30 @@ func TestBuildRistrettoCache(t *testing.T) {
 		}
 	})
 
-	t.Run("ignores WithLazyInit silently", func(t *testing.T) {
+	t.Run("constructor itself does no I/O and cannot fail", func(t *testing.T) {
 		t.Parallel()
 
-		c, err := BuildRistrettoCache[string]("lazy", WithLazyInit())
-		if err != nil {
-			t.Fatalf("BuildRistrettoCache: %v", err)
+		c := NewRistrettoCache[string]("ctor-only")
+		if c == nil {
+			t.Fatal("expected non-nil cache from constructor")
 		}
+
+		t.Cleanup(func() { _ = c.Stop(context.Background()) })
+	})
+}
+
+func TestRistrettoCache_Start(t *testing.T) {
+	t.Parallel()
+
+	t.Run("succeeds with default configuration", func(t *testing.T) {
+		t.Parallel()
+
+		c := NewRistrettoCache[string]("start-ok")
 		t.Cleanup(func() { _ = c.Stop(context.Background()) })
 
-		if c == nil {
-			t.Fatal("expected non-nil cache")
+		err := c.Start(context.Background())
+		if err != nil {
+			t.Fatalf("Start: %v", err)
 		}
 	})
 }
@@ -71,10 +87,7 @@ func TestRistrettoCache_Name(t *testing.T) {
 	t.Run("returns the configured name", func(t *testing.T) {
 		t.Parallel()
 
-		c, err := BuildRistrettoCache[string]("alpha")
-		if err != nil {
-			t.Fatalf("BuildRistrettoCache: %v", err)
-		}
+		c := NewRistrettoCache[string]("alpha")
 		t.Cleanup(func() { _ = c.Stop(context.Background()) })
 
 		if c.Name() != "alpha" {
@@ -156,9 +169,11 @@ func TestRistrettoCache_Set(t *testing.T) {
 	t.Run("falls back to default ttl when per-call ttl is non-positive", func(t *testing.T) {
 		t.Parallel()
 
-		c, err := BuildRistrettoCache[string]("test-default-ttl", WithTTL(10*time.Second))
+		c := NewRistrettoCache[string]("test-default-ttl", WithTTL(10*time.Second))
+
+		err := c.Start(ctx)
 		if err != nil {
-			t.Fatalf("BuildRistrettoCache: %v", err)
+			t.Fatalf("Start: %v", err)
 		}
 		t.Cleanup(func() { _ = c.Stop(ctx) })
 
@@ -295,29 +310,17 @@ func TestRistrettoCache_Clear(t *testing.T) {
 	})
 }
 
-func TestRistrettoCache_Stop(t *testing.T) {
+func TestRistrettoCache_StopIsIdempotent(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	c := NewRistrettoCache[string]("idempotent-stop")
 
-	t.Run("closes the client and is safe to call twice", func(t *testing.T) {
-		t.Parallel()
+	err := c.Start(context.Background())
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
 
-		c, err := BuildRistrettoCache[string]("stop-test")
-		if err != nil {
-			t.Fatalf("BuildRistrettoCache: %v", err)
-		}
-
-		stopErr := c.Stop(ctx)
-		if stopErr != nil {
-			t.Fatalf("first Stop: %v", stopErr)
-		}
-
-		stopErr = c.Stop(ctx)
-		if stopErr != nil {
-			t.Fatalf("second Stop: %v", stopErr)
-		}
-	})
+	lctests.AssertIdempotentStop(t, c)
 }
 
 func TestRistrettoCache_KeyPrefix(t *testing.T) {
@@ -328,9 +331,11 @@ func TestRistrettoCache_KeyPrefix(t *testing.T) {
 	t.Run("default prefix uses name", func(t *testing.T) {
 		t.Parallel()
 
-		c, err := BuildRistrettoCache[string]("alpha")
+		c := NewRistrettoCache[string]("alpha")
+
+		err := c.Start(ctx)
 		if err != nil {
-			t.Fatalf("BuildRistrettoCache: %v", err)
+			t.Fatalf("Start: %v", err)
 		}
 		t.Cleanup(func() { _ = c.Stop(ctx) })
 
@@ -347,9 +352,11 @@ func TestRistrettoCache_KeyPrefix(t *testing.T) {
 	t.Run("WithKeyPrefix overrides default", func(t *testing.T) {
 		t.Parallel()
 
-		c, err := BuildRistrettoCache[string]("alpha", WithKeyPrefix("custom::"))
+		c := NewRistrettoCache[string]("alpha", WithKeyPrefix("custom::"))
+
+		err := c.Start(ctx)
 		if err != nil {
-			t.Fatalf("BuildRistrettoCache: %v", err)
+			t.Fatalf("Start: %v", err)
 		}
 		t.Cleanup(func() { _ = c.Stop(ctx) })
 
@@ -363,3 +370,4 @@ func TestRistrettoCache_KeyPrefix(t *testing.T) {
 		}
 	})
 }
+
