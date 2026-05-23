@@ -3,15 +3,14 @@
 // Heap/Goroutine/BlockProfile`) and stateless HTTP exposition
 // (`NewPprofHandler`) for ad-hoc collection.
 //
-// It also exposes lifecycle-aware diagnostics components that
-// implement `common/lifecycle.Component`: `TraceFlightRecorder` wraps
-// the Go 1.25+ `runtime/trace.FlightRecorder` (continuous trace
-// buffering, dumped on demand), and `BlockProfiling` owns the
-// `runtime.SetBlockProfileRate` lifecycle so block-profile sampling is
-// enabled by `Start` and disabled by `Stop`. Builders
-// `BuildTraceFlightRecorder` and `BuildBlockProfiling` wrap
-// construction with the managed-component idiom and return a
-// `lifecycle.CloseFn` for graceful shutdown.
+// It also exposes lifecycle-aware diagnostics components that implement
+// `common/lifecycle.Component`: `TraceFlightRecorder` wraps the Go 1.25+
+// `runtime/trace.FlightRecorder` (continuous trace buffering, dumped on
+// demand), and `BlockProfiling` owns the `runtime.SetBlockProfileRate`
+// lifecycle so block-profile sampling is enabled by `Start` and disabled
+// by `Stop`. Consumers wire either component into the lifecycle pipeline
+// via `lifecycle.Build(ctx, component, errChan)`, which returns the
+// `CloseFn` for graceful shutdown.
 //
 // Error contract: capture operations wrap errors into a domain `Error`
 // type with `ProfileCapture` as the type constant. Callers should
@@ -34,21 +33,13 @@ var (
 	_ TraceFlightRecorder = (*PluggableTraceFlightRecorder)(nil)
 	_ BlockProfiling      = (*blockprof)(nil)
 
-	_ BuildTraceFlightRecorderFn = BuildTraceFlightRecorder
-	_ BuildBlockProfilingFn      = BuildBlockProfiling
-	_ ErrCaptureProfileFn        = ErrCaptureProfile
+	_ ErrCaptureProfileFn = ErrCaptureProfile
 
 	_ CaptureCPUFn       = CaptureCPUProfile
 	_ CaptureHeapFn      = CaptureHeapProfile
 	_ CaptureGoroutineFn = CaptureGoroutineProfile
 	_ CaptureBlockFn     = CaptureBlockProfile
 )
-
-// BuildTraceFlightRecorderFn is the function type for BuildTraceFlightRecorder.
-type BuildTraceFlightRecorderFn func(ctx context.Context, name string, errChan lifecycle.ErrChan, options ...Option) (TraceFlightRecorder, lifecycle.CloseFn, error)
-
-// BuildBlockProfilingFn is the function type for BuildBlockProfiling.
-type BuildBlockProfilingFn func(ctx context.Context, name string, errChan lifecycle.ErrChan, options ...Option) (BlockProfiling, lifecycle.CloseFn, error)
 
 // ErrCaptureProfileFn is the function type for ErrCaptureProfile.
 type ErrCaptureProfileFn func(causes ...error) error

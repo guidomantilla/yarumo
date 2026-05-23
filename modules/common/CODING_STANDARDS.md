@@ -234,6 +234,47 @@ The crypto subpackage standard previously documented here has moved to its
 own module: see [`modules/crypto/CODING_STANDARDS.md`](../crypto/CODING_STANDARDS.md).
 Crypto is no longer part of `modules/common`.
 
+## `common/lifecycle/` — Lone Goroutine-Dispatching Exception
+
+`modules/common/` follows the principle "pure libraries, no lifecycle, no
+side effects, no goroutines spawned by package functions". `common/lifecycle/`
+is the **single, deliberate exception**: it is the workspace's lifecycle
+primitive, so it must operate at the lifecycle boundary.
+
+Concretely, the following are allowed **only inside `common/lifecycle/`**
+within `modules/common/`:
+
+- Free functions that spawn background goroutines (`go component.Start(...)`).
+- Functions that depend on `common/log` to emit boundary log lines
+  (`starting up` / `stopping` / `stopped` / `failed to start` / `shutdown failed`).
+- `Build*` constructors that return `(Component, CloseFn, error)` — wiring
+  a Component with its start goroutine and its teardown callback.
+
+The justification is that the `Component` interface itself lives here, so
+the canonical wiring helpers belong to the same package — moving them to
+a top-level module would create a circular ownership problem (the wiring
+of the primitive cannot live further from the primitive than its consumers
+do).
+
+Every other package under `modules/common/` MUST remain free of:
+- background goroutine dispatch,
+- log calls at the boundary (a leaf may log on error paths, but not as
+  part of routine flow),
+- builder-shaped constructors that fire side effects.
+
+If a feature genuinely needs lifecycle, it belongs in its own top-level
+module (`modules/http/`, `modules/cron/`, `modules/grpc/`,
+`modules/diagnostics/`, etc.). Code review should treat any `go ...` or
+any `Build<X>` returning `(Component, CloseFn, error)` outside
+`common/lifecycle/` and outside `modules/<top-level>/` as a red flag.
+
+When extending `common/lifecycle/` itself, prefer:
+- Wrapping the existing `Start`/`Stop` helpers rather than re-implementing the
+  goroutine + channel pattern.
+- Leaving `Component` constructors (`NewComponent`, `NewBaseComponent`) as
+  pure factories with no side effects; concentrate the side effects in the
+  `Build*` family so they remain auditable in one place.
+
 ## Reviewed Packages
 
 - [x] common/assert

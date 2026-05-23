@@ -6,6 +6,10 @@
 // implements common/lifecycle.Component (Name + Start + Stop + Done), with Start
 // blocking until shutdown (server-style lifecycle).
 //
+// Consumers wire the Server into the lifecycle pipeline via
+// lifecycle.Build(ctx, server, errChan), which returns the CloseFn for
+// graceful shutdown.
+//
 // Built-in interceptors:
 //   - RecoveryInterceptor / StreamRecoveryInterceptor: recover from handler panics and return codes.Internal.
 //   - LoggingInterceptor / StreamLoggingInterceptor: log method name, duration, and errors.
@@ -17,8 +21,6 @@
 package grpc
 
 import (
-	"context"
-
 	"google.golang.org/grpc"
 
 	"github.com/guidomantilla/yarumo/common/lifecycle"
@@ -27,16 +29,12 @@ import (
 var (
 	_ Server = (*server)(nil)
 
-	_ BuildServerFn       = BuildServer
 	_ ErrServerFn         = ErrServer
 	_ UnaryInterceptorFn  = RecoveryInterceptor
 	_ UnaryInterceptorFn  = LoggingInterceptor
 	_ StreamInterceptorFn = StreamRecoveryInterceptor
 	_ StreamInterceptorFn = StreamLoggingInterceptor
 )
-
-// BuildServerFn is the function type for BuildServer.
-type BuildServerFn func(ctx context.Context, name string, network string, host string, port string, errChan lifecycle.ErrChan, options ...Option) (Server, lifecycle.CloseFn, error)
 
 // ErrServerFn is the function type for ErrServer.
 type ErrServerFn func(errs ...error) error

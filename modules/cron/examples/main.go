@@ -1,9 +1,9 @@
-// Demo that exercises cron.BuildScheduler end-to-end and proves that:
+// Demo that exercises NewScheduler + lifecycle.Build end-to-end and proves that:
 //
-//  1. The builder shape `(Scheduler, lifecycle.CloseFn, error)` matches the
-//     project's managed-component idiom — call sites can either bind the
-//     scheduler to register jobs (as below) or discard it with `_` when all
-//     that's needed is the lifecycle.
+//  1. The two-step pattern `cron.NewScheduler(...)` + `lifecycle.Build(...)`
+//     replaces the legacy cron.BuildScheduler in a uniform way — the same
+//     pattern applies to http, grpc, diagnostics and any consumer-defined
+//     Component.
 //  2. `defer stopFn(ctx, timeout)` drains in-flight jobs and unblocks the
 //     internal lifecycle.Start goroutine.
 //  3. The scheduler's Start/Stop methods drive the underlying *cron.Cron
@@ -42,11 +42,11 @@ func run() error {
 
 	errChan := make(chan error, 1)
 
-	// Build returns (Scheduler, CloseFn, error). We bind the scheduler here
-	// because the demo registers a job on it; for components that need no
-	// further interaction the call site can read this as
-	//   _, stopFn, err := cron.BuildScheduler(ctx, "demo-cron", errChan)
-	scheduler, stopFn, err := cron.BuildScheduler(ctx, "demo-cron", errChan)
+	// NewScheduler constructs the Component; lifecycle.Build wires it into
+	// a background goroutine and returns the CloseFn for graceful shutdown.
+	scheduler := cron.NewScheduler("demo-cron")
+
+	stopFn, err := lifecycle.Build(ctx, scheduler, errChan)
 	if err != nil {
 		return fmt.Errorf("build scheduler: %w", err)
 	}

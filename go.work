@@ -23,7 +23,6 @@ use (
 	./modules/http
 	./modules/http/examples
 	./modules/log
-	./modules/managed
 	./modules/telemetry/otel
 	./modules/validation
 	./sdks/decisions/core

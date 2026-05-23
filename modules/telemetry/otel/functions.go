@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
-	"github.com/guidomantilla/yarumo/managed"
 	runtimemetrics "go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
@@ -18,6 +16,9 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+
+	"github.com/guidomantilla/yarumo/common/lifecycle"
+	clog "github.com/guidomantilla/yarumo/common/log"
 )
 
 // Observe sets up full OpenTelemetry observability (logging, tracing, metrics)
@@ -30,7 +31,7 @@ import (
 // On error it unwinds every provider that had already started before the
 // failing step, returns the original ctx, a noop StopFn, and an error chain
 // wrapping the failing step via the matching Err* factory.
-func Observe(ctx context.Context, serviceName string, serviceVersion string, env string, options ...Option) (context.Context, managed.StopFn, error) {
+func Observe(ctx context.Context, serviceName string, serviceVersion string, env string, options ...Option) (context.Context, lifecycle.CloseFn, error) {
 
 	res, err := Resources(ctx, serviceName, serviceVersion, env)
 	if err != nil {
@@ -39,7 +40,7 @@ func Observe(ctx context.Context, serviceName string, serviceVersion string, env
 
 	options = append(options, WithResource(res))
 
-	var stopFns []managed.StopFn
+	var stopFns []lifecycle.CloseFn
 	unwind := func() {
 		for i := len(stopFns) - 1; i >= 0; i-- {
 			stopFns[i](ctx, unwindTimeout)
@@ -90,7 +91,7 @@ func Resources(ctx context.Context, serviceName string, serviceVersion string, e
 }
 
 // Tracer sets up an OpenTelemetry trace provider with OTLP gRPC exporter.
-func Tracer(ctx context.Context, options ...Option) (managed.StopFn, error) {
+func Tracer(ctx context.Context, options ...Option) (lifecycle.CloseFn, error) {
 	clog.Info(ctx, "starting up", "stage", "startup", "component", "otel tracer")
 
 	opts := NewOptions(options...)
@@ -131,7 +132,7 @@ func Tracer(ctx context.Context, options ...Option) (managed.StopFn, error) {
 }
 
 // Meter sets up an OpenTelemetry meter provider with OTLP gRPC exporter.
-func Meter(ctx context.Context, options ...Option) (managed.StopFn, error) {
+func Meter(ctx context.Context, options ...Option) (lifecycle.CloseFn, error) {
 	clog.Info(ctx, "starting up", "stage", "startup", "component", "otel meter")
 
 	opts := NewOptions(options...)
@@ -178,7 +179,7 @@ func Meter(ctx context.Context, options ...Option) (managed.StopFn, error) {
 }
 
 // Logger sets up an OpenTelemetry logger provider with OTLP gRPC exporter.
-func Logger(ctx context.Context, options ...Option) (managed.StopFn, error) {
+func Logger(ctx context.Context, options ...Option) (lifecycle.CloseFn, error) {
 	clog.Info(ctx, "starting up", "stage", "startup", "component", "otel logger")
 
 	opts := NewOptions(options...)

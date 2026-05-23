@@ -31,6 +31,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/guidomantilla/yarumo/common/lifecycle"
+
 	"github.com/guidomantilla/yarumo/config"
 	"github.com/guidomantilla/yarumo/diagnostics"
 )
@@ -243,17 +245,19 @@ func demoPprofHandler(_ context.Context) error {
 
 // demoBuildBlockProfiling exercises the lifecycle component that owns
 // runtime.SetBlockProfileRate: Start enables sampling, Stop resets to
-// zero. The component shape matches http.BuildServer, cron.BuildScheduler,
-// grpc.BuildServer, and BuildTraceFlightRecorder.
+// zero. The component is wired into the lifecycle pipeline via the
+// unified lifecycle.Build helper — same pattern as every other
+// Component (http, grpc, cron, custom).
 func demoBuildBlockProfiling(ctx context.Context) error {
 	errChan := make(chan error, 1)
 
-	sampler, stopFn, err := diagnostics.BuildBlockProfiling(
-		ctx, "demo-blockprof", errChan,
+	sampler := diagnostics.NewBlockProfiling("demo-blockprof",
 		diagnostics.WithBlockProfileRate(1),
 	)
+
+	stopFn, err := lifecycle.Build(ctx, sampler, errChan)
 	if err != nil {
-		return fmt.Errorf("BuildBlockProfiling: %w", err)
+		return fmt.Errorf("lifecycle.Build (blockprof): %w", err)
 	}
 
 	defer stopFn(ctx, 2*time.Second)
@@ -288,17 +292,19 @@ func demoBuildBlockProfiling(ctx context.Context) error {
 // demoBuildTraceFlightRecorder exercises the lifecycle component wrapping
 // runtime/trace.FlightRecorder. The recorder continuously buffers runtime
 // events; WriteTo dumps the current buffer on demand. Only one flight
-// recorder may be active per process at a time.
+// recorder may be active per process at a time. Wired via the unified
+// lifecycle.Build helper.
 func demoBuildTraceFlightRecorder(ctx context.Context) error {
 	errChan := make(chan error, 1)
 
-	recorder, stopFn, err := diagnostics.BuildTraceFlightRecorder(
-		ctx, "demo-tracefr", errChan,
+	recorder := diagnostics.NewTraceFlightRecorder("demo-tracefr",
 		diagnostics.WithMinAge(1*time.Second),
 		diagnostics.WithMaxBytes(1<<20),
 	)
+
+	stopFn, err := lifecycle.Build(ctx, recorder, errChan)
 	if err != nil {
-		return fmt.Errorf("BuildTraceFlightRecorder: %w", err)
+		return fmt.Errorf("lifecycle.Build (tracefr): %w", err)
 	}
 
 	defer stopFn(ctx, 5*time.Second)

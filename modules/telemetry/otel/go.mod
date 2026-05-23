@@ -4,18 +4,11 @@ go 1.25.5
 
 replace github.com/guidomantilla/yarumo/common => ../../common
 
-replace github.com/guidomantilla/yarumo/cron => ../../cron
-
-replace github.com/guidomantilla/yarumo/grpc => ../../grpc
-
 replace github.com/guidomantilla/yarumo/log => ../../log
-
-replace github.com/guidomantilla/yarumo/managed => ../../managed
 
 require (
 	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000
 	github.com/guidomantilla/yarumo/log v0.0.0-00010101000000-000000000000
-	github.com/guidomantilla/yarumo/managed v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.64.0
 	go.opentelemetry.io/otel v1.39.0
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.15.0

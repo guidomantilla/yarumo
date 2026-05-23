@@ -6,10 +6,9 @@
 // Stop + Done) with server-style semantics: Start blocks calling
 // Serve/ServeTLS until shutdown; Done closes when Start returns.
 //
-// BuildServer wraps NewServer with the managed-component idiom: it
-// returns the Server together with a lifecycle.CloseFn that performs
-// graceful shutdown bounded by a timeout and blocks until the background
-// goroutine has exited.
+// Consumers wire the Server into the lifecycle pipeline via
+// lifecycle.Build(ctx, server, errChan), which returns the CloseFn for
+// graceful shutdown.
 //
 // Error contract: server operations wrap errors into a domain Error type
 // with ServerType. Callers should prefer errors.Is/As instead of relying
@@ -20,21 +19,14 @@
 package http
 
 import (
-	"context"
-	nethttp "net/http"
-
 	"github.com/guidomantilla/yarumo/common/lifecycle"
 )
 
 var (
 	_ Server = (*server)(nil)
 
-	_ BuildServerFn = BuildServer
-	_ ErrServerFn   = ErrServer
+	_ ErrServerFn = ErrServer
 )
-
-// BuildServerFn is the function type for BuildServer.
-type BuildServerFn func(ctx context.Context, name string, network string, host string, port string, handler nethttp.Handler, errChan lifecycle.ErrChan, options ...Option) (Server, lifecycle.CloseFn, error)
 
 // ErrServerFn is the function type for ErrServer.
 type ErrServerFn func(errs ...error) error

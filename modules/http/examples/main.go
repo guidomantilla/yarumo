@@ -1,8 +1,8 @@
-// Demo that exercises http.BuildServer end-to-end and proves that:
+// Demo that exercises NewServer + lifecycle.Build end-to-end and proves that:
 //
-//  1. The builder shape `(Server, lifecycle.CloseFn, error)` matches the
-//     project's managed-component idiom and mirrors grpc.BuildServer /
-//     cron.BuildScheduler.
+//  1. The two-step pattern `http.NewServer(...)` + `lifecycle.Build(...)`
+//     replaces the legacy http.BuildServer and is identical for grpc/cron/
+//     diagnostics — a single Build helper drives every Component.
 //  2. `defer stopFn(ctx, timeout)` triggers Shutdown, the blocking Start
 //     (Serve) returns, the lifecycle goroutine exits via the internal
 //     `spawned` channel, and closeFn only returns after that happens —
@@ -24,6 +24,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/guidomantilla/yarumo/common/lifecycle"
 	"github.com/guidomantilla/yarumo/config"
 	cghttp "github.com/guidomantilla/yarumo/http"
 )
@@ -52,12 +53,14 @@ func run() error {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	_, stopFn, err := cghttp.BuildServer(
-		ctx, "demo-http", "tcp", "127.0.0.1", "50052", handler, errChan,
+	server := cghttp.NewServer(
+		"demo-http", "tcp", "127.0.0.1", "50052", handler,
 		cghttp.WithReadTimeout(5*time.Second),
 		cghttp.WithWriteTimeout(5*time.Second),
 		cghttp.WithIdleTimeout(30*time.Second),
 	)
+
+	stopFn, err := lifecycle.Build(ctx, server, errChan)
 	if err != nil {
 		return fmt.Errorf("build server: %w", err)
 	}

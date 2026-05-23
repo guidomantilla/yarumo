@@ -16,6 +16,25 @@
 //
 // Callers should always wait on Done() for true completion regardless of
 // Start's flavor. The Start helper in this package does exactly that.
+//
+// # Goroutine-dispatching exception within common/
+//
+// This package is the **single sanctioned exception** to the
+// modules/common/ rule "no goroutines spawned by package functions, no
+// log calls at the boundary, no side-effecting builders". It hosts the
+// canonical lifecycle wiring helpers (Start, Stop, and the Build*
+// family), so it must operate at the lifecycle boundary — that means
+// dispatching background goroutines for Component starts and emitting
+// "starting up" / "stopping" / "stopped" / "failed to start" /
+// "shutdown failed" log lines via common/log.
+//
+// Every other package under modules/common/ MUST remain side-effect
+// free at the function-call boundary. If a feature needs lifecycle of
+// its own, it belongs in a top-level module (modules/http/,
+// modules/cron/, modules/grpc/, modules/diagnostics/, etc.), not under
+// common/. See modules/common/CODING_STANDARDS.md (section
+// "common/lifecycle/ — Lone Goroutine-Dispatching Exception") for the
+// full rule and review guidance.
 package lifecycle
 
 import (
@@ -28,6 +47,7 @@ var (
 
 	_ StartFn       = Start
 	_ StopFn        = Stop
+	_ BuildFn       = Build
 	_ ErrStartFn    = ErrStart
 	_ ErrShutdownFn = ErrShutdown
 )
@@ -37,6 +57,9 @@ type StartFn func(ctx context.Context, component Component, errChan ErrChan) err
 
 // StopFn is the function type for Stop.
 type StopFn func(ctx context.Context, component Component, timeout time.Duration) error
+
+// BuildFn is the function type for Build.
+type BuildFn func(ctx context.Context, component Component, errChan ErrChan) (CloseFn, error)
 
 // ErrStartFn is the function type for ErrStart.
 type ErrStartFn func(errs ...error) error

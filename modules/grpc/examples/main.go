@@ -1,7 +1,8 @@
-// Demo that exercises grpc.BuildServer end-to-end and proves that:
+// Demo that exercises NewServer + lifecycle.Build end-to-end and proves that:
 //
-//  1. The builder shape `(Server, lifecycle.CloseFn, error)` matches the
-//     project's managed-component idiom and mirrors cron.BuildScheduler.
+//  1. The two-step pattern `grpc.NewServer(...)` + `lifecycle.Build(...)`
+//     replaces the legacy grpc.BuildServer and is identical for http/cron/
+//     diagnostics — a single Build helper drives every Component.
 //  2. `defer stopFn(ctx, timeout)` triggers GracefulStop, the blocking
 //     Start (Serve) returns, the lifecycle goroutine exits via the
 //     internal `spawned` channel, and closeFn only returns after that
@@ -26,6 +27,7 @@ import (
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/guidomantilla/yarumo/common/lifecycle"
 	"github.com/guidomantilla/yarumo/config"
 	cgrpc "github.com/guidomantilla/yarumo/grpc"
 )
@@ -55,10 +57,12 @@ func run() error {
 	healthSrv := health.NewServer()
 	healthSrv.SetServingStatus(demoService, healthpb.HealthCheckResponse_SERVING)
 
-	_, stopFn, err := cgrpc.BuildServer(
-		ctx, "demo-grpc", "tcp", "127.0.0.1", "50051", errChan,
+	server := cgrpc.NewServer(
+		"demo-grpc", "tcp", "127.0.0.1", "50051",
 		cgrpc.WithService(healthSrv, &healthpb.Health_ServiceDesc),
 	)
+
+	stopFn, err := lifecycle.Build(ctx, server, errChan)
 	if err != nil {
 		return fmt.Errorf("build server: %w", err)
 	}

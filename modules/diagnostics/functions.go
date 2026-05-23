@@ -5,9 +5,6 @@ import (
 	"io"
 	"runtime/pprof"
 	"time"
-
-	"github.com/guidomantilla/yarumo/common/lifecycle"
-	clog "github.com/guidomantilla/yarumo/common/log"
 )
 
 // CaptureCPUProfile starts a CPU profile that writes to w for the given duration.
@@ -76,81 +73,3 @@ func CaptureBlockProfile(w io.Writer) error {
 	return captureNamedProfile("block", w)
 }
 
-// BuildTraceFlightRecorder creates a managed TraceFlightRecorder, starts
-// it in a background goroutine, and returns a CloseFn for graceful shutdown.
-//
-// Startup errors are logged and forwarded to errChan (non-blocking). The
-// returned recorder can be used to inspect Enabled() and dump the buffer
-// via WriteTo. The returned CloseFn must be called by the caller to
-// release runtime resources; it bounds the shutdown by the given
-// timeout and blocks until the background goroutine has exited.
-func BuildTraceFlightRecorder(ctx context.Context, name string, errChan lifecycle.ErrChan, options ...Option) (TraceFlightRecorder, lifecycle.CloseFn, error) {
-	clog.Info(ctx, "starting up", "stage", "startup", "component", name)
-
-	component := NewTraceFlightRecorder(name, options...)
-
-	spawned := make(chan struct{})
-
-	closeFn := func(ctx context.Context, timeout time.Duration) {
-		clog.Info(ctx, "stopping", "stage", "shutdown", "component", name)
-		defer clog.Info(ctx, "stopped", "stage", "shutdown", "component", name)
-
-		err := lifecycle.Stop(ctx, component, timeout)
-		if err != nil {
-			clog.Error(ctx, "shutdown failed", "stage", "shutdown", "component", name, "error", err)
-		}
-
-		<-spawned
-	}
-
-	go func() {
-		defer close(spawned)
-
-		err := lifecycle.Start(ctx, component, errChan)
-		if err != nil {
-			clog.Error(ctx, "failed to start", "stage", "startup", "component", name, "error", err)
-		}
-	}()
-
-	return component, closeFn, nil
-}
-
-// BuildBlockProfiling creates a managed BlockProfiling sampler, starts
-// it in a background goroutine, and returns a CloseFn for graceful
-// shutdown.
-//
-// Startup errors are logged and forwarded to errChan (non-blocking).
-// The returned sampler can be used to inspect Rate(). The returned
-// CloseFn must be called by the caller to disable sampling
-// (runtime.SetBlockProfileRate(0)); it bounds the shutdown by the
-// given timeout and blocks until the background goroutine has exited.
-func BuildBlockProfiling(ctx context.Context, name string, errChan lifecycle.ErrChan, options ...Option) (BlockProfiling, lifecycle.CloseFn, error) {
-	clog.Info(ctx, "starting up", "stage", "startup", "component", name)
-
-	component := NewBlockProfiling(name, options...)
-
-	spawned := make(chan struct{})
-
-	closeFn := func(ctx context.Context, timeout time.Duration) {
-		clog.Info(ctx, "stopping", "stage", "shutdown", "component", name)
-		defer clog.Info(ctx, "stopped", "stage", "shutdown", "component", name)
-
-		err := lifecycle.Stop(ctx, component, timeout)
-		if err != nil {
-			clog.Error(ctx, "shutdown failed", "stage", "shutdown", "component", name, "error", err)
-		}
-
-		<-spawned
-	}
-
-	go func() {
-		defer close(spawned)
-
-		err := lifecycle.Start(ctx, component, errChan)
-		if err != nil {
-			clog.Error(ctx, "failed to start", "stage", "startup", "component", name, "error", err)
-		}
-	}()
-
-	return component, closeFn, nil
-}

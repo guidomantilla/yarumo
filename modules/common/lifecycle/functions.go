@@ -3,6 +3,8 @@ package lifecycle
 import (
 	"context"
 	"time"
+
+	clog "github.com/guidomantilla/yarumo/common/log"
 )
 
 // Start runs the component in the current goroutine and waits for completion.
@@ -42,4 +44,33 @@ func Stop(ctx context.Context, component Component, timeout time.Duration) error
 	}
 
 	return nil
+}
+
+func Build(ctx context.Context, component Component, errChan ErrChan) (CloseFn, error) {
+	clog.Info(ctx, "starting up", "stage", "startup", "component", component.Name())
+
+	spawned := make(chan struct{})
+
+	closeFn := func(ctx context.Context, timeout time.Duration) {
+		clog.Info(ctx, "stopping", "stage", "shutdown", "component", component.Name())
+		defer clog.Info(ctx, "stopped", "stage", "shutdown", "component", component.Name())
+
+		err := Stop(ctx, component, timeout)
+		if err != nil {
+			clog.Error(ctx, "shutdown failed", "stage", "shutdown", "component", component.Name(), "error", err)
+		}
+
+		<-spawned
+	}
+
+	go func() {
+		defer close(spawned)
+
+		err := Start(ctx, component, errChan)
+		if err != nil {
+			clog.Error(ctx, "failed to start", "stage", "startup", "component", component.Name(), "error", err)
+		}
+	}()
+
+	return closeFn, nil
 }

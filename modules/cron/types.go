@@ -5,17 +5,15 @@
 // worker-style semantics: Start kicks off the cron's internal goroutines and
 // returns immediately; Done closes after Stop completes.
 //
-// BuildScheduler wraps NewScheduler with the managed-component idiom: it
-// returns the Scheduler together with a lifecycle.CloseFn that performs
-// graceful shutdown bounded by a timeout and blocks until the background
-// goroutine has exited.
+// Consumers wire the Scheduler into the lifecycle pipeline via
+// lifecycle.Build(ctx, scheduler, errChan), which returns the CloseFn for
+// graceful shutdown.
 //
 // Concurrency: Scheduler implementations are safe for concurrent use by
 // multiple goroutines.
 package cron
 
 import (
-	"context"
 	"time"
 
 	cron "github.com/robfig/cron/v3"
@@ -25,12 +23,7 @@ import (
 
 var (
 	_ Scheduler = (*scheduler)(nil)
-
-	_ BuildSchedulerFn = BuildScheduler
 )
-
-// BuildSchedulerFn is the function type for BuildScheduler.
-type BuildSchedulerFn func(ctx context.Context, name string, errChan lifecycle.ErrChan, options ...cron.Option) (Scheduler, lifecycle.CloseFn, error)
 
 // Scheduler defines the interface for a cron job scheduler.
 //

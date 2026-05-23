@@ -8,6 +8,12 @@ require (
 	github.com/guidomantilla/yarumo/compute/math v0.0.0
 )
 
+replace (
+	github.com/guidomantilla/yarumo/common => ../../../modules/common
+	github.com/guidomantilla/yarumo/compute/engine => ../../../modules/compute/engine
+	github.com/guidomantilla/yarumo/compute/math => ../../../modules/compute/math
+)
+
 require (
 	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc // indirect
 	github.com/devmiek/nanoid-go v0.0.0-20241216084707-e17e38258ffc // indirect
@@ -19,11 +25,4 @@ require (
 	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
-)
-
-replace (
-	github.com/guidomantilla/yarumo/common => ../../../modules/common
-	github.com/guidomantilla/yarumo/compute/engine => ../../../modules/compute/engine
-	github.com/guidomantilla/yarumo/compute/math => ../../../modules/compute/math
-	github.com/guidomantilla/yarumo/log => ../../../modules/log
 )
