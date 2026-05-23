@@ -5,9 +5,6 @@ go 1.25.5
 require (
 	github.com/avast/retry-go/v4 v4.7.0
 	github.com/google/go-cmp v0.7.0
-	github.com/google/uuid v1.6.0
-	github.com/oklog/ulid/v2 v2.1.1
-	github.com/spf13/cast v1.10.0
 	golang.org/x/text v0.34.0
 	golang.org/x/time v0.15.0
 )
@@ -15,5 +12,4 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 )

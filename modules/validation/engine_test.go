@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/extensions/common/validation"
 )
 
 type pokemon struct {

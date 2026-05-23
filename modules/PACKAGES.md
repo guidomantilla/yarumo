@@ -7,21 +7,19 @@
 - API expone funciones libres como superficie principal. El consumidor llama funciones del paquete, no construye y opera sobre tipos del paquete.
 - No exporta structs con invariantes mutables ni constructores `NewXxx(opts ...Option) Interface` con Options pattern. Pueden existir constructores triviales que devuelven valores inmutables bajo interface (ej. `NewUID(name, fn) UID`) sin descalificar el shape.
 - Pueden mantener **estado mutable interno** detrás de las funciones libres (PRNG state, slot `current` swappable vía `Use`, registry map, regex caches). La pureza "mismos args ⇒ mismo resultado" es ideal pero no requisito: ver bloque "Estado mutable de paquete" al final de esta sección.
-- Ejemplos en el repo: `common/assert/`, `common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `common/validation/`, `common/log/`, `extensions/common/uids/`.
+- Ejemplos en el repo: `common/assert/`, `extensions/common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `extensions/common/validation/`, `common/log/`, `extensions/common/uids/`.
 
 ### Inventario en `modules/common/`
 
 | Paquete | Qué hace |
 |---|---|
 | `assert/` | Assertions runtime (`NotNil`, `NotEmpty`, `Equal`, `True`, `False`) — modo log o fatal según config. |
-| `cast/` | Type-safe casting (`ToInt`, `ToString`, `ToTime`, `ToDuration`, …) — wrappa `spf13/cast`. |
 | `errs/` | Typed errors + error-chain helpers (`As`, `Match`, `Wrap`, `Unwrap`, `ErrorMessages`, `AsErrorInfo`) + JSON-serializable info. |
 | `log/` | Facade abstracta de logging estructurado (`Logger` interface + `Use`/`Default` + helpers `Trace`/`Debug`/`Info`/`Warn`/`Error`/`Fatal`) sobre slot mutable. Trío base (`types.go`/`functions.go`/`functions_test.go`) + `internals.go` con `loggerHolder` (struct sin métodos, excepción del consumidor de `load`) + vars `current`/`internal`/`osExit` + helper `load`. Concern del default `noopLogger` (struct privado con métodos que implementa `Logger`) aislado en `noop.go`. Implementaciones concretas viven en `modules/extensions/common/log/`; este paquete no depende de ninguna. Default noopLogger (Fatal escribe a stderr y exit) hasta que el consumer llame `Use(...)`. |
 | `pointer/` | Helpers para pointers (deref con default, take-address, comparación). |
 | `random/` | Generación pseudoaleatoria no-crypto (`Bytes`, `Number`, `String`, `Text*`). |
 | `rest/` | Cliente REST stateless (`Call`, `CallStream`, `DecodeHTTPError`) con DTOs `RequestSpec`/`ResponseSpec[T]`/`StreamResponseSpec`; concurrency-safe. |
 | `utils/` | Funciones genéricas (`Coalesce`, `Ternary`, `Empty`, `RandomString`, case-helpers `PascalCase`/`SnakeCase`/…). |
-| `validation/` | Leaves de validación (`IsRequired`, `MinLen`, `IsEmail`, `IsUUID`, …) + reflexión por dotted path (`GetField`). |
 
 ### Extensiones a las reglas
 
@@ -119,7 +117,7 @@ Las reglas universales del repo (doc terminado en punto, comenzar por el nombre 
   - Sentinels: comentario de grupo encima del bloque `var (...)`; cada sentinel se autodocumenta con su mensaje.
   - `Error` struct + factory `ErrXxx`: doc-comment dedicado a cada uno.
 
-**Referencia operativa**: `modules/common/utils/` y `modules/common/validation/` cubren entre los dos todos los casos. Si dudás cómo documentar algo, mirá esos paquetes.
+**Referencia operativa**: `modules/common/utils/` y `modules/extensions/common/validation/` cubren entre los dos todos los casos. Si dudás cómo documentar algo, mirá esos paquetes.
 
 ## Excepciones a los shapes
 

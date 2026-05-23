@@ -18,9 +18,11 @@ use (
 	./modules/crypto
 	./modules/diagnostics
 	./modules/diagnostics/examples
+	./modules/extensions/common/cast
 	./modules/extensions/common/log
 	./modules/extensions/common/resilience
 	./modules/extensions/common/uids
+	./modules/extensions/common/validation
 	./modules/extensions/telemetry/otel/slog
 	./modules/grpc
 	./modules/grpc/examples

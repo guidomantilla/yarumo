@@ -1,7 +1,7 @@
 package validation
 
 import (
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/extensions/common/validation"
 )
 
 // builtins is the default leaf catalogue. Each entry adapts a typed function

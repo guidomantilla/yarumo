@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/extensions/common/validation"
 )
 
 // runByName looks up a leaf in the default registry and runs it. It

@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/extensions/common/validation"
 )
 
 // Pokemon is a sample domain type validated by this example.

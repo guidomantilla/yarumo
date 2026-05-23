@@ -278,7 +278,6 @@ When extending `common/lifecycle/` itself, prefer:
 ## Reviewed Packages
 
 - [x] common/assert
-- [x] common/cast
 - [x] common/constraints
 - [x] common/diagnostics
 - [x] common/errs
