@@ -48,6 +48,12 @@ exclude:
     - ^health/examples/main.go
     - ^resilience/examples/main.go
     - ^validation/examples/main.go
+    # lifecycle/tests/ is a test-only helper subpackage. Its failure
+    # branches (panic recovery, goroutine-leak path, ctx-timeout path)
+    # are exercised only when a Component implementation breaks the
+    # contract, which is by design not reproducible from a unit test
+    # of the helper itself.
+    - ^lifecycle/tests/
 
 # NOTES:
 # - symbol `/` in all path regexps will be replaced by the current OS file path separator

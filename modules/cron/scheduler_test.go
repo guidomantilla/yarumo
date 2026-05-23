@@ -1,10 +1,13 @@
 package cron
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	cron "github.com/robfig/cron/v3"
+
+	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
 )
 
 func TestNewScheduler(t *testing.T) {
@@ -45,4 +48,17 @@ func TestNewScheduler(t *testing.T) {
 			t.Fatalf("got %d entries, want 0", len(s.Entries()))
 		}
 	})
+}
+
+func TestScheduler_StopIsIdempotent(t *testing.T) {
+	t.Parallel()
+
+	s := NewScheduler("cron-idempotent")
+
+	err := s.Start(context.Background())
+	if err != nil {
+		t.Fatalf("Start returned %v", err)
+	}
+
+	lctests.AssertIdempotentStop(t, s)
 }

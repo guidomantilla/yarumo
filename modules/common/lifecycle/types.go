@@ -75,18 +75,61 @@ type ErrChan chan<- error
 // not return an error: shutdown errors are logged at the builder boundary.
 type CloseFn func(ctx context.Context, timeout time.Duration)
 
-// Component is the contract for entities tied to the application's lifecycle.
+// Component is the contract for entities tied to the application's
+// lifecycle.
 //
 // Implementations must be safe for concurrent use by multiple goroutines.
-// See the package documentation for the Start blocking-vs-non-blocking contract.
+// Implementations must observe the five invariants below; deviations break
+// the lifecycle.Build / Start / Stop helpers and the consumer contract.
+//
+// # Invariants
+//
+//  1. Stop is idempotent. Calling Stop more than once is safe: no panic,
+//     no goroutine leak, no double-close of Done. The first call performs
+//     the work; subsequent calls return without re-entering the shutdown
+//     path. The returned error on the second call is implementation-
+//     defined and may be non-nil (e.g. wrapped "already closed" from a
+//     driver) — callers MUST NOT depend on it.
+//  2. Stop does not block waiting on Done. Stop initiates shutdown and
+//     returns (bounded by ctx). Use the Stop helper in this package and
+//     wait on Done() separately if you need post-shutdown synchronization.
+//  3. Start is server-style XOR worker-style.
+//     - Server-style (e.g. http, grpc): Start blocks until the server has
+//     shut down. Done MUST be closed when Start returns.
+//     - Worker-style (e.g. cron, diagnostics): Start enables internal
+//     state or dispatches goroutines and returns immediately. Done MUST
+//     be closed after Stop completes.
+//     The flavor is fixed per implementation and documented on its Start
+//     method.
+//  4. Done is closed exactly once. The closer is whichever runs first:
+//     Stop, or the end of Start in server-style implementations. Use
+//     sync.Once.Do(close(done)) — see component.go for the canonical
+//     pattern.
+//  5. Re-Start is not supported. A Component is single-use: once Stopped,
+//     it MUST NOT be Started again. Construct a new Component instead.
+//     Implementations are not required to guard against re-Start.
+//
+// # Testing the contract
+//
+// The lifecycle/tests subpackage publishes AssertIdempotentStop, which
+// verifies invariants 1, 2, and 4 against any Component implementation.
+// Every implementation under modules/ MUST have at least one test that
+// invokes it.
 type Component interface {
 	// Name returns the component's identity used in logs.
 	Name() string
-	// Start begins the component execution. See package docs for the
-	// blocking-vs-non-blocking contract.
+	// Start begins the component execution. Per invariant 3, Start is
+	// either server-style (blocks until shutdown) or worker-style (returns
+	// after enabling internal state). The flavor is documented on each
+	// concrete implementation.
 	Start(ctx context.Context) error
-	// Stop gracefully stops the component bounded by ctx's deadline.
+	// Stop initiates graceful shutdown bounded by ctx's deadline.
+	// Per invariant 1, Stop is safe to call multiple times. Per invariant
+	// 2, Stop returns once shutdown has been initiated; callers wait on
+	// Done() for completion.
 	Stop(ctx context.Context) error
-	// Done returns a channel that is closed when the component has stopped.
+	// Done returns a channel that is closed exactly once when the
+	// component has stopped. The closer is Stop, or the end of Start in
+	// server-style implementations, whichever runs first.
 	Done() <-chan struct{}
 }

@@ -33,7 +33,25 @@ func Start(ctx context.Context, component Component, errChan ErrChan) error {
 }
 
 // Stop signals graceful shutdown to the component bounded by the given
-// timeout. It returns the error reported by component.Stop after logging.
+// timeout.
+//
+// The provided ctx is wrapped with context.WithTimeout(ctx, timeout) and
+// the derived ctx is what component.Stop receives. Implementations that
+// honor ctx (the recommended pattern; see Component invariant 2) return
+// within the bound. Implementations that ignore ctx — for example by
+// delegating to an underlying library call that blocks indefinitely —
+// MAY block past timeout; Stop has no goroutine of its own to enforce
+// the bound. Callers that need a hard cap must wrap the call site.
+//
+// The returned error is the raw error from component.Stop. It is the
+// implementation's responsibility to wrap with lifecycle.ErrShutdown
+// (and, when applicable, lifecycle.ErrShutdownTimeout) so callers can
+// match via errors.Is. Build does that wrapping; standalone callers of
+// Stop should as well.
+//
+// Per Component invariant 1 (idempotent Stop), Stop is safe to call
+// repeatedly; the error value returned by subsequent calls is
+// implementation-defined.
 func Stop(ctx context.Context, component Component, timeout time.Duration) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()

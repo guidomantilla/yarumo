@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/guidomantilla/yarumo/common/lifecycle"
+	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
 )
 
 type testService any
@@ -133,16 +134,7 @@ func TestServer_Stop(t *testing.T) {
 		t.Parallel()
 
 		srv := NewServer("stop-2", "tcp", "127.0.0.1", "0")
-
-		err := srv.Stop(context.Background())
-		if err != nil {
-			t.Fatalf("first Stop returned %v", err)
-		}
-
-		err = srv.Stop(context.Background())
-		if err != nil {
-			t.Fatalf("second Stop returned %v", err)
-		}
+		lctests.AssertIdempotentStop(t, srv)
 	})
 }
 
