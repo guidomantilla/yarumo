@@ -4,8 +4,6 @@ package managed
 import (
 	"context"
 	"time"
-
-	cdiagnostics "github.com/guidomantilla/yarumo/common/diagnostics"
 )
 
 // Worker defines the interface for a managed worker with start, stop, and done lifecycle methods.
@@ -20,11 +18,6 @@ type Worker interface {
 
 // BaseWorker defines the interface for a basic managed worker.
 type BaseWorker interface {
-	Worker
-}
-
-// TraceFlightRecorderWorker defines the interface for a trace flight recorder managed worker.
-type TraceFlightRecorderWorker interface {
 	Worker
 }
 
@@ -44,11 +37,9 @@ type Component[T any] struct {
 type BuildFn[I any, C any] func(ctx context.Context, name string, internal I, errChan ErrChan) (Component[C], StopFn, error)
 
 var (
-	_ BuildFn[any, BaseWorker]                                             = BuildBaseWorker
-	_ BuildFn[cdiagnostics.TraceFlightRecorder, TraceFlightRecorderWorker] = BuildTraceFlightRecorderWorker
+	_ BuildFn[any, BaseWorker] = BuildBaseWorker
 )
 
 var (
-	_ BaseWorker                = (*baseWorker)(nil)
-	_ TraceFlightRecorderWorker = (*traceFlightRecorderWorker)(nil)
+	_ BaseWorker = (*baseWorker)(nil)
 )

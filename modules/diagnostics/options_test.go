@@ -76,6 +76,37 @@ func TestWithMaxBytes(t *testing.T) {
 	})
 }
 
+func TestWithBlockProfileRate(t *testing.T) {
+	t.Parallel()
+
+	t.Run("overrides default", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithBlockProfileRate(100))
+		if opts.blockProfileRate != 100 {
+			t.Fatalf("got blockProfileRate %d, want %d", opts.blockProfileRate, 100)
+		}
+	})
+
+	t.Run("zero keeps default", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithBlockProfileRate(0))
+		if opts.blockProfileRate != blockProfileRateDefault {
+			t.Fatalf("got blockProfileRate %d, want default %d", opts.blockProfileRate, blockProfileRateDefault)
+		}
+	})
+
+	t.Run("negative keeps default", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithBlockProfileRate(-1))
+		if opts.blockProfileRate != blockProfileRateDefault {
+			t.Fatalf("got blockProfileRate %d, want default %d", opts.blockProfileRate, blockProfileRateDefault)
+		}
+	})
+}
+
 func TestNewOptions(t *testing.T) {
 	t.Parallel()
 
@@ -90,18 +121,31 @@ func TestNewOptions(t *testing.T) {
 		if opts.maxBytes != 10<<20 {
 			t.Fatalf("got maxBytes %d, want %d", opts.maxBytes, uint64(10<<20))
 		}
+
+		if opts.blockProfileRate != blockProfileRateDefault {
+			t.Fatalf("got blockProfileRate %d, want %d", opts.blockProfileRate, blockProfileRateDefault)
+		}
 	})
 
-	t.Run("both options applied", func(t *testing.T) {
+	t.Run("all options applied", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithMinAge(5*time.Second), WithMaxBytes(20<<20))
+		opts := NewOptions(
+			WithMinAge(5*time.Second),
+			WithMaxBytes(20<<20),
+			WithBlockProfileRate(500),
+		)
+
 		if opts.minAge != 5*time.Second {
 			t.Fatalf("got minAge %v, want %v", opts.minAge, 5*time.Second)
 		}
 
 		if opts.maxBytes != 20<<20 {
 			t.Fatalf("got maxBytes %d, want %d", opts.maxBytes, uint64(20<<20))
+		}
+
+		if opts.blockProfileRate != 500 {
+			t.Fatalf("got blockProfileRate %d, want %d", opts.blockProfileRate, 500)
 		}
 	})
 }

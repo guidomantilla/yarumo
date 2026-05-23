@@ -1,0 +1,186 @@
+version: "2"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  default: all
+
+  disable:
+    - dupl
+    - err113
+    - exhaustruct
+    - godot
+    - gomoddirectives
+    - iface
+    - ireturn
+    - lll
+    - mnd
+    - nlreturn
+    - revive
+    - tagliatelle
+    - testpackage
+    - varnamelen
+    - whitespace
+    - wsl
+    - wsl_v5
+
+  settings:
+    depguard:
+      rules:
+        main:
+          list-mode: original
+          deny:
+            # ------------------------------------------------------------------------
+            # LOGGING
+            # ------------------------------------------------------------------------
+            - pkg: "^log$"
+              desc: "use log/slog instead of stdlib log"
+            - pkg: "github.com/sirupsen/logrus"
+              desc: "use log/slog instead of logrus"
+            - pkg: "go.uber.org/zap"
+              desc: "use log/slog instead of zap"
+            - pkg: "github.com/rs/zerolog"
+              desc: "use log/slog instead of zerolog"
+
+            # ------------------------------------------------------------------------
+            # TESTING
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/stretchr/testify"
+              desc: "use t.Fatal/t.Fatalf instead of testify assertions"
+
+            # ------------------------------------------------------------------------
+            # LEGACY ERRORS
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/pkg/errors"
+              desc: "use errs.Wrap(sentinel, err) with a sentinel from errors.go"
+
+            # ------------------------------------------------------------------------
+            # DEPRECATED IO
+            # ------------------------------------------------------------------------
+            - pkg: "io/ioutil"
+              desc: "ioutil is deprecated since Go 1.16"
+
+            # ------------------------------------------------------------------------
+            # BANNED DEPENDENCIES
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/spf13/viper"
+              desc: "viper is not allowed in diagnostics module"
+
+    forbidigo:
+      forbid:
+        - pattern: ^(fmt\.Print(|f|ln)|fmt\.Fprint(|f|ln)|print|println)$
+          msg: "use the project logger (log/slog) instead of direct print statements"
+
+    funlen:
+      lines: 220
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+  exclusions:
+    rules:
+      # Exclude some linters from running on tests files.
+      - path: _test\.go
+        linters:
+          - cyclop
+          - errcheck
+          - errchkjson
+          - errname
+          - forbidigo
+          - containedctx
+          - funlen
+          - gocognit
+          - gocyclo
+          - gosec
+          - maintidx
+          - noctx
+          - wrapcheck
+          - forcetypeassert
+      # sentinel errors and type compliance vars are package-level by design
+      - path: (errors|types)\.go
+        linters:
+          - gochecknoglobals
+      # tracefr delegates directly to *runtime/trace.FlightRecorder; wrapping
+      # errors adds no value. cassert.NotNil guards the receiver invariant on
+      # lifecycle methods; contextcheck false positive.
+      - path: tracefr\.go
+        linters:
+          - wrapcheck
+          - contextcheck
+      # blockprof: cassert.NotNil guards the receiver invariant on lifecycle
+      # methods; contextcheck false positive.
+      - path: blockprof\.go
+        linters:
+          - contextcheck
+      # tracefr_pluggable.go: cassert.NotNil guards the receiver invariant on
+      # lifecycle methods; contextcheck false positive (the assert does not
+      # take a context).
+      - path: tracefr_pluggable\.go
+        linters:
+          - contextcheck
+      # functions.go: BuildTraceFlightRecorder / BuildBlockProfiling delegate to
+      # NewTraceFlightRecorder / NewBlockProfiling which call cassert.NotEmpty
+      # on positional args (receiver-style invariant); ctx is not part of the
+      # assertion semantics. handlers.go intentionally imports net/http/pprof;
+      # captures (CaptureCPUProfile etc.) wrap runtime/pprof — both imports
+      # are the whole point of those files. wrapcheck on functions.go: profile
+      # WriteTo and pprof.StartCPUProfile errors are re-wrapped by the domain
+      # factory ErrCaptureProfile.
+      - path: functions\.go
+        linters:
+          - contextcheck
+          - depguard
+          - wrapcheck
+      - path: handlers\.go
+        linters:
+          - depguard
+      # internals.go wraps runtime/pprof.Lookup; the import is the whole
+      # point of the file. wrapcheck: profile.WriteTo errors are re-wrapped
+      # by ErrCaptureProfile.
+      - path: internals\.go
+        linters:
+          - depguard
+          - wrapcheck
+      # functions_test.go: runtime/pprof.Lookup cross-check is intentional;
+      # pprofProfileMagic and blockProfileMu are required test globals; CPU
+      # and block profile state is process-global so those subtests cannot
+      # run in parallel.
+      - path: functions_test\.go
+        linters:
+          - depguard
+          - gochecknoglobals
+          - paralleltest
+          - tparallel
+      # tracefr_test.go: only one trace.FlightRecorder can be active per
+      # process, so lifecycle subtests run sequentially.
+      - path: tracefr_test\.go
+        linters:
+          - paralleltest
+          - tparallel
+      # blockprof_test.go: runtime.SetBlockProfileRate is process-global,
+      # so subtests that toggle it cannot run in parallel. The
+      # blockProfRateMu test-global mutex serialises them.
+      - path: blockprof_test\.go
+        linters:
+          - paralleltest
+          - tparallel
+          - gochecknoglobals
+      # Examples are runnable demos.
+      - path: examples/
+        linters:
+          - forbidigo
+          - gochecknoglobals
+          - gochecknoinits
+          - errcheck
+          - wrapcheck
+          - noctx
+          - gosec
+          - funlen
+          - mnd
+          - lll
+          - gocyclo
+          - maintidx
+          - perfsprint
+          - staticcheck

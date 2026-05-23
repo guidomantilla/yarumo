@@ -2,9 +2,34 @@ package diagnostics
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"testing"
 )
+
+func TestPluggableTraceFlightRecorder_Name(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil fn returns empty", func(t *testing.T) {
+		t.Parallel()
+
+		p := &PluggableTraceFlightRecorder{}
+		if p.Name() != "" {
+			t.Fatalf("expected empty string, got %q", p.Name())
+		}
+	})
+
+	t.Run("delegates to fn", func(t *testing.T) {
+		t.Parallel()
+
+		p := &PluggableTraceFlightRecorder{
+			NameFn: func() string { return "configured-name" },
+		}
+		if p.Name() != "configured-name" {
+			t.Fatalf("expected %q, got %q", "configured-name", p.Name())
+		}
+	})
+}
 
 func TestPluggableTraceFlightRecorder_Start(t *testing.T) {
 	t.Parallel()
@@ -14,7 +39,7 @@ func TestPluggableTraceFlightRecorder_Start(t *testing.T) {
 
 		p := &PluggableTraceFlightRecorder{}
 
-		err := p.Start()
+		err := p.Start(context.Background())
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -25,13 +50,14 @@ func TestPluggableTraceFlightRecorder_Start(t *testing.T) {
 
 		called := false
 		p := &PluggableTraceFlightRecorder{
-			StartFn: func() error {
+			StartFn: func(_ context.Context) error {
 				called = true
+
 				return nil
 			},
 		}
 
-		err := p.Start()
+		err := p.Start(context.Background())
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -45,11 +71,24 @@ func TestPluggableTraceFlightRecorder_Start(t *testing.T) {
 func TestPluggableTraceFlightRecorder_Stop(t *testing.T) {
 	t.Parallel()
 
-	t.Run("nil fn does not panic", func(t *testing.T) {
+	t.Run("nil fn returns nil and closes Done", func(t *testing.T) {
 		t.Parallel()
 
 		p := &PluggableTraceFlightRecorder{}
-		p.Stop()
+
+		// Initialise Done lazily.
+		_ = p.Done()
+
+		err := p.Stop(context.Background())
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		select {
+		case <-p.Done():
+		default:
+			t.Fatal("expected Done channel closed after Stop")
+		}
 	})
 
 	t.Run("delegates to fn", func(t *testing.T) {
@@ -57,13 +96,63 @@ func TestPluggableTraceFlightRecorder_Stop(t *testing.T) {
 
 		called := false
 		p := &PluggableTraceFlightRecorder{
-			StopFn: func() { called = true },
+			StopFn: func(_ context.Context) error {
+				called = true
+
+				return nil
+			},
 		}
 
-		p.Stop()
+		err := p.Stop(context.Background())
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 
 		if !called {
 			t.Fatal("expected StopFn to be called")
+		}
+	})
+
+	t.Run("is idempotent", func(t *testing.T) {
+		t.Parallel()
+
+		p := &PluggableTraceFlightRecorder{}
+		_ = p.Done()
+
+		err := p.Stop(context.Background())
+		if err != nil {
+			t.Fatalf("first Stop returned %v", err)
+		}
+
+		err = p.Stop(context.Background())
+		if err != nil {
+			t.Fatalf("second Stop returned %v", err)
+		}
+	})
+}
+
+func TestPluggableTraceFlightRecorder_Done(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil fn returns internal channel", func(t *testing.T) {
+		t.Parallel()
+
+		p := &PluggableTraceFlightRecorder{}
+		if p.Done() == nil {
+			t.Fatal("expected non-nil channel")
+		}
+	})
+
+	t.Run("delegates to fn", func(t *testing.T) {
+		t.Parallel()
+
+		ch := make(chan struct{})
+		p := &PluggableTraceFlightRecorder{
+			DoneFn: func() <-chan struct{} { return ch },
+		}
+
+		if p.Done() != (<-chan struct{})(ch) {
+			t.Fatal("expected DoneFn channel")
 		}
 	})
 }
@@ -119,6 +208,7 @@ func TestPluggableTraceFlightRecorder_WriteTo(t *testing.T) {
 		p := &PluggableTraceFlightRecorder{
 			WriteToFn: func(w io.Writer) (int64, error) {
 				n, err := w.Write([]byte("trace"))
+
 				return int64(n), err
 			},
 		}
