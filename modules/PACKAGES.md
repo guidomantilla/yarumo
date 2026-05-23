@@ -7,7 +7,7 @@
 - API expone funciones libres como superficie principal. El consumidor llama funciones del paquete, no construye y opera sobre tipos del paquete.
 - No exporta structs con invariantes mutables ni constructores `NewXxx(opts ...Option) Interface` con Options pattern. Pueden existir constructores triviales que devuelven valores inmutables bajo interface (ej. `NewUID(name, fn) UID`) sin descalificar el shape.
 - Pueden mantener **estado mutable interno** detrás de las funciones libres (PRNG state, slot `current` swappable vía `Use`, registry map, regex caches). La pureza "mismos args ⇒ mismo resultado" es ideal pero no requisito: ver bloque "Estado mutable de paquete" al final de esta sección.
-- Ejemplos en el repo: `common/assert/`, `common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `common/validation/`, `common/log/`, `common/uids/`.
+- Ejemplos en el repo: `common/assert/`, `common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `common/validation/`, `common/log/`, `extensions/common/uids/`.
 
 ### Inventario en `modules/common/`
 
@@ -16,11 +16,10 @@
 | `assert/` | Assertions runtime (`NotNil`, `NotEmpty`, `Equal`, `True`, `False`) — modo log o fatal según config. |
 | `cast/` | Type-safe casting (`ToInt`, `ToString`, `ToTime`, `ToDuration`, …) — wrappa `spf13/cast`. |
 | `errs/` | Typed errors + error-chain helpers (`As`, `Match`, `Wrap`, `Unwrap`, `ErrorMessages`, `AsErrorInfo`) + JSON-serializable info. |
-| `log/` | Facade abstracta de logging estructurado (`Logger` interface + `Use`/`Default` + helpers `Trace`/`Debug`/`Info`/`Warn`/`Error`/`Fatal`) sobre slot mutable. Trío base (`types.go`/`functions.go`/`functions_test.go`) + `internals.go` con `loggerHolder` (struct sin métodos, excepción del consumidor de `load`) + vars `current`/`internal`/`osExit` + helper `load`. Concern del default `noopLogger` (struct privado con métodos que implementa `Logger`) aislado en `noop.go`. Implementaciones concretas viven en `modules/extensions/log/`; este paquete no depende de ninguna. Default noopLogger (Fatal escribe a stderr y exit) hasta que el consumer llame `Use(...)`. |
+| `log/` | Facade abstracta de logging estructurado (`Logger` interface + `Use`/`Default` + helpers `Trace`/`Debug`/`Info`/`Warn`/`Error`/`Fatal`) sobre slot mutable. Trío base (`types.go`/`functions.go`/`functions_test.go`) + `internals.go` con `loggerHolder` (struct sin métodos, excepción del consumidor de `load`) + vars `current`/`internal`/`osExit` + helper `load`. Concern del default `noopLogger` (struct privado con métodos que implementa `Logger`) aislado en `noop.go`. Implementaciones concretas viven en `modules/extensions/common/log/`; este paquete no depende de ninguna. Default noopLogger (Fatal escribe a stderr y exit) hasta que el consumer llame `Use(...)`. |
 | `pointer/` | Helpers para pointers (deref con default, take-address, comparación). |
 | `random/` | Generación pseudoaleatoria no-crypto (`Bytes`, `Number`, `String`, `Text*`). |
 | `rest/` | Cliente REST stateless (`Call`, `CallStream`, `DecodeHTTPError`) con DTOs `RequestSpec`/`ResponseSpec[T]`/`StreamResponseSpec`; concurrency-safe. |
-| `uids/` | Generadores (`UUIDv4`/`UUIDv7`/`ULID`/`NanoID`/`CUID2`/`XID`) + validadores (`IsUUID`/…) + registry global swappable de algoritmos vía `Register`/`Use`/`Generate`. Concern "valor UID" en `uids.go`; concern "registry" en `extensions.go`. |
 | `utils/` | Funciones genéricas (`Coalesce`, `Ternary`, `Empty`, `RandomString`, case-helpers `PascalCase`/`SnakeCase`/…). |
 | `validation/` | Leaves de validación (`IsRequired`, `MinLen`, `IsEmail`, `IsUUID`, …) + reflexión por dotted path (`GetField`). |
 
@@ -53,7 +52,6 @@ Aplican las 4 reglas universales con las siguientes extensiones cuando el paquet
 | `expressions/` | `Evaluator` de expresiones — lexer/parser/eval sobre AST con scope. |
 | `health/` | Aggregator de health checks que orquesta múltiples sondas. |
 | `http/` | `Client` + `Server` HTTP con retry/limiter, defaults seguros para timeouts/headers. |
-| `resilience/` | `CircuitBreaker` + `RateLimiter` (instancias) con registry lazy goroutine-free. |
 
 **Concerns ajenos en archivos `<concern>.go`** — mismo principio que R1 de Shape A (concern por archivo) aplicado a funciones libres: cuando dos grupos de funciones libres pertenecen a concerns ajenos entre sí, se separan en archivos `<concern>.go` en vez de mezclarse en `functions.go`. Precedentes: `uids/extensions.go` (registry global del paquete con state + `Register`/`Get`/`Use`/`Generate`/`Supported`, distinto de los generadores/validadores libres en `functions.go`); `diagnostics/handlers.go` (HTTP handlers `NewPprofHandler` distintos de las capturas de profile en `functions.go`) — ahora en `modules/diagnostics/` tras el split de #175.
 
@@ -127,7 +125,7 @@ Las reglas universales del repo (doc terminado en punto, comenzar por el nombre 
 
 Algunos paquetes bajo `common/` no encajan en ningún shape — porque son envoltorios delgados sobre una librería externa, tienen un constraint de dependencias que justifica la desviación, o su superficie es exclusivamente declaración de tipos (sin funciones libres como API principal). Quedan fuera del inventario de Shape A y Shape B, y de sus reglas.
 
-- `modules/extensions/log/slog/` — adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `Logger` como **struct público concreto** (no como interface) e implementa la interface `common/log.Logger` (typing estructural). Vive como módulo top-level porque depende de `common/log` (interface) en dirección consumer → abstracción; el ciclo arquitectónico inverso (common → impl) queda eliminado. Esta forma encaja en la excepción 4 de `CODING_STANDARDS.md` (criterio 4) y rompe también el patrón Shape B clásico, así que vive acá.
+- `modules/extensions/common/log/slog/` — adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `Logger` como **struct público concreto** (no como interface) e implementa la interface `common/log.Logger` (typing estructural). Vive como módulo top-level porque depende de `common/log` (interface) en dirección consumer → abstracción; el ciclo arquitectónico inverso (common → impl) queda eliminado. Esta forma encaja en la excepción 4 de `CODING_STANDARDS.md` (criterio 4) y rompe también el patrón Shape B clásico, así que vive acá.
 - `common/constraints/` — solo declara type constraints genéricas (`Signed`, `Unsigned`, `Integer`, `Float`, `Complex`, `Number`) + aliases (`Comparable`, `Ordenable`). Sin funciones libres, sin métodos, sin estado. Análogo a `golang.org/x/exp/constraints`. No tiene `functions.go` (no hay funciones); el package doc + declaraciones viven en `types.go` (único archivo).
 - `common/types/` — solo declara el tipo `Bytes []byte` con métodos puros (`ToHex`, `ToBase64Std`/`ToBase64RawStd`/`ToBase64Url`/`ToBase64RawUrl`). Sin funciones libres del paquete. Encaja parcialmente en R1 variante 1 de Shape A (DTO público con métodos puros), pero no cumple el trío base porque no hay funciones libres que justifiquen `functions.go` ni un `types.go` separado del concern: el package doc + tipo + métodos viven todos en `bytes.go` (único archivo).
 - **Subpaquetes de `modules/crypto/`** (14 paquetes — ver inventario abajo) — siguen el **Crypto Subpackage Standard** documentado en `modules/crypto/CODING_STANDARDS.md`. El standard define file structure propia (`types.go`, `errors.go`, `<name>.go`, `functions.go`, `options.go`, `extensions.go`, `text_codec.go`) y overrides explícitos a 3 criterios del documento general: criterion 3 (struct público concreto, no interface), criterion 4 (constructor devuelve `*Method` con pluggable function fields), criterion 6 (registry multi-instance, no singleton `Use`). Aplica al universo crypto completo, con 3 utility packages (`random/`, `certs/`, `passwords/generator/`) que no usan el Method pattern y siguen Shape A. Para detalles y compliance ver el standard; PACKAGES.md no duplica esas reglas.
@@ -156,18 +154,18 @@ Módulo top-level extraído de `modules/common/crypto/` (issue #170). Reúne 14 
 | `signers/hmacs/` | Method | HMAC (SHA-256/384/512). |
 | `signers/rsassas/` | Method | RSASSA (PKCS#1 v1.5 + PSS, SHA-256/384/512). |
 
-## Módulo `modules/extensions/log/`
+## Módulo `modules/extensions/common/log/`
 
 Top-level module que aloja **implementaciones concretas** de la interface `common/log.Logger`. No tiene paquete raíz propio — el módulo existe solo como contenedor de adapters concretos (`slog/`, etc.). La abstracción (interface, slot global, helpers `Trace`/.../`Fatal`) vive en `common/log/`; este módulo aporta las impls.
 
-**Dirección de dependencia.** `modules/extensions/log/<impl>` → `common/log` (interface). Nunca al revés. Esta inversión es lo que mantiene `common/` libre de dependencias hacia módulos top-level y evita el ciclo arquitectónico `common → log → common`.
+**Dirección de dependencia.** `modules/extensions/common/log/<impl>` → `common/log` (interface). Nunca al revés. Esta inversión es lo que mantiene `common/` libre de dependencias hacia módulos top-level y evita el ciclo arquitectónico `common → log → common`.
 
 | Subpaquete | Shape | Qué hace |
 |---|---|---|
 | `log/slog/` | Excepción (struct público concreto, no interface) | Adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `*Logger` como struct público concreto e implementa `common/log.Logger` por typing estructural. Incluye `Options` (`WithLevel`/`WithWriter`/`WithHandlers`/`WithContextExtractors`), `NewFanoutHandler`, `NewContextHandler`, `ReplaceLevel`, `SlogctxExtractor`. |
 | `log/slog/slogctx/` | Shape A | Bag context-bound de `slog.Attr` (`WithAttrs`, `SetAttrs`, `Attrs`) para propagar atributos por `context.Context`. Sin estado de paquete. |
 
-Los tests de la facade `common/log/` son intencionalmente seriales (sin `t.Parallel()`) porque mutan el slot global. Documentado en cabecera de `common/log/functions_test.go` y en `common/log/doc.go`. Los subpaquetes de `modules/extensions/log/` (`slog/`, `slog/slogctx/`) corren con `t.Parallel()` en todos sus tests.
+Los tests de la facade `common/log/` son intencionalmente seriales (sin `t.Parallel()`) porque mutan el slot global. Documentado en cabecera de `common/log/functions_test.go` y en `common/log/doc.go`. Los subpaquetes de `modules/extensions/common/log/` (`slog/`, `slog/slogctx/`) corren con `t.Parallel()` en todos sus tests.
 
-Histórico: `common/log/` fue extraído como módulo top-level en #173, pero esto cerró un ciclo arquitectónico con `common/assert` que dependía de log. La reorganización en este mismo PR devuelve la **interface** a `common/log/` y deja en `modules/extensions/log/` solo las **implementaciones concretas** — patrón paralelo a `commons-logging`/`slf4j-api` vs binding impls.
+Histórico: `common/log/` fue extraído como módulo top-level en #173, pero esto cerró un ciclo arquitectónico con `common/assert` que dependía de log. La reorganización en este mismo PR devuelve la **interface** a `common/log/` y deja en `modules/extensions/common/log/` solo las **implementaciones concretas** — patrón paralelo a `commons-logging`/`slf4j-api` vs binding impls.
 

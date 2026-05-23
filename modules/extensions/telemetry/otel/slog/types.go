@@ -18,7 +18,7 @@ package slog
 import (
 	"log/slog"
 
-	cslog "github.com/guidomantilla/yarumo/extensions/log/slog"
+	cslog "github.com/guidomantilla/yarumo/extensions/common/log/slog"
 )
 
 var (

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	cresilience "github.com/guidomantilla/yarumo/common/resilience"
+	cresilience "github.com/guidomantilla/yarumo/extensions/common/resilience"
 )
 
 func main() {

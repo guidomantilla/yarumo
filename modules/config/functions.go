@@ -10,7 +10,7 @@ import (
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	clog "github.com/guidomantilla/yarumo/common/log"
-	cslog "github.com/guidomantilla/yarumo/extensions/log/slog"
+	cslog "github.com/guidomantilla/yarumo/extensions/common/log/slog"
 	cutils "github.com/guidomantilla/yarumo/common/utils"
 )
 

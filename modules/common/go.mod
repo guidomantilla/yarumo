@@ -3,23 +3,17 @@ module github.com/guidomantilla/yarumo/common
 go 1.25.5
 
 require (
-	github.com/akshayvadher/cuid2 v0.0.0-20241212114603-8aba656b70dc
 	github.com/avast/retry-go/v4 v4.7.0
-	github.com/devmiek/nanoid-go v0.0.0-20241216084707-e17e38258ffc
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/oklog/ulid/v2 v2.1.1
-	github.com/rs/xid v1.6.0
-	github.com/sony/gobreaker v1.0.0
 	github.com/spf13/cast v1.10.0
 	golang.org/x/text v0.34.0
-	golang.org/x/time v0.14.0
+	golang.org/x/time v0.15.0
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
 )

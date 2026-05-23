@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	cslog "github.com/guidomantilla/yarumo/extensions/log/slog"
+	cslog "github.com/guidomantilla/yarumo/extensions/common/log/slog"
 	"go.opentelemetry.io/otel/trace"
 )
 

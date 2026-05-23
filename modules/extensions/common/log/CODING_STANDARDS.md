@@ -1,4 +1,4 @@
-# Coding Standards — modules/extensions/log/
+# Coding Standards — modules/extensions/common/log/
 
 This module follows the workspace-wide standards documented in
 [`modules/common/CODING_STANDARDS.md`](../common/CODING_STANDARDS.md).

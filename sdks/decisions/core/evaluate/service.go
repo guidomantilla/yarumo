@@ -7,7 +7,7 @@ import (
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cuids "github.com/guidomantilla/yarumo/common/uids"
+	cuids "github.com/guidomantilla/yarumo/extensions/common/uids"
 
 	"github.com/guidomantilla/yarumo/decisions/core/repository"
 )

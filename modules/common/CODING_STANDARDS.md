@@ -288,5 +288,4 @@ When extending `common/lifecycle/` itself, prefer:
 - [x] common/random
 - [x] common/rest
 - [x] common/types
-- [x] common/uids
 - [x] common/utils

@@ -6,7 +6,7 @@ replace github.com/guidomantilla/yarumo/cache => ../
 
 replace github.com/guidomantilla/yarumo/common => ../../common
 
-replace github.com/guidomantilla/yarumo/extensions/log => ../../extensions/log
+replace github.com/guidomantilla/yarumo/extensions/common/log => ../../extensions/common/log
 
 require (
 	github.com/alicebob/miniredis/v2 v2.38.0
