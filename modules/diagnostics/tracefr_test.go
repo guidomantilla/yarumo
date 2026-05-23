@@ -5,6 +5,8 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
 )
 
 // TestNewTraceFlightRecorder constructs the recorder and checks basic
@@ -93,15 +95,7 @@ func TestTraceFlightRecorder_Lifecycle(t *testing.T) {
 			t.Fatalf("unexpected start error: %v", err)
 		}
 
-		err = r.Stop(context.Background())
-		if err != nil {
-			t.Fatalf("first Stop returned %v", err)
-		}
-
-		err = r.Stop(context.Background())
-		if err != nil {
-			t.Fatalf("second Stop returned %v", err)
-		}
+		lctests.AssertIdempotentStop(t, r)
 	})
 
 	t.Run("write to while enabled", func(t *testing.T) {

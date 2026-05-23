@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"sync"
 	"testing"
+
+	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
 )
 
 // blockProfRateMu serialises tests that mutate runtime.SetBlockProfileRate.
@@ -99,15 +101,7 @@ func TestBlockProfiling_Lifecycle(t *testing.T) {
 			t.Fatalf("unexpected start error: %v", err)
 		}
 
-		err = s.Stop(context.Background())
-		if err != nil {
-			t.Fatalf("first Stop returned %v", err)
-		}
-
-		err = s.Stop(context.Background())
-		if err != nil {
-			t.Fatalf("second Stop returned %v", err)
-		}
+		lctests.AssertIdempotentStop(t, s)
 	})
 }
 
