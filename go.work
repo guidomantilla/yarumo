@@ -15,6 +15,7 @@ use (
 	./modules/config
 	./modules/cron
 	./modules/cron/examples
+	./modules/crypto
 	./modules/diagnostics
 	./modules/diagnostics/examples
 	./modules/grpc

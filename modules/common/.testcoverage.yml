@@ -32,14 +32,6 @@ threshold:
 # a new threshold to it. If a project has multiple rules that match the same path,
 # override rules should be listed in order from specific to more general rules.
 override:
-  # crypto/ciphers/hybrid/functions.go wraps circl/hpke; the uncovered
-  # branches are error paths from third-party APIs (KEM scheme errors,
-  # rand.Reader failures, NewSender/NewReceiver returning nil error in the
-  # current circl release) that are not reachable from unit tests without
-  # forking the dependency.
-  - threshold: 85
-    path: ^crypto/ciphers/hybrid/functions\.go$
-
   # uids/functions.go: the uncovered branches are the error paths of
   # uuid.NewRandom, nanoid.New and uuid.NewV7, which only return errors when
   # the underlying crypto/rand source fails. Not reachable from unit tests
@@ -52,14 +44,6 @@ override:
 exclude:
 #  # Exclude files or packages matching their paths
   paths:
-    - ^crypto/certs/examples/main.go
-    - ^crypto/ciphers/examples/main.go
-    - ^crypto/ciphers/hybrid/examples/main.go
-    - ^crypto/hashes/examples/main.go
-    - ^crypto/kdfs/examples/main.go
-    - ^crypto/passwords/examples/main.go
-    - ^crypto/signers/examples/main.go
-    - ^crypto/tokens/examples/main.go
     - ^diagnostics/examples/main.go
     - ^health/examples/main.go
     - ^resilience/examples/main.go

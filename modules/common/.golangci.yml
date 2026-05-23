@@ -189,17 +189,6 @@ linters:
       - path: cast/functions\.go
         linters:
           - wrapcheck
-      # crypto/random: randInt/randRead package-level vars are required for
-      # testing crypto/rand error paths.
-      - path: crypto/random/functions\.go
-        linters:
-          - gochecknoglobals
-      # crypto/random: TestNumber and TestString cannot be parallel — they mock
-      # the package-level randInt.
-      - path: crypto/random/functions_test\.go
-        linters:
-          - paralleltest
-          - tparallel
       # random (fast, math/rand/v2-backed): gosec G404 fires by design — this
       # package is the non-secure variant of crypto/random. Misuse is guarded
       # by the import path and the per-function doc warnings.
@@ -210,26 +199,6 @@ linters:
       - path: log/internals\.go
         linters:
           - gochecknoglobals
-          - ireturn
-      # crypto/tokens/tokens.go: signingMethodFor must return the jwt.SigningMethod
-      # interface from the backend library; that is the entire point of the helper
-      # so callers do not see jwt types. ireturn would force returning a concrete
-      # type from a third-party package, defeating the abstraction.
-      # cyclop: signingMethodFor is a flat enum mapping over 13 Algorithm values
-      # (HS256/384/512 + RS256/384/512 + PS256/384/512 + ES256/384/512 + EdDSA).
-      # Each case is a single return; extraction into table-driven dispatch hurts
-      # readability without reducing real complexity.
-      - path: crypto/tokens/tokens\.go
-        linters:
-          - ireturn
-          - cyclop
-      # crypto/ciphers/hybrid: HPKE Method.GenerateKey and the internal
-      # generateKey helper return kem.PublicKey / kem.PrivateKey from circl —
-      # those are interfaces by design (one Method can serve multiple KEMs
-      # over time). Returning the concrete X25519 types would re-leak circl
-      # internals and break the polymorphism the abstraction is built on.
-      - path: crypto/ciphers/hybrid/(functions|hybrid)\.go
-        linters:
           - ireturn
       # log/slog globals are required for the default logger singleton
       - path: log/slog/logger\.go
@@ -334,34 +303,6 @@ linters:
       - path: lifecycle/functions\.go
         linters:
           - wrapcheck
-      # crypto subpackage globals: predefined methods, registry map, sync mutex, sentinel errors
-      - path: crypto/
-        linters:
-          - gochecknoglobals
-      # crypto/hashes is the legitimate registration point for legacy hash drivers
-      # (crypto/sha1, crypto/md5). These imports are required so callers can opt
-      # into legacy interop without each importing the stdlib drivers themselves.
-      - path: crypto/hashes/extensions\.go
-        linters:
-          - depguard
-          - gosec
-      # crypto examples use println for demonstration purposes
-      - path: crypto/.*/examples/
-        linters:
-          - forbidigo
-      # crypto/hashes examples demonstrate legacy hashes (SHA1) marked Deprecated by design;
-      # staticcheck SA1019 fires correctly for consumers but the demo itself is intentional.
-      - path: crypto/hashes/examples/
-        linters:
-          - staticcheck
-      # crypto private functions return errors that are wrapped by the Method caller
-      - path: crypto/.*/functions\.go
-        linters:
-          - wrapcheck
-      # extensions_test.go cannot be parallel: tests modify the global methods registry
-      - path: crypto/.*/extensions_test\.go
-        linters:
-          - paralleltest
       # NewOptions has 11 cyclomatic complexity (limit 10); extracting sub-functions hurts readability
       - path: http/options\.go
         linters:
