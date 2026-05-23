@@ -18,11 +18,12 @@ use (
 	./modules/crypto
 	./modules/diagnostics
 	./modules/diagnostics/examples
+	./modules/extensions/log
+	./modules/extensions/telemetry/otel/slog
 	./modules/grpc
 	./modules/grpc/examples
 	./modules/http
 	./modules/http/examples
-	./modules/log
 	./modules/telemetry/otel
 	./modules/validation
 	./sdks/decisions/core

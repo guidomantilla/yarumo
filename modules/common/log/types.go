@@ -2,7 +2,7 @@
 //
 // The package-level helpers (Trace/Debug/Info/Warn/Error/Fatal) delegate
 // to a process-global Logger swappable via Use. Concrete implementations
-// live in modules/log/<impl>; they depend on this package, never the
+// live in modules/extensions/log/<impl>; they depend on this package, never the
 // reverse. Until Use is called, the default slot serves a noopLogger that
 // discards Trace/Debug/Info/Warn/Error and exits the process on Fatal so
 // that a missing Use call cannot hide a fatal condition.

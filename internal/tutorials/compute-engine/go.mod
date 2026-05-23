@@ -17,5 +17,4 @@ replace (
 	github.com/guidomantilla/yarumo/common => ../../../modules/common
 	github.com/guidomantilla/yarumo/compute/engine => ../../../modules/compute/engine
 	github.com/guidomantilla/yarumo/compute/math => ../../../modules/compute/math
-	github.com/guidomantilla/yarumo/log => ../../../modules/log
 )

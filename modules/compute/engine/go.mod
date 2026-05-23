@@ -15,5 +15,4 @@ require (
 replace (
 	github.com/guidomantilla/yarumo/common => ../../common
 	github.com/guidomantilla/yarumo/compute/math => ../math
-	github.com/guidomantilla/yarumo/log => ../../log
 )

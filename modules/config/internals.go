@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	clog "github.com/guidomantilla/yarumo/common/log"
-	cslog "github.com/guidomantilla/yarumo/log/slog"
+	cslog "github.com/guidomantilla/yarumo/extensions/log/slog"
 )
 
 const maskedValue = "********"

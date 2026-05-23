@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	clog "github.com/guidomantilla/yarumo/common/log"
-	cslog "github.com/guidomantilla/yarumo/log/slog"
 )
 
 type fakeServerStream struct {
@@ -304,9 +303,10 @@ func TestRecoveryInterceptor_StackCaptureNotTruncated(t *testing.T) {
 	t.Run("unary interceptor captures outermost recursion frames", func(t *testing.T) {
 		spy := &stackCapturingLogger{}
 
+		prev := clog.Default()
 		clog.Use(spy)
 
-		defer clog.Use(cslog.NewLogger())
+		defer clog.Use(prev)
 
 		interceptor := RecoveryInterceptor()
 		info := &grpc.UnaryServerInfo{FullMethod: "/test.Service/DeepPanic"}
@@ -341,9 +341,10 @@ func TestRecoveryInterceptor_StackCaptureNotTruncated(t *testing.T) {
 	t.Run("stream interceptor captures outermost recursion frames", func(t *testing.T) {
 		spy := &stackCapturingLogger{}
 
+		prev := clog.Default()
 		clog.Use(spy)
 
-		defer clog.Use(cslog.NewLogger())
+		defer clog.Use(prev)
 
 		interceptor := StreamRecoveryInterceptor()
 		info := &grpc.StreamServerInfo{FullMethod: "/test.Service/StreamDeepPanic"}
