@@ -8,56 +8,33 @@ import (
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
-// Error domain type for HTTP request errors.
-const (
-	RequestType = "http-request"
-)
+// HTTPType is the domain type tag attached to every Error produced by this package.
+const HTTPType = "http"
 
-var (
-	_ error = (*Error)(nil)
-	_ error = (*StatusCodeError)(nil)
-)
-
-// Error is the domain error for HTTP request operations.
+// Error is the domain error type for http transport operations.
 type Error struct {
 	cerrs.TypedError
 }
 
-// Error returns a formatted error message including the error type and cause.
+// Error returns the formatted error string.
 func (e *Error) Error() string {
 	cassert.NotNil(e, "error is nil")
 	cassert.NotNil(e.Err, "internal error is nil")
 
-	return fmt.Sprintf("http request %s error: %s", e.Type, e.Err)
+	return fmt.Sprintf("%s error: %s", e.Type, e.Err)
 }
 
-// StatusCodeError represents an HTTP response whose status code triggered a retry.
-type StatusCodeError struct {
-	StatusCode int
-}
-
-// Error returns a formatted message including the retryable status code.
-func (e *StatusCodeError) Error() string {
-	cassert.NotNil(e, "error is nil")
-	return fmt.Sprintf("http retryable status code: %d", e.StatusCode)
-}
-
-// Sentinel errors for HTTP request failure modes.
+// Sentinel errors for http transport failure modes.
 var (
-	ErrHttpRequestFailed     = errors.New("http request failed")
-	ErrContextNil            = errors.New("context is nil")
-	ErrHttpRequestNil        = errors.New("http request is nil")
-	ErrRateLimiterExceeded   = errors.New("rate limit exceeded")
-	ErrHttpNonReplayableBody = errors.New("http non-replayable request body")
-	ErrHttpGetBodyFailed     = errors.New("http get body failed")
+	ErrTransportFailed = errors.New("transport failed")
 )
 
-// ErrDo creates an HTTP request domain error joining the given causes with ErrHttpRequestFailed.
-func ErrDo(errs ...error) error {
+// ErrTransport creates a transport domain error joining the given causes with ErrTransportFailed.
+func ErrTransport(causes ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
-			Type: RequestType,
-			Err:  errors.Join(append(errs, ErrHttpRequestFailed)...),
+			Type: HTTPType,
+			Err:  errors.Join(append(causes, ErrTransportFailed)...),
 		},
 	}
 }

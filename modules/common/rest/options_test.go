@@ -5,15 +5,20 @@ import (
 	"testing"
 )
 
+// doClient adapts a plain Do function to chttp.Client for tests.
+type doClient func(*http.Request) (*http.Response, error)
+
+func (f doClient) Do(req *http.Request) (*http.Response, error) { return f(req) }
+
 func TestNewOptions(t *testing.T) {
 	t.Parallel()
 
-	t.Run("applies default DoFn", func(t *testing.T) {
+	t.Run("applies default client", func(t *testing.T) {
 		t.Parallel()
 
 		opts := NewOptions()
-		if opts.doFn == nil {
-			t.Fatal("default doFn should not be nil")
+		if opts.client == nil {
+			t.Fatal("default client should not be nil")
 		}
 	})
 
@@ -27,10 +32,10 @@ func TestNewOptions(t *testing.T) {
 	})
 }
 
-func TestWithDoFn(t *testing.T) {
+func TestWithClient(t *testing.T) {
 	t.Parallel()
 
-	t.Run("overrides DoFn", func(t *testing.T) {
+	t.Run("overrides client", func(t *testing.T) {
 		t.Parallel()
 
 		called := false
@@ -40,8 +45,8 @@ func TestWithDoFn(t *testing.T) {
 			return makeResp(200, []byte("{}"), map[string]string{"Content-Type": applicationJSON}), nil
 		}
 
-		opts := NewOptions(WithDoFn(do))
-		resp, err := opts.doFn(&http.Request{})
+		opts := NewOptions(WithClient(doClient(do)))
+		resp, err := opts.client.Do(&http.Request{})
 
 		if resp != nil {
 			_ = resp.Body.Close()
@@ -52,16 +57,16 @@ func TestWithDoFn(t *testing.T) {
 		}
 
 		if !called {
-			t.Fatal("WithDoFn did not override doFn")
+			t.Fatal("WithClient did not override client")
 		}
 	})
 
-	t.Run("ignores nil DoFn", func(t *testing.T) {
+	t.Run("ignores nil client", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithDoFn(nil))
-		if opts.doFn == nil {
-			t.Fatal("doFn should remain default when nil is passed")
+		opts := NewOptions(WithClient(nil))
+		if opts.client == nil {
+			t.Fatal("client should remain default when nil is passed")
 		}
 	})
 }

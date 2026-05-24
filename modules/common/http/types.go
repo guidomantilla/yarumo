@@ -1,81 +1,49 @@
-// Package http provides a small wrapper around the standard *http.Client.
+// Package http provides the base abstractions for the workspace's HTTP
+// client stack: the Client interface, a NewClient convenience that wires
+// stdlib *http.Client with safe defaults, the RoundTripperFn adapter for
+// turning plain functions into http.RoundTripper, and a domain error
+// type that other transports can wrap.
 //
-// This custom implementation/extension of *http.Client optionally adds rate limiting and retry capabilities while keeping
-// full API compatibility through a minimal Client interface.
+// All concrete middleware transports (rate limiting, retry, tracing,
+// metrics, auth, ...) live in their own modules under
+// modules/extensions/common/http/<name>/ so consumers pull only what
+// they use. Each is an http.RoundTripper that wraps another, and the
+// caller composes the chain explicitly:
 //
-// Timeouts alignment:
-//   - The underlying http.Client.Timeout is configurable via Options and acts as an overall per-request timeout.
-//   - The internal rate limiter wait is bounded by the effective deadline, which is the minimum between req.Context() deadline and the client Timeout.
-//   - When a *http.Transport is provided, selected transport timeouts are capped to not exceed the client Timeout
-//     (TLSHandshakeTimeout, ResponseHeaderTimeout, ExpectContinueTimeout). Stricter values provided by the transport are kept.
+//	import (
+//	    chttp        "github.com/guidomantilla/yarumo/common/http"
+//	    chttplimiter "github.com/guidomantilla/yarumo/extensions/common/http/limiter"
+//	    chttpretry   "github.com/guidomantilla/yarumo/extensions/common/http/retry"
+//	)
 //
-// Error contract: implementations may wrap underlying errors. Callers should prefer errors.Is/As instead of relying on string messages.
-// Responsibility: the caller must close res.Body when err == nil.
-// Concurrency: implementations must be safe for concurrent use by multiple goroutines.
+//	transport := chttpretry.NewRetryTransport(
+//	    chttplimiter.NewLimiterTransport(http.DefaultTransport, rate.NewLimiter(10, 5)),
+//	    chttpretry.WithAttempts(3),
+//	)
+//	client := chttp.NewClient(chttp.WithTransport(transport))
 package http
 
-import (
-	"net/http"
-
-	retry "github.com/avast/retry-go/v4"
-)
+import "net/http"
 
 var (
-	_ Client = (*client)(nil)
-	_ Client = (*PluggableClient)(nil)
+	_ http.RoundTripper = RoundTripperFn(nil)
+	_ Client            = (*http.Client)(nil)
 
-	_ ErrDoFn           = ErrDo
-	_ DoFn              = ErrorDo
-	_ DoFn              = NoopDo
-	_ DoFn              = Do
-	_ LimiterEnabledFn  = EnabledLimiter
-	_ LimiterEnabledFn  = DisabledLimiter
-	_ RetrierEnabledFn  = EnabledRetrier
-	_ RetrierEnabledFn  = DisabledRetrier
-	_ retry.RetryIfFunc = NoopRetryIf
-	_ retry.RetryIfFunc = RetryIfHttpError
-	_ retry.OnRetryFunc = NoopRetryHook
-	_ RetryOnResponseFn = NoopRetryOnResponse
-	_ RetryOnResponseFn = RetryOn5xxAnd429Response
-
-	_ DoFn             = DefaultClient.Do
-	_ LimiterEnabledFn = DefaultClient.LimiterEnabled
-	_ RetrierEnabledFn = DefaultClient.RetrierEnabled
-
-	_ DoFn             = NoopClient.Do
-	_ LimiterEnabledFn = NoopClient.LimiterEnabled
-	_ RetrierEnabledFn = NoopClient.RetrierEnabled
-
-	_ DoFn             = ErrorClient.Do
-	_ LimiterEnabledFn = ErrorClient.LimiterEnabled
-	_ RetrierEnabledFn = ErrorClient.RetrierEnabled
+	_ ErrTransportFn = ErrTransport
 )
 
-// ErrDoFn is the function type for ErrDo.
-type ErrDoFn func(errs ...error) error
-
-// DoFn is the function type for Do.
-type DoFn func(req *http.Request) (*http.Response, error)
-
-// RetryOnResponseFn is the function type for RetryOn5xxAnd429Response.
-type RetryOnResponseFn func(res *http.Response) bool
-
-// LimiterEnabledFn is the function type for LimiterEnabled.
-type LimiterEnabledFn func() bool
-
-// RetrierEnabledFn is the function type for RetrierEnabled.
-type RetrierEnabledFn func() bool
-
-// Client defines the interface for HTTP client operations.
-//
-// Cancellation and deadlines are controlled via req.Context().
-// The caller is responsible for closing res.Body when err == nil.
-// Implementations must be safe for concurrent use by multiple goroutines.
+// Client is the minimal contract for executing HTTP requests. It is
+// satisfied by the stdlib *http.Client out of the box, so consumers that
+// need an abstraction (for testing or alternative implementations) can
+// accept Client and still pass the canonical type. Mocks typically
+// implement Client directly or wrap *http.Client with a fake
+// http.RoundTripper, which is the idiomatic Go testing pattern.
 type Client interface {
-	// Do sends the HTTP request and returns the response or an error.
+	// Do executes the request and returns the response. The caller must
+	// close res.Body when err == nil. Implementations must be safe for
+	// concurrent use by multiple goroutines.
 	Do(req *http.Request) (*http.Response, error)
-	// LimiterEnabled reports whether client-side rate limiting is active.
-	LimiterEnabled() bool
-	// RetrierEnabled reports whether automatic retries are active.
-	RetrierEnabled() bool
 }
+
+// ErrTransportFn is the function type for ErrTransport.
+type ErrTransportFn func(causes ...error) error

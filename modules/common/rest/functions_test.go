@@ -47,7 +47,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		res, err := Call[sample](context.Background(), spec, WithDoFn(do))
+		res, err := Call[sample](context.Background(), spec, WithClient(doClient(do)))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -81,7 +81,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		res, err := Call[[]byte](context.Background(), spec, WithDoFn(do))
+		res, err := Call[[]byte](context.Background(), spec, WithClient(doClient(do)))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -99,7 +99,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		res, err := Call[string](context.Background(), spec, WithDoFn(do))
+		res, err := Call[string](context.Background(), spec, WithClient(doClient(do)))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -117,7 +117,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		res, err := Call[sample](context.Background(), spec, WithDoFn(do))
+		res, err := Call[sample](context.Background(), spec, WithClient(doClient(do)))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -135,7 +135,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := Call[sample](context.Background(), spec, WithDoFn(do))
+		_, err := Call[sample](context.Background(), spec, WithClient(doClient(do)))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -149,7 +149,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := Call[sample](context.Background(), spec, WithDoFn(do))
+		_, err := Call[sample](context.Background(), spec, WithClient(doClient(do)))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -183,7 +183,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := Call[sample](context.Background(), spec, WithDoFn(do))
+		_, err := Call[sample](context.Background(), spec, WithClient(doClient(do)))
 		if err == nil {
 			t.Fatal("expected error when DoFn fails")
 		}
@@ -202,7 +202,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := Call[sample](context.Background(), spec, WithDoFn(do))
+		_, err := Call[sample](context.Background(), spec, WithClient(doClient(do)))
 		if err == nil {
 			t.Fatal("expected error when body read fails")
 		}
@@ -216,7 +216,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := Call[sample](context.Background(), spec, WithDoFn(do))
+		_, err := Call[sample](context.Background(), spec, WithClient(doClient(do)))
 		if err == nil {
 			t.Fatal("expected error for non-2xx status")
 		}
@@ -234,7 +234,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := Call[sample](context.Background(), spec, WithDoFn(do))
+		_, err := Call[sample](context.Background(), spec, WithClient(doClient(do)))
 		if err == nil {
 			t.Fatal("expected error for unsupported content-type")
 		}
@@ -248,7 +248,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := Call[sample](context.Background(), spec, WithDoFn(do))
+		_, err := Call[sample](context.Background(), spec, WithClient(doClient(do)))
 		if err == nil {
 			t.Fatal("expected JSON unmarshal error")
 		}
@@ -262,7 +262,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		res, err := Call[sample](context.Background(), spec, WithDoFn(do))
+		res, err := Call[sample](context.Background(), spec, WithClient(doClient(do)))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -292,7 +292,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := Call[sample](context.Background(), spec, WithDoFn(do), WithMaxResponseSize(50))
+		_, err := Call[sample](context.Background(), spec, WithClient(doClient(do)), WithMaxResponseSize(50))
 		if err == nil {
 			t.Fatal("expected error when response exceeds max size")
 		}
@@ -311,7 +311,7 @@ func TestCall(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		res, err := Call[sample](context.Background(), spec, WithDoFn(do), WithMaxResponseSize(int64(len(body))))
+		res, err := Call[sample](context.Background(), spec, WithClient(doClient(do)), WithMaxResponseSize(int64(len(body))))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -487,7 +487,7 @@ func TestCallStream(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodPost, URL: "http://example.com"}
 
-		res, err := CallStream(context.Background(), spec, WithDoFn(do))
+		res, err := CallStream(context.Background(), spec, WithClient(doClient(do)))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -520,7 +520,7 @@ func TestCallStream(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := CallStream(context.Background(), spec, WithDoFn(do))
+		_, err := CallStream(context.Background(), spec, WithClient(doClient(do)))
 		if err == nil {
 			t.Fatal("expected error for non-2xx status")
 		}
@@ -558,7 +558,7 @@ func TestCallStream(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := CallStream(context.Background(), spec, WithDoFn(do))
+		_, err := CallStream(context.Background(), spec, WithClient(doClient(do)))
 		if err == nil {
 			t.Fatal("expected error when DoFn fails")
 		}
@@ -572,7 +572,7 @@ func TestCallStream(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := CallStream(context.Background(), spec, WithDoFn(do))
+		_, err := CallStream(context.Background(), spec, WithClient(doClient(do)))
 		if err == nil {
 			t.Fatal("expected error when DoFn returns error")
 		}
@@ -598,7 +598,7 @@ func TestCallStream(t *testing.T) {
 		}
 		spec := &RequestSpec{Method: http.MethodGet, URL: "http://example.com"}
 
-		_, err := CallStream(context.Background(), spec, WithDoFn(do), WithMaxResponseSize(50))
+		_, err := CallStream(context.Background(), spec, WithClient(doClient(do)), WithMaxResponseSize(50))
 		if err == nil {
 			t.Fatal("expected error when error response exceeds max size")
 		}

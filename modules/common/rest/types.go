@@ -3,7 +3,7 @@
 //
 // Requests are described by RequestSpec and executed via Call (decoded response) or
 // CallStream (raw streaming body). Configuration is provided through functional Options
-// including the HTTP execution function (WithDoFn) and response size limits (WithMaxResponseSize).
+// including the HTTP client (WithClient) and response size limits (WithMaxResponseSize).
 //
 // Error contract: operations wrap errors into a domain Error type with RequestType.
 // Callers should prefer errors.Is/As instead of relying on string messages.

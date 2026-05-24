@@ -3,152 +3,84 @@ package http
 import (
 	"net/http"
 	"time"
-
-	retry "github.com/avast/retry-go/v4"
-	"golang.org/x/time/rate"
 )
 
-// Option is a functional option for configuring HTTP Client Options.
+// Option is a functional option for configuring HTTP client Options.
 type Option func(opts *Options)
 
-// Options holds the configuration for HTTP Client construction.
+// Options holds the configuration applied at client construction time.
+// Fields are unexported; callers configure them through the With* functions
+// and the consumer reads the final values through NewClient.
 type Options struct {
-	clientTimeout         time.Duration
-	clientTransport       http.RoundTripper
-	clientAttempts        uint
-	clientRetryIf         retry.RetryIfFunc
-	clientRetryHook       retry.OnRetryFunc
-	clientRetryOnResponse RetryOnResponseFn
-	clientLimiterRate     rate.Limit
-	clientLimiterBurst    uint
-
-	clientRetryIfSet         bool
-	clientRetryOnResponseSet bool
+	timeout   time.Duration
+	transport http.RoundTripper
 }
 
-// NewOptions creates Options with secure defaults and applies the given functional options.
+// NewOptions creates Options with secure defaults and applies the given
+// functional options. Defaults:
+//
+//   - timeout: 30s (stdlib's *http.Client zero value is 0, meaning no
+//     timeout — every consumer reinvents this; we standardize.)
+//   - transport: http.DefaultTransport
+//
+// When the configured transport is a *http.Transport, its internal
+// timeouts (TLSHandshake, ResponseHeader, ExpectContinue) are capped to
+// the overall client timeout so a stalled handshake cannot exceed the
+// request budget. The original transport is cloned, not mutated.
+//
+// Rate limiting is intentionally NOT wired here. Compose the transport
+// chain manually via NewLimiterTransport (and any retry/tracing/etc.
+// transports) and inject the assembled RoundTripper through
+// WithTransport. This keeps the order of middlewares explicit at the
+// call site.
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		clientTimeout:         30 * time.Second,
-		clientTransport:       http.DefaultTransport,
-		clientAttempts:        1,
-		clientRetryIf:         NoopRetryIf,
-		clientRetryHook:       NoopRetryHook,
-		clientRetryOnResponse: NoopRetryOnResponse,
-		clientLimiterRate:     rate.Inf, // unlimited - same as not having a limiter
-		clientLimiterBurst:    0,        // unlimited - same as not having a limiter
+		timeout:   30 * time.Second,
+		transport: http.DefaultTransport,
 	}
 
 	for _, opt := range opts {
 		opt(options)
 	}
 
-	// Auto-wire: if retryOnResponse was explicitly configured but retryIf was not,
-	// default retryIf to RetryIfHttpError so response-based retries actually trigger retries.
-	if options.clientRetryOnResponseSet && !options.clientRetryIfSet {
-		options.clientRetryIf = RetryIfHttpError
-	}
-
-	// Hardening: if limiter is enabled (finite rate) and burst <= 0, normalize to a minimal safe burst of 1 to avoid over-restrictive behavior.
-	mustHarden := options.clientLimiterRate != rate.Inf && options.clientLimiterBurst <= 0
-	if mustHarden {
-		options.clientLimiterBurst = 1
-	}
-
-	// Timeout alignment: cap selected transport timeouts so they do not exceed the client-level timeout.
-	// We only cap non-zero values (0 means no timeout for that hop), and we do not mutate the original transport instance.
-	t, ok := options.clientTransport.(*http.Transport)
-	if options.clientTimeout > 0 && ok {
+	t, ok := options.transport.(*http.Transport)
+	if options.timeout > 0 && ok {
 		clone := t.Clone()
 		if clone.TLSHandshakeTimeout > 0 {
-			clone.TLSHandshakeTimeout = min(clone.TLSHandshakeTimeout, options.clientTimeout)
+			clone.TLSHandshakeTimeout = min(clone.TLSHandshakeTimeout, options.timeout)
 		}
 
 		if clone.ResponseHeaderTimeout > 0 {
-			clone.ResponseHeaderTimeout = min(clone.ResponseHeaderTimeout, options.clientTimeout)
+			clone.ResponseHeaderTimeout = min(clone.ResponseHeaderTimeout, options.timeout)
 		}
 
 		if clone.ExpectContinueTimeout > 0 {
-			clone.ExpectContinueTimeout = min(clone.ExpectContinueTimeout, options.clientTimeout)
+			clone.ExpectContinueTimeout = min(clone.ExpectContinueTimeout, options.timeout)
 		}
-		// Note: DialContext timeout cannot be reliably capped here without replacing the dialer/function. We intentionally avoid overriding
-		// DialContext to preserve custom transport.
-		options.clientTransport = clone
+
+		options.transport = clone
 	}
 
 	return options
 }
 
-// WithClientTimeout sets the overall per-request timeout for the HTTP client.
-func WithClientTimeout(clientTimeout time.Duration) Option {
+// WithTimeout sets the overall per-request timeout for the *http.Client
+// that NewClient produces. Non-positive values are ignored.
+func WithTimeout(timeout time.Duration) Option {
 	return func(opts *Options) {
-		if clientTimeout > 0 {
-			opts.clientTimeout = clientTimeout
+		if timeout > 0 {
+			opts.timeout = timeout
 		}
 	}
 }
 
-// WithClientTransport sets the HTTP transport (RoundTripper) for the client.
-func WithClientTransport(clientTransport http.RoundTripper) Option {
+// WithTransport sets the RoundTripper. Pass the assembled middleware
+// chain (limiter, retry, tracing, etc.) here so the order of wrappers is
+// explicit. Nil values are ignored.
+func WithTransport(transport http.RoundTripper) Option {
 	return func(opts *Options) {
-		if clientTransport != nil {
-			opts.clientTransport = clientTransport
-		}
-	}
-}
-
-// WithClientAttempts sets the maximum number of attempts for retryable requests.
-func WithClientAttempts(clientAttempts uint) Option {
-	return func(opts *Options) {
-		if clientAttempts > 1 {
-			opts.clientAttempts = clientAttempts
-		}
-	}
-}
-
-// WithClientRetryIf sets the function that decides whether an error is retryable.
-func WithClientRetryIf(clientRetryIf retry.RetryIfFunc) Option {
-	return func(opts *Options) {
-		if clientRetryIf != nil {
-			opts.clientRetryIf = clientRetryIf
-			opts.clientRetryIfSet = true
-		}
-	}
-}
-
-// WithClientRetryHook sets the hook function called on each retry attempt.
-func WithClientRetryHook(clientRetryHook retry.OnRetryFunc) Option {
-	return func(opts *Options) {
-		if clientRetryHook != nil {
-			opts.clientRetryHook = clientRetryHook
-		}
-	}
-}
-
-// WithClientRetryOnResponse sets the function that decides whether a response should trigger a retry.
-func WithClientRetryOnResponse(clientRetryOnResponse RetryOnResponseFn) Option {
-	return func(opts *Options) {
-		if clientRetryOnResponse != nil {
-			opts.clientRetryOnResponse = clientRetryOnResponse
-			opts.clientRetryOnResponseSet = true
-		}
-	}
-}
-
-// WithClientLimiterRate sets the token bucket rate for client-side rate limiting.
-func WithClientLimiterRate(clientLimiterRate float64) Option {
-	return func(opts *Options) {
-		if clientLimiterRate > 0 && clientLimiterRate != float64(rate.Inf) {
-			opts.clientLimiterRate = rate.Limit(clientLimiterRate)
-		}
-	}
-}
-
-// WithClientLimiterBurst sets the token bucket burst size for client-side rate limiting.
-func WithClientLimiterBurst(clientLimiterBurst uint) Option {
-	return func(opts *Options) {
-		if clientLimiterBurst > 0 {
-			opts.clientLimiterBurst = clientLimiterBurst
+		if transport != nil {
+			opts.transport = transport
 		}
 	}
 }

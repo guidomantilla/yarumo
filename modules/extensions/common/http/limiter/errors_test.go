@@ -1,4 +1,4 @@
-package http
+package limiter
 
 import (
 	"errors"
@@ -7,37 +7,33 @@ import (
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
 
-func TestErrTransport(t *testing.T) {
+func TestErrRateLimiterExceeded(t *testing.T) {
 	t.Parallel()
 
-	t.Run("wraps ErrTransportFailed without causes", func(t *testing.T) {
+	t.Run("wraps ErrRateLimiterFailed without causes", func(t *testing.T) {
 		t.Parallel()
 
-		err := ErrTransport()
-		if !errors.Is(err, ErrTransportFailed) {
-			t.Fatalf("expected wrap of ErrTransportFailed, got %v", err)
+		err := ErrRateLimiterExceeded()
+		if !errors.Is(err, ErrRateLimiterFailed) {
+			t.Fatalf("expected wrap of ErrRateLimiterFailed, got %v", err)
 		}
 	})
 
 	t.Run("wraps additional causes", func(t *testing.T) {
 		t.Parallel()
 
-		cause := errors.New("boom")
-		err := ErrTransport(cause)
+		cause := errors.New("ctx expired")
+		err := ErrRateLimiterExceeded(cause)
 
 		if !errors.Is(err, cause) {
 			t.Fatalf("expected wrap of cause, got %v", err)
 		}
-
-		if !errors.Is(err, ErrTransportFailed) {
-			t.Fatalf("expected wrap of ErrTransportFailed, got %v", err)
-		}
 	})
 
-	t.Run("returns *Error with HTTPType tag", func(t *testing.T) {
+	t.Run("returns *Error with LimiterType tag", func(t *testing.T) {
 		t.Parallel()
 
-		err := ErrTransport()
+		err := ErrRateLimiterExceeded()
 
 		var e *Error
 		ok := errors.As(err, &e)
@@ -45,8 +41,8 @@ func TestErrTransport(t *testing.T) {
 			t.Fatalf("expected *Error, got %T", err)
 		}
 
-		if e.Type != HTTPType {
-			t.Fatalf("Type = %q, want %q", e.Type, HTTPType)
+		if e.Type != LimiterType {
+			t.Fatalf("Type = %q, want %q", e.Type, LimiterType)
 		}
 	})
 }
@@ -59,13 +55,13 @@ func TestError_Error(t *testing.T) {
 
 		e := &Error{
 			TypedError: cerrs.TypedError{
-				Type: HTTPType,
+				Type: LimiterType,
 				Err:  errors.New("boom"),
 			},
 		}
 
 		got := e.Error()
-		want := "http error: boom"
+		want := "http-limiter error: boom"
 		if got != want {
 			t.Fatalf("Error() = %q, want %q", got, want)
 		}

@@ -11,14 +11,14 @@ const defaultMaxResponseSize int64 = 10 << 20 // 10 MB
 
 // Options holds the configuration for a REST call.
 type Options struct {
-	doFn            chttp.DoFn
+	client          chttp.Client
 	maxResponseSize int64
 }
 
 // NewOptions creates Options with defaults and applies the provided options.
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		doFn:            chttp.Do,
+		client:          chttp.NewClient(),
 		maxResponseSize: defaultMaxResponseSize,
 	}
 
@@ -29,11 +29,11 @@ func NewOptions(opts ...Option) *Options {
 	return options
 }
 
-// WithDoFn sets the HTTP execution function.
-func WithDoFn(doFn chttp.DoFn) Option {
+// WithClient sets the HTTP client used to execute REST requests.
+func WithClient(client chttp.Client) Option {
 	return func(opts *Options) {
-		if doFn != nil {
-			opts.doFn = doFn
+		if client != nil {
+			opts.client = client
 		}
 	}
 }

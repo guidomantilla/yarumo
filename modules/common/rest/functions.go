@@ -33,7 +33,7 @@ func Call[T any](ctx context.Context, spec *RequestSpec, options ...Option) (*Re
 
 	start := time.Now()
 
-	resp, err := opts.doFn(req)
+	resp, err := opts.client.Do(req)
 	if resp != nil {
 		defer func() { _ = resp.Body.Close() }()
 	}
@@ -86,7 +86,7 @@ func CallStream(ctx context.Context, spec *RequestSpec, options ...Option) (*Str
 		return nil, ErrCall(err)
 	}
 
-	resp, err := opts.doFn(req)
+	resp, err := opts.client.Do(req)
 	if err != nil {
 		if resp != nil {
 			_ = resp.Body.Close()

@@ -19,6 +19,8 @@ use (
 	./modules/diagnostics
 	./modules/diagnostics/examples
 	./modules/extensions/common/cast
+	./modules/extensions/common/http/limiter
+	./modules/extensions/common/http/retry
 	./modules/extensions/common/log
 	./modules/extensions/common/resilience
 	./modules/extensions/common/uids
