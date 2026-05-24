@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	cvalidation "github.com/guidomantilla/yarumo/extensions/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/common/validation"
 )
 
 // runByName looks up a leaf in the default registry and runs it. It
@@ -384,8 +384,8 @@ func TestBuiltin_IDLeaves(t *testing.T) {
 		t.Parallel()
 
 		err := runByName(t, "ulid", "not-ulid", nil)
-		if !errors.Is(err, cvalidation.ErrULIDInvalid) {
-			t.Fatalf("expected ErrULIDInvalid, got %v", err)
+		if !errors.Is(err, cvalidation.ErrUIDInvalid) {
+			t.Fatalf("expected ErrUIDInvalid, got %v", err)
 		}
 	})
 }

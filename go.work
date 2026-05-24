@@ -7,6 +7,7 @@ use (
 	./internal/tutorials/compute-engine
 	./internal/tutorials/compute-math
 	./modules/common
+	./modules/common/validation/examples
 	./modules/compute/engine
 	./modules/compute/math
 	./modules/compute/tests/acceptance
@@ -21,7 +22,6 @@ use (
 	./modules/extensions/common/resilience/limiter
 	./modules/extensions/common/resilience/retry
 	./modules/extensions/common/uids
-	./modules/extensions/common/validation
 	./modules/extensions/telemetry/otel/http
 	./modules/extensions/telemetry/otel/slog
 	./modules/managed/cache/redis

@@ -8,7 +8,8 @@ import (
 	"fmt"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cvalidation "github.com/guidomantilla/yarumo/extensions/common/validation"
+	extuids "github.com/guidomantilla/yarumo/extensions/common/uids"
+	cvalidation "github.com/guidomantilla/yarumo/common/validation"
 )
 
 // Pokemon is a sample domain type validated by this example.
@@ -49,7 +50,7 @@ func demoLeaves(p Pokemon) {
 
 	var causes []error
 
-	err := cvalidation.IsUUID(p.ID)
+	err := cvalidation.IsUID(p.ID, extuids.IsUUID)
 	if err != nil {
 		causes = append(causes, err)
 	}

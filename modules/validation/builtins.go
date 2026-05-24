@@ -1,7 +1,8 @@
 package validation
 
 import (
-	cvalidation "github.com/guidomantilla/yarumo/extensions/common/validation"
+	extuids "github.com/guidomantilla/yarumo/extensions/common/uids"
+	cvalidation "github.com/guidomantilla/yarumo/common/validation"
 )
 
 // builtins is the default leaf catalogue. Each entry adapts a typed function
@@ -147,24 +148,27 @@ func ruleInRange(value any, params []any) error {
 	return cvalidation.InRange(v, lo, hi)
 }
 
-// ruleUUID delegates to common/validation/.IsUUID.
+// ruleUUID delegates to cvalidation.IsUID with the UUID predicate from
+// extensions/common/uids — the engine module owns the choice of algorithm
+// since the validation leaves are algorithm-agnostic.
 func ruleUUID(value any, _ []any) error {
 	s, err := asString(value)
 	if err != nil {
 		return err
 	}
 
-	return cvalidation.IsUUID(s)
+	return cvalidation.IsUID(s, extuids.IsUUID)
 }
 
-// ruleULID delegates to common/validation/.IsULID.
+// ruleULID delegates to cvalidation.IsUID with the ULID predicate from
+// extensions/common/uids.
 func ruleULID(value any, _ []any) error {
 	s, err := asString(value)
 	if err != nil {
 		return err
 	}
 
-	return cvalidation.IsULID(s)
+	return cvalidation.IsUID(s, extuids.IsULID)
 }
 
 // ruleNonEmpty rejects nil collections via reflection-free interface

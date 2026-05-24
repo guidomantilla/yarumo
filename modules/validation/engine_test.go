@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cvalidation "github.com/guidomantilla/yarumo/extensions/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/common/validation"
 )
 
 type pokemon struct {
@@ -147,8 +147,8 @@ func TestEngine_Conditional(t *testing.T) {
 			t.Fatalf("expected error, got nil")
 		}
 
-		if !errors.Is(err, cvalidation.ErrUUIDInvalid) {
-			t.Fatalf("expected ErrUUIDInvalid, got %v", err)
+		if !errors.Is(err, cvalidation.ErrUIDInvalid) {
+			t.Fatalf("expected ErrUIDInvalid, got %v", err)
 		}
 	})
 

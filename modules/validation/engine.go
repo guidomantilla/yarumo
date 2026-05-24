@@ -6,7 +6,7 @@ import (
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 	cexpressions "github.com/guidomantilla/yarumo/common/expressions"
-	cvalidation "github.com/guidomantilla/yarumo/extensions/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/common/validation"
 )
 
 // engine is the default Engine implementation.
