@@ -24,4 +24,4 @@ var (
 )
 
 // DefaultFn is the function type for Default.
-type DefaultFn func(ctx context.Context, name string, version string, env string) context.Context
+type DefaultFn func(ctx context.Context, name string, version string, env string, opts ...Option) context.Context

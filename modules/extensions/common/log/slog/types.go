@@ -8,12 +8,12 @@ import (
 	clog "github.com/guidomantilla/yarumo/common/log"
 )
 
-// Interface compliance: this package's Logger satisfies the Logger
-// interface declared by modules/common/log, the package's slog.Handler
-// implementations match the stdlib interface, and the bundled
-// AttrExtractor adapter is registered.
+// Interface compliance: this package's private logger satisfies the
+// Logger interface declared by modules/common/log, the package's
+// slog.Handler implementations match the stdlib interface, and the
+// bundled AttrExtractor adapter is registered.
 var (
-	_ clog.Logger = (*Logger)(nil)
+	_ clog.Logger = (*logger)(nil)
 
 	_ slog.Handler = (*fanoutHandler)(nil)
 	_ slog.Handler = (*contextHandler)(nil)

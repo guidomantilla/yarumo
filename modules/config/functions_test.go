@@ -1,8 +1,16 @@
 package config
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
+	"log/slog"
+	"os"
 	"testing"
+
+	clog "github.com/guidomantilla/yarumo/common/log"
+	cslogctx "github.com/guidomantilla/yarumo/extensions/common/log/slog/slogctx"
 )
 
 // TestDefault cannot be parallel: sets environment variables and modifies
@@ -165,4 +173,55 @@ func TestDefault(t *testing.T) {
 			t.Fatal("expected non-nil context")
 		}
 	})
+}
+
+// TestDefault_SlogctxExtractorWired is the regression test for #226:
+// config.Default must register cslog.SlogctxExtractor so that attrs added
+// via slogctx.WithAttrs propagate into emitted log records. Cannot be
+// parallel: replaces os.Stderr and mutates the global logger via clog.Use.
+func TestDefault_SlogctxExtractorWired(t *testing.T) {
+	t.Setenv("ENABLE_ASSERTS", "")
+	t.Setenv("LOG_LEVEL", "info")
+	t.Setenv("DEBUG", "false")
+	t.Setenv("ENABLE_CONFIG_DUMP", "")
+
+	r, w, pipeErr := os.Pipe()
+	if pipeErr != nil {
+		t.Fatalf("os.Pipe: %v", pipeErr)
+	}
+
+	originalStderr := os.Stderr
+	os.Stderr = w
+	t.Cleanup(func() { os.Stderr = originalStderr })
+
+	ctx := Default(context.Background(), "app", "1.0", "prod")
+	ctx = cslogctx.WithAttrs(ctx, slog.String("request_id", "req-42"))
+
+	clog.Info(ctx, "ping")
+
+	closeErr := w.Close()
+	if closeErr != nil {
+		t.Fatalf("pipe close: %v", closeErr)
+	}
+
+	var buf bytes.Buffer
+	_, copyErr := io.Copy(&buf, r)
+	if copyErr != nil {
+		t.Fatalf("pipe read: %v", copyErr)
+	}
+
+	var record map[string]any
+	jsonErr := json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &record)
+	if jsonErr != nil {
+		t.Fatalf("decode log record %q: %v", buf.String(), jsonErr)
+	}
+
+	got, ok := record["request_id"]
+	if !ok {
+		t.Fatalf("expected request_id attr in record, got %v", record)
+	}
+
+	if got != "req-42" {
+		t.Fatalf("request_id = %v, want %q", got, "req-42")
+	}
 }

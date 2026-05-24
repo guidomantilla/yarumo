@@ -2,21 +2,23 @@ package config
 
 import (
 	"context"
-	"log/slog"
-	"os"
 	"strings"
 
 	"github.com/spf13/viper"
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	clog "github.com/guidomantilla/yarumo/common/log"
-	cslog "github.com/guidomantilla/yarumo/extensions/common/log/slog"
-	cutils "github.com/guidomantilla/yarumo/common/utils"
 )
 
-// Default configures the application's cross-cutting concerns: environment variable loading,
-// assertion subsystem, and logging. ctx must be non-nil; it is returned unchanged.
-func Default(ctx context.Context, name string, version string, env string) context.Context {
+// Default configures the application's cross-cutting concerns: environment
+// variable loading, the assertion subsystem and logging. ctx must be
+// non-nil; it is returned unchanged.
+//
+// By default the installed logger is the slog-backed clog.Logger built
+// from LOG_LEVEL / DEBUG. Override it with WithLogger to inject any other
+// clog.Logger implementation (useful for tests, alternative backends, or
+// pre-configured loggers wired earlier in the bootstrap).
+func Default(ctx context.Context, name string, version string, env string, opts ...Option) context.Context {
 	cassert.NotNil(ctx, "ctx is nil")
 
 	viper.AutomaticEnv()
@@ -24,32 +26,9 @@ func Default(ctx context.Context, name string, version string, env string) conte
 	v := strings.ToLower(viper.GetString("ENABLE_ASSERTS"))
 	cassert.Enable(v == "1" || v == "true" || v == "yes")
 
-	level := parseLevel(cutils.Coalesce(viper.GetString("LOG_LEVEL"), "info"))
-
-	handlerOpts := &slog.HandlerOptions{
-		AddSource:   viper.GetBool("DEBUG"),
-		Level:       slog.Level(level),
-		ReplaceAttr: cslog.ReplaceLevel,
-	}
-
-	var handler slog.Handler = slog.NewJSONHandler(os.Stderr, handlerOpts)
-
-	var attrs []slog.Attr
-	if cutils.NotEmpty(name) {
-		attrs = append(attrs, slog.String("name", name))
-	}
-	if cutils.NotEmpty(version) {
-		attrs = append(attrs, slog.String("version", version))
-	}
-	if cutils.NotEmpty(env) {
-		attrs = append(attrs, slog.String("env", env))
-	}
-
-	if len(attrs) > 0 {
-		handler = handler.WithAttrs(attrs)
-	}
-
-	clog.Use(cslog.NewLogger(cslog.WithHandlers(handler)))
+	options := NewOptions(name, version, env, opts...)
+	
+	clog.Use(options.logger)
 
 	v = strings.ToLower(viper.GetString("ENABLE_CONFIG_DUMP"))
 	if v == "1" || v == "true" || v == "yes" {
