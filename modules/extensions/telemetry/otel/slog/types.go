@@ -26,7 +26,6 @@ var (
 
 	_ TraceExtractorFn = TraceExtractor
 	_ WithOtelTraceFn  = WithOtelTrace
-	_ NewBridgeFn      = NewBridge
 )
 
 // TraceExtractorFn is the function type for TraceExtractor.
@@ -34,6 +33,3 @@ type TraceExtractorFn func() cslog.AttrExtractor
 
 // WithOtelTraceFn is the function type for WithOtelTrace.
 type WithOtelTraceFn func() cslog.Option
-
-// NewBridgeFn is the function type for NewBridge.
-type NewBridgeFn func(name string, minLevel slog.Level) slog.Handler

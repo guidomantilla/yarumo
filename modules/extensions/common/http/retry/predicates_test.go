@@ -85,28 +85,10 @@ func TestRetryIfHttpError(t *testing.T) {
 	})
 }
 
-func TestNoopHelpers(t *testing.T) {
+func TestNoopRetryOnResponse(t *testing.T) {
 	t.Parallel()
 
-	t.Run("NoopRetryOnResponse returns false", func(t *testing.T) {
-		t.Parallel()
-
-		if NoopRetryOnResponse(&http.Response{StatusCode: 500}) {
-			t.Fatal("expected false")
-		}
-	})
-
-	t.Run("NoopRetryIf returns false", func(t *testing.T) {
-		t.Parallel()
-
-		if NoopRetryIf(errors.New("anything")) {
-			t.Fatal("expected false")
-		}
-	})
-
-	t.Run("NoopRetryHook does not panic", func(t *testing.T) {
-		t.Parallel()
-
-		NoopRetryHook(0, errors.New("anything"))
-	})
+	if NoopRetryOnResponse(&http.Response{StatusCode: 500}) {
+		t.Fatal("expected false")
+	}
 }

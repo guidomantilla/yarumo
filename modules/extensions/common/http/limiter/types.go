@@ -20,20 +20,13 @@ package limiter
 
 import (
 	"net/http"
-
-	"golang.org/x/time/rate"
 )
 
 var (
 	_ http.RoundTripper = (*limiterTransport)(nil)
 
-	_ NewLimiterTransportFn = NewLimiterTransport
-
 	_ ErrRateLimiterExceededFn = ErrRateLimiterExceeded
 )
-
-// NewLimiterTransportFn is the function type for NewLimiterTransport.
-type NewLimiterTransportFn func(base http.RoundTripper, limiter *rate.Limiter) http.RoundTripper
 
 // ErrRateLimiterExceededFn is the function type for ErrRateLimiterExceeded.
 type ErrRateLimiterExceededFn func(causes ...error) error

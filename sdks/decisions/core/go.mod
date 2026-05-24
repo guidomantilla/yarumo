@@ -24,6 +24,6 @@ require (
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 )

@@ -3,16 +3,16 @@ package limiter
 import (
 	"net/http"
 
-	"golang.org/x/time/rate"
-
 	cassert "github.com/guidomantilla/yarumo/common/assert"
+	rlimiter "github.com/guidomantilla/yarumo/extensions/common/resilience/limiter"
 )
 
-// limiterTransport gates each outgoing request on rate.Limiter.Wait
-// before delegating to base. Constructed via NewLimiterTransport.
+// limiterTransport gates each outgoing request on the provided
+// resilience.Limiter before delegating to base. Constructed via
+// NewLimiterTransport.
 type limiterTransport struct {
 	base    http.RoundTripper
-	limiter *rate.Limiter
+	limiter rlimiter.Limiter
 }
 
 // NewLimiterTransport wraps the given base RoundTripper with a rate
@@ -22,12 +22,13 @@ type limiterTransport struct {
 // A nil base falls back to http.DefaultTransport. A nil limiter is
 // rejected at construction time — callers that want to disable gating
 // should not wrap the transport in the first place; passing nil here
-// almost always indicates a wiring bug. Use rate.NewLimiter with the
-// desired rate and burst to construct the limiter.
+// almost always indicates a wiring bug. Construct the limiter with
+// rlimiter.NewLimiter(...) and reuse it across as many transports (and
+// non-HTTP contexts) as needed.
 //
 // The returned RoundTripper is safe for concurrent use as long as base
 // and limiter are.
-func NewLimiterTransport(base http.RoundTripper, limiter *rate.Limiter) http.RoundTripper {
+func NewLimiterTransport(base http.RoundTripper, limiter rlimiter.Limiter) http.RoundTripper {
 	cassert.NotNil(limiter, "limiter is nil")
 
 	if base == nil {

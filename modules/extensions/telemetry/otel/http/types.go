@@ -42,16 +42,7 @@ import "net/http"
 var (
 	_ http.RoundTripper = (*metricsTransport)(nil)
 	_ http.RoundTripper = (*tracingTransport)(nil)
-
-	_ NewMetricsTransportFn = NewMetricsTransport
-	_ NewTracingTransportFn = NewTracingTransport
 )
-
-// NewMetricsTransportFn is the function type for NewMetricsTransport.
-type NewMetricsTransportFn func(base http.RoundTripper, opts ...Option) http.RoundTripper
-
-// NewTracingTransportFn is the function type for NewTracingTransport.
-type NewTracingTransportFn func(base http.RoundTripper, opts ...Option) http.RoundTripper
 
 // SpanNameFn produces the span name for a given outgoing request. Used by
 // the tracing transport via WithSpanNameFn. Implementations should avoid

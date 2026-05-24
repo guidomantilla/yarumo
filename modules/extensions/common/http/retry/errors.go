@@ -26,21 +26,14 @@ func (e *Error) Error() string {
 
 // Sentinel errors for retry transport failure modes.
 var (
-	ErrRetryFailed         = errors.New("retry attempts exhausted")
+	// ErrNonReplayableBodyFailed indicates a request with a non-replayable
+	// body (Body != nil and GetBody == nil) cannot be retried because
+	// subsequent attempts would silently send a consumed body.
 	ErrNonReplayableBodyFailed = errors.New("request body cannot be replayed (no GetBody set)")
 )
 
-// ErrRetry creates a retry domain error joining the given causes with ErrRetryFailed.
-func ErrRetry(causes ...error) error {
-	return &Error{
-		TypedError: cerrs.TypedError{
-			Type: RetryType,
-			Err:  errors.Join(append(causes, ErrRetryFailed)...),
-		},
-	}
-}
-
-// ErrNonReplayableBody creates a retry domain error joining the given causes with ErrNonReplayableBodyFailed.
+// ErrNonReplayableBody creates a retry domain error joining the given
+// causes with ErrNonReplayableBodyFailed.
 func ErrNonReplayableBody(causes ...error) error {
 	return &Error{
 		TypedError: cerrs.TypedError{
@@ -52,9 +45,9 @@ func ErrNonReplayableBody(causes ...error) error {
 
 // StatusCodeError represents an HTTP response that was treated as a retry
 // trigger by the retry transport. The transport synthesizes this error
-// when RetryOnResponseFn returns true so the underlying retry library
-// (which only retries on errors) sees the response as a retryable
-// failure. Use RetryIfHttpError (or errors.As) to recognize it.
+// when RetryOnResponseFn returns true so the underlying retrier (which
+// only retries on errors) observes the response as a retryable failure.
+// Use RetryIfHttpError (or errors.As) to recognize it.
 type StatusCodeError struct {
 	StatusCode int
 }

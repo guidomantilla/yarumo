@@ -13,10 +13,13 @@ use (
 	./modules/config
 	./modules/crypto
 	./modules/extensions/common/cast
+	./modules/extensions/common/http/breaker
 	./modules/extensions/common/http/limiter
 	./modules/extensions/common/http/retry
 	./modules/extensions/common/log
-	./modules/extensions/common/resilience
+	./modules/extensions/common/resilience/breaker
+	./modules/extensions/common/resilience/limiter
+	./modules/extensions/common/resilience/retry
 	./modules/extensions/common/uids
 	./modules/extensions/common/validation
 	./modules/extensions/telemetry/otel/http
