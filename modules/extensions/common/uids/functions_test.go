@@ -6,12 +6,14 @@ import (
 	"github.com/google/uuid"
 	ulidpkg "github.com/oklog/ulid/v2"
 	"github.com/rs/xid"
+
+	cuids "github.com/guidomantilla/yarumo/common/uids"
 )
 
 func generateFor(t *testing.T, name string) string {
 	t.Helper()
 
-	algo, err := Lookup(name)
+	algo, err := cuids.Lookup(name)
 	if err != nil {
 		t.Fatalf("Get(%q) error: %v", name, err)
 	}

@@ -2,16 +2,6 @@ package uids
 
 import cassert "github.com/guidomantilla/yarumo/common/assert"
 
-// Default UID generators preconfigured with standard algorithms.
-var (
-	UuidV4 = NewUID("UUIDv4", UUIDv4)
-	NanoID = NewUID("NanoID", NANOID)
-	Cuid2  = NewUID("CUID2", CUID2)
-	UuidV7 = NewUID("UUIDv7", UUIDv7)
-	Ulid   = NewUID("ULID", ULID)
-	XId    = NewUID("XID", XID)
-)
-
 // uid implements the UID interface.
 type uid struct {
 	name string

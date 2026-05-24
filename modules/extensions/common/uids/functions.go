@@ -10,6 +10,7 @@ import (
 	"github.com/rs/xid"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cuids "github.com/guidomantilla/yarumo/common/uids"
 )
 
 // nanoIDRegex matches the default NanoID format: 21 characters from the
@@ -30,7 +31,7 @@ var cuid2Regex = regexp.MustCompile(`^[a-z][a-z0-9]{23}$`)
 func UUIDv4() (string, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return "", cerrs.Wrap(ErrGenerationFailed, err)
+		return "", cerrs.Wrap(cuids.ErrGenerationFailed, err)
 	}
 
 	return id.String(), nil
@@ -40,7 +41,7 @@ func UUIDv4() (string, error) {
 func NANOID() (string, error) {
 	id, err := nanoid.New()
 	if err != nil {
-		return "", cerrs.Wrap(ErrGenerationFailed, err)
+		return "", cerrs.Wrap(cuids.ErrGenerationFailed, err)
 	}
 
 	return id, nil
@@ -55,7 +56,7 @@ func CUID2() (string, error) {
 func UUIDv7() (string, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
-		return "", cerrs.Wrap(ErrGenerationFailed, err)
+		return "", cerrs.Wrap(cuids.ErrGenerationFailed, err)
 	}
 
 	return id.String(), nil
