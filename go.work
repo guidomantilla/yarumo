@@ -19,6 +19,7 @@ use (
 	./modules/extensions/common/resilience
 	./modules/extensions/common/uids
 	./modules/extensions/common/validation
+	./modules/extensions/telemetry/otel/http
 	./modules/extensions/telemetry/otel/slog
 	./modules/managed/cache/redis
 	./modules/managed/cache/redis/examples
