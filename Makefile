@@ -1,9 +1,9 @@
 .PHONY: verify-tools install tidy graph generate imports format vet lint lint-inline build-inlineassign test bench coverage check validate build ci update-dependencies
 
-MODULES := modules/common modules/config modules/telemetry/otel
+MODULES := modules/common modules/config modules/managed/telemetry/otel
 MODULES += modules/compute/math modules/compute/engine modules/compute/tests/acceptance
-MODULES += modules/validation modules/cache modules/crypto
-MODULES += modules/cron modules/diagnostics modules/grpc modules/http
+MODULES += modules/validation modules/crypto
+MODULES += modules/managed/cache/redis modules/managed/cache/ristretto modules/managed/cron modules/managed/diagnostics modules/managed/grpc modules/managed/http modules/managed/keep-alive
 MODULES += modules/extensions/common/cast modules/extensions/common/http/limiter modules/extensions/common/http/retry modules/extensions/common/log modules/extensions/common/resilience modules/extensions/common/uids modules/extensions/common/validation modules/extensions/telemetry/otel/slog
 MODULES += sdks/decisions/core
 ENABLE_INTERNAL := false

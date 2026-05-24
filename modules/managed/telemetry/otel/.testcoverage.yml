@@ -4,7 +4,7 @@ profile: .reports/testcoverage.out
 
 # (optional; but recommended to set)
 # When specified, reported file paths will not contain local prefix in the output
-local-prefix: "github.com/guidomantilla/yarumo/extensions/telemetry/otel/slog"
+local-prefix: "github.com/guidomantilla/yarumo/managed/telemetry/otel"
 
 # Holds coverage thresholds percentages, values should be in range [0-100]
 threshold:

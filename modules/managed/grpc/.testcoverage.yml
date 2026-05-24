@@ -4,7 +4,7 @@ profile: .reports/testcoverage.out
 
 # (optional; but recommended to set)
 # When specified, reported file paths will not contain local prefix in the output
-local-prefix: "github.com/guidomantilla/yarumo/extensions/telemetry/otel/slog"
+local-prefix: "github.com/guidomantilla/yarumo/managed/grpc"
 
 # Holds coverage thresholds percentages, values should be in range [0-100]
 threshold:
@@ -14,8 +14,8 @@ threshold:
 
   # (optional; default 0)
   # The minimum coverage that each package should have
-  package: 85
+  package: 90
 
   # (optional; default 0)
   # The minimum total coverage a project should have
-  total: 90
+  total: 95

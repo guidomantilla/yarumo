@@ -3,10 +3,11 @@
 // handles, goroutines, external SDK lifetimes) which cannot be reclaimed
 // by the garbage collector and must be explicitly stopped.
 //
-// A Component is born with NewComponent (or any package-specific
-// constructor) and dies when Stop is called. Plain objects without
-// lifecycle are not Components — they live and die with the goroutine
-// that constructed them.
+// A Component is born with a package-specific constructor (for example
+// `keepalive.NewKeepAlive`, `cron.NewScheduler`, `http.NewServer`) and
+// dies when Stop is called. Plain objects without lifecycle are not
+// Components — they live and die with the goroutine that constructed
+// them.
 //
 // Implementations choose how Start behaves:
 //   - Server-style: Start blocks until shutdown (e.g., ListenAndServe).
@@ -30,8 +31,8 @@
 //
 // Every other package under modules/common/ MUST remain side-effect
 // free at the function-call boundary. If a feature needs lifecycle of
-// its own, it belongs in a top-level module (modules/http/,
-// modules/cron/, modules/grpc/, modules/diagnostics/, etc.), not under
+// its own, it belongs in a top-level module (modules/managed/http/,
+// modules/managed/cron/, modules/managed/grpc/, modules/managed/diagnostics/, etc.), not under
 // common/. See modules/common/CODING_STANDARDS.md (section
 // "common/lifecycle/ — Lone Goroutine-Dispatching Exception") for the
 // full rule and review guidance.
@@ -43,8 +44,6 @@ import (
 )
 
 var (
-	_ Component = (*component)(nil)
-
 	_ StartFn       = Start
 	_ StopFn        = Stop
 	_ BuildFn       = Build
@@ -103,8 +102,8 @@ type CloseFn func(ctx context.Context, timeout time.Duration)
 //     method.
 //  4. Done is closed exactly once. The closer is whichever runs first:
 //     Stop, or the end of Start in server-style implementations. Use
-//     sync.Once.Do(close(done)) — see component.go for the canonical
-//     pattern.
+//     sync.Once.Do(close(done)) — see managed/keep-alive/keep_alive.go
+//     for the canonical pattern.
 //  5. Re-Start is not supported. A Component is single-use: once Stopped,
 //     it MUST NOT be Started again. Construct a new Component instead.
 //     Implementations are not required to guard against re-Start.

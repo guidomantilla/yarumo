@@ -6,18 +6,12 @@ use (
 	./internal/temporal/courses/edu-102-go-code
 	./internal/tutorials/compute-engine
 	./internal/tutorials/compute-math
-	./modules/cache
-	./modules/cache/examples
 	./modules/common
 	./modules/compute/engine
 	./modules/compute/math
 	./modules/compute/tests/acceptance
 	./modules/config
-	./modules/cron
-	./modules/cron/examples
 	./modules/crypto
-	./modules/diagnostics
-	./modules/diagnostics/examples
 	./modules/extensions/common/cast
 	./modules/extensions/common/http/limiter
 	./modules/extensions/common/http/retry
@@ -26,11 +20,20 @@ use (
 	./modules/extensions/common/uids
 	./modules/extensions/common/validation
 	./modules/extensions/telemetry/otel/slog
-	./modules/grpc
-	./modules/grpc/examples
-	./modules/http
-	./modules/http/examples
-	./modules/telemetry/otel
+	./modules/managed/cache/redis
+	./modules/managed/cache/redis/examples
+	./modules/managed/cache/ristretto
+	./modules/managed/cache/ristretto/examples
+	./modules/managed/cron
+	./modules/managed/cron/examples
+	./modules/managed/diagnostics
+	./modules/managed/diagnostics/examples
+	./modules/managed/grpc
+	./modules/managed/grpc/examples
+	./modules/managed/http
+	./modules/managed/http/examples
+	./modules/managed/keep-alive
+	./modules/managed/telemetry/otel
 	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples

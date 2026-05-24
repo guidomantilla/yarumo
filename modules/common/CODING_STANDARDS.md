@@ -263,8 +263,8 @@ Every other package under `modules/common/` MUST remain free of:
 - builder-shaped constructors that fire side effects.
 
 If a feature genuinely needs lifecycle, it belongs in its own top-level
-module (`modules/http/`, `modules/cron/`, `modules/grpc/`,
-`modules/diagnostics/`, etc.). Code review should treat any `go ...` or
+module (`modules/managed/http/`, `modules/managed/cron/`, `modules/managed/grpc/`,
+`modules/managed/diagnostics/`, etc.). Code review should treat any `go ...` or
 any `Build<X>` returning `(Component, CloseFn, error)` outside
 `common/lifecycle/` and outside `modules/<top-level>/` as a red flag.
 
