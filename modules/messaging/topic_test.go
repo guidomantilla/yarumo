@@ -348,13 +348,13 @@ func TestTopicChannel_StopIsIdempotent(t *testing.T) {
 	lctests.AssertIdempotentStop(t, qc)
 }
 
-func TestBuildTopicChannel(t *testing.T) {
+func TestTopicChannel_LifecycleIntegration(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns CloseFn and starts worker", func(t *testing.T) {
+	t.Run("lifecycle.Build wires the worker and CloseFn drains", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewTopicChannel[int]("q-build", WithBufferSize(4), WithDrainTimeout(time.Second))
+		qc := NewTopicChannel[int]("q-lifecycle", WithBufferSize(4), WithDrainTimeout(time.Second))
 
 		var delivered int32
 		_, err := qc.Subscribe(func(_ context.Context, _ Message[int]) error {
@@ -366,9 +366,9 @@ func TestBuildTopicChannel(t *testing.T) {
 		}
 
 		errChan := make(chan error, 1)
-		closeFn, err := BuildTopicChannel(context.Background(), qc, errChan)
+		closeFn, err := lifecycle.Build(context.Background(), qc, errChan)
 		if err != nil {
-			t.Fatalf("BuildTopicChannel returned %v", err)
+			t.Fatalf("lifecycle.Build returned %v", err)
 		}
 
 		err = qc.Send(context.Background(), NewMessage[int](1, nil))
@@ -421,7 +421,7 @@ func TestTopicChannel_DispatchOrder(t *testing.T) {
 
 	errChan := make(chan error, 1)
 
-	closeFn, err := BuildTopicChannel(context.Background(), qc, errChan)
+	closeFn, err := lifecycle.Build(context.Background(), qc, errChan)
 	if err != nil {
 		t.Fatalf("BuildTopicChannel returned %v", err)
 	}
@@ -477,7 +477,7 @@ func TestTopicChannel_PanicRecovery(t *testing.T) {
 
 	errChan := make(chan error, 1)
 
-	closeFn, err := BuildTopicChannel(context.Background(), qc, errChan)
+	closeFn, err := lifecycle.Build(context.Background(), qc, errChan)
 	if err != nil {
 		t.Fatalf("BuildTopicChannel returned %v", err)
 	}
@@ -532,7 +532,7 @@ func TestTopicChannel_ErrorHandlerHook(t *testing.T) {
 
 	errChan := make(chan error, 1)
 
-	closeFn, err := BuildTopicChannel(context.Background(), qc, errChan)
+	closeFn, err := lifecycle.Build(context.Background(), qc, errChan)
 	if err != nil {
 		t.Fatalf("BuildTopicChannel returned %v", err)
 	}

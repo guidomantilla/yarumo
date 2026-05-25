@@ -66,20 +66,6 @@ func NewTopicChannel[T any](name string, opts ...Option) *TopicChannel[T] {
 	}
 }
 
-// BuildTopicChannel wires a TopicChannel[T] into the application
-// lifecycle via lifecycle.Build. It returns the CloseFn for graceful
-// shutdown.
-func BuildTopicChannel[T any](ctx context.Context, qc *TopicChannel[T], errChan lifecycle.ErrChan) (lifecycle.CloseFn, error) {
-	cassert.NotNil(qc, "TopicChannel is nil")
-
-	closeFn, err := lifecycle.Build(ctx, qc, errChan)
-	if err != nil {
-		return nil, err
-	}
-
-	return closeFn, nil
-}
-
 // Name returns the channel's identity used in lifecycle logs.
 func (q *TopicChannel[T]) Name() string {
 	cassert.NotNil(q, "TopicChannel is nil")

@@ -102,7 +102,7 @@ func demoTopicChannel(ctx context.Context) error {
 
 	errChan := make(chan error, 1)
 
-	closeFn, err := messaging.BuildTopicChannel(ctx, queue, errChan)
+	closeFn, err := lifecycle.Build(ctx, queue, errChan)
 	if err != nil {
 		return err
 	}
