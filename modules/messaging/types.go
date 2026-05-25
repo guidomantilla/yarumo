@@ -31,6 +31,7 @@ import (
 
 var (
 	_ Channel[any] = (*directChannel[any])(nil)
+	_ Channel[any] = (*QueueChannel[any])(nil)
 )
 
 // Handler is the function type for a message handler. The Handler
