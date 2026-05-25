@@ -1,9 +1,8 @@
-package token_test
+package token
 
 import (
 	"testing"
 
-	authntoken "github.com/guidomantilla/yarumo/security/authn/token"
 )
 
 func TestNewOptions(t *testing.T) {
@@ -12,7 +11,7 @@ func TestNewOptions(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authntoken.NewOptions()
+		opts := NewOptions()
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}
@@ -21,10 +20,10 @@ func TestNewOptions(t *testing.T) {
 	t.Run("with all overrides", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authntoken.NewOptions(
-			authntoken.WithSubjectClaim("uid"),
-			authntoken.WithNameClaim("display"),
-			authntoken.WithRolesClaim("scopes"),
+		opts := NewOptions(
+			WithSubjectClaim("uid"),
+			WithNameClaim("display"),
+			WithRolesClaim("scopes"),
 		)
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
@@ -38,7 +37,7 @@ func TestWithSubjectClaim(t *testing.T) {
 	t.Run("empty is ignored", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authntoken.NewOptions(authntoken.WithSubjectClaim(""))
+		opts := NewOptions(WithSubjectClaim(""))
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}
@@ -51,7 +50,7 @@ func TestWithNameClaim(t *testing.T) {
 	t.Run("empty is ignored", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authntoken.NewOptions(authntoken.WithNameClaim(""))
+		opts := NewOptions(WithNameClaim(""))
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}
@@ -64,7 +63,7 @@ func TestWithRolesClaim(t *testing.T) {
 	t.Run("empty is ignored", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authntoken.NewOptions(authntoken.WithRolesClaim(""))
+		opts := NewOptions(WithRolesClaim(""))
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}

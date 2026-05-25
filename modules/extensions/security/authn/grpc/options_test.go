@@ -1,9 +1,8 @@
-package grpc_test
+package grpc
 
 import (
 	"testing"
 
-	authngrpc "github.com/guidomantilla/yarumo/extensions/security/authn/grpc"
 )
 
 func TestNewOptions(t *testing.T) {
@@ -12,7 +11,7 @@ func TestNewOptions(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authngrpc.NewOptions()
+		opts := NewOptions()
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}
@@ -21,9 +20,9 @@ func TestNewOptions(t *testing.T) {
 	t.Run("with overrides", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authngrpc.NewOptions(
-			authngrpc.WithMetadataKey("X-Auth"),
-			authngrpc.WithScheme("Token"),
+		opts := NewOptions(
+			WithMetadataKey("X-Auth"),
+			WithScheme("Token"),
 		)
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
@@ -37,7 +36,7 @@ func TestWithMetadataKey(t *testing.T) {
 	t.Run("empty ignored", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authngrpc.NewOptions(authngrpc.WithMetadataKey(""))
+		opts := NewOptions(WithMetadataKey(""))
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}
@@ -50,7 +49,7 @@ func TestWithScheme(t *testing.T) {
 	t.Run("empty ignored", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authngrpc.NewOptions(authngrpc.WithScheme(""))
+		opts := NewOptions(WithScheme(""))
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}

@@ -1,4 +1,4 @@
-package grpc_test
+package grpc
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/guidomantilla/yarumo/security/authn"
-	authngrpc "github.com/guidomantilla/yarumo/extensions/security/authn/grpc"
 )
 
 // fakeAuthenticator is a test double for authn.Authenticator.
@@ -70,7 +69,7 @@ func TestNewUnaryInterceptor(t *testing.T) {
 		t.Parallel()
 
 		want := &authn.Principal{ID: "u-1"}
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(want))
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(want))
 
 		var got *authn.Principal
 
@@ -102,7 +101,7 @@ func TestNewUnaryInterceptor(t *testing.T) {
 	t.Run("missing metadata returns Unauthenticated", func(t *testing.T) {
 		t.Parallel()
 
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		_, err := interceptor(context.Background(), nil, unaryInfo(), func(_ context.Context, _ any) (any, error) {
 			t.Fatal("handler must not be called")
@@ -122,7 +121,7 @@ func TestNewUnaryInterceptor(t *testing.T) {
 	t.Run("missing authorization key returns Unauthenticated", func(t *testing.T) {
 		t.Parallel()
 
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		md := metadata.New(map[string]string{"x-other": "v"})
 		ctx := metadata.NewIncomingContext(context.Background(), md)
@@ -141,7 +140,7 @@ func TestNewUnaryInterceptor(t *testing.T) {
 	t.Run("malformed scheme returns Unauthenticated", func(t *testing.T) {
 		t.Parallel()
 
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		_, err := interceptor(ctxWithAuth("Basic xxx"), nil, unaryInfo(), func(_ context.Context, _ any) (any, error) {
 			return nil, nil
@@ -156,7 +155,7 @@ func TestNewUnaryInterceptor(t *testing.T) {
 	t.Run("malformed value (no space) returns Unauthenticated", func(t *testing.T) {
 		t.Parallel()
 
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		_, err := interceptor(ctxWithAuth("Bearer"), nil, unaryInfo(), func(_ context.Context, _ any) (any, error) {
 			return nil, nil
@@ -171,7 +170,7 @@ func TestNewUnaryInterceptor(t *testing.T) {
 	t.Run("empty bearer credential returns Unauthenticated", func(t *testing.T) {
 		t.Parallel()
 
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		_, err := interceptor(ctxWithAuth("Bearer   "), nil, unaryInfo(), func(_ context.Context, _ any) (any, error) {
 			return nil, nil
@@ -186,7 +185,7 @@ func TestNewUnaryInterceptor(t *testing.T) {
 	t.Run("multiple authorization values returns Unauthenticated", func(t *testing.T) {
 		t.Parallel()
 
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		md := metadata.MD{}
 		md.Append("authorization", "Bearer a", "Bearer b")
@@ -206,7 +205,7 @@ func TestNewUnaryInterceptor(t *testing.T) {
 		t.Parallel()
 
 		sentinel := authn.ErrAuthentication(authn.ErrTokenInvalid)
-		interceptor := authngrpc.NewUnaryInterceptor(newRejectingAuthenticator(sentinel))
+		interceptor := NewUnaryInterceptor(newRejectingAuthenticator(sentinel))
 
 		_, err := interceptor(ctxWithAuth("Bearer bad"), nil, unaryInfo(), func(_ context.Context, _ any) (any, error) {
 			t.Fatal("handler must not run")
@@ -222,7 +221,7 @@ func TestNewUnaryInterceptor(t *testing.T) {
 	t.Run("nil principal with no error returns Unauthenticated", func(t *testing.T) {
 		t.Parallel()
 
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(nil))
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(nil))
 
 		_, err := interceptor(ctxWithAuth("Bearer t"), nil, unaryInfo(), func(_ context.Context, _ any) (any, error) {
 			t.Fatal("handler must not run")
@@ -239,7 +238,7 @@ func TestNewUnaryInterceptor(t *testing.T) {
 		t.Parallel()
 
 		want := &authn.Principal{ID: "u"}
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(want))
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(want))
 
 		var saw bool
 
@@ -261,8 +260,8 @@ func TestNewUnaryInterceptor(t *testing.T) {
 		t.Parallel()
 
 		want := &authn.Principal{ID: "u"}
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(want),
-			authngrpc.WithMetadataKey("X-Auth-Token"),
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(want),
+			WithMetadataKey("X-Auth-Token"),
 		)
 
 		md := metadata.New(map[string]string{"x-auth-token": "Bearer t"})
@@ -288,8 +287,8 @@ func TestNewUnaryInterceptor(t *testing.T) {
 		t.Parallel()
 
 		want := &authn.Principal{ID: "u"}
-		interceptor := authngrpc.NewUnaryInterceptor(newOKAuthenticator(want),
-			authngrpc.WithScheme("Token"),
+		interceptor := NewUnaryInterceptor(newOKAuthenticator(want),
+			WithScheme("Token"),
 		)
 
 		var saw bool
@@ -316,7 +315,7 @@ func TestNewStreamInterceptor(t *testing.T) {
 		t.Parallel()
 
 		want := &authn.Principal{ID: "u-1"}
-		interceptor := authngrpc.NewStreamInterceptor(newOKAuthenticator(want))
+		interceptor := NewStreamInterceptor(newOKAuthenticator(want))
 
 		var got *authn.Principal
 
@@ -346,7 +345,7 @@ func TestNewStreamInterceptor(t *testing.T) {
 	t.Run("missing metadata returns Unauthenticated", func(t *testing.T) {
 		t.Parallel()
 
-		interceptor := authngrpc.NewStreamInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		interceptor := NewStreamInterceptor(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		ss := &fakeStream{ctx: context.Background()}
 
@@ -364,7 +363,7 @@ func TestNewStreamInterceptor(t *testing.T) {
 	t.Run("authenticator error returns Unauthenticated", func(t *testing.T) {
 		t.Parallel()
 
-		interceptor := authngrpc.NewStreamInterceptor(newRejectingAuthenticator(errors.New("bad")))
+		interceptor := NewStreamInterceptor(newRejectingAuthenticator(errors.New("bad")))
 
 		ss := &fakeStream{ctx: ctxWithAuth("Bearer t")}
 
@@ -382,7 +381,7 @@ func TestNewStreamInterceptor(t *testing.T) {
 	t.Run("nil principal with no error returns Unauthenticated", func(t *testing.T) {
 		t.Parallel()
 
-		interceptor := authngrpc.NewStreamInterceptor(newOKAuthenticator(nil))
+		interceptor := NewStreamInterceptor(newOKAuthenticator(nil))
 
 		ss := &fakeStream{ctx: ctxWithAuth("Bearer t")}
 

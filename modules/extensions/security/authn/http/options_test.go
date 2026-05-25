@@ -1,10 +1,9 @@
-package http_test
+package http
 
 import (
 	"net/http"
 	"testing"
 
-	authnhttp "github.com/guidomantilla/yarumo/extensions/security/authn/http"
 )
 
 func TestNewOptions(t *testing.T) {
@@ -13,7 +12,7 @@ func TestNewOptions(t *testing.T) {
 	t.Run("defaults", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authnhttp.NewOptions()
+		opts := NewOptions()
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}
@@ -22,10 +21,10 @@ func TestNewOptions(t *testing.T) {
 	t.Run("with overrides", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authnhttp.NewOptions(
-			authnhttp.WithHeaderName("X-Auth"),
-			authnhttp.WithScheme("Token"),
-			authnhttp.WithErrorHandler(func(_ http.ResponseWriter, _ *http.Request, _ error) {}),
+		opts := NewOptions(
+			WithHeaderName("X-Auth"),
+			WithScheme("Token"),
+			WithErrorHandler(func(_ http.ResponseWriter, _ *http.Request, _ error) {}),
 		)
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
@@ -39,7 +38,7 @@ func TestWithHeaderName(t *testing.T) {
 	t.Run("empty ignored", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authnhttp.NewOptions(authnhttp.WithHeaderName(""))
+		opts := NewOptions(WithHeaderName(""))
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}
@@ -52,7 +51,7 @@ func TestWithScheme(t *testing.T) {
 	t.Run("empty ignored", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authnhttp.NewOptions(authnhttp.WithScheme(""))
+		opts := NewOptions(WithScheme(""))
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}
@@ -65,7 +64,7 @@ func TestWithErrorHandler(t *testing.T) {
 	t.Run("nil ignored", func(t *testing.T) {
 		t.Parallel()
 
-		opts := authnhttp.NewOptions(authnhttp.WithErrorHandler(nil))
+		opts := NewOptions(WithErrorHandler(nil))
 		if opts == nil {
 			t.Fatal("NewOptions returned nil")
 		}

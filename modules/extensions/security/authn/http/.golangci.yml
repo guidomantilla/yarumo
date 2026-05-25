@@ -92,7 +92,7 @@ linters:
       - path: types\.go
         linters:
           - gochecknoglobals
-      - path: middleware\.go
+      - path: functions\.go
         linters:
           - wrapcheck
           - contextcheck

@@ -1,4 +1,4 @@
-package http_test
+package http
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/guidomantilla/yarumo/security/authn"
-	authnhttp "github.com/guidomantilla/yarumo/extensions/security/authn/http"
 )
 
 // fakeAuthenticator is a test double for authn.Authenticator. The
@@ -45,7 +44,7 @@ func TestNewMiddleware(t *testing.T) {
 		t.Parallel()
 
 		want := &authn.Principal{ID: "u-1", Name: "Alice"}
-		mw := authnhttp.NewMiddleware(newOKAuthenticator(want))
+		mw := NewMiddleware(newOKAuthenticator(want))
 
 		var got *authn.Principal
 
@@ -77,7 +76,7 @@ func TestNewMiddleware(t *testing.T) {
 	t.Run("missing header returns 401", func(t *testing.T) {
 		t.Parallel()
 
-		mw := authnhttp.NewMiddleware(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		mw := NewMiddleware(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		reached := false
 
@@ -102,7 +101,7 @@ func TestNewMiddleware(t *testing.T) {
 	t.Run("malformed header returns 401", func(t *testing.T) {
 		t.Parallel()
 
-		mw := authnhttp.NewMiddleware(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		mw := NewMiddleware(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		handler := mw(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 
@@ -120,7 +119,7 @@ func TestNewMiddleware(t *testing.T) {
 	t.Run("scheme without token returns 401", func(t *testing.T) {
 		t.Parallel()
 
-		mw := authnhttp.NewMiddleware(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		mw := NewMiddleware(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		handler := mw(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 
@@ -138,7 +137,7 @@ func TestNewMiddleware(t *testing.T) {
 	t.Run("empty bearer token returns 401", func(t *testing.T) {
 		t.Parallel()
 
-		mw := authnhttp.NewMiddleware(newOKAuthenticator(&authn.Principal{ID: "x"}))
+		mw := NewMiddleware(newOKAuthenticator(&authn.Principal{ID: "x"}))
 
 		handler := mw(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 
@@ -157,7 +156,7 @@ func TestNewMiddleware(t *testing.T) {
 		t.Parallel()
 
 		want := &authn.Principal{ID: "u-1"}
-		mw := authnhttp.NewMiddleware(newOKAuthenticator(want))
+		mw := NewMiddleware(newOKAuthenticator(want))
 
 		var saw bool
 
@@ -179,7 +178,7 @@ func TestNewMiddleware(t *testing.T) {
 	t.Run("authenticator error returns 401", func(t *testing.T) {
 		t.Parallel()
 
-		mw := authnhttp.NewMiddleware(newRejectingAuthenticator(authn.ErrAuthentication(authn.ErrTokenInvalid)))
+		mw := NewMiddleware(newRejectingAuthenticator(authn.ErrAuthentication(authn.ErrTokenInvalid)))
 
 		reached := false
 
@@ -205,7 +204,7 @@ func TestNewMiddleware(t *testing.T) {
 	t.Run("nil principal with no error returns 401", func(t *testing.T) {
 		t.Parallel()
 
-		mw := authnhttp.NewMiddleware(newOKAuthenticator(nil))
+		mw := NewMiddleware(newOKAuthenticator(nil))
 
 		reached := false
 
@@ -232,8 +231,8 @@ func TestNewMiddleware(t *testing.T) {
 		t.Parallel()
 
 		want := &authn.Principal{ID: "u-1"}
-		mw := authnhttp.NewMiddleware(newOKAuthenticator(want),
-			authnhttp.WithHeaderName("X-Custom-Auth"),
+		mw := NewMiddleware(newOKAuthenticator(want),
+			WithHeaderName("X-Custom-Auth"),
 		)
 
 		var saw bool
@@ -258,8 +257,8 @@ func TestNewMiddleware(t *testing.T) {
 
 		var captured error
 
-		mw := authnhttp.NewMiddleware(newRejectingAuthenticator(authn.ErrAuthentication(authn.ErrTokenInvalid)),
-			authnhttp.WithErrorHandler(func(w http.ResponseWriter, _ *http.Request, cause error) {
+		mw := NewMiddleware(newRejectingAuthenticator(authn.ErrAuthentication(authn.ErrTokenInvalid)),
+			WithErrorHandler(func(w http.ResponseWriter, _ *http.Request, cause error) {
 				captured = cause
 
 				w.WriteHeader(http.StatusForbidden)

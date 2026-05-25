@@ -13,12 +13,7 @@ const AuthnType = "authn"
 
 var (
 	_ error = (*Error)(nil)
-
-	_ ErrAuthenticationFn = ErrAuthentication
 )
-
-// ErrAuthenticationFn is the function type for ErrAuthentication.
-type ErrAuthenticationFn func(causes ...error) error
 
 // Sentinel errors for authentication operations. Concrete Authenticator
 // implementations wrap one of these sentinels so transport middleware

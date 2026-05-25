@@ -1,10 +1,9 @@
-package authn_test
+package authn
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/guidomantilla/yarumo/security/authn"
 )
 
 func TestErrAuthentication(t *testing.T) {
@@ -13,13 +12,13 @@ func TestErrAuthentication(t *testing.T) {
 	t.Run("joins ErrAuthenticationFailed", func(t *testing.T) {
 		t.Parallel()
 
-		err := authn.ErrAuthentication(authn.ErrTokenInvalid)
+		err := ErrAuthentication(ErrTokenInvalid)
 
-		if !errors.Is(err, authn.ErrAuthenticationFailed) {
+		if !errors.Is(err, ErrAuthenticationFailed) {
 			t.Fatal("errors.Is(err, ErrAuthenticationFailed) = false, want true")
 		}
 
-		if !errors.Is(err, authn.ErrTokenInvalid) {
+		if !errors.Is(err, ErrTokenInvalid) {
 			t.Fatal("errors.Is(err, ErrTokenInvalid) = false, want true")
 		}
 	})
@@ -27,7 +26,7 @@ func TestErrAuthentication(t *testing.T) {
 	t.Run("includes type in message", func(t *testing.T) {
 		t.Parallel()
 
-		err := authn.ErrAuthentication(authn.ErrTokenEmpty)
+		err := ErrAuthentication(ErrTokenEmpty)
 
 		msg := err.Error()
 		if msg == "" {
@@ -55,8 +54,8 @@ func TestErrAuthentication(t *testing.T) {
 	t.Run("no causes still joins sentinel", func(t *testing.T) {
 		t.Parallel()
 
-		err := authn.ErrAuthentication()
-		if !errors.Is(err, authn.ErrAuthenticationFailed) {
+		err := ErrAuthentication()
+		if !errors.Is(err, ErrAuthenticationFailed) {
 			t.Fatal("errors.Is(err, ErrAuthenticationFailed) = false, want true")
 		}
 	})

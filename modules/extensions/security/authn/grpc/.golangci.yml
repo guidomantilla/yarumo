@@ -92,12 +92,14 @@ linters:
       - path: types\.go
         linters:
           - gochecknoglobals
+      - path: functions\.go
+        linters:
+          - wrapcheck
+          - contextcheck
       # authenticatedStream embeds a ctx so its Context() override can
       # carry the principal. This is the canonical pattern documented by
       # google.golang.org/grpc itself; the stream has only one valid
       # lifetime so the ctx field is not a leak.
-      - path: interceptor\.go
+      - path: authenticatedstream\.go
         linters:
-          - wrapcheck
-          - contextcheck
           - containedctx

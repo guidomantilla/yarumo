@@ -1,4 +1,4 @@
-package token_test
+package token
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	ctokens "github.com/guidomantilla/yarumo/crypto/tokens"
 	"github.com/guidomantilla/yarumo/security/authn"
-	authntoken "github.com/guidomantilla/yarumo/security/authn/token"
 )
 
 func newTestMethod(t *testing.T) *ctokens.Method {
@@ -35,7 +34,7 @@ func TestNewTokenAuthenticator(t *testing.T) {
 	t.Run("returns non-nil authenticator", func(t *testing.T) {
 		t.Parallel()
 
-		auth := authntoken.NewTokenAuthenticator(newTestMethod(t))
+		auth := NewTokenAuthenticator(newTestMethod(t))
 		if auth == nil {
 			t.Fatal("NewTokenAuthenticator returned nil")
 		}
@@ -44,10 +43,10 @@ func TestNewTokenAuthenticator(t *testing.T) {
 	t.Run("with custom claim keys", func(t *testing.T) {
 		t.Parallel()
 
-		auth := authntoken.NewTokenAuthenticator(newTestMethod(t),
-			authntoken.WithSubjectClaim("user_id"),
-			authntoken.WithNameClaim("display"),
-			authntoken.WithRolesClaim("groups"),
+		auth := NewTokenAuthenticator(newTestMethod(t),
+			WithSubjectClaim("user_id"),
+			WithNameClaim("display"),
+			WithRolesClaim("groups"),
 		)
 		if auth == nil {
 			t.Fatal("NewTokenAuthenticator returned nil")
@@ -69,7 +68,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			"tid":   "acme",
 		})
 
-		auth := authntoken.NewTokenAuthenticator(method)
+		auth := NewTokenAuthenticator(method)
 
 		principal, err := auth.Validate(context.Background(), token)
 		if err != nil {
@@ -103,7 +102,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 	t.Run("empty token rejected", func(t *testing.T) {
 		t.Parallel()
 
-		auth := authntoken.NewTokenAuthenticator(newTestMethod(t))
+		auth := NewTokenAuthenticator(newTestMethod(t))
 
 		_, err := auth.Validate(context.Background(), "")
 		if err == nil {
@@ -122,7 +121,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 	t.Run("invalid token rejected", func(t *testing.T) {
 		t.Parallel()
 
-		auth := authntoken.NewTokenAuthenticator(newTestMethod(t))
+		auth := NewTokenAuthenticator(newTestMethod(t))
 
 		_, err := auth.Validate(context.Background(), "not.a.jwt")
 		if err == nil {
@@ -142,7 +141,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 
 		token := mintToken(t, bad, "u-1", ctokens.Payload{"sub": "u-1"})
 
-		auth := authntoken.NewTokenAuthenticator(good)
+		auth := NewTokenAuthenticator(good)
 
 		_, err := auth.Validate(context.Background(), token)
 		if err == nil {
@@ -162,14 +161,14 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			"name": "Alice",
 		})
 
-		auth := authntoken.NewTokenAuthenticator(method)
+		auth := NewTokenAuthenticator(method)
 
 		_, err := auth.Validate(context.Background(), token)
 		if err == nil {
 			t.Fatal("Validate without sub claim returned nil error")
 		}
 
-		if !errors.Is(err, authntoken.ErrSubjectClaimMissing) {
+		if !errors.Is(err, ErrSubjectClaimMissing) {
 			t.Fatalf("error %v does not match ErrSubjectClaimMissing", err)
 		}
 
@@ -187,7 +186,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			"name":    "Bob",
 		})
 
-		auth := authntoken.NewTokenAuthenticator(method, authntoken.WithSubjectClaim("user_id"))
+		auth := NewTokenAuthenticator(method, WithSubjectClaim("user_id"))
 
 		principal, err := auth.Validate(context.Background(), token)
 		if err != nil {
@@ -216,7 +215,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			}),
 		)
 
-		auth := authntoken.NewTokenAuthenticator(method)
+		auth := NewTokenAuthenticator(method)
 
 		principal, err := auth.Validate(context.Background(), "anything")
 		if err != nil {
@@ -237,7 +236,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			"roles": []any{"admin", 42, "viewer"},
 		})
 
-		auth := authntoken.NewTokenAuthenticator(method)
+		auth := NewTokenAuthenticator(method)
 
 		principal, err := auth.Validate(context.Background(), token)
 		if err != nil {
@@ -258,7 +257,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			"sub": "u-1",
 		})
 
-		auth := authntoken.NewTokenAuthenticator(method)
+		auth := NewTokenAuthenticator(method)
 
 		principal, err := auth.Validate(context.Background(), token)
 		if err != nil {
@@ -283,7 +282,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			"name": 12345,
 		})
 
-		auth := authntoken.NewTokenAuthenticator(method)
+		auth := NewTokenAuthenticator(method)
 
 		principal, err := auth.Validate(context.Background(), token)
 		if err != nil {

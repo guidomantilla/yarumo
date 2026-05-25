@@ -1,16 +1,15 @@
-package authn_test
+package authn
 
 import (
 	"context"
 	"testing"
 
-	"github.com/guidomantilla/yarumo/security/authn"
 )
 
 func TestPrincipal_Fields(t *testing.T) {
 	t.Parallel()
 
-	p := &authn.Principal{
+	p := &Principal{
 		ID:         "user-1",
 		Name:       "Alice",
 		Roles:      []string{"admin"},
@@ -41,10 +40,10 @@ func TestWithPrincipal(t *testing.T) {
 	t.Run("happy path stores principal", func(t *testing.T) {
 		t.Parallel()
 
-		p := &authn.Principal{ID: "u-1"}
-		ctx := authn.WithPrincipal(context.Background(), p)
+		p := &Principal{ID: "u-1"}
+		ctx := WithPrincipal(context.Background(), p)
 
-		got, ok := authn.FromContext(ctx)
+		got, ok := FromContext(ctx)
 		if !ok {
 			t.Fatal("FromContext = ok=false, want ok=true")
 		}
@@ -58,9 +57,9 @@ func TestWithPrincipal(t *testing.T) {
 		t.Parallel()
 
 		parent := context.Background()
-		ctx := authn.WithPrincipal(parent, nil)
+		ctx := WithPrincipal(parent, nil)
 
-		_, ok := authn.FromContext(ctx)
+		_, ok := FromContext(ctx)
 		if ok {
 			t.Fatal("FromContext = ok=true after WithPrincipal(nil), want ok=false")
 		}
@@ -70,7 +69,7 @@ func TestWithPrincipal(t *testing.T) {
 		t.Parallel()
 
 		//nolint:staticcheck // intentional nil ctx to validate guard
-		ctx := authn.WithPrincipal(nil, &authn.Principal{ID: "u"})
+		ctx := WithPrincipal(nil, &Principal{ID: "u"})
 		if ctx != nil {
 			t.Fatalf("WithPrincipal(nil, _) = %v, want nil", ctx)
 		}
@@ -83,7 +82,7 @@ func TestFromContext(t *testing.T) {
 	t.Run("missing principal returns false", func(t *testing.T) {
 		t.Parallel()
 
-		got, ok := authn.FromContext(context.Background())
+		got, ok := FromContext(context.Background())
 		if ok {
 			t.Fatal("FromContext on empty ctx = ok=true, want ok=false")
 		}
@@ -97,7 +96,7 @@ func TestFromContext(t *testing.T) {
 		t.Parallel()
 
 		//nolint:staticcheck // intentional nil ctx to validate guard
-		got, ok := authn.FromContext(nil)
+		got, ok := FromContext(nil)
 		if ok {
 			t.Fatal("FromContext(nil) = ok=true, want ok=false")
 		}
@@ -117,7 +116,7 @@ func TestFromContext(t *testing.T) {
 		// FromContext correctly reports absence.
 		ctx := context.WithValue(context.Background(), struct{ name string }{name: "principal"}, "not-a-principal")
 
-		got, ok := authn.FromContext(ctx)
+		got, ok := FromContext(ctx)
 		if ok {
 			t.Fatal("FromContext with collateral key = ok=true, want ok=false")
 		}
