@@ -209,3 +209,46 @@ Top-level module que ofrece primitivas de mensajería tipada in-process. Expone 
 - `channel_queue.go` + tests.
 - `examples/` — submódulo propio con `go.mod`, demos runnable de los 4 channels.
 
+## Módulo `modules/security/authn/`
+
+Top-level module que aloja el contrato de autenticación + la impl canónica `tokenAuthenticator` (in-module porque sólo depende de `crypto/tokens`, otro módulo del workspace). Transport adapters viven en sus propios go-modules bajo `modules/extensions/security/authn/` para que `google.golang.org/grpc` no se filtre vía MVS a consumers que sólo necesitan el contrato. Classification: **Shape B con package único; transports split a módulos hermanos**.
+
+**Tipos / símbolos públicos:**
+- `Principal` — struct con `ID`/`Name`/`Roles`/`Attributes`.
+- `Authenticator` — interface (`Validate(ctx, token) (*Principal, error)`).
+- `Error` + `ErrAuthentication(causes...) error` factory.
+- Funciones libres: `WithPrincipal(ctx, *Principal) context.Context`, `FromContext(ctx) (*Principal, bool)`, `NewTokenAuthenticator(method, opts...) Authenticator`.
+- Options pattern: `Option`, `Options`, `NewOptions`, `WithSubjectClaim`, `WithNameClaim`, `WithRolesClaim`.
+- Fn aliases: `WithPrincipalFn`, `FromContextFn`, `ErrAuthenticationFn` (compliance exhaustiva en `types.go`).
+- Sentinels: `ErrAuthenticationFailed`, `ErrTokenEmpty`, `ErrTokenInvalid`, `ErrAuthenticatorNil`, `ErrHeaderMissing`, `ErrHeaderMalformed`, `ErrPrincipalNil`, `ErrMethodNil`, `ErrSubjectClaimMissing`.
+
+**Backend canónico.** `tokenAuthenticator` (struct privado) delega verificación a `*crypto/tokens.Method`. Funciona con los 15 algoritmos soportados por `crypto/tokens` (familia JWT — HS/RS/PS/ES/EdDSA — y familia opaque AEAD — OPAQUE_AES_GCM, OPAQUE_XCHACHA20_POLY1305) porque el dispatch lo hace `Method.Validate`. Mapea claims del Payload a `*Principal` con claves configurables.
+
+**Contrato de fallo.** Todas las impls de `Authenticator` envuelven errores vía `ErrAuthentication(causes...)`. Esto garantiza `errors.Is(err, ErrAuthenticationFailed) == true` para cualquier fallo, permitiendo a los transport adapters traducir uniformemente a 401 / `codes.Unauthenticated` sin inspeccionar errores concretos.
+
+**Aislamiento de dependencias.** Un consumer del contrato no arrastra `google.golang.org/grpc` ni `net/http` server (más allá de stdlib) — esas viven en go-modules separados. Por MVS, cualquier `require` en un go.mod consumido se materializa en el `go.sum` del consumer aunque no compile el código importador — la separación en go-modules es la única que evita esto.
+
+**Sin lifecycle.** El módulo no aloja `lifecycle.Component`. Cada autenticador es un validador stateless. Si una impl futura necesitara caching o background refresh, debe ir a un top-level `modules/managed/<name>/` y exponer `Authenticator` para wirearse contra este contrato.
+
+**Layout plano.** No hay subpaquetes anidados. Futuros backends sin dep externa (apikey, chain, mock, ...) viven en el root junto a `tokenAuthenticator`. Backends con dep externa van a `modules/extensions/security/authn/<x>/`. Sub-dominios nuevos (ej. sessions) son **hermanos top-level**: `modules/security/sessions/`, no `modules/security/authn/sessions/`.
+
+## Módulo `modules/extensions/security/authn/http/`
+
+Transport adapter: server-side `net/http` Bearer middleware sobre el contrato `security/authn`. Módulo independiente para mantener `google.golang.org/grpc` fuera del closure de cualquier consumer HTTP-only (y viceversa).
+
+| Paquete | Shape | Externos | Qué hace |
+|---|---|---|---|
+| `http` | Shape B | `net/http` (stdlib), `security/authn` | `NewMiddleware(authenticator, opts...) Middleware` — `func(http.Handler) http.Handler` que extrae `Authorization: Bearer <token>` (header + scheme configurables), valida vía `Authenticator`, inyecta `*Principal` en `r.Context()`. Fallos → 401 vía `ErrorHandler` configurable (`WithErrorHandler`). |
+
+**Options públicas:** `WithHeaderName(string)`, `WithScheme(string)`, `WithErrorHandler(func(http.ResponseWriter, *http.Request, error))`.
+
+## Módulo `modules/extensions/security/authn/grpc/`
+
+Transport adapter: gRPC unary + stream server interceptors sobre el contrato `security/authn`. Módulo independiente para que `google.golang.org/grpc` no se filtre vía MVS a consumers que sólo necesitan el contrato o HTTP.
+
+| Paquete | Shape | Externos | Qué hace |
+|---|---|---|---|
+| `grpc` | Shape B | `google.golang.org/grpc`, `security/authn` | `NewUnaryInterceptor(authenticator, opts...)` y `NewStreamInterceptor(authenticator, opts...)` — leen el token del metadata key `authorization` (configurable), validan, inyectan `*Principal` en `ctx`. Fallos → `status.Error(codes.Unauthenticated, ...)`. Stream wraps el server stream con `Context()` override para propagar el ctx con el Principal sin reasignar. |
+
+**Options públicas:** `WithMetadataKey(string)`, `WithScheme(string)`.
+

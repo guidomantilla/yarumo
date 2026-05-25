@@ -23,6 +23,8 @@ use (
 	./modules/extensions/common/resilience/limiter
 	./modules/extensions/common/resilience/retry
 	./modules/extensions/common/uids
+	./modules/extensions/security/authn/grpc
+	./modules/extensions/security/authn/http
 	./modules/extensions/telemetry/otel/http
 	./modules/extensions/telemetry/otel/slog
 	./modules/managed/cache/redis
@@ -41,6 +43,7 @@ use (
 	./modules/managed/telemetry/otel
 	./modules/messaging
 	./modules/messaging/examples
+	./modules/security/authn
 	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples

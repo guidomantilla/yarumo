@@ -1,0 +1,105 @@
+version: "2"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  default: all
+
+  disable:
+    - dupl
+    - err113
+    - exhaustruct
+    - godot
+    - gomoddirectives
+    - iface
+    - ireturn
+    - lll
+    - mnd
+    - nlreturn
+    - revive
+    - tagliatelle
+    - testpackage
+    - varnamelen
+    - whitespace
+    - wsl
+    - wsl_v5
+
+  settings:
+    depguard:
+      rules:
+        main:
+          list-mode: original
+          deny:
+            - pkg: "^log$"
+              desc: "use log/slog instead of stdlib log"
+            - pkg: "github.com/sirupsen/logrus"
+              desc: "use log/slog instead of logrus"
+            - pkg: "go.uber.org/zap"
+              desc: "use log/slog instead of zap"
+            - pkg: "github.com/rs/zerolog"
+              desc: "use log/slog instead of zerolog"
+            - pkg: "github.com/stretchr/testify"
+              desc: "use t.Fatal/t.Fatalf instead of testify assertions"
+            - pkg: "github.com/pkg/errors"
+              desc: "use errs.Wrap(sentinel, err) with a sentinel from errors.go"
+            - pkg: "io/ioutil"
+              desc: "ioutil is deprecated since Go 1.16"
+            - pkg: "github.com/golang/protobuf"
+              desc: "use google.golang.org/protobuf instead (v1 API is deprecated)"
+            - pkg: "github.com/spf13/viper"
+              desc: "viper is not allowed in authn/grpc module"
+
+    forbidigo:
+      forbid:
+        - pattern: ^(fmt\.Print(|f|ln)|fmt\.Fprint(|f|ln)|print|println)$
+          msg: "use the project logger (log/slog) instead of direct print statements"
+
+    funlen:
+      lines: 220
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - cyclop
+          - errcheck
+          - errchkjson
+          - errname
+          - forbidigo
+          - containedctx
+          - funlen
+          - gocognit
+          - gocyclo
+          - gosec
+          - maintidx
+          - noctx
+          - wrapcheck
+          - forcetypeassert
+          - govet
+          - unparam
+          - paralleltest
+          - tparallel
+          - revive
+          - staticcheck
+          - nilnil
+          - nolintlint
+          - ineffassign
+      - path: types\.go
+        linters:
+          - gochecknoglobals
+      - path: functions\.go
+        linters:
+          - wrapcheck
+          - contextcheck
+      # authenticatedStream embeds a ctx so its Context() override can
+      # carry the principal. This is the canonical pattern documented by
+      # google.golang.org/grpc itself; the stream has only one valid
+      # lifetime so the ctx field is not a leak.
+      - path: authenticatedstream\.go
+        linters:
+          - containedctx
