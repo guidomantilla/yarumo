@@ -1,6 +1,9 @@
 package messaging
 
 import (
+	"context"
+	"errors"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -93,4 +96,73 @@ func TestWithDrainTimeout(t *testing.T) {
 			t.Fatalf("expected default %v, got %v", defaultDrainTimeout, opts.drainTimeout)
 		}
 	})
+}
+
+func TestNewOptions_DefaultErrorHandlerInstalled(t *testing.T) {
+	t.Parallel()
+
+	opts := NewOptions()
+	if opts.errorHandler == nil {
+		t.Fatal("expected DefaultErrorHandler installed, got nil")
+	}
+
+	want := reflect.ValueOf(DefaultErrorHandler).Pointer()
+	got := reflect.ValueOf(opts.errorHandler).Pointer()
+	if got != want {
+		t.Fatalf("expected DefaultErrorHandler pointer, got different function")
+	}
+}
+
+func TestWithErrorHandler_OverridesDefault(t *testing.T) {
+	t.Parallel()
+
+	custom := func(_ context.Context, _ any, _ error) {}
+
+	opts := NewOptions(WithErrorHandler(custom))
+	if opts.errorHandler == nil {
+		t.Fatal("expected custom hook installed, got nil")
+	}
+
+	want := reflect.ValueOf(custom).Pointer()
+	got := reflect.ValueOf(opts.errorHandler).Pointer()
+	if got != want {
+		t.Fatalf("expected custom hook, got DefaultErrorHandler")
+	}
+}
+
+func TestWithErrorHandler_NilPreservesDefault(t *testing.T) {
+	t.Parallel()
+
+	opts := NewOptions(WithErrorHandler(nil))
+
+	want := reflect.ValueOf(DefaultErrorHandler).Pointer()
+	got := reflect.ValueOf(opts.errorHandler).Pointer()
+	if got != want {
+		t.Fatalf("expected DefaultErrorHandler when nil passed, got different function")
+	}
+}
+
+func TestSilentErrorHandler_OptsOutOfLogging(t *testing.T) {
+	t.Parallel()
+
+	opts := NewOptions(WithErrorHandler(SilentErrorHandler))
+
+	want := reflect.ValueOf(SilentErrorHandler).Pointer()
+	got := reflect.ValueOf(opts.errorHandler).Pointer()
+	if got != want {
+		t.Fatalf("expected SilentErrorHandler installed, got different function")
+	}
+
+	// Smoke-test the silent hook actually does nothing: should not
+	// panic and should not write anywhere observable.
+	SilentErrorHandler(context.Background(), nil, errors.New("test"))
+}
+
+func TestDefaultErrorHandler_DoesNotPanicOnNilMsg(t *testing.T) {
+	t.Parallel()
+
+	// Smoke-test: handler must tolerate nil msg + non-nil err and not
+	// panic. Output goes through common/log's global slot — invisible
+	// to this test but the call must complete cleanly.
+	DefaultErrorHandler(context.Background(), nil, errors.New("smoke"))
 }
