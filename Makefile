@@ -4,6 +4,7 @@ MODULES := modules/common modules/config modules/managed/telemetry/otel
 MODULES += modules/compute/math modules/compute/engine modules/compute/tests/acceptance
 MODULES += modules/validation modules/crypto
 MODULES += modules/managed/cache/redis modules/managed/cache/ristretto modules/managed/cron modules/managed/diagnostics modules/managed/grpc modules/managed/http modules/managed/keep-alive
+MODULES += modules/messaging
 MODULES += modules/extensions/common/cast modules/extensions/common/http/breaker modules/extensions/common/http/limiter modules/extensions/common/http/retry modules/extensions/common/log/slog modules/extensions/common/log/zerolog modules/extensions/common/resilience/breaker modules/extensions/common/resilience/limiter modules/extensions/common/resilience/retry modules/extensions/common/uids modules/extensions/telemetry/otel/http modules/extensions/telemetry/otel/slog
 MODULES += sdks/decisions/core
 ENABLE_INTERNAL := false
@@ -14,7 +15,7 @@ INTERNAL += internal/temporal/courses/edu-101-go-code internal/temporal/courses/
 # Other modules (compute/math, compute/engine) still carry historical
 # violations tracked under follow-up tickets; expand this list as those
 # modules are cleaned up.
-INLINE_MODULES := modules/common modules/validation modules/cache modules/crypto
+INLINE_MODULES := modules/common modules/validation modules/cache modules/crypto modules/messaging
 
 # Built inlineassign binary location. The cmd/inlineassign main package lives
 # under tools/lint/inlineassign and is wired into go.work for local builds.
