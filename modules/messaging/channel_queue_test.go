@@ -17,7 +17,7 @@ func TestNewQueueChannel(t *testing.T) {
 	t.Run("returns non-nil channel", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-1")
+		qc := NewQueueChannel[int]("q-1").(*queue[int])
 		if qc == nil {
 			t.Fatal("expected non-nil channel")
 		}
@@ -26,7 +26,7 @@ func TestNewQueueChannel(t *testing.T) {
 	t.Run("applies worker count option", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-pool", WithWorkerCount(4))
+		qc := NewQueueChannel[int]("q-pool", WithWorkerCount(4)).(*queue[int])
 		if qc.workerCount != 4 {
 			t.Fatalf("expected workerCount=4, got %d", qc.workerCount)
 		}
@@ -36,7 +36,7 @@ func TestNewQueueChannel(t *testing.T) {
 func TestQueueChannel_RoundRobin(t *testing.T) {
 	t.Parallel()
 
-	qc := NewQueueChannel[int]("q-rr", WithBufferSize(16), WithDrainTimeout(time.Second))
+	qc := NewQueueChannel[int]("q-rr", WithBufferSize(16), WithDrainTimeout(time.Second)).(*queue[int])
 
 	const subs = 3
 
@@ -106,7 +106,7 @@ func TestQueueChannel_RoundRobin(t *testing.T) {
 func TestQueueChannel_PointToPoint(t *testing.T) {
 	t.Parallel()
 
-	qc := NewQueueChannel[int]("q-p2p", WithBufferSize(4), WithDrainTimeout(time.Second))
+	qc := NewQueueChannel[int]("q-p2p", WithBufferSize(4), WithDrainTimeout(time.Second)).(*queue[int])
 
 	var subA, subB int32
 
@@ -176,7 +176,7 @@ func TestQueueChannel_NoSubscribersHook(t *testing.T) {
 		WithBufferSize(4),
 		WithDrainTimeout(time.Second),
 		WithErrorHandler(hook),
-	)
+	).(*queue[int])
 
 	errChan := make(chan error, 1)
 
@@ -215,7 +215,7 @@ func TestQueueChannel_PanicRecovery(t *testing.T) {
 		WithBufferSize(4),
 		WithDrainTimeout(time.Second),
 		WithErrorHandler(hook),
-	)
+	).(*queue[int])
 
 	var nextFired int32
 
@@ -273,7 +273,7 @@ func TestQueueChannel_Send(t *testing.T) {
 	t.Run("returns ErrContextNil on nil ctx", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-ctx")
+		qc := NewQueueChannel[int]("q-ctx").(*queue[int])
 		err := qc.Send(nil, NewMessage[int](1, nil)) //nolint:staticcheck
 		if !errors.Is(err, ErrContextNil) {
 			t.Fatalf("expected ErrContextNil, got %v", err)
@@ -283,7 +283,7 @@ func TestQueueChannel_Send(t *testing.T) {
 	t.Run("returns ErrClosed after Stop", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-stopped")
+		qc := NewQueueChannel[int]("q-stopped").(*queue[int])
 		err := qc.Start(context.Background())
 		if err != nil {
 			t.Fatalf("Start returned %v", err)
@@ -307,7 +307,7 @@ func TestQueueChannel_Subscribe(t *testing.T) {
 	t.Run("returns ErrHandlerNil on nil handler", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-sub-nil")
+		qc := NewQueueChannel[int]("q-sub-nil").(*queue[int])
 		_, err := qc.Subscribe(nil)
 		if !errors.Is(err, ErrHandlerNil) {
 			t.Fatalf("expected ErrHandlerNil, got %v", err)
@@ -318,7 +318,7 @@ func TestQueueChannel_Subscribe(t *testing.T) {
 func TestQueueChannel_StopIsIdempotent(t *testing.T) {
 	t.Parallel()
 
-	qc := NewQueueChannel[int]("q-stop", WithDrainTimeout(time.Second))
+	qc := NewQueueChannel[int]("q-stop", WithDrainTimeout(time.Second)).(*queue[int])
 	_ = qc.Start(context.Background())
 
 	err := qc.Stop(context.Background())

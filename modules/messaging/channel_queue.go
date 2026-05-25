@@ -25,7 +25,7 @@ import (
 // Use this primitive for work distribution: N equivalent subscribers
 // share the load and each message is processed once. Contrast with
 // TopicChannel where each message goes to every subscriber.
-type QueueChannel[T any] struct {
+type queue[T any] struct {
 	name         string
 	bufferSize   int
 	workerCount  int
@@ -53,12 +53,12 @@ type QueueChannel[T any] struct {
 //
 // The returned channel is not running; call lifecycle.Build to wire
 // it into the application lifecycle and spawn the worker pool.
-func NewQueueChannel[T any](name string, opts ...Option) *QueueChannel[T] {
+func NewQueueChannel[T any](name string, opts ...Option) Channel[T] {
 	cassert.NotEmpty(name, "name is empty")
 
 	options := NewOptions(opts...)
 
-	return &QueueChannel[T]{
+	return &queue[T]{
 		name:         name,
 		bufferSize:   options.bufferSize,
 		workerCount:  options.workerCount,
@@ -71,27 +71,27 @@ func NewQueueChannel[T any](name string, opts ...Option) *QueueChannel[T] {
 }
 
 // Name returns the channel's identity used in lifecycle logs.
-func (q *QueueChannel[T]) Name() string {
-	cassert.NotNil(q, "QueueChannel is nil")
+func (c *queue[T]) Name() string {
+	cassert.NotNil(c, "QueueChannel is nil")
 
-	return q.name
+	return c.name
 }
 
 // Start spawns the worker pool. Each worker consumes from the
 // inbound buffer and dispatches each message to one subscriber
 // chosen by round-robin among the currently registered handlers.
 // Start is idempotent.
-func (q *QueueChannel[T]) Start(ctx context.Context) error {
-	cassert.NotNil(q, "QueueChannel is nil")
+func (c *queue[T]) Start(ctx context.Context) error {
+	cassert.NotNil(c, "QueueChannel is nil")
 
-	q.startOnce.Do(func() {
-		for range q.workerCount {
-			q.workerWG.Add(1)
+	c.startOnce.Do(func() {
+		for range c.workerCount {
+			c.workerWG.Add(1)
 
-			go q.run(ctx)
+			go c.run(ctx)
 		}
 
-		go q.awaitDrain()
+		go c.awaitDrain()
 	})
 
 	return nil
@@ -99,30 +99,30 @@ func (q *QueueChannel[T]) Start(ctx context.Context) error {
 
 // awaitDrain closes the done channel exactly once after every worker
 // goroutine has exited.
-func (q *QueueChannel[T]) awaitDrain() {
-	q.workerWG.Wait()
-	q.doneOnce.Do(func() { close(q.done) })
+func (c *queue[T]) awaitDrain() {
+	c.workerWG.Wait()
+	c.doneOnce.Do(func() { close(c.done) })
 }
 
 // Stop closes the inbound buffer and waits for every worker to
 // finish processing in-flight messages, bounded by the configured
 // drain timeout or by ctx's deadline (whichever is tighter). Stop is
 // idempotent per the lifecycle.Component contract.
-func (q *QueueChannel[T]) Stop(ctx context.Context) error {
-	cassert.NotNil(q, "QueueChannel is nil")
+func (c *queue[T]) Stop(ctx context.Context) error {
+	cassert.NotNil(c, "QueueChannel is nil")
 
-	q.stopOnce.Do(func() {
-		q.closed.Store(true)
-		close(q.inbound)
+	c.stopOnce.Do(func() {
+		c.closed.Store(true)
+		close(c.inbound)
 	})
 
-	timeout := q.drainTimeout
+	timeout := c.drainTimeout
 
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	select {
-	case <-q.done:
+	case <-c.done:
 		return nil
 	case <-waitCtx.Done():
 		return lifecycle.ErrShutdown(lifecycle.ErrShutdownTimeout, waitCtx.Err())
@@ -131,29 +131,29 @@ func (q *QueueChannel[T]) Stop(ctx context.Context) error {
 
 // Done returns the channel that is closed after every worker has
 // drained the inbound buffer and exited.
-func (q *QueueChannel[T]) Done() <-chan struct{} {
-	cassert.NotNil(q, "QueueChannel is nil")
+func (c *queue[T]) Done() <-chan struct{} {
+	cassert.NotNil(c, "QueueChannel is nil")
 
-	return q.done
+	return c.done
 }
 
 // Send enqueues msg for asynchronous dispatch. Send returns
 // ErrSend(ErrClosed) after Stop. When the buffer is full, Send
 // blocks until a slot opens or ctx expires; on ctx expiry Send
 // returns ErrSend with the ctx error joined.
-func (q *QueueChannel[T]) Send(ctx context.Context, msg Message[T]) error {
-	cassert.NotNil(q, "QueueChannel is nil")
+func (c *queue[T]) Send(ctx context.Context, msg Message[T]) error {
+	cassert.NotNil(c, "QueueChannel is nil")
 
 	if ctx == nil {
 		return ErrSend(ErrContextNil)
 	}
 
-	if q.closed.Load() {
+	if c.closed.Load() {
 		return ErrSend(ErrClosed)
 	}
 
 	select {
-	case q.inbound <- msg:
+	case c.inbound <- msg:
 		return nil
 	case <-ctx.Done():
 		return ErrSend(ErrTimeout, ctx.Err())
@@ -168,39 +168,39 @@ func (q *QueueChannel[T]) Send(ctx context.Context, msg Message[T]) error {
 // All registered handlers are equivalent peers competing for
 // messages: subsequent messages are distributed round-robin among
 // the live set, skipping cancelled handlers.
-func (q *QueueChannel[T]) Subscribe(handler Handler[T]) (Cancel, error) {
-	cassert.NotNil(q, "QueueChannel is nil")
+func (c *queue[T]) Subscribe(handler Handler[T]) (Cancel, error) {
+	cassert.NotNil(c, "QueueChannel is nil")
 
 	if handler == nil {
 		return nil, ErrSubscribe(ErrHandlerNil)
 	}
 
-	if q.closed.Load() {
+	if c.closed.Load() {
 		return nil, ErrSubscribe(ErrClosed)
 	}
 
-	q.mu.Lock()
-	q.nextID++
-	id := q.nextID
-	q.byID[id] = handler
-	q.order = append(q.order, id)
-	q.mu.Unlock()
+	c.mu.Lock()
+	c.nextID++
+	id := c.nextID
+	c.byID[id] = handler
+	c.order = append(c.order, id)
+	c.mu.Unlock()
 
 	var once sync.Once
 
 	cancel := func() {
 		once.Do(func() {
-			q.mu.Lock()
-			defer q.mu.Unlock()
+			c.mu.Lock()
+			defer c.mu.Unlock()
 
-			delete(q.byID, id)
+			delete(c.byID, id)
 
-			for i, candidate := range q.order {
+			for i, candidate := range c.order {
 				if candidate != id {
 					continue
 				}
 
-				q.order = append(q.order[:i], q.order[i+1:]...)
+				c.order = append(c.order[:i], c.order[i+1:]...)
 
 				break
 			}
@@ -212,11 +212,11 @@ func (q *QueueChannel[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 
 // run is one worker's loop. It consumes from inbound until the
 // channel is closed, then exits and decrements the worker WaitGroup.
-func (q *QueueChannel[T]) run(ctx context.Context) {
-	defer q.workerWG.Done()
+func (c *queue[T]) run(ctx context.Context) {
+	defer c.workerWG.Done()
 
-	for msg := range q.inbound {
-		q.dispatch(ctx, msg)
+	for msg := range c.inbound {
+		c.dispatch(ctx, msg)
 	}
 }
 
@@ -225,31 +225,31 @@ func (q *QueueChannel[T]) run(ctx context.Context) {
 // routed through the configured ErrorHandler (default: no-op).
 // Messages arriving when no subscribers are registered are dropped
 // and surfaced via the hook.
-func (q *QueueChannel[T]) dispatch(ctx context.Context, msg Message[T]) {
-	q.mu.Lock()
+func (c *queue[T]) dispatch(ctx context.Context, msg Message[T]) {
+	c.mu.Lock()
 
-	n := len(q.order)
+	n := len(c.order)
 	if n == 0 {
-		q.mu.Unlock()
+		c.mu.Unlock()
 
-		if q.errorHandler != nil {
-			q.errorHandler(ctx, msg, ErrNoSubscribers)
+		if c.errorHandler != nil {
+			c.errorHandler(ctx, msg, ErrNoSubscribers)
 		}
 
 		return
 	}
 
-	idx := q.rotation % uint64(n)
-	q.rotation++
-	handler := q.byID[q.order[idx]]
-	q.mu.Unlock()
+	idx := c.rotation % uint64(n)
+	c.rotation++
+	handler := c.byID[c.order[idx]]
+	c.mu.Unlock()
 
 	err := invokeHandler(ctx, msg, handler)
 	if err == nil {
 		return
 	}
 
-	if q.errorHandler != nil {
-		q.errorHandler(ctx, msg, err)
+	if c.errorHandler != nil {
+		c.errorHandler(ctx, msg, err)
 	}
 }

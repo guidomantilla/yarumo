@@ -168,3 +168,44 @@ Los tests de la facade `common/log/` son intencionalmente seriales (sin `t.Paral
 
 Histórico: `common/log/` fue extraído como módulo top-level en #173, pero esto cerró un ciclo arquitectónico con `common/assert` que dependía de log. La reorganización en ese PR devolvió la **interface** a `common/log/` y dejó en `modules/extensions/common/log/` solo las **implementaciones concretas** — patrón paralelo a `commons-logging`/`slf4j-api` vs binding impls. Tras la entrada de `zerolog/` como módulo separado, el directorio `extensions/common/log/` se reestructuró: el `go.mod` parent se eliminó y `slog/` se promovió a módulo hermano, restaurando la simetría (`slog/` y `zerolog/` son peers, cada uno con go.mod propio).
 
+## Módulo `modules/messaging/`
+
+Top-level module que ofrece primitivas de mensajería tipada in-process. Expone una sola interface pública `Channel[T]` con cuatro implementaciones equivalentes que cubren los ejes ortogonales sync/async × fan-out/point-to-point. Sigue **Shape B con múltiples peers de una interface sin canónica** — file naming `channel_<variant>.go`, structs `<variant>Channel` per R1.
+
+| Variante | Archivo | Struct | Roles | Qué hace |
+|---|---|---|---|---|
+| Pipeline | `channel_pipeline.go` | `pipelineChannel[T]` | `Channel[T]` | Sync sequential fan-out en la goroutine del caller. Fail-fast con `*ChainError` trace (step por step: ok / error / panic / skipped). Patrón "Transactional Handler Chain" (cf. MediatR pipeline behaviors). |
+| Broadcast | `channel_broadcast.go` | `broadcastChannel[T]` | `Channel[T]` | Sync parallel fan-out con barrier (`sync.WaitGroup`). Send dispara N goroutines, espera a todas, joina errores con `errors.Join`. Sin fail-fast — todos los handlers corren. |
+| Topic | `channel_topic.go` | `topicChannel[T]` | `Channel[T]` + `lifecycle.Component` | Async buffered fan-out via worker único. Caller fire-and-forget. Errores via `WithErrorHandler` hook. Implementa lifecycle.Component (Start/Stop/Done/Name); callers wirean via type assertion `ch.(lifecycle.Component)` + `lifecycle.Build`. |
+| Queue | `channel_queue.go` | `queueChannel[T]` | `Channel[T]` + `lifecycle.Component` | Async point-to-point distribution: 1 msg → 1 subscriber via round-robin. Worker pool configurable con `WithWorkerCount(n)`. Caller fire-and-forget. Errores via hook. |
+
+**Tipos públicos del módulo:**
+- `Channel[T]` — interface (Send/Subscribe).
+- `Message[T]` — envelope con `Payload T` + `Headers` (struct dedicado con `CorrelationID`/`Timestamp`/`Source`/`Custom`).
+- `Handler[T] func(ctx, Message[T]) error` — signature del subscriber.
+- `Cancel func()` — handle idempotente retornado por Subscribe.
+- `Options` + Option pattern: `WithBufferSize`, `WithDrainTimeout`, `WithWorkerCount`, `WithErrorHandler`.
+- `ErrorHandler func(ctx, msg any, err error)` — hook de observabilidad para impls async.
+- `StepStatus` enum + `StepResult` + `ChainError` — trace de PipelineChannel.
+- `Error` struct con sentinels: `ErrSendFailed`, `ErrSubscribeFailed`, `ErrClosed`, `ErrHandlerNil`, `ErrContextNil`, `ErrTimeout`, `ErrDrainTimeout`, `ErrHandlerPanic`, `ErrChainFailed`, `ErrNoSubscribers`.
+
+**Constructores:**
+- `NewPipelineChannel[T]() Channel[T]`
+- `NewBroadcastChannel[T]() Channel[T]`
+- `NewTopicChannel[T](name, opts...) Channel[T]`
+- `NewQueueChannel[T](name, opts...) Channel[T]`
+- `NewMessage[T](payload, cuids.UID) Message[T]` — constructor de envelope con correlation id auto-populado.
+
+**Patrón "Channel + lifecycle.Component" via assertion.** `topic` y `queue` implementan `lifecycle.Component` además de `Channel[T]`. El constructor retorna `Channel[T]` (interfaz minimal); callers que quieren lifecycle hacen `ch.(lifecycle.Component)` y wirean con `lifecycle.Build`. Esto mantiene la API de Channel pura y la composición lifecycle opcional. Pattern reusable cuando una primitiva implementa interfaces ortogonales.
+
+**Estructura de archivos:**
+- `types.go` — Channel[T] interface + Handler/Cancel + compliance vars.
+- `message.go` — Message[T] + Headers + NewMessage.
+- `errors.go` — Error struct, sentinels, ErrXxx factories, ChainError + StepResult.
+- `options.go` — Options + Option + WithXxx.
+- `channel_pipeline.go` + tests.
+- `channel_broadcast.go` + tests.
+- `channel_topic.go` + tests.
+- `channel_queue.go` + tests.
+- `examples/` — submódulo propio con `go.mod`, demos runnable de los 4 channels.
+

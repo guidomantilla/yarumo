@@ -36,10 +36,10 @@ import (
 )
 
 var (
-	_ Channel[any] = (*pipelineChannel[any])(nil)
-	_ Channel[any] = (*broadcastChannel[any])(nil)
-	_ Channel[any] = (*TopicChannel[any])(nil)
-	_ Channel[any] = (*QueueChannel[any])(nil)
+	_ Channel[any] = (*pipeline[any])(nil)
+	_ Channel[any] = (*broadcast[any])(nil)
+	_ Channel[any] = (*topic[any])(nil)
+	_ Channel[any] = (*queue[any])(nil)
 )
 
 // Handler is the function type for a message handler. The Handler

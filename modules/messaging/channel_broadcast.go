@@ -23,7 +23,7 @@ import (
 // Use this primitive when the caller needs sync confirmation that
 // every subscriber processed the message, but wants parallelism among
 // subscribers (cf. PipelineChannel which is sync but serial).
-type broadcastChannel[T any] struct {
+type broadcast[T any] struct {
 	mu     sync.RWMutex
 	nextID uint64
 	order  []uint64
@@ -35,7 +35,7 @@ type broadcastChannel[T any] struct {
 // finished and returns the joined errors (nil when all handlers
 // succeed).
 func NewBroadcastChannel[T any]() Channel[T] {
-	return &broadcastChannel[T]{
+	return &broadcast[T]{
 		byID: map[uint64]Handler[T]{},
 	}
 }
@@ -46,7 +46,7 @@ func NewBroadcastChannel[T any]() Channel[T] {
 // (errors.Is matches each cause). Panics are recovered per handler
 // and surface as ErrHandlerPanic-wrapped errors in the joined set.
 // Returns ErrSend(ErrContextNil) when ctx is nil.
-func (c *broadcastChannel[T]) Send(ctx context.Context, msg Message[T]) error {
+func (c *broadcast[T]) Send(ctx context.Context, msg Message[T]) error {
 	if ctx == nil {
 		return ErrSend(ErrContextNil)
 	}
@@ -90,7 +90,7 @@ func (c *broadcastChannel[T]) Send(ctx context.Context, msg Message[T]) error {
 // because handlers run in parallel the actual completion order is
 // non-deterministic. The returned error from Send aggregates failures
 // without reference to ordering.
-func (c *broadcastChannel[T]) Subscribe(handler Handler[T]) (Cancel, error) {
+func (c *broadcast[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 	cassert.NotNil(c, "broadcastChannel is nil")
 
 	if handler == nil {
@@ -131,7 +131,7 @@ func (c *broadcastChannel[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 // snapshot returns a stable copy of the handler list. The Send loop
 // reads it once outside any lock so handler invocations never hold
 // the channel's mutex.
-func (c *broadcastChannel[T]) snapshot() []Handler[T] {
+func (c *broadcast[T]) snapshot() []Handler[T] {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 

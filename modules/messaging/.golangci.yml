@@ -111,21 +111,21 @@ linters:
       # lifecycle methods; contextcheck false positive on Stop.
       # wrapcheck: Stop wraps ctx.Err with lifecycle.ErrShutdown — that
       # is the domain factory, additional wrapping adds no value.
-      - path: topic\.go
+      - path: channel_topic\.go
         linters:
           - contextcheck
           - wrapcheck
       # pipeline.go: cassert.NotNil guards receiver invariants.
-      - path: pipeline\.go
+      - path: channel_pipeline\.go
         linters:
           - contextcheck
       # queue.go: same cassert.NotNil pattern as topic.go + wrapcheck on
       # lifecycle.ErrShutdown (domain factory, no value in re-wrapping).
-      - path: queue\.go
+      - path: channel_queue\.go
         linters:
           - contextcheck
           - wrapcheck
       # broadcast.go: cassert.NotNil guards receiver invariants.
-      - path: broadcast\.go
+      - path: channel_broadcast\.go
         linters:
           - contextcheck

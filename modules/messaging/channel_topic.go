@@ -25,7 +25,7 @@ import (
 // (returns immediately after enqueue) until the buffer fills; once
 // full, Send blocks until either the worker drains a slot or ctx
 // expires.
-type TopicChannel[T any] struct {
+type topic[T any] struct {
 	name         string
 	bufferSize   int
 	drainTimeout time.Duration
@@ -50,12 +50,12 @@ type TopicChannel[T any] struct {
 //
 // The returned channel is not running; call lifecycle.Build (or the
 // BuildTopicChannel convenience) to spawn the worker goroutine.
-func NewTopicChannel[T any](name string, opts ...Option) *TopicChannel[T] {
+func NewTopicChannel[T any](name string, opts ...Option) Channel[T] {
 	cassert.NotEmpty(name, "name is empty")
 
 	options := NewOptions(opts...)
 
-	return &TopicChannel[T]{
+	return &topic[T]{
 		name:         name,
 		bufferSize:   options.bufferSize,
 		drainTimeout: options.drainTimeout,
@@ -67,10 +67,10 @@ func NewTopicChannel[T any](name string, opts ...Option) *TopicChannel[T] {
 }
 
 // Name returns the channel's identity used in lifecycle logs.
-func (q *TopicChannel[T]) Name() string {
-	cassert.NotNil(q, "TopicChannel is nil")
+func (c *topic[T]) Name() string {
+	cassert.NotNil(c, "TopicChannel is nil")
 
-	return q.name
+	return c.name
 }
 
 // Start spawns the worker goroutine that consumes from the inbound
@@ -78,11 +78,11 @@ func (q *TopicChannel[T]) Name() string {
 // handlers. It satisfies the lifecycle.Component worker-style
 // contract: Start returns immediately; Done closes after Stop has
 // drained the worker.
-func (q *TopicChannel[T]) Start(ctx context.Context) error {
-	cassert.NotNil(q, "TopicChannel is nil")
+func (c *topic[T]) Start(ctx context.Context) error {
+	cassert.NotNil(c, "TopicChannel is nil")
 
-	q.startOnce.Do(func() {
-		go q.run(ctx)
+	c.startOnce.Do(func() {
+		go c.run(ctx)
 	})
 
 	return nil
@@ -94,21 +94,21 @@ func (q *TopicChannel[T]) Start(ctx context.Context) error {
 // lifecycle.ErrShutdown wrapping lifecycle.ErrShutdownTimeout when
 // the drain does not complete in time. Stop is idempotent per the
 // lifecycle.Component contract.
-func (q *TopicChannel[T]) Stop(ctx context.Context) error {
-	cassert.NotNil(q, "TopicChannel is nil")
+func (c *topic[T]) Stop(ctx context.Context) error {
+	cassert.NotNil(c, "TopicChannel is nil")
 
-	q.stopOnce.Do(func() {
-		q.closed.Store(true)
-		close(q.inbound)
+	c.stopOnce.Do(func() {
+		c.closed.Store(true)
+		close(c.inbound)
 	})
 
-	timeout := q.drainTimeout
+	timeout := c.drainTimeout
 
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	select {
-	case <-q.done:
+	case <-c.done:
 		return nil
 	case <-waitCtx.Done():
 		return lifecycle.ErrShutdown(lifecycle.ErrShutdownTimeout, waitCtx.Err())
@@ -117,29 +117,29 @@ func (q *TopicChannel[T]) Stop(ctx context.Context) error {
 
 // Done returns the channel that is closed after the worker has
 // drained the inbound queue and exited.
-func (q *TopicChannel[T]) Done() <-chan struct{} {
-	cassert.NotNil(q, "TopicChannel is nil")
+func (c *topic[T]) Done() <-chan struct{} {
+	cassert.NotNil(c, "TopicChannel is nil")
 
-	return q.done
+	return c.done
 }
 
 // Send enqueues msg for asynchronous dispatch by the worker. Send
 // returns ErrSend(ErrClosed) after Stop. When the buffer is full,
 // Send blocks until either a slot becomes available or ctx expires;
 // on ctx expiry, Send returns ErrSend with the ctx error joined.
-func (q *TopicChannel[T]) Send(ctx context.Context, msg Message[T]) error {
-	cassert.NotNil(q, "TopicChannel is nil")
+func (c *topic[T]) Send(ctx context.Context, msg Message[T]) error {
+	cassert.NotNil(c, "TopicChannel is nil")
 
 	if ctx == nil {
 		return ErrSend(ErrContextNil)
 	}
 
-	if q.closed.Load() {
+	if c.closed.Load() {
 		return ErrSend(ErrClosed)
 	}
 
 	select {
-	case q.inbound <- msg:
+	case c.inbound <- msg:
 		return nil
 	case <-ctx.Done():
 		return ErrSend(ErrTimeout, ctx.Err())
@@ -151,39 +151,39 @@ func (q *TopicChannel[T]) Send(ctx context.Context, msg Message[T]) error {
 // Subscribe order. Cancel is idempotent. Subscribe returns
 // ErrSubscribe(ErrHandlerNil) when handler is nil and
 // ErrSubscribe(ErrClosed) when the channel has been stopped.
-func (q *TopicChannel[T]) Subscribe(handler Handler[T]) (Cancel, error) {
-	cassert.NotNil(q, "TopicChannel is nil")
+func (c *topic[T]) Subscribe(handler Handler[T]) (Cancel, error) {
+	cassert.NotNil(c, "TopicChannel is nil")
 
 	if handler == nil {
 		return nil, ErrSubscribe(ErrHandlerNil)
 	}
 
-	if q.closed.Load() {
+	if c.closed.Load() {
 		return nil, ErrSubscribe(ErrClosed)
 	}
 
-	q.mu.Lock()
-	q.nextID++
-	id := q.nextID
-	q.byID[id] = handler
-	q.order = append(q.order, id)
-	q.mu.Unlock()
+	c.mu.Lock()
+	c.nextID++
+	id := c.nextID
+	c.byID[id] = handler
+	c.order = append(c.order, id)
+	c.mu.Unlock()
 
 	var once sync.Once
 
 	cancel := func() {
 		once.Do(func() {
-			q.mu.Lock()
-			defer q.mu.Unlock()
+			c.mu.Lock()
+			defer c.mu.Unlock()
 
-			delete(q.byID, id)
+			delete(c.byID, id)
 
-			for i, candidate := range q.order {
+			for i, candidate := range c.order {
 				if candidate != id {
 					continue
 				}
 
-				q.order = append(q.order[:i], q.order[i+1:]...)
+				c.order = append(c.order[:i], c.order[i+1:]...)
 
 				break
 			}
@@ -196,11 +196,11 @@ func (q *TopicChannel[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 // run is the worker loop. It reads from inbound until the channel is
 // closed, dispatching each message to every registered handler. It
 // closes done exactly once when the loop exits.
-func (q *TopicChannel[T]) run(ctx context.Context) {
-	defer q.doneOnce.Do(func() { close(q.done) })
+func (c *topic[T]) run(ctx context.Context) {
+	defer c.doneOnce.Do(func() { close(c.done) })
 
-	for msg := range q.inbound {
-		q.dispatch(ctx, msg)
+	for msg := range c.inbound {
+		c.dispatch(ctx, msg)
 	}
 }
 
@@ -209,13 +209,13 @@ func (q *TopicChannel[T]) run(ctx context.Context) {
 // message cannot kill the worker. Handler errors and recovered panics
 // are routed through the configured ErrorHandler (default: no-op)
 // since async dispatch has no return path to the publisher.
-func (q *TopicChannel[T]) dispatch(ctx context.Context, msg Message[T]) {
-	q.mu.RLock()
-	snapshot := make([]Handler[T], 0, len(q.order))
-	for _, id := range q.order {
-		snapshot = append(snapshot, q.byID[id])
+func (c *topic[T]) dispatch(ctx context.Context, msg Message[T]) {
+	c.mu.RLock()
+	snapshot := make([]Handler[T], 0, len(c.order))
+	for _, id := range c.order {
+		snapshot = append(snapshot, c.byID[id])
 	}
-	q.mu.RUnlock()
+	c.mu.RUnlock()
 
 	for _, handler := range snapshot {
 		err := invokeHandler(ctx, msg, handler)
@@ -223,8 +223,8 @@ func (q *TopicChannel[T]) dispatch(ctx context.Context, msg Message[T]) {
 			continue
 		}
 
-		if q.errorHandler != nil {
-			q.errorHandler(ctx, msg, err)
+		if c.errorHandler != nil {
+			c.errorHandler(ctx, msg, err)
 		}
 	}
 }

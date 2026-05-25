@@ -9,16 +9,16 @@ import (
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 )
 
-// pipelineChannel implements Channel[T] as a Transactional Handler
+// pipeline implements Channel[T] as a Transactional Handler
 // Chain: Send invokes every subscribed handler synchronously, in the
 // caller's goroutine, in registration order. The first handler to
 // return a non-nil error (or to panic) aborts the chain — subsequent
 // steps are reported as skipped in the returned *ChainError trace.
 //
-// pipelineChannel does not own a close lifecycle: there is nothing to
+// pipeline does not own a close lifecycle: there is nothing to
 // drain and no goroutines to stop. Channels that need a graceful
 // shutdown use the TopicChannel variant.
-type pipelineChannel[T any] struct {
+type pipeline[T any] struct {
 	mu     sync.RWMutex
 	nextID uint64
 	order  []uint64
@@ -35,7 +35,7 @@ type pipelineChannel[T any] struct {
 // flushed before the response, or a "bridge to async" step that hands
 // the message off to a TopicChannel.
 func NewPipelineChannel[T any]() Channel[T] {
-	return &pipelineChannel[T]{
+	return &pipeline[T]{
 		byID: map[uint64]Handler[T]{},
 	}
 }
@@ -54,12 +54,12 @@ func NewPipelineChannel[T any]() Channel[T] {
 // Panics inside handlers are recovered, converted to a StepResult
 // with Status StepStatusPanic, and reported through the same
 // *ChainError flow. They never propagate to the caller.
-func (c *pipelineChannel[T]) Send(ctx context.Context, msg Message[T]) error {
+func (c *pipeline[T]) Send(ctx context.Context, msg Message[T]) error {
 	if ctx == nil {
 		return ErrSend(ErrContextNil)
 	}
 
-	cassert.NotNil(c, "pipelineChannel is nil")
+	cassert.NotNil(c, "pipeline is nil")
 
 	handlers := c.snapshot()
 
@@ -125,8 +125,8 @@ func invokeStep[T any](ctx context.Context, msg Message[T], index int, handler H
 // step 0, the second becomes step 1, and so on. Cancelling a handler
 // does not renumber the remaining steps — subsequent traces simply
 // omit the cancelled handler.
-func (c *pipelineChannel[T]) Subscribe(handler Handler[T]) (Cancel, error) {
-	cassert.NotNil(c, "pipelineChannel is nil")
+func (c *pipeline[T]) Subscribe(handler Handler[T]) (Cancel, error) {
+	cassert.NotNil(c, "pipeline is nil")
 
 	if handler == nil {
 		return nil, ErrSubscribe(ErrHandlerNil)
@@ -167,7 +167,7 @@ func (c *pipelineChannel[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 // order. It exists so the Send dispatch loop holds the read lock for
 // as little time as possible — handlers should not be invoked while
 // holding any lock.
-func (c *pipelineChannel[T]) snapshot() []Handler[T] {
+func (c *pipeline[T]) snapshot() []Handler[T] {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 

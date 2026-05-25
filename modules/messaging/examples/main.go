@@ -166,10 +166,11 @@ func demoTopicChannel(ctx context.Context) error {
 		messaging.WithBufferSize(8),
 		messaging.WithDrainTimeout(2*time.Second),
 	)
+	component, _ := channel.(lifecycle.Component)
 
 	errChan := make(chan error, 1)
 
-	closeFn, err := lifecycle.Build(ctx, channel, errChan)
+	closeFn, err := lifecycle.Build(ctx, component, errChan)
 	if err != nil {
 		return err
 	}
@@ -205,7 +206,7 @@ func demoTopicChannel(ctx context.Context) error {
 	}
 
 	closeFn(ctx, 5*time.Second)
-	<-channel.Done()
+	<-component.Done()
 
 	fmt.Println()
 
@@ -223,10 +224,11 @@ func demoQueueChannel(ctx context.Context) error {
 		messaging.WithWorkerCount(3),
 		messaging.WithDrainTimeout(2*time.Second),
 	)
+	component, _ := channel.(lifecycle.Component)
 
 	errChan := make(chan error, 1)
 
-	closeFn, err := lifecycle.Build(ctx, channel, errChan)
+	closeFn, err := lifecycle.Build(ctx, component, errChan)
 	if err != nil {
 		return err
 	}
@@ -259,7 +261,7 @@ func demoQueueChannel(ctx context.Context) error {
 	}
 
 	closeFn(ctx, 5*time.Second)
-	<-channel.Done()
+	<-component.Done()
 
 	a := atomic.LoadInt32(&workerA)
 	b := atomic.LoadInt32(&workerB)
