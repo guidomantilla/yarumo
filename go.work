@@ -13,6 +13,9 @@ use (
 	./modules/compute/tests/acceptance
 	./modules/config
 	./modules/crypto
+	./modules/datasource
+	./modules/datasource/gorm
+	./modules/datasource/gorm/examples
 	./modules/extensions/common/cast
 	./modules/extensions/common/http/breaker
 	./modules/extensions/common/http/limiter
