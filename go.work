@@ -40,6 +40,7 @@ use (
 	./modules/managed/keep-alive
 	./modules/managed/telemetry/otel
 	./modules/messaging
+	./modules/messaging/examples
 	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples
