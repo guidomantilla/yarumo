@@ -44,6 +44,7 @@ use (
 	./modules/messaging
 	./modules/messaging/examples
 	./modules/security/authn
+	./modules/security/authz
 	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples

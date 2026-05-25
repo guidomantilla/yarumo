@@ -252,3 +252,87 @@ Transport adapter: gRPC unary + stream server interceptors sobre el contrato `se
 
 **Options públicas:** `WithMetadataKey(string)`, `WithScheme(string)`.
 
+## Módulo `modules/security/authz/`
+
+Top-level module that provides authorization primitives: a `Policy`
+interface returning `Decision{Effect,Reason,Metadata}`, a `Request`
+envelope (Principal/Resource/Action/Environment), and `Require`
+middleware for HTTP and gRPC. Sub-package `rbac/` is the canonical
+Policy implementation for role-based access control with role
+inheritance and permission wildcards.
+
+The parent package follows **Shape B** (the `chain` impl of `Policy`
+returned by `ChainPolicies` is the sole stateful struct; everything
+else is free functions and DTOs). The `rbac/` sub-package also follows
+**Shape B** with a private `policy` impl + a public `InMemoryRolesStore`
+struct (exposed as a concrete type, not interface-returning, so
+consumers can call `Assign`/`Unassign` directly — the abstraction is
+`RolesStore`, the canonical impl is the in-memory store).
+
+**Design decisions:**
+- `Request.Principal` is typed as `any` so `authz` does NOT depend on
+  any authn library. Policies cast the principal to the shape their
+  authn layer produces (typically a struct from a sibling
+  `modules/security/authn/` module).
+- `Require` middleware (HTTP + gRPC) reads the principal from ctx via
+  an explicit `PrincipalReader` option (`WithPrincipalReader`). No
+  hardcoded context key — coupling between authn and authz is wired
+  explicitly per consumer.
+- `RequireHTTP` / `RequireUnary` / `RequireStream` panic at construction
+  on nil Policy or empty action. Fail-closed-at-boot per
+  `lifecycle.Build`-precedent.
+- Default audit hook (`DefaultAuditHook`) logs every Decision via
+  `common/log` (Allow → Info, Deny/Abstain → Warn); opt out with
+  `WithAuditHook(SilentAuditHook)`. Same shape as messaging's
+  `DefaultErrorHandler` precedent.
+
+**Tipos públicos del módulo (authz):**
+- `Effect` enum + constants `EffectAllow`/`EffectDeny`/`EffectAbstain`.
+- `Decision` struct (`Effect`/`Reason`/`Metadata`).
+- `Resource`, `Environment`, `Request` structs.
+- `Policy` interface (`Evaluate(ctx, Request) Decision`).
+- `PrincipalReader` interface + `PrincipalReaderFn` function adapter.
+- `AuditHookFn` function type.
+- Free functions: `NewRequest`, `Allow`/`Deny`/`Abstain`,
+  `ChainPolicies`, `DefaultAuditHook`/`SilentAuditHook`, `LocalIP`.
+- `Options` + `WithPrincipalReader`/`WithAuditHook`/
+  `WithHTTPResourceResolver`/`WithGRPCResourceResolver`.
+- `HTTPResourceResolverFn` / `GRPCResourceResolverFn` function types.
+- `Error` struct + sentinels (`ErrAuthzFailed`, `ErrDenied`,
+  `ErrAbstained`, `ErrPolicyNil`, `ErrPrincipalNil`,
+  `ErrPrincipalReaderNil`, `ErrActionEmpty`).
+
+**Constructors / middlewares:**
+- `RequireHTTP(policy, action, opts...) func(http.Handler) http.Handler`.
+- `RequireUnary(policy, action, opts...) grpc.UnaryServerInterceptor`.
+- `RequireStream(policy, action, opts...) grpc.StreamServerInterceptor`.
+- `ChainPolicies(policies...) Policy`.
+
+**Tipos públicos del sub-paquete (rbac):**
+- `RolesStore` interface (`Roles(ctx, principalID) ([]string, error)`).
+- `InMemoryRolesStore` struct (exposed) + `NewInMemoryRolesStore() *InMemoryRolesStore`.
+- `PrincipalIDResolverFn` function type.
+- `Options` + `WithRolePermissions`/`WithInheritance`/`WithRolesStore`/
+  `WithPrincipalIDResolver`/`WithAuditHook`.
+- `NewPolicy(opts...) authz.Policy` (non-fallible; cycle detection
+  installs a deny-only fallback).
+- `Error` struct + sentinels (`ErrRBACFailed`, `ErrRoleEmpty`,
+  `ErrPermissionEmpty`, `ErrInheritanceCycle`).
+
+**Estructura de archivos (authz):**
+- `doc.go` — package doc + design notes.
+- `types.go` — Effect/Decision/Resource/Environment/Request/Policy/PrincipalReader.
+- `errors.go` — Error struct, sentinels, ErrAuthz factory.
+- `functions.go` — NewRequest, Allow/Deny/Abstain, ChainPolicies, DefaultAuditHook, SilentAuditHook, LocalIP.
+- `options.go` — Options + With* funcs + resolver types.
+- `require_http.go` — RequireHTTP middleware + helpers.
+- `require_grpc.go` — RequireUnary / RequireStream interceptors + helpers.
+
+**Estructura de archivos (rbac):**
+- `types.go` — RolesStore interface + PrincipalIDResolverFn + package doc.
+- `errors.go` — Error struct, sentinels, ErrRBAC factory.
+- `options.go` — Options + With* funcs.
+- `policy.go` — `policy` struct + NewPolicy + Evaluate + wildcard matcher.
+- `store.go` — InMemoryRolesStore concrete struct + Assign/Unassign/Roles.
+- `internals.go` — buildClosure + dfsClosure (cycle detection).
+
