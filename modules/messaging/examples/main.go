@@ -1,5 +1,5 @@
 // Package main demonstrates the in-process messaging primitives end-to-
-// end: DirectChannel synchronous dispatch, QueueChannel async dispatch
+// end: PipelineChannel synchronous dispatch, QueueChannel async dispatch
 // with lifecycle.Build + graceful drain, the Publisher/Subscriber facade
 // routed by Go type, and subscription cancel.
 package main
@@ -37,7 +37,7 @@ func main() {
 func run() error {
 	ctx := context.Background()
 
-	err := demoDirectChannel(ctx)
+	err := demoPipelineChannel(ctx)
 	if err != nil {
 		return fmt.Errorf("direct channel: %w", err)
 	}
@@ -60,13 +60,13 @@ func run() error {
 	return nil
 }
 
-// demoDirectChannel shows synchronous in-goroutine dispatch: Send invokes
+// demoPipelineChannel shows synchronous in-goroutine dispatch: Send invokes
 // every subscribed handler in the caller's goroutine, in registration
 // order.
-func demoDirectChannel(ctx context.Context) error {
-	fmt.Println("=== DirectChannel (synchronous) ===")
+func demoPipelineChannel(ctx context.Context) error {
+	fmt.Println("=== PipelineChannel (synchronous) ===")
 
-	channel := messaging.NewDirectChannel[OrderCreated]()
+	channel := messaging.NewPipelineChannel[OrderCreated]()
 
 	_, err := channel.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
 		fmt.Printf("  audit: order %s recorded\n", msg.Payload.ID)
@@ -200,7 +200,7 @@ func demoPubSub(ctx context.Context) error {
 func demoCancel(ctx context.Context) error {
 	fmt.Println("=== Cancel subscription ===")
 
-	channel := messaging.NewDirectChannel[OrderCreated]()
+	channel := messaging.NewPipelineChannel[OrderCreated]()
 
 	cancel, err := channel.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
 		fmt.Printf("  handler received order %s\n", msg.Payload.ID)

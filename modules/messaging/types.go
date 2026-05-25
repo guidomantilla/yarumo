@@ -4,7 +4,7 @@
 // Message[T] envelopes to registered handlers. Two channel
 // implementations are provided in-process:
 //
-//   - DirectChannel[T]: synchronous in-goroutine dispatch — Send invokes
+//   - PipelineChannel[T]: synchronous in-goroutine dispatch — Send invokes
 //     every subscribed handler on the caller's goroutine.
 //   - QueueChannel[T]: asynchronous, buffered dispatch via a single
 //     worker goroutine. Implements common/lifecycle.Component so it can
@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	_ Channel[any] = (*directChannel[any])(nil)
+	_ Channel[any] = (*pipelineChannel[any])(nil)
 	_ Channel[any] = (*QueueChannel[any])(nil)
 	_ Publisher    = (*PubSub)(nil)
 	_ Subscriber   = (*PubSub)(nil)
@@ -38,7 +38,7 @@ var (
 
 // Handler is the function type for a message handler. The Handler
 // receives the propagated context and the typed Message envelope and
-// returns an error to signal failure. DirectChannel propagates the
+// returns an error to signal failure. PipelineChannel propagates the
 // error to the Send caller; QueueChannel logs and continues.
 type Handler[T any] func(ctx context.Context, msg Message[T]) error
 
@@ -61,7 +61,7 @@ type Cancel func()
 type Channel[T any] interface {
 	// Send dispatches msg to all currently subscribed handlers. The
 	// returned error reflects the dispatch outcome per implementation:
-	// DirectChannel propagates the first handler error; QueueChannel
+	// PipelineChannel propagates the first handler error; QueueChannel
 	// returns ErrClosed if the worker is no longer accepting work, or
 	// nil after successful enqueue. ctx propagates to each Handler.
 	Send(ctx context.Context, msg Message[T]) error

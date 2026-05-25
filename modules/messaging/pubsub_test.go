@@ -44,7 +44,7 @@ func TestNewPubSub(t *testing.T) {
 		var called int32
 		factory := func(_ reflect.Type) Channel[any] {
 			atomic.AddInt32(&called, 1)
-			return NewDirectChannel[any]()
+			return NewPipelineChannel[any]()
 		}
 
 		ps := NewPubSub(WithChannelFactory(factory))
@@ -242,7 +242,7 @@ func TestPubSub_LazyChannelAllocation(t *testing.T) {
 		var built int32
 		factory := func(_ reflect.Type) Channel[any] {
 			atomic.AddInt32(&built, 1)
-			return NewDirectChannel[any]()
+			return NewPipelineChannel[any]()
 		}
 
 		ps := NewPubSub(WithChannelFactory(factory))

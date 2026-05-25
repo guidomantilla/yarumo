@@ -3,6 +3,9 @@ package messaging
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
@@ -44,7 +47,111 @@ var (
 	// ErrDrainTimeout indicates that the queue did not finish draining
 	// pending messages before Stop's context deadline expired.
 	ErrDrainTimeout = errors.New("drain timeout")
+	// ErrHandlerPanic indicates that a pipeline handler panicked
+	// during dispatch. The recovered value is embedded in the
+	// resulting StepResult.Err via this sentinel.
+	ErrHandlerPanic = errors.New("handler panicked")
+	// ErrChainFailed indicates that a PipelineChannel send aborted
+	// because at least one step returned an error. The full step trace
+	// is available on the returned *ChainError.
+	ErrChainFailed = errors.New("pipeline chain failed")
 )
+
+// StepStatus classifies the outcome of a single pipeline step in a
+// ChainError trace.
+type StepStatus string
+
+const (
+	// StepStatusOK indicates the step completed without error.
+	StepStatusOK StepStatus = "ok"
+	// StepStatusError indicates the step returned a non-nil error.
+	StepStatusError StepStatus = "error"
+	// StepStatusPanic indicates the step panicked during execution.
+	StepStatusPanic StepStatus = "panic"
+	// StepStatusSkipped indicates the step was not executed because a
+	// previous step in the chain failed (fail-fast).
+	StepStatusSkipped StepStatus = "skipped"
+)
+
+// StepResult records the outcome of a single handler invocation
+// within a PipelineChannel.Send call.
+type StepResult struct {
+	// Index is the 0-based position of the step in the chain, in
+	// Subscribe order.
+	Index int
+	// Status reports the outcome (ok / error / panic / skipped).
+	Status StepStatus
+	// Err is the non-nil error returned by the handler when Status is
+	// StepStatusError, the wrapped recovered value when Status is
+	// StepStatusPanic, or nil otherwise.
+	Err error
+	// Duration is the wall-clock time the handler took to execute.
+	// Zero for skipped steps.
+	Duration time.Duration
+}
+
+// ChainError is the error returned by PipelineChannel.Send when at
+// least one step fails. It carries a per-step trace (ok / error /
+// panic / skipped) so callers can render which steps ran, which one
+// broke, and which never executed. ChainError.Unwrap returns the
+// failing step's underlying error so errors.Is/As keep working.
+type ChainError struct {
+	// Steps holds the outcome of every step in the chain, in order.
+	// Failed step's index is also exposed via Failed.
+	Steps []StepResult
+	// Failed is the index of the step that aborted the chain, or -1
+	// when every step completed successfully (in which case Send
+	// returns nil instead of *ChainError).
+	Failed int
+}
+
+// Error renders the chain trace as a multi-line string suitable for
+// logs.
+func (e *ChainError) Error() string {
+	cassert.NotNil(e, "ChainError is nil")
+
+	var b strings.Builder
+
+	b.WriteString("pipeline chain failed at step ")
+	b.WriteString(strconv.Itoa(e.Failed))
+	b.WriteString(":\n")
+
+	for _, step := range e.Steps {
+		b.WriteString("  [")
+		b.WriteString(strconv.Itoa(step.Index))
+		b.WriteString("] ")
+		b.WriteString(string(step.Status))
+
+		for i := len(step.Status); i < 8; i++ {
+			b.WriteByte(' ')
+		}
+
+		b.WriteString(" (")
+		b.WriteString(step.Duration.String())
+		b.WriteByte(')')
+
+		if step.Err != nil {
+			b.WriteString(": ")
+			b.WriteString(step.Err.Error())
+		}
+
+		b.WriteByte('\n')
+	}
+
+	return strings.TrimRight(b.String(), "\n")
+}
+
+// Unwrap returns the failing step's underlying error so errors.Is and
+// errors.As can match against the original sentinel.
+func (e *ChainError) Unwrap() error {
+	cassert.NotNil(e, "ChainError is nil")
+
+	if e.Failed < 0 || e.Failed >= len(e.Steps) {
+		return nil
+	}
+
+	return e.Steps[e.Failed].Err
+}
 
 // Error is the domain error type for messaging operations.
 type Error struct {

@@ -14,8 +14,8 @@ import (
 // reflect.Type for diagnostics (logging, name composition); it returns
 // a Channel[any] because the facade stores channels in a heterogeneous
 // registry. Implementations typically build a typed channel (e.g.
-// NewDirectChannel[Event]()) and wrap it in a type-erasing shim — the
-// default factory does exactly that with DirectChannel.
+// NewPipelineChannel[Event]()) and wrap it in a type-erasing shim — the
+// default factory does exactly that with PipelineChannel.
 type ChannelFactory func(t reflect.Type) Channel[any]
 
 // PubSub combines Publisher and Subscriber for in-process pub/sub
@@ -26,7 +26,7 @@ type ChannelFactory func(t reflect.Type) Channel[any]
 // PubSub maintains one Channel[any] per published Go type. The
 // channels are allocated lazily on the first Publish or Subscribe for
 // that type, using the configured ChannelFactory (default:
-// NewDirectChannel-backed). PubSub is safe for concurrent use.
+// NewPipelineChannel-backed). PubSub is safe for concurrent use.
 type PubSub struct {
 	factory ChannelFactory
 
@@ -51,7 +51,7 @@ type Subscriber interface {
 }
 
 // NewPubSub creates a PubSub facade. By default it uses a
-// DirectChannel for every Go type; pass WithChannelFactory to override.
+// PipelineChannel for every Go type; pass WithChannelFactory to override.
 func NewPubSub(opts ...PubSubOption) *PubSub {
 	options := &pubSubOptions{
 		factory: defaultChannelFactory,
@@ -85,12 +85,12 @@ func WithChannelFactory(factory ChannelFactory) PubSubOption {
 	}
 }
 
-// defaultChannelFactory constructs a DirectChannel[any] for any Go
+// defaultChannelFactory constructs a PipelineChannel[any] for any Go
 // type. Type isolation is preserved because the PubSub registry keys
 // each channel by reflect.Type — a handler subscribed for type X
 // never observes payloads published for type Y.
 func defaultChannelFactory(_ reflect.Type) Channel[any] {
-	return NewDirectChannel[any]()
+	return NewPipelineChannel[any]()
 }
 
 // publish dispatches payload to the channel registered for the given
