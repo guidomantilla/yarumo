@@ -17,14 +17,14 @@ transport / backend lives in its own subpackage:
 
 | Subpackage | Purpose | External deps |
 |---|---|---|
-| `authn/jwt/` | JWT-backed Authenticator over `modules/crypto/tokens`. | `crypto/tokens` (→ `golang-jwt/v5`). |
+| `authn/token/` | Token-backed Authenticator over `modules/crypto/tokens`. Works with all 15 algorithms (JWT + opaque AEAD). | `crypto/tokens` (→ `golang-jwt/v5`). |
 | `authn/http/` | Server-side `net/http` Bearer middleware. | `net/http` (stdlib). |
 | `authn/grpc/` | Unary + stream gRPC interceptors. | `google.golang.org/grpc`. |
 
-Consumers that wire a non-JWT backend never pull `golang-jwt/v5` into
-their build graph. Consumers that only serve gRPC never pull the HTTP
-package and vice versa. This is the canonical pattern: keep the root
-abstraction free of backend / transport deps.
+Consumers that wire a non-token backend never pull `golang-jwt/v5`
+into their build graph. Consumers that only serve gRPC never pull the
+HTTP package and vice versa. This is the canonical pattern: keep the
+root abstraction free of backend / transport deps.
 
 ### Failure contract
 

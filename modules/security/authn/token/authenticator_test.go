@@ -1,4 +1,4 @@
-package jwt_test
+package token_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 	ctokens "github.com/guidomantilla/yarumo/crypto/tokens"
 	"github.com/guidomantilla/yarumo/security/authn"
-	authnjwt "github.com/guidomantilla/yarumo/security/authn/jwt"
+	authntoken "github.com/guidomantilla/yarumo/security/authn/token"
 )
 
 func newTestMethod(t *testing.T) *ctokens.Method {
@@ -29,33 +29,33 @@ func mintToken(t *testing.T, method *ctokens.Method, subject string, payload cto
 	return token
 }
 
-func TestNewJWTAuthenticator(t *testing.T) {
+func TestNewTokenAuthenticator(t *testing.T) {
 	t.Parallel()
 
 	t.Run("returns non-nil authenticator", func(t *testing.T) {
 		t.Parallel()
 
-		auth := authnjwt.NewJWTAuthenticator(newTestMethod(t))
+		auth := authntoken.NewTokenAuthenticator(newTestMethod(t))
 		if auth == nil {
-			t.Fatal("NewJWTAuthenticator returned nil")
+			t.Fatal("NewTokenAuthenticator returned nil")
 		}
 	})
 
 	t.Run("with custom claim keys", func(t *testing.T) {
 		t.Parallel()
 
-		auth := authnjwt.NewJWTAuthenticator(newTestMethod(t),
-			authnjwt.WithSubjectClaim("user_id"),
-			authnjwt.WithNameClaim("display"),
-			authnjwt.WithRolesClaim("groups"),
+		auth := authntoken.NewTokenAuthenticator(newTestMethod(t),
+			authntoken.WithSubjectClaim("user_id"),
+			authntoken.WithNameClaim("display"),
+			authntoken.WithRolesClaim("groups"),
 		)
 		if auth == nil {
-			t.Fatal("NewJWTAuthenticator returned nil")
+			t.Fatal("NewTokenAuthenticator returned nil")
 		}
 	})
 }
 
-func TestJWTAuthenticator_Validate(t *testing.T) {
+func TestTokenAuthenticator_Validate(t *testing.T) {
 	t.Parallel()
 
 	t.Run("happy path returns principal", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestJWTAuthenticator_Validate(t *testing.T) {
 			"tid":   "acme",
 		})
 
-		auth := authnjwt.NewJWTAuthenticator(method)
+		auth := authntoken.NewTokenAuthenticator(method)
 
 		principal, err := auth.Validate(context.Background(), token)
 		if err != nil {
@@ -103,7 +103,7 @@ func TestJWTAuthenticator_Validate(t *testing.T) {
 	t.Run("empty token rejected", func(t *testing.T) {
 		t.Parallel()
 
-		auth := authnjwt.NewJWTAuthenticator(newTestMethod(t))
+		auth := authntoken.NewTokenAuthenticator(newTestMethod(t))
 
 		_, err := auth.Validate(context.Background(), "")
 		if err == nil {
@@ -122,7 +122,7 @@ func TestJWTAuthenticator_Validate(t *testing.T) {
 	t.Run("invalid token rejected", func(t *testing.T) {
 		t.Parallel()
 
-		auth := authnjwt.NewJWTAuthenticator(newTestMethod(t))
+		auth := authntoken.NewTokenAuthenticator(newTestMethod(t))
 
 		_, err := auth.Validate(context.Background(), "not.a.jwt")
 		if err == nil {
@@ -142,7 +142,7 @@ func TestJWTAuthenticator_Validate(t *testing.T) {
 
 		token := mintToken(t, bad, "u-1", ctokens.Payload{"sub": "u-1"})
 
-		auth := authnjwt.NewJWTAuthenticator(good)
+		auth := authntoken.NewTokenAuthenticator(good)
 
 		_, err := auth.Validate(context.Background(), token)
 		if err == nil {
@@ -162,14 +162,14 @@ func TestJWTAuthenticator_Validate(t *testing.T) {
 			"name": "Alice",
 		})
 
-		auth := authnjwt.NewJWTAuthenticator(method)
+		auth := authntoken.NewTokenAuthenticator(method)
 
 		_, err := auth.Validate(context.Background(), token)
 		if err == nil {
 			t.Fatal("Validate without sub claim returned nil error")
 		}
 
-		if !errors.Is(err, authnjwt.ErrSubjectClaimMissing) {
+		if !errors.Is(err, authntoken.ErrSubjectClaimMissing) {
 			t.Fatalf("error %v does not match ErrSubjectClaimMissing", err)
 		}
 
@@ -187,7 +187,7 @@ func TestJWTAuthenticator_Validate(t *testing.T) {
 			"name":    "Bob",
 		})
 
-		auth := authnjwt.NewJWTAuthenticator(method, authnjwt.WithSubjectClaim("user_id"))
+		auth := authntoken.NewTokenAuthenticator(method, authntoken.WithSubjectClaim("user_id"))
 
 		principal, err := auth.Validate(context.Background(), token)
 		if err != nil {
@@ -216,7 +216,7 @@ func TestJWTAuthenticator_Validate(t *testing.T) {
 			}),
 		)
 
-		auth := authnjwt.NewJWTAuthenticator(method)
+		auth := authntoken.NewTokenAuthenticator(method)
 
 		principal, err := auth.Validate(context.Background(), "anything")
 		if err != nil {
@@ -237,7 +237,7 @@ func TestJWTAuthenticator_Validate(t *testing.T) {
 			"roles": []any{"admin", 42, "viewer"},
 		})
 
-		auth := authnjwt.NewJWTAuthenticator(method)
+		auth := authntoken.NewTokenAuthenticator(method)
 
 		principal, err := auth.Validate(context.Background(), token)
 		if err != nil {
@@ -258,7 +258,7 @@ func TestJWTAuthenticator_Validate(t *testing.T) {
 			"sub": "u-1",
 		})
 
-		auth := authnjwt.NewJWTAuthenticator(method)
+		auth := authntoken.NewTokenAuthenticator(method)
 
 		principal, err := auth.Validate(context.Background(), token)
 		if err != nil {
@@ -283,7 +283,7 @@ func TestJWTAuthenticator_Validate(t *testing.T) {
 			"name": 12345,
 		})
 
-		auth := authnjwt.NewJWTAuthenticator(method)
+		auth := authntoken.NewTokenAuthenticator(method)
 
 		principal, err := auth.Validate(context.Background(), token)
 		if err != nil {

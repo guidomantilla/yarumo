@@ -27,9 +27,12 @@
 //
 // Subpackages:
 //
-//   - authn/jwt: JWTAuthenticator that delegates verification to
-//     modules/crypto/tokens. Pulls golang-jwt/v5 transitively only when
-//     imported.
+//   - authn/token: TokenAuthenticator that delegates verification to
+//     modules/crypto/tokens. Works with every algorithm crypto/tokens
+//     supports — the JWT family (HS/RS/PS/ES/EdDSA) and the opaque
+//     AEAD family (OPAQUE_AES_GCM, OPAQUE_XCHACHA20_POLY1305) — since
+//     dispatch is owned by *tokens.Method. Pulls golang-jwt/v5
+//     transitively only when imported.
 //   - authn/http: net/http middleware extracting the Authorization
 //     header, validating the bearer token, and injecting the Principal
 //     into the request ctx.

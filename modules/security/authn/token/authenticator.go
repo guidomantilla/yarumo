@@ -1,4 +1,4 @@
-package jwt
+package token
 
 import (
 	"context"
@@ -8,34 +8,38 @@ import (
 	"github.com/guidomantilla/yarumo/security/authn"
 )
 
-// jwtAuthenticator is the JWT-backed authn.Authenticator. It delegates
-// signature/expiry verification to *tokens.Method and reshapes the
-// resulting Payload map into a *Principal according to the configured
-// claim keys.
-type jwtAuthenticator struct {
+// tokenAuthenticator is the token-backed authn.Authenticator. It
+// delegates verification to *tokens.Method (which dispatches across the
+// JWT and opaque AEAD algorithm families supported by crypto/tokens)
+// and reshapes the resulting Payload map into a *Principal according
+// to the configured claim keys.
+type tokenAuthenticator struct {
 	method       *ctokens.Method
 	subjectClaim string
 	nameClaim    string
 	rolesClaim   string
 }
 
-// NewJWTAuthenticator returns a stateless authn.Authenticator backed by
-// the given *tokens.Method. The Method must have been built with a
-// verifying key (WithKey / WithVerifyingKey / WithGeneratedKey) — there
-// is no implicit fallback. A nil method panics via cassert.NotNil so
-// construction-time misconfiguration surfaces immediately rather than
-// at the first Validate call.
+// NewTokenAuthenticator returns a stateless authn.Authenticator backed
+// by the given *tokens.Method. Works with every algorithm supported by
+// modules/crypto/tokens — the JWT family (HS/RS/PS/ES/EdDSA) and the
+// opaque AEAD family (OPAQUE_AES_GCM, OPAQUE_XCHACHA20_POLY1305) —
+// since dispatch is owned by Method.Validate. The Method must have
+// been built with a verifying key (WithKey / WithVerifyingKey /
+// WithGeneratedKey) — there is no implicit fallback. A nil method
+// panics via cassert.NotNil so construction-time misconfiguration
+// surfaces immediately rather than at the first Validate call.
 //
 // Claim mapping defaults to "sub" → Principal.ID, "name" →
 // Principal.Name, "roles" → Principal.Roles. All other Payload keys
 // flow into Principal.Attributes verbatim. Override via WithSubjectClaim
 // / WithNameClaim / WithRolesClaim.
-func NewJWTAuthenticator(method *ctokens.Method, options ...Option) authn.Authenticator {
+func NewTokenAuthenticator(method *ctokens.Method, options ...Option) authn.Authenticator {
 	cassert.NotNil(method, "tokens method is nil")
 
 	opts := NewOptions(options...)
 
-	return &jwtAuthenticator{
+	return &tokenAuthenticator{
 		method:       method,
 		subjectClaim: opts.subjectClaim,
 		nameClaim:    opts.nameClaim,
@@ -43,13 +47,13 @@ func NewJWTAuthenticator(method *ctokens.Method, options ...Option) authn.Authen
 	}
 }
 
-// Validate verifies the JWT token via the underlying *tokens.Method and
+// Validate verifies the token via the underlying *tokens.Method and
 // reshapes the resulting Payload into a *Principal. The returned error
 // is always wrapped through authn.ErrAuthentication so transport
 // middleware can translate verification failures to a uniform 401
 // without inspecting concrete error types.
-func (a *jwtAuthenticator) Validate(_ context.Context, token string) (*authn.Principal, error) {
-	cassert.NotNil(a, "jwtAuthenticator is nil")
+func (a *tokenAuthenticator) Validate(_ context.Context, token string) (*authn.Principal, error) {
+	cassert.NotNil(a, "tokenAuthenticator is nil")
 
 	if token == "" {
 		return nil, authn.ErrAuthentication(authn.ErrTokenEmpty)
@@ -68,8 +72,8 @@ func (a *jwtAuthenticator) Validate(_ context.Context, token string) (*authn.Pri
 	return principal, nil
 }
 
-// principalFromPayload extracts a *Principal from the JWT payload map
-// using the configured claim keys. Validation rules:
+// principalFromPayload extracts a *Principal from the token payload
+// map using the configured claim keys. Validation rules:
 //
 //   - The subject claim MUST be a non-empty string; otherwise the
 //     function returns ErrSubjectClaimMissing.
@@ -106,7 +110,7 @@ func principalFromPayload(payload ctokens.Payload, subjectClaim, nameClaim, role
 	}, nil
 }
 
-// extractRoles converts a JWT-decoded roles claim into []string. JSON
+// extractRoles converts a decoded roles claim into []string. JSON
 // arrays decode as []any in Go, so the common case is a type-switch
 // over []any with per-element string assertion. A []string is also
 // accepted for callers that hand-craft the Payload in tests. Anything

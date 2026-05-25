@@ -220,7 +220,7 @@ subpackage isolation per backend / transport**.
 | Subpaquete | Shape | Externos | Qué hace |
 |---|---|---|---|
 | `authn` (root) | Shape B | — | Define `Principal` (id/name/roles/attributes), interfaz `Authenticator`, helpers `WithPrincipal` / `FromContext`, dominio de error (`AuthnType`, `ErrAuthentication`, sentinels). Sin lifecycle, sin goroutines. |
-| `authn/jwt` | Shape B | `crypto/tokens` (→ `golang-jwt/v5`) | `NewJWTAuthenticator(method, opts...) authn.Authenticator` que delega verificación a `*tokens.Method`. Mapea claims del Payload a `*Principal` con claves configurables (`WithSubjectClaim`/`WithNameClaim`/`WithRolesClaim`). |
+| `authn/token` | Shape B | `crypto/tokens` (→ `golang-jwt/v5`) | `NewTokenAuthenticator(method, opts...) authn.Authenticator` que delega verificación a `*tokens.Method`. Funciona con los 15 algoritmos soportados por `crypto/tokens` (familia JWT — HS/RS/PS/ES/EdDSA — y familia opaque AEAD — OPAQUE_AES_GCM, OPAQUE_XCHACHA20_POLY1305) porque el dispatch lo hace `Method.Validate`. Mapea claims del Payload a `*Principal` con claves configurables (`WithSubjectClaim`/`WithNameClaim`/`WithRolesClaim`). |
 | `authn/http` | Shape B | `net/http` (stdlib) | `NewMiddleware(authenticator, opts...) Middleware` — server-side middleware `func(http.Handler) http.Handler` que extrae `Authorization: Bearer <token>`, valida, inyecta `*Principal` en ctx. Failure modes → 401 vía `ErrorHandler` configurable. |
 | `authn/grpc` | Shape B | `google.golang.org/grpc` | `NewUnaryInterceptor` + `NewStreamInterceptor` — interceptors gRPC que leen el token del metadata key `authorization`, validan, inyectan `*Principal`. Failure modes → `codes.Unauthenticated`. |
 
