@@ -12,13 +12,13 @@ import (
 	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
 )
 
-func TestNewQueueChannel(t *testing.T) {
+func TestNewTopicChannel(t *testing.T) {
 	t.Parallel()
 
 	t.Run("returns non-nil channel", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-1")
+		qc := NewTopicChannel[int]("q-1")
 		if qc == nil {
 			t.Fatal("expected non-nil queue channel")
 		}
@@ -27,7 +27,7 @@ func TestNewQueueChannel(t *testing.T) {
 	t.Run("carries the given name", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-named")
+		qc := NewTopicChannel[int]("q-named")
 		if qc.Name() != "q-named" {
 			t.Fatalf("expected name %q, got %q", "q-named", qc.Name())
 		}
@@ -36,7 +36,7 @@ func TestNewQueueChannel(t *testing.T) {
 	t.Run("done channel open at construction", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-done")
+		qc := NewTopicChannel[int]("q-done")
 		select {
 		case <-qc.Done():
 			t.Fatal("expected Done open before Stop")
@@ -47,20 +47,20 @@ func TestNewQueueChannel(t *testing.T) {
 	t.Run("applies buffer size option", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-buf", WithBufferSize(4))
+		qc := NewTopicChannel[int]("q-buf", WithBufferSize(4))
 		if qc.bufferSize != 4 {
 			t.Fatalf("expected buffer 4, got %d", qc.bufferSize)
 		}
 	})
 }
 
-func TestQueueChannel_Start(t *testing.T) {
+func TestTopicChannel_Start(t *testing.T) {
 	t.Parallel()
 
 	t.Run("returns nil and accepts sends", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-start", WithBufferSize(4))
+		qc := NewTopicChannel[int]("q-start", WithBufferSize(4))
 		err := qc.Start(context.Background())
 		if err != nil {
 			t.Fatalf("Start returned %v", err)
@@ -93,13 +93,13 @@ func TestQueueChannel_Start(t *testing.T) {
 	})
 }
 
-func TestQueueChannel_Send(t *testing.T) {
+func TestTopicChannel_Send(t *testing.T) {
 	t.Parallel()
 
 	t.Run("returns ErrContextNil on nil ctx", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-ctxnil")
+		qc := NewTopicChannel[int]("q-ctxnil")
 		err := qc.Send(nil, NewMessage[int](1, nil)) //nolint:staticcheck
 		if !errors.Is(err, ErrContextNil) {
 			t.Fatalf("expected ErrContextNil, got %v", err)
@@ -109,7 +109,7 @@ func TestQueueChannel_Send(t *testing.T) {
 	t.Run("returns ErrClosed after Stop", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-closed")
+		qc := NewTopicChannel[int]("q-closed")
 		err := qc.Start(context.Background())
 		if err != nil {
 			t.Fatalf("Start returned %v", err)
@@ -130,7 +130,7 @@ func TestQueueChannel_Send(t *testing.T) {
 		t.Parallel()
 
 		// buffer size 1, no Start so the worker never drains
-		qc := NewQueueChannel[int]("q-fullbuf", WithBufferSize(1))
+		qc := NewTopicChannel[int]("q-fullbuf", WithBufferSize(1))
 
 		err := qc.Send(context.Background(), NewMessage[int](1, nil))
 		if err != nil {
@@ -150,13 +150,13 @@ func TestQueueChannel_Send(t *testing.T) {
 	})
 }
 
-func TestQueueChannel_Subscribe(t *testing.T) {
+func TestTopicChannel_Subscribe(t *testing.T) {
 	t.Parallel()
 
 	t.Run("returns ErrHandlerNil on nil handler", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-sub-nil")
+		qc := NewTopicChannel[int]("q-sub-nil")
 		_, err := qc.Subscribe(nil)
 		if !errors.Is(err, ErrHandlerNil) {
 			t.Fatalf("expected ErrHandlerNil, got %v", err)
@@ -166,7 +166,7 @@ func TestQueueChannel_Subscribe(t *testing.T) {
 	t.Run("returns ErrClosed after Stop", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-sub-closed")
+		qc := NewTopicChannel[int]("q-sub-closed")
 		err := qc.Start(context.Background())
 		if err != nil {
 			t.Fatalf("Start returned %v", err)
@@ -186,7 +186,7 @@ func TestQueueChannel_Subscribe(t *testing.T) {
 	t.Run("cancel detaches handler", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-sub-cancel")
+		qc := NewTopicChannel[int]("q-sub-cancel")
 		err := qc.Start(context.Background())
 		if err != nil {
 			t.Fatalf("Start returned %v", err)
@@ -236,13 +236,13 @@ func TestQueueChannel_Subscribe(t *testing.T) {
 	})
 }
 
-func TestQueueChannel_Stop(t *testing.T) {
+func TestTopicChannel_Stop(t *testing.T) {
 	t.Parallel()
 
 	t.Run("drains pending messages before returning", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-drain", WithBufferSize(16), WithDrainTimeout(time.Second))
+		qc := NewTopicChannel[int]("q-drain", WithBufferSize(16), WithDrainTimeout(time.Second))
 
 		var delivered int32
 
@@ -281,7 +281,7 @@ func TestQueueChannel_Stop(t *testing.T) {
 	t.Run("returns ErrShutdownTimeout when drain exceeds bound", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-drain-timeout", WithBufferSize(8), WithDrainTimeout(10*time.Millisecond))
+		qc := NewTopicChannel[int]("q-drain-timeout", WithBufferSize(8), WithDrainTimeout(10*time.Millisecond))
 
 		// slow handler that blocks past the drain timeout
 		release := make(chan struct{})
@@ -318,7 +318,7 @@ func TestQueueChannel_Stop(t *testing.T) {
 	t.Run("is idempotent across multiple calls", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-stop-idemp")
+		qc := NewTopicChannel[int]("q-stop-idemp")
 		err := qc.Start(context.Background())
 		if err != nil {
 			t.Fatalf("Start returned %v", err)
@@ -336,10 +336,10 @@ func TestQueueChannel_Stop(t *testing.T) {
 	})
 }
 
-func TestQueueChannel_StopIsIdempotent(t *testing.T) {
+func TestTopicChannel_StopIsIdempotent(t *testing.T) {
 	t.Parallel()
 
-	qc := NewQueueChannel[int]("q-lct")
+	qc := NewTopicChannel[int]("q-lct")
 	err := qc.Start(context.Background())
 	if err != nil {
 		t.Fatalf("Start returned %v", err)
@@ -348,13 +348,13 @@ func TestQueueChannel_StopIsIdempotent(t *testing.T) {
 	lctests.AssertIdempotentStop(t, qc)
 }
 
-func TestBuildQueueChannel(t *testing.T) {
+func TestBuildTopicChannel(t *testing.T) {
 	t.Parallel()
 
 	t.Run("returns CloseFn and starts worker", func(t *testing.T) {
 		t.Parallel()
 
-		qc := NewQueueChannel[int]("q-build", WithBufferSize(4), WithDrainTimeout(time.Second))
+		qc := NewTopicChannel[int]("q-build", WithBufferSize(4), WithDrainTimeout(time.Second))
 
 		var delivered int32
 		_, err := qc.Subscribe(func(_ context.Context, _ Message[int]) error {
@@ -366,9 +366,9 @@ func TestBuildQueueChannel(t *testing.T) {
 		}
 
 		errChan := make(chan error, 1)
-		closeFn, err := BuildQueueChannel(context.Background(), qc, errChan)
+		closeFn, err := BuildTopicChannel(context.Background(), qc, errChan)
 		if err != nil {
-			t.Fatalf("BuildQueueChannel returned %v", err)
+			t.Fatalf("BuildTopicChannel returned %v", err)
 		}
 
 		err = qc.Send(context.Background(), NewMessage[int](1, nil))
@@ -385,10 +385,176 @@ func TestBuildQueueChannel(t *testing.T) {
 	})
 }
 
-func TestQueueChannel_Concurrent(t *testing.T) {
+func TestTopicChannel_DispatchOrder(t *testing.T) {
 	t.Parallel()
 
-	qc := NewQueueChannel[int]("q-concur", WithBufferSize(64), WithDrainTimeout(time.Second))
+	qc := NewTopicChannel[int]("q-order", WithBufferSize(4), WithDrainTimeout(time.Second))
+
+	var (
+		mu     sync.Mutex
+		order  []int
+		signal = make(chan struct{}, 1)
+	)
+
+	subscribe := func(id int) {
+		_, err := qc.Subscribe(func(_ context.Context, _ Message[int]) error {
+			mu.Lock()
+			order = append(order, id)
+			isLast := len(order) == 4
+			mu.Unlock()
+
+			if isLast {
+				signal <- struct{}{}
+			}
+
+			return nil
+		})
+		if err != nil {
+			t.Fatalf("Subscribe returned %v", err)
+		}
+	}
+
+	subscribe(0)
+	subscribe(1)
+	subscribe(2)
+	subscribe(3)
+
+	errChan := make(chan error, 1)
+
+	closeFn, err := BuildTopicChannel(context.Background(), qc, errChan)
+	if err != nil {
+		t.Fatalf("BuildTopicChannel returned %v", err)
+	}
+
+	defer closeFn(context.Background(), time.Second)
+
+	err = qc.Send(context.Background(), NewMessage[int](42, nil))
+	if err != nil {
+		t.Fatalf("Send returned %v", err)
+	}
+
+	<-signal
+
+	want := []int{0, 1, 2, 3}
+	for i := range want {
+		if order[i] != want[i] {
+			t.Fatalf("handler %d fired in wrong order: %v", i, order)
+		}
+	}
+}
+
+func TestTopicChannel_PanicRecovery(t *testing.T) {
+	t.Parallel()
+
+	var (
+		captured  error
+		hookFired = make(chan struct{}, 1)
+	)
+
+	errHook := func(_ context.Context, _ any, err error) {
+		captured = err
+		hookFired <- struct{}{}
+	}
+
+	qc := NewTopicChannel[int]("q-panic", WithBufferSize(4), WithDrainTimeout(time.Second), WithErrorHandler(errHook))
+
+	var afterFired int32
+
+	_, err := qc.Subscribe(func(_ context.Context, _ Message[int]) error {
+		panic("kaboom")
+	})
+	if err != nil {
+		t.Fatalf("Subscribe returned %v", err)
+	}
+
+	_, err = qc.Subscribe(func(_ context.Context, _ Message[int]) error {
+		atomic.AddInt32(&afterFired, 1)
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Subscribe returned %v", err)
+	}
+
+	errChan := make(chan error, 1)
+
+	closeFn, err := BuildTopicChannel(context.Background(), qc, errChan)
+	if err != nil {
+		t.Fatalf("BuildTopicChannel returned %v", err)
+	}
+
+	defer closeFn(context.Background(), time.Second)
+
+	err = qc.Send(context.Background(), NewMessage[int](1, nil))
+	if err != nil {
+		t.Fatalf("Send returned %v", err)
+	}
+
+	<-hookFired
+
+	if captured == nil {
+		t.Fatal("expected error captured, got nil")
+	}
+
+	if !errors.Is(captured, ErrHandlerPanic) {
+		t.Fatalf("expected ErrHandlerPanic wrapped, got %v", captured)
+	}
+
+	closeFn(context.Background(), time.Second)
+
+	if atomic.LoadInt32(&afterFired) != 1 {
+		t.Fatalf("subsequent handler should still fire after a panic, got %d", afterFired)
+	}
+}
+
+func TestTopicChannel_ErrorHandlerHook(t *testing.T) {
+	t.Parallel()
+
+	boom := errors.New("boom")
+
+	var (
+		captured  error
+		hookFired = make(chan struct{}, 1)
+	)
+
+	errHook := func(_ context.Context, _ any, err error) {
+		captured = err
+		hookFired <- struct{}{}
+	}
+
+	qc := NewTopicChannel[int]("q-errhook", WithBufferSize(4), WithDrainTimeout(time.Second), WithErrorHandler(errHook))
+
+	_, err := qc.Subscribe(func(_ context.Context, _ Message[int]) error {
+		return boom
+	})
+	if err != nil {
+		t.Fatalf("Subscribe returned %v", err)
+	}
+
+	errChan := make(chan error, 1)
+
+	closeFn, err := BuildTopicChannel(context.Background(), qc, errChan)
+	if err != nil {
+		t.Fatalf("BuildTopicChannel returned %v", err)
+	}
+
+	defer closeFn(context.Background(), time.Second)
+
+	err = qc.Send(context.Background(), NewMessage[int](1, nil))
+	if err != nil {
+		t.Fatalf("Send returned %v", err)
+	}
+
+	<-hookFired
+
+	if !errors.Is(captured, boom) {
+		t.Fatalf("expected captured to wrap boom, got %v", captured)
+	}
+}
+
+func TestTopicChannel_Concurrent(t *testing.T) {
+	t.Parallel()
+
+	qc := NewTopicChannel[int]("q-concur", WithBufferSize(64), WithDrainTimeout(time.Second))
 
 	var fired int64
 	const sends = 200

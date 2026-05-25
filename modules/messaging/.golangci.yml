@@ -107,16 +107,16 @@ linters:
       - path: errors\.go
         linters:
           - gochecknoglobals
-      # queue.go: cassert.NotNil guards the receiver invariant on
+      # topic.go: cassert.NotNil guards the receiver invariant on
       # lifecycle methods; contextcheck false positive on Stop.
       # wrapcheck: Stop wraps ctx.Err with lifecycle.ErrShutdown — that
       # is the domain factory, additional wrapping adds no value.
-      - path: queue\.go
+      - path: topic\.go
         linters:
           - contextcheck
           - wrapcheck
-      # direct.go: cassert.NotNil guards receiver invariants.
-      - path: direct\.go
+      # pipeline.go: cassert.NotNil guards receiver invariants.
+      - path: pipeline\.go
         linters:
           - contextcheck
       # pubsub.go: the typed facade uses reflect.Type as a map key and

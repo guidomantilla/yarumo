@@ -6,7 +6,7 @@
 //
 //   - PipelineChannel[T]: synchronous in-goroutine dispatch — Send invokes
 //     every subscribed handler on the caller's goroutine.
-//   - QueueChannel[T]: asynchronous, buffered dispatch via a single
+//   - TopicChannel[T]: asynchronous, buffered dispatch via a single
 //     worker goroutine. Implements common/lifecycle.Component so it can
 //     be wired into the application lifecycle with graceful drain on
 //     Stop.
@@ -31,7 +31,7 @@ import (
 
 var (
 	_ Channel[any] = (*pipelineChannel[any])(nil)
-	_ Channel[any] = (*QueueChannel[any])(nil)
+	_ Channel[any] = (*TopicChannel[any])(nil)
 	_ Publisher    = (*PubSub)(nil)
 	_ Subscriber   = (*PubSub)(nil)
 )
@@ -39,7 +39,7 @@ var (
 // Handler is the function type for a message handler. The Handler
 // receives the propagated context and the typed Message envelope and
 // returns an error to signal failure. PipelineChannel propagates the
-// error to the Send caller; QueueChannel logs and continues.
+// error to the Send caller; TopicChannel logs and continues.
 type Handler[T any] func(ctx context.Context, msg Message[T]) error
 
 // Cancel is the function type returned by Subscribe. Invoking Cancel
@@ -61,7 +61,7 @@ type Cancel func()
 type Channel[T any] interface {
 	// Send dispatches msg to all currently subscribed handlers. The
 	// returned error reflects the dispatch outcome per implementation:
-	// PipelineChannel propagates the first handler error; QueueChannel
+	// PipelineChannel propagates the first handler error; TopicChannel
 	// returns ErrClosed if the worker is no longer accepting work, or
 	// nil after successful enqueue. ctx propagates to each Handler.
 	Send(ctx context.Context, msg Message[T]) error

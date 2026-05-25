@@ -1,22 +1,36 @@
 package messaging
 
 import (
+	"context"
 	"time"
 )
 
-// Default buffer and drain bounds for QueueChannel.
+// Default buffer and drain bounds for TopicChannel.
 const (
 	defaultBufferSize   = 64
 	defaultDrainTimeout = 5 * time.Second
 )
 
+// ErrorHandler is the function type for the per-handler error
+// observability hook installed on a TopicChannel via WithErrorHandler.
+//
+// The hook fires once per failed handler invocation, after the
+// dispatcher has recovered any panic. err carries the handler's
+// returned error or, on panic, an error wrapping ErrHandlerPanic
+// with the recovered value. msg is type-erased; cast it inside the
+// hook when payload-specific behavior is needed. The hook is invoked
+// from the worker goroutine and must not block — long observability
+// work should be dispatched asynchronously by the implementer.
+type ErrorHandler func(ctx context.Context, msg any, err error)
+
 // Option is a functional option for configuring messaging Options.
 type Option func(opts *Options)
 
-// Options holds the configuration for a QueueChannel.
+// Options holds the configuration for a TopicChannel.
 type Options struct {
 	bufferSize   int
 	drainTimeout time.Duration
+	errorHandler ErrorHandler
 }
 
 // NewOptions creates a new Options with sensible defaults and applies
@@ -35,7 +49,7 @@ func NewOptions(opts ...Option) *Options {
 }
 
 // WithBufferSize sets the capacity of the in-memory queue used by the
-// QueueChannel worker. Non-positive values are ignored.
+// TopicChannel worker. Non-positive values are ignored.
 func WithBufferSize(size int) Option {
 	return func(opts *Options) {
 		if size > 0 {
@@ -50,6 +64,19 @@ func WithDrainTimeout(timeout time.Duration) Option {
 	return func(opts *Options) {
 		if timeout > 0 {
 			opts.drainTimeout = timeout
+		}
+	}
+}
+
+// WithErrorHandler installs an observability hook fired once per
+// handler invocation that returns an error or panics. The default is
+// a no-op — handler errors are silently dropped — so installing this
+// is strongly recommended for any production wiring. Nil values are
+// ignored.
+func WithErrorHandler(handler ErrorHandler) Option {
+	return func(opts *Options) {
+		if handler != nil {
+			opts.errorHandler = handler
 		}
 	}
 }

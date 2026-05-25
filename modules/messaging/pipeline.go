@@ -17,7 +17,7 @@ import (
 //
 // pipelineChannel does not own a close lifecycle: there is nothing to
 // drain and no goroutines to stop. Channels that need a graceful
-// shutdown use the QueueChannel variant.
+// shutdown use the TopicChannel variant.
 type pipelineChannel[T any] struct {
 	mu     sync.RWMutex
 	nextID uint64
@@ -33,7 +33,7 @@ type pipelineChannel[T any] struct {
 // (or fail together) before the caller proceeds — audit logs joining
 // the caller's transaction, cache invalidation, metrics that must be
 // flushed before the response, or a "bridge to async" step that hands
-// the message off to a QueueChannel.
+// the message off to a TopicChannel.
 func NewPipelineChannel[T any]() Channel[T] {
 	return &pipelineChannel[T]{
 		byID: map[uint64]Handler[T]{},
@@ -59,7 +59,7 @@ func (c *pipelineChannel[T]) Send(ctx context.Context, msg Message[T]) error {
 		return ErrSend(ErrContextNil)
 	}
 
-	cassert.NotNil(c, "pipelineChannel is nil") //nolint:contextcheck // cassert.NotNil takes no ctx; false positive
+	cassert.NotNil(c, "pipelineChannel is nil")
 
 	handlers := c.snapshot()
 

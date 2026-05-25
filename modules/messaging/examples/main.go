@@ -1,5 +1,5 @@
 // Package main demonstrates the in-process messaging primitives end-to-
-// end: PipelineChannel synchronous dispatch, QueueChannel async dispatch
+// end: PipelineChannel synchronous dispatch, TopicChannel async dispatch
 // with lifecycle.Build + graceful drain, the Publisher/Subscriber facade
 // routed by Go type, and subscription cancel.
 package main
@@ -42,7 +42,7 @@ func run() error {
 		return fmt.Errorf("direct channel: %w", err)
 	}
 
-	err = demoQueueChannel(ctx)
+	err = demoTopicChannel(ctx)
 	if err != nil {
 		return fmt.Errorf("queue channel: %w", err)
 	}
@@ -101,20 +101,20 @@ func demoPipelineChannel(ctx context.Context) error {
 	return nil
 }
 
-// demoQueueChannel shows asynchronous dispatch via a worker goroutine,
+// demoTopicChannel shows asynchronous dispatch via a worker goroutine,
 // wired into the lifecycle with lifecycle.Build, and the graceful drain
 // performed by Stop.
-func demoQueueChannel(ctx context.Context) error {
-	fmt.Println("=== QueueChannel (async + lifecycle.Build + drain) ===")
+func demoTopicChannel(ctx context.Context) error {
+	fmt.Println("=== TopicChannel (async + lifecycle.Build + drain) ===")
 
-	queue := messaging.NewQueueChannel[OrderCreated]("orders-queue",
+	queue := messaging.NewTopicChannel[OrderCreated]("orders-queue",
 		messaging.WithBufferSize(8),
 		messaging.WithDrainTimeout(2*time.Second),
 	)
 
 	errChan := make(chan error, 1)
 
-	closeFn, err := messaging.BuildQueueChannel(ctx, queue, errChan)
+	closeFn, err := messaging.BuildTopicChannel(ctx, queue, errChan)
 	if err != nil {
 		return err
 	}
