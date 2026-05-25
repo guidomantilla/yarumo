@@ -152,19 +152,19 @@ Módulo top-level extraído de `modules/common/crypto/` (issue #170). Reúne 14 
 | `signers/hmacs/` | Method | HMAC (SHA-256/384/512). |
 | `signers/rsassas/` | Method | RSASSA (PKCS#1 v1.5 + PSS, SHA-256/384/512). |
 
-## Módulo `modules/extensions/common/log/`
+## Contenedor `modules/extensions/common/log/`
 
-Top-level module que aloja **implementaciones concretas** de la interface `common/log.Logger`. No tiene paquete raíz propio — el módulo existe solo como contenedor de adapters concretos (`slog/`, etc.). La abstracción (interface, slot global, helpers `Trace`/.../`Fatal`) vive en `common/log/`; este módulo aporta las impls.
+Directorio puramente contenedor — **NO es un go module**. Aloja **módulos hermanos**, uno por implementación concreta de la interface `common/log.Logger`. Cada impl tiene su propio `go.mod` y se promociona/retira independientemente. La abstracción (interface, slot global, helpers `Trace`/.../`Fatal`) vive en `common/log/`; este directorio aporta las impls.
 
 **Dirección de dependencia.** `modules/extensions/common/log/<impl>` → `common/log` (interface). Nunca al revés. Esta inversión es lo que mantiene `common/` libre de dependencias hacia módulos top-level y evita el ciclo arquitectónico `common → log → common`.
 
-| Subpaquete | Shape | Qué hace |
+| Submódulo | Shape | Qué hace |
 |---|---|---|
-| `log/slog/` | Excepción (struct público concreto, no interface) | Adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `*Logger` como struct público concreto e implementa `common/log.Logger` por typing estructural. Incluye `Options` (`WithLevel`/`WithWriter`/`WithHandlers`/`WithContextExtractors`), `NewFanoutHandler`, `NewContextHandler`, `ReplaceLevel`, `SlogctxExtractor`. |
-| `log/slog/slogctx/` | Shape A | Bag context-bound de `slog.Attr` (`WithAttrs`, `SetAttrs`, `Attrs`) para propagar atributos por `context.Context`. Sin estado de paquete. |
-| `log/zerolog/` (NEW module) | Shape B | Adapter sobre `github.com/rs/zerolog`. `NewLogger(opts ...Option) clog.Logger` retorna la interface (patrón canónico; slog es la excepción histórica). Options: `WithLevel`/`WithWriter`/`WithConsole`/`WithTimeFormat`/`WithSampling`. Args variádicos se parsean como pares clave-valor con dispatch tipado en `internals.go`. Sin registry, sin pluggable. |
+| `log/slog/` | Excepción (struct público concreto, no interface) | Adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `*Logger` como struct público concreto e implementa `common/log.Logger` por typing estructural. Incluye `Options` (`WithLevel`/`WithWriter`/`WithHandlers`/`WithContextExtractors`), `NewFanoutHandler`, `NewContextHandler`, `ReplaceLevel`, `SlogctxExtractor`. Aloja el subpaquete `slogctx/` (subpaquete propio dentro del mismo módulo, sin go.mod separado). |
+| `log/slog/slogctx/` | Shape A | Subpaquete del módulo `slog/`. Bag context-bound de `slog.Attr` (`WithAttrs`, `SetAttrs`, `Attrs`) para propagar atributos por `context.Context`. Sin estado de paquete. |
+| `log/zerolog/` | Shape B | Adapter sobre `github.com/rs/zerolog`. `NewLogger(opts ...Option) clog.Logger` retorna la interface (patrón canónico; slog es la excepción histórica). Options: `WithLevel`/`WithWriter`/`WithConsole`/`WithTimeFormat`/`WithSampling`. Args variádicos se parsean como pares clave-valor con dispatch tipado en `internals.go`. Sin registry, sin pluggable. |
 
-Los tests de la facade `common/log/` son intencionalmente seriales (sin `t.Parallel()`) porque mutan el slot global. Documentado en cabecera de `common/log/functions_test.go` y en `common/log/doc.go`. Los subpaquetes de `modules/extensions/common/log/` (`slog/`, `slog/slogctx/`) corren con `t.Parallel()` en todos sus tests.
+Los tests de la facade `common/log/` son intencionalmente seriales (sin `t.Parallel()`) porque mutan el slot global. Documentado en cabecera de `common/log/functions_test.go` y en `common/log/doc.go`. Los submódulos de `modules/extensions/common/log/` (`slog/`, `slog/slogctx/`, `zerolog/`) corren con `t.Parallel()` en todos sus tests.
 
-Histórico: `common/log/` fue extraído como módulo top-level en #173, pero esto cerró un ciclo arquitectónico con `common/assert` que dependía de log. La reorganización en este mismo PR devuelve la **interface** a `common/log/` y deja en `modules/extensions/common/log/` solo las **implementaciones concretas** — patrón paralelo a `commons-logging`/`slf4j-api` vs binding impls.
+Histórico: `common/log/` fue extraído como módulo top-level en #173, pero esto cerró un ciclo arquitectónico con `common/assert` que dependía de log. La reorganización en ese PR devolvió la **interface** a `common/log/` y dejó en `modules/extensions/common/log/` solo las **implementaciones concretas** — patrón paralelo a `commons-logging`/`slf4j-api` vs binding impls. Tras la entrada de `zerolog/` como módulo separado, el directorio `extensions/common/log/` se reestructuró: el `go.mod` parent se eliminó y `slog/` se promovió a módulo hermano, restaurando la simetría (`slog/` y `zerolog/` son peers, cada uno con go.mod propio).
 

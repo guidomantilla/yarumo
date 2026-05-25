@@ -4,10 +4,10 @@ go 1.25.5
 
 replace github.com/guidomantilla/yarumo/common => ../../../../common
 
-replace github.com/guidomantilla/yarumo/extensions/common/log => ../../../common/log
+replace github.com/guidomantilla/yarumo/extensions/common/log/slog => ../../../common/log/slog
 
 require (
-	github.com/guidomantilla/yarumo/extensions/common/log v0.0.0-00010101000000-000000000000
+	github.com/guidomantilla/yarumo/extensions/common/log/slog v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/otel/log v0.15.0
 	go.opentelemetry.io/otel/trace v1.43.0
 )

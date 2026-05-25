@@ -17,7 +17,7 @@ use (
 	./modules/extensions/common/http/breaker
 	./modules/extensions/common/http/limiter
 	./modules/extensions/common/http/retry
-	./modules/extensions/common/log
+	./modules/extensions/common/log/slog
 	./modules/extensions/common/log/zerolog
 	./modules/extensions/common/resilience/breaker
 	./modules/extensions/common/resilience/limiter
