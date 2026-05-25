@@ -1,4 +1,4 @@
-package authz
+package grpc
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
+
+	"github.com/guidomantilla/yarumo/security/authz"
 )
 
 // RequireUnary returns a gRPC unary server interceptor that evaluates
@@ -15,16 +17,15 @@ import (
 // to the handler; Deny / Abstain short-circuits with
 // codes.PermissionDenied and Decision.Reason as the status message.
 //
-// Action and policy validation mirrors RequireHTTP: nil policy or
-// empty action panics at construction time (fail closed loud, not at
-// request time).
-func RequireUnary(policy Policy, action string, opts ...Option) grpc.UnaryServerInterceptor {
+// Action and policy validation: nil policy or empty action panics at
+// construction time (fail closed loud, not at request time).
+func RequireUnary(policy authz.Policy, action string, opts ...Option) grpc.UnaryServerInterceptor {
 	if policy == nil {
-		panic(ErrAuthz(ErrPolicyNil))
+		panic(authz.ErrAuthz(authz.ErrPolicyNil))
 	}
 
 	if action == "" {
-		panic(ErrAuthz(ErrActionEmpty))
+		panic(authz.ErrAuthz(authz.ErrActionEmpty))
 	}
 
 	options := NewOptions(opts...)
@@ -35,20 +36,20 @@ func RequireUnary(policy Policy, action string, opts ...Option) grpc.UnaryServer
 			method = info.FullMethod
 		}
 
-		principal, ok := readPrincipalGRPC(ctx, options.principalReader)
+		principal, ok := readPrincipal(ctx, options.principalReader)
 		if !ok {
-			dec := Deny("principal not present in context")
-			authzReq := Request{Action: action}
+			dec := authz.Deny("principal not present in context")
+			authzReq := authz.Request{Action: action}
 			options.auditHook(ctx, authzReq, dec)
 
 			return nil, denyStatus(dec)
 		}
 
-		authzReq := buildGRPCRequest(ctx, principal, action, method, req, options.grpcResourceFn)
+		authzReq := buildRequest(ctx, principal, action, method, req, options.resourceFn)
 		dec := policy.Evaluate(ctx, authzReq)
 		options.auditHook(ctx, authzReq, dec)
 
-		if dec.Effect != EffectAllow {
+		if dec.Effect != authz.EffectAllow {
 			return nil, denyStatus(dec)
 		}
 
@@ -56,21 +57,20 @@ func RequireUnary(policy Policy, action string, opts ...Option) grpc.UnaryServer
 	}
 }
 
-// RequireStream returns a gRPC stream server interceptor with the
-// same evaluation logic as RequireUnary, but applied to streaming
-// RPCs.
+// RequireStream returns a gRPC stream server interceptor with the same
+// evaluation logic as RequireUnary, but applied to streaming RPCs.
 //
-// The principal and resource resolution happen once per stream
-// (before the handler returns). Per-message checks are not performed
-// — callers that need per-message authorization can call Evaluate
-// directly inside their handler.
-func RequireStream(policy Policy, action string, opts ...Option) grpc.StreamServerInterceptor {
+// The principal and resource resolution happen once per stream (before
+// the handler returns). Per-message checks are not performed — callers
+// that need per-message authorization can call Evaluate directly inside
+// their handler.
+func RequireStream(policy authz.Policy, action string, opts ...Option) grpc.StreamServerInterceptor {
 	if policy == nil {
-		panic(ErrAuthz(ErrPolicyNil))
+		panic(authz.ErrAuthz(authz.ErrPolicyNil))
 	}
 
 	if action == "" {
-		panic(ErrAuthz(ErrActionEmpty))
+		panic(authz.ErrAuthz(authz.ErrActionEmpty))
 	}
 
 	options := NewOptions(opts...)
@@ -83,20 +83,20 @@ func RequireStream(policy Policy, action string, opts ...Option) grpc.StreamServ
 			method = info.FullMethod
 		}
 
-		principal, ok := readPrincipalGRPC(ctx, options.principalReader)
+		principal, ok := readPrincipal(ctx, options.principalReader)
 		if !ok {
-			dec := Deny("principal not present in context")
-			authzReq := Request{Action: action}
+			dec := authz.Deny("principal not present in context")
+			authzReq := authz.Request{Action: action}
 			options.auditHook(ctx, authzReq, dec)
 
 			return denyStatus(dec)
 		}
 
-		authzReq := buildGRPCRequest(ctx, principal, action, method, nil, options.grpcResourceFn)
+		authzReq := buildRequest(ctx, principal, action, method, nil, options.resourceFn)
 		dec := policy.Evaluate(ctx, authzReq)
 		options.auditHook(ctx, authzReq, dec)
 
-		if dec.Effect != EffectAllow {
+		if dec.Effect != authz.EffectAllow {
 			return denyStatus(dec)
 		}
 
@@ -104,9 +104,9 @@ func RequireStream(policy Policy, action string, opts ...Option) grpc.StreamServ
 	}
 }
 
-// readPrincipalGRPC delegates to the configured PrincipalReader. A nil
+// readPrincipal delegates to the configured PrincipalReader. A nil
 // reader returns ok=false (caller treats as deny).
-func readPrincipalGRPC(ctx context.Context, reader PrincipalReader) (any, bool) {
+func readPrincipal(ctx context.Context, reader authz.PrincipalReader) (any, bool) {
 	if reader == nil {
 		return nil, false
 	}
@@ -114,27 +114,27 @@ func readPrincipalGRPC(ctx context.Context, reader PrincipalReader) (any, bool) 
 	return reader.Read(ctx)
 }
 
-// buildGRPCRequest assembles a Request from the gRPC ctx, the
-// principal, the action, the gRPC FullMethod, the typed request
-// message (unary only) and the optional resource resolver.
-func buildGRPCRequest(ctx context.Context, principal any, action string, method string, req any, resolver GRPCResourceResolverFn) Request {
-	resource := Resource{}
+// buildRequest assembles a Request from the gRPC ctx, the principal,
+// the action, the gRPC FullMethod, the typed request message (unary
+// only) and the optional resource resolver.
+func buildRequest(ctx context.Context, principal any, action, method string, req any, resolver GRPCResourceResolverFn) authz.Request {
+	resource := authz.Resource{}
 	if resolver != nil {
 		resource = resolver(ctx, method, req)
 	}
 
-	env := Environment{IP: peerIP(ctx)}
+	env := authz.Environment{IP: peerIP(ctx)}
 
-	authzReq := NewRequest(principal, action, resource, env)
-	authzReq.Environment.Attrs = grpcMethodAttr(method, authzReq.Environment.Attrs)
+	authzReq := authz.NewRequest(principal, action, resource, env)
+	authzReq.Environment.Attrs = methodAttr(method, authzReq.Environment.Attrs)
 
 	return authzReq
 }
 
-// grpcMethodAttr inserts the gRPC FullMethod into the env.Attrs map so
+// methodAttr inserts the gRPC FullMethod into the env.Attrs map so
 // policies can pattern-match on the RPC name without a transport
 // dependency. A nil attrs map is allocated lazily.
-func grpcMethodAttr(method string, attrs map[string]any) map[string]any {
+func methodAttr(method string, attrs map[string]any) map[string]any {
 	if method == "" {
 		return attrs
 	}
@@ -171,6 +171,6 @@ func peerIP(ctx context.Context) net.IP {
 
 // denyStatus translates a Deny / Abstain Decision into a gRPC status
 // error with codes.PermissionDenied and Reason as the message.
-func denyStatus(dec Decision) error {
+func denyStatus(dec authz.Decision) error {
 	return status.Error(codes.PermissionDenied, dec.Reason)
 }

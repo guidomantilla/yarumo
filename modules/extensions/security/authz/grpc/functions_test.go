@@ -1,4 +1,4 @@
-package authz
+package grpc
 
 import (
 	"context"
@@ -9,7 +9,37 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
+
+	"github.com/guidomantilla/yarumo/security/authz"
 )
+
+// allowPolicy returns Allow for any request.
+type allowPolicy struct{}
+
+func (allowPolicy) Evaluate(_ context.Context, _ authz.Request) authz.Decision {
+	return authz.Allow("ok")
+}
+
+// denyPolicy returns Deny with a fixed reason.
+type denyPolicy struct {
+	reason string
+}
+
+func (p denyPolicy) Evaluate(_ context.Context, _ authz.Request) authz.Decision {
+	return authz.Deny(p.reason)
+}
+
+// captureRequestPolicy stores the last Request passed to Evaluate and
+// returns Allow.
+type captureRequestPolicy struct {
+	last authz.Request
+}
+
+func (p *captureRequestPolicy) Evaluate(_ context.Context, req authz.Request) authz.Decision {
+	p.last = req
+
+	return authz.Allow("captured")
+}
 
 func TestRequireUnary_Allow(t *testing.T) {
 	t.Parallel()
@@ -17,13 +47,13 @@ func TestRequireUnary_Allow(t *testing.T) {
 	t.Run("forwards to handler on allow", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
 		interceptor := RequireUnary(allowPolicy{}, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		var called bool
@@ -56,13 +86,13 @@ func TestRequireUnary_Deny(t *testing.T) {
 	t.Run("returns PermissionDenied", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
 		interceptor := RequireUnary(denyPolicy{reason: "no role"}, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		var called bool
@@ -100,7 +130,7 @@ func TestRequireUnary_Deny(t *testing.T) {
 		t.Parallel()
 
 		interceptor := RequireUnary(allowPolicy{}, "read",
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		_, err := interceptor(context.Background(), nil, &grpc.UnaryServerInfo{}, func(_ context.Context, _ any) (any, error) {
@@ -124,14 +154,14 @@ func TestRequireUnary_AuditHook(t *testing.T) {
 	t.Run("hook fires with decision", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
 		var calls int
-		var lastDec Decision
+		var lastDec authz.Decision
 
-		hook := AuditHookFn(func(_ context.Context, _ Request, d Decision) {
+		hook := authz.AuditHookFn(func(_ context.Context, _ authz.Request, d authz.Decision) {
 			calls++
 			lastDec = d
 		})
@@ -149,7 +179,7 @@ func TestRequireUnary_AuditHook(t *testing.T) {
 			t.Fatalf("expected 1 hook call, got %d", calls)
 		}
 
-		if lastDec.Effect != EffectDeny {
+		if lastDec.Effect != authz.EffectDeny {
 			t.Fatalf("expected EffectDeny, got %q", lastDec.Effect)
 		}
 	})
@@ -161,20 +191,20 @@ func TestRequireUnary_ResourceResolver(t *testing.T) {
 	t.Run("resolver populates resource", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
 		policy := &captureRequestPolicy{}
 
-		resolver := GRPCResourceResolverFn(func(_ context.Context, method string, _ any) Resource {
-			return Resource{Type: "rpc", ID: method}
+		resolver := GRPCResourceResolverFn(func(_ context.Context, method string, _ any) authz.Resource {
+			return authz.Resource{Type: "rpc", ID: method}
 		})
 
 		interceptor := RequireUnary(policy, "invoke",
 			WithPrincipalReader(reader),
-			WithGRPCResourceResolver(resolver),
-			WithAuditHook(SilentAuditHook),
+			WithResourceResolver(resolver),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		_, _ = interceptor(context.Background(), nil, &grpc.UnaryServerInfo{FullMethod: "/svc/X"}, func(_ context.Context, _ any) (any, error) {
@@ -193,7 +223,7 @@ func TestRequireUnary_ResourceResolver(t *testing.T) {
 	t.Run("method attr populated even without resolver", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
@@ -201,7 +231,7 @@ func TestRequireUnary_ResourceResolver(t *testing.T) {
 
 		interceptor := RequireUnary(policy, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		_, _ = interceptor(context.Background(), nil, &grpc.UnaryServerInfo{FullMethod: "/svc/Y"}, func(_ context.Context, _ any) (any, error) {
@@ -267,13 +297,13 @@ func TestRequireStream_Allow(t *testing.T) {
 	t.Run("forwards to handler on allow", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
 		interceptor := RequireStream(allowPolicy{}, "stream",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		var called bool
@@ -302,13 +332,13 @@ func TestRequireStream_Deny(t *testing.T) {
 	t.Run("returns PermissionDenied", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
 		interceptor := RequireStream(denyPolicy{reason: "denied"}, "stream",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		ss := &fakeServerStream{ctx: context.Background()}
@@ -332,7 +362,7 @@ func TestRequireStream_Deny(t *testing.T) {
 		t.Parallel()
 
 		interceptor := RequireStream(allowPolicy{}, "stream",
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		ss := &fakeServerStream{ctx: context.Background()}
@@ -382,7 +412,7 @@ func TestPeerIP_ExtractedFromContext(t *testing.T) {
 	t.Run("populates env.IP from peer", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
@@ -390,7 +420,7 @@ func TestPeerIP_ExtractedFromContext(t *testing.T) {
 
 		interceptor := RequireUnary(policy, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		addr := &net.TCPAddr{IP: net.ParseIP("10.0.0.7"), Port: 42}
@@ -412,7 +442,7 @@ func TestPeerIP_ExtractedFromContext(t *testing.T) {
 	t.Run("no peer leaves IP nil", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
@@ -420,7 +450,7 @@ func TestPeerIP_ExtractedFromContext(t *testing.T) {
 
 		interceptor := RequireUnary(policy, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		_, _ = interceptor(context.Background(), nil, &grpc.UnaryServerInfo{}, func(_ context.Context, _ any) (any, error) {

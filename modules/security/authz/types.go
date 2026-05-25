@@ -1,3 +1,52 @@
+// Copyright 2026 Guido Mauricio Mantilla Tarazona
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package authz provides authorization primitives: a Policy interface,
+// a Decision type carrying Allow/Deny/Abstain with a reason, a Request
+// envelope (Principal/Resource/Action/Environment), and helpers to
+// compose policies (ChainPolicies) and emit audit observations
+// (DefaultAuditHook / SilentAuditHook).
+//
+// Sub-package rbac implements role-based access control with role
+// inheritance and permission wildcards on top of the Policy interface.
+//
+// Transport adapters live in their own top-level modules under
+// modules/extensions/security/authz/ so a consumer of the contract
+// never pulls google.golang.org/grpc unless it imports the grpc
+// adapter explicitly:
+//
+//   - extensions/security/authz/http: Require middleware for net/http.
+//   - extensions/security/authz/grpc: Require unary + stream
+//     interceptors for gRPC.
+//
+// # Design notes
+//
+// Principal is typed as any inside Request so authz does NOT take a
+// dependency on authn. Consumers cast inside the policy to whatever
+// shape their authentication layer produces (typically an
+// authn.Principal). This keeps the two modules independent and lets
+// the Policy be reused with custom principal shapes (machine identities,
+// API keys, service accounts, etc.).
+//
+// The Require HTTP and gRPC middleware do not pull the Principal from
+// a hardcoded context key. Consumers wire a PrincipalReader option
+// (WithPrincipalReader) which knows how their authn layer stashes the
+// principal in ctx. This keeps coupling explicit and lets the same
+// middleware run on top of any authn implementation.
+//
+// Concurrency: all public types in this package are safe for concurrent
+// use by multiple goroutines.
 package authz
 
 import (
@@ -8,7 +57,38 @@ import (
 
 var (
 	_ PrincipalReader = (PrincipalReaderFn)(nil)
+
+	_ NewRequestFn    = NewRequest
+	_ AllowFn         = Allow
+	_ DenyFn          = Deny
+	_ AbstainFn       = Abstain
+	_ ChainPoliciesFn = ChainPolicies
+	_ AuditHookFn     = DefaultAuditHook
+	_ AuditHookFn     = SilentAuditHook
+	_ LocalIPFn       = LocalIP
+	_ ErrAuthzFn      = ErrAuthz
 )
+
+// NewRequestFn is the function type for NewRequest.
+type NewRequestFn func(principal any, action string, resource Resource, env Environment) Request
+
+// AllowFn is the function type for Allow.
+type AllowFn func(reason string) Decision
+
+// DenyFn is the function type for Deny.
+type DenyFn func(reason string) Decision
+
+// AbstainFn is the function type for Abstain.
+type AbstainFn func(reason string) Decision
+
+// ChainPoliciesFn is the function type for ChainPolicies.
+type ChainPoliciesFn func(policies ...Policy) Policy
+
+// LocalIPFn is the function type for LocalIP.
+type LocalIPFn func(ip string) net.IP
+
+// ErrAuthzFn is the function type for ErrAuthz.
+type ErrAuthzFn func(causes ...error) error
 
 // Effect classifies the outcome of a Policy evaluation. Allow grants
 // the request, Deny rejects it, Abstain signals that the policy does

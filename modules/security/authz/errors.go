@@ -13,12 +13,7 @@ const AuthzType = "authz"
 
 var (
 	_ error = (*Error)(nil)
-
-	_ ErrAuthzFn = ErrAuthz
 )
-
-// ErrAuthzFn is the function type for ErrAuthz.
-type ErrAuthzFn func(causes ...error) error
 
 // Sentinel errors for authorization failures.
 var (

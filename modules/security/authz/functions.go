@@ -10,30 +10,7 @@ import (
 
 var (
 	_ Policy = (*chain)(nil)
-
-	_ NewRequestFn    = NewRequest
-	_ AllowFn         = Allow
-	_ DenyFn          = Deny
-	_ AbstainFn       = Abstain
-	_ AuditHookFn     = DefaultAuditHook
-	_ AuditHookFn     = SilentAuditHook
-	_ ChainPoliciesFn = ChainPolicies
 )
-
-// NewRequestFn is the function type for NewRequest.
-type NewRequestFn func(principal any, action string, resource Resource, env Environment) Request
-
-// AllowFn is the function type for Allow.
-type AllowFn func(reason string) Decision
-
-// DenyFn is the function type for Deny.
-type DenyFn func(reason string) Decision
-
-// AbstainFn is the function type for Abstain.
-type AbstainFn func(reason string) Decision
-
-// ChainPoliciesFn is the function type for ChainPolicies.
-type ChainPoliciesFn func(policies ...Policy) Policy
 
 // NewRequest constructs a Request. When env.Time is zero, NewRequest
 // defaults it to time.Now() so policies can compare without a nil

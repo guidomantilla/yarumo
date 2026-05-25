@@ -1,4 +1,4 @@
-package authz
+package http
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
+
+	"github.com/guidomantilla/yarumo/security/authz"
 )
 
 // RequireHTTP returns an HTTP middleware that evaluates policy against
@@ -23,18 +25,16 @@ import (
 // X-Authz-Reason response header so callers that consume the response
 // body as plain text still see it.
 //
-// Action must be non-empty; an empty action passes nil to next (the
-// middleware degrades to a no-op rather than denying every request,
-// because an empty action almost always means a wiring bug — fail
-// closed at construction time, not at request time). policy must be
-// non-nil; a nil policy panics at construction.
-func RequireHTTP(policy Policy, action string, opts ...Option) func(http.Handler) http.Handler {
+// Action must be non-empty; an empty action panics at construction
+// (fail closed loud, not at request time). policy must be non-nil;
+// a nil policy panics at construction.
+func RequireHTTP(policy authz.Policy, action string, opts ...Option) func(http.Handler) http.Handler {
 	if policy == nil {
-		panic(ErrAuthz(ErrPolicyNil))
+		panic(authz.ErrAuthz(authz.ErrPolicyNil))
 	}
 
 	if action == "" {
-		panic(ErrAuthz(ErrActionEmpty))
+		panic(authz.ErrAuthz(authz.ErrActionEmpty))
 	}
 
 	options := NewOptions(opts...)
@@ -43,20 +43,20 @@ func RequireHTTP(policy Policy, action string, opts ...Option) func(http.Handler
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			principal, ok := readPrincipalHTTP(ctx, options.principalReader)
+			principal, ok := readPrincipal(ctx, options.principalReader)
 			if !ok {
-				dec := Deny("principal not present in context")
-				options.auditHook(ctx, Request{Action: action}, dec)
+				dec := authz.Deny("principal not present in context")
+				options.auditHook(ctx, authz.Request{Action: action}, dec)
 				writeAuthzDeny(w, dec)
 
 				return
 			}
 
-			req := buildHTTPRequest(r, principal, action, options.httpResourceFn)
+			req := buildRequest(r, principal, action, options.resourceFn)
 			dec := policy.Evaluate(ctx, req)
 			options.auditHook(ctx, req, dec)
 
-			if dec.Effect != EffectAllow {
+			if dec.Effect != authz.EffectAllow {
 				writeAuthzDeny(w, dec)
 
 				return
@@ -67,9 +67,9 @@ func RequireHTTP(policy Policy, action string, opts ...Option) func(http.Handler
 	}
 }
 
-// readPrincipalHTTP delegates to the configured PrincipalReader. A nil
+// readPrincipal delegates to the configured PrincipalReader. A nil
 // reader returns ok=false (caller treats as deny).
-func readPrincipalHTTP(ctx context.Context, reader PrincipalReader) (any, bool) {
+func readPrincipal(ctx context.Context, reader authz.PrincipalReader) (any, bool) {
 	if reader == nil {
 		return nil, false
 	}
@@ -77,18 +77,18 @@ func readPrincipalHTTP(ctx context.Context, reader PrincipalReader) (any, bool) 
 	return reader.Read(ctx)
 }
 
-// buildHTTPRequest assembles a Request from the HTTP request, the
+// buildRequest assembles a Request from the HTTP request, the
 // principal pulled from ctx, the configured action, and the resource
 // resolver (if any).
-func buildHTTPRequest(r *http.Request, principal any, action string, resolver HTTPResourceResolverFn) Request {
-	resource := Resource{}
+func buildRequest(r *http.Request, principal any, action string, resolver HTTPResourceResolverFn) authz.Request {
+	resource := authz.Resource{}
 	if resolver != nil {
 		resource = resolver(r)
 	}
 
-	env := Environment{IP: clientIP(r)}
+	env := authz.Environment{IP: clientIP(r)}
 
-	return NewRequest(principal, action, resource, env)
+	return authz.NewRequest(principal, action, resource, env)
 }
 
 // clientIP extracts the caller IP from r. It honors X-Forwarded-For (
@@ -121,7 +121,7 @@ func clientIP(r *http.Request) net.IP {
 // infallible per encoding/json semantics, so the Marshal error path
 // is unreachable at runtime; the linter directive below silences
 // errchkjson for that reason.
-func writeAuthzDeny(w http.ResponseWriter, dec Decision) {
+func writeAuthzDeny(w http.ResponseWriter, dec authz.Decision) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("X-Authz-Reason", dec.Reason)
 	w.WriteHeader(http.StatusForbidden)

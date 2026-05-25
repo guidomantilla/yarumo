@@ -1,4 +1,4 @@
-package authz
+package http
 
 import (
 	"context"
@@ -8,13 +8,15 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/guidomantilla/yarumo/security/authz"
 )
 
 // allowPolicy returns Allow for any request.
 type allowPolicy struct{}
 
-func (allowPolicy) Evaluate(_ context.Context, _ Request) Decision {
-	return Allow("ok")
+func (allowPolicy) Evaluate(_ context.Context, _ authz.Request) authz.Decision {
+	return authz.Allow("ok")
 }
 
 // denyPolicy returns Deny with a fixed reason.
@@ -22,20 +24,20 @@ type denyPolicy struct {
 	reason string
 }
 
-func (p denyPolicy) Evaluate(_ context.Context, _ Request) Decision {
-	return Deny(p.reason)
+func (p denyPolicy) Evaluate(_ context.Context, _ authz.Request) authz.Decision {
+	return authz.Deny(p.reason)
 }
 
 // captureRequestPolicy stores the last Request passed to Evaluate and
 // returns Allow.
 type captureRequestPolicy struct {
-	last Request
+	last authz.Request
 }
 
-func (p *captureRequestPolicy) Evaluate(_ context.Context, req Request) Decision {
+func (p *captureRequestPolicy) Evaluate(_ context.Context, req authz.Request) authz.Decision {
 	p.last = req
 
-	return Allow("captured")
+	return authz.Allow("captured")
 }
 
 func TestRequireHTTP_Allow(t *testing.T) {
@@ -44,7 +46,7 @@ func TestRequireHTTP_Allow(t *testing.T) {
 	t.Run("invokes next handler on allow", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
@@ -57,7 +59,7 @@ func TestRequireHTTP_Allow(t *testing.T) {
 
 		mw := RequireHTTP(allowPolicy{}, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
@@ -81,7 +83,7 @@ func TestRequireHTTP_Deny(t *testing.T) {
 	t.Run("403 on deny", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
@@ -93,7 +95,7 @@ func TestRequireHTTP_Deny(t *testing.T) {
 
 		mw := RequireHTTP(denyPolicy{reason: "not allowed"}, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
@@ -127,7 +129,7 @@ func TestRequireHTTP_Deny(t *testing.T) {
 		t.Parallel()
 
 		mw := RequireHTTP(allowPolicy{}, "read",
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
@@ -143,13 +145,13 @@ func TestRequireHTTP_Deny(t *testing.T) {
 	t.Run("403 when reader returns false", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return nil, false
 		})
 
 		mw := RequireHTTP(allowPolicy{}, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
@@ -169,13 +171,13 @@ func TestRequireHTTP_AuditHookCalled(t *testing.T) {
 	t.Run("hook fires once on allow", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
 		var calls int
 
-		hook := AuditHookFn(func(_ context.Context, _ Request, _ Decision) {
+		hook := authz.AuditHookFn(func(_ context.Context, _ authz.Request, _ authz.Decision) {
 			calls++
 		})
 
@@ -200,9 +202,9 @@ func TestRequireHTTP_AuditHookCalled(t *testing.T) {
 		t.Parallel()
 
 		var calls int
-		var lastDec Decision
+		var lastDec authz.Decision
 
-		hook := AuditHookFn(func(_ context.Context, _ Request, d Decision) {
+		hook := authz.AuditHookFn(func(_ context.Context, _ authz.Request, d authz.Decision) {
 			calls++
 			lastDec = d
 		})
@@ -220,7 +222,7 @@ func TestRequireHTTP_AuditHookCalled(t *testing.T) {
 			t.Fatalf("expected 1 hook call, got %d", calls)
 		}
 
-		if lastDec.Effect != EffectDeny {
+		if lastDec.Effect != authz.EffectDeny {
 			t.Fatalf("expected EffectDeny, got %q", lastDec.Effect)
 		}
 	})
@@ -232,20 +234,20 @@ func TestRequireHTTP_ResourceResolver(t *testing.T) {
 	t.Run("resolver populates resource", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
 		policy := &captureRequestPolicy{}
 
-		resolver := HTTPResourceResolverFn(func(r *http.Request) Resource {
-			return Resource{Type: "orders", ID: strings.TrimPrefix(r.URL.Path, "/orders/")}
+		resolver := HTTPResourceResolverFn(func(r *http.Request) authz.Resource {
+			return authz.Resource{Type: "orders", ID: strings.TrimPrefix(r.URL.Path, "/orders/")}
 		})
 
 		mw := RequireHTTP(policy, "read",
 			WithPrincipalReader(reader),
-			WithHTTPResourceResolver(resolver),
-			WithAuditHook(SilentAuditHook),
+			WithResourceResolver(resolver),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		req := httptest.NewRequest(http.MethodGet, "/orders/42", http.NoBody)
@@ -301,7 +303,7 @@ func TestRequireHTTP_XForwardedFor(t *testing.T) {
 	t.Run("uses first X-Forwarded-For hop", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
@@ -309,7 +311,7 @@ func TestRequireHTTP_XForwardedFor(t *testing.T) {
 
 		mw := RequireHTTP(policy, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
@@ -332,7 +334,7 @@ func TestRequireHTTP_XForwardedFor(t *testing.T) {
 	t.Run("falls back to RemoteAddr", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
@@ -340,7 +342,7 @@ func TestRequireHTTP_XForwardedFor(t *testing.T) {
 
 		mw := RequireHTTP(policy, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
@@ -363,7 +365,7 @@ func TestRequireHTTP_XForwardedFor(t *testing.T) {
 	t.Run("ignores invalid X-Forwarded-For", func(t *testing.T) {
 		t.Parallel()
 
-		reader := PrincipalReaderFn(func(_ context.Context) (any, bool) {
+		reader := authz.PrincipalReaderFn(func(_ context.Context) (any, bool) {
 			return "alice", true
 		})
 
@@ -371,7 +373,7 @@ func TestRequireHTTP_XForwardedFor(t *testing.T) {
 
 		mw := RequireHTTP(policy, "read",
 			WithPrincipalReader(reader),
-			WithAuditHook(SilentAuditHook),
+			WithAuditHook(authz.SilentAuditHook),
 		)
 
 		req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
