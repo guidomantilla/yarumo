@@ -39,6 +39,7 @@ use (
 	./modules/managed/http/examples
 	./modules/managed/keep-alive
 	./modules/managed/telemetry/otel
+	./modules/messaging
 	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples

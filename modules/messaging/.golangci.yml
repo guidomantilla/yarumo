@@ -1,0 +1,127 @@
+version: "2"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  default: all
+
+  disable:
+    - dupl
+    - err113
+    - exhaustruct
+    - godot
+    - gomoddirectives
+    - iface
+    - ireturn
+    - lll
+    - mnd
+    - nlreturn
+    - revive
+    - tagliatelle
+    - testpackage
+    - varnamelen
+    - whitespace
+    - wsl
+    - wsl_v5
+
+  settings:
+    depguard:
+      rules:
+        main:
+          list-mode: original
+          deny:
+            # ------------------------------------------------------------------------
+            # LOGGING
+            # ------------------------------------------------------------------------
+            - pkg: "^log$"
+              desc: "use log/slog instead of stdlib log"
+            - pkg: "github.com/sirupsen/logrus"
+              desc: "use log/slog instead of logrus"
+            - pkg: "go.uber.org/zap"
+              desc: "use log/slog instead of zap"
+            - pkg: "github.com/rs/zerolog"
+              desc: "use log/slog instead of zerolog"
+
+            # ------------------------------------------------------------------------
+            # TESTING
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/stretchr/testify"
+              desc: "use t.Fatal/t.Fatalf instead of testify assertions"
+
+            # ------------------------------------------------------------------------
+            # LEGACY ERRORS
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/pkg/errors"
+              desc: "use errs.Wrap(sentinel, err) with a sentinel from errors.go"
+
+            # ------------------------------------------------------------------------
+            # DEPRECATED IO
+            # ------------------------------------------------------------------------
+            - pkg: "io/ioutil"
+              desc: "ioutil is deprecated since Go 1.16"
+
+            # ------------------------------------------------------------------------
+            # BANNED DEPENDENCIES
+            # ------------------------------------------------------------------------
+            - pkg: "github.com/spf13/viper"
+              desc: "viper is not allowed in messaging module"
+
+    forbidigo:
+      forbid:
+        - pattern: ^(fmt\.Print(|f|ln)|fmt\.Fprint(|f|ln)|print|println)$
+          msg: "use the project logger (log/slog) instead of direct print statements"
+
+    funlen:
+      lines: 220
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+  exclusions:
+    rules:
+      # Exclude some linters from running on tests files.
+      - path: _test\.go
+        linters:
+          - cyclop
+          - errcheck
+          - errchkjson
+          - errname
+          - forbidigo
+          - containedctx
+          - funlen
+          - gocognit
+          - gocyclo
+          - gosec
+          - maintidx
+          - noctx
+          - wrapcheck
+          - forcetypeassert
+          - govet
+          - unparam
+      # sentinel errors and type compliance vars are package-level by design
+      - path: types\.go
+        linters:
+          - gochecknoglobals
+      - path: errors\.go
+        linters:
+          - gochecknoglobals
+      # queue.go: cassert.NotNil guards the receiver invariant on
+      # lifecycle methods; contextcheck false positive on Stop.
+      # wrapcheck: Stop wraps ctx.Err with lifecycle.ErrShutdown — that
+      # is the domain factory, additional wrapping adds no value.
+      - path: queue\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      # direct.go: cassert.NotNil guards receiver invariants.
+      - path: direct\.go
+        linters:
+          - contextcheck
+      # pubsub.go: the typed facade uses reflect.Type as a map key and
+      # any-typed registry; wrapcheck false positive on factory chain.
+      - path: pubsub\.go
+        linters:
+          - contextcheck
+          - wrapcheck
