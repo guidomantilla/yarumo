@@ -15,7 +15,7 @@ INTERNAL += internal/temporal/courses/edu-101-go-code internal/temporal/courses/
 # Other modules (compute/math, compute/engine) still carry historical
 # violations tracked under follow-up tickets; expand this list as those
 # modules are cleaned up.
-INLINE_MODULES := modules/common modules/validation modules/cache modules/crypto
+INLINE_MODULES := modules/common modules/validation modules/cache modules/crypto modules/messaging
 
 # Built inlineassign binary location. The cmd/inlineassign main package lives
 # under tools/lint/inlineassign and is wired into go.work for local builds.

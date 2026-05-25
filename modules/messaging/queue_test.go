@@ -227,7 +227,8 @@ func TestQueueChannel_Subscribe(t *testing.T) {
 		// allow worker time to drain second send
 		time.Sleep(50 * time.Millisecond)
 
-		if got := atomic.LoadInt32(&fired); got != 1 {
+		got := atomic.LoadInt32(&fired)
+		if got != 1 {
 			t.Fatalf("expected fired=1 after cancel, got %d", got)
 		}
 
@@ -377,7 +378,8 @@ func TestBuildQueueChannel(t *testing.T) {
 
 		closeFn(context.Background(), time.Second)
 
-		if got := atomic.LoadInt32(&delivered); got != 1 {
+		got := atomic.LoadInt32(&delivered)
+		if got != 1 {
 			t.Fatalf("expected 1 delivery, got %d", got)
 		}
 	})
