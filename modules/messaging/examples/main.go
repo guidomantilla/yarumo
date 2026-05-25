@@ -1,7 +1,6 @@
 // Package main demonstrates the in-process messaging primitives end-to-
 // end: PipelineChannel synchronous dispatch, TopicChannel async dispatch
-// with lifecycle.Build + graceful drain, the Publisher/Subscriber facade
-// routed by Go type, and subscription cancel.
+// with lifecycle.Build + graceful drain, and subscription cancel.
 package main
 
 import (
@@ -18,12 +17,6 @@ import (
 type OrderCreated struct {
 	ID     string
 	Amount float64
-}
-
-// UserSignedUp is a sample domain event published by the auth service.
-type UserSignedUp struct {
-	UserID string
-	Email  string
 }
 
 func main() {
@@ -45,11 +38,6 @@ func run() error {
 	err = demoTopicChannel(ctx)
 	if err != nil {
 		return fmt.Errorf("queue channel: %w", err)
-	}
-
-	err = demoPubSub(ctx)
-	if err != nil {
-		return fmt.Errorf("pubsub: %w", err)
 	}
 
 	err = demoCancel(ctx)
@@ -151,45 +139,6 @@ func demoTopicChannel(ctx context.Context) error {
 	<-queue.Done()
 
 	fmt.Println("  drain complete; worker exited.")
-	fmt.Println()
-
-	return nil
-}
-
-// demoPubSub shows the Publisher/Subscriber facade routing payloads by
-// Go type: each subscriber only receives events of its declared type.
-func demoPubSub(ctx context.Context) error {
-	fmt.Println("=== Publisher/Subscriber (routed by Go type) ===")
-
-	bus := messaging.NewPubSub()
-
-	_, err := messaging.Subscribe[OrderCreated](bus, func(_ context.Context, msg messaging.Message[OrderCreated]) error {
-		fmt.Printf("  order handler: ID=%s amount=$%.2f\n", msg.Payload.ID, msg.Payload.Amount)
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	_, err = messaging.Subscribe[UserSignedUp](bus, func(_ context.Context, msg messaging.Message[UserSignedUp]) error {
-		fmt.Printf("  user handler:  ID=%s email=%s\n", msg.Payload.UserID, msg.Payload.Email)
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	err = messaging.Publish[OrderCreated](ctx, bus, OrderCreated{ID: "ord-200", Amount: 49.99})
-	if err != nil {
-		return err
-	}
-
-	err = messaging.Publish[UserSignedUp](ctx, bus, UserSignedUp{UserID: "usr-77", Email: "ana@example.com"})
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("  (each handler only fired for its own type)")
 	fmt.Println()
 
 	return nil

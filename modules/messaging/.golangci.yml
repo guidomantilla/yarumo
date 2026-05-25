@@ -119,9 +119,3 @@ linters:
       - path: pipeline\.go
         linters:
           - contextcheck
-      # pubsub.go: the typed facade uses reflect.Type as a map key and
-      # any-typed registry; wrapcheck false positive on factory chain.
-      - path: pubsub\.go
-        linters:
-          - contextcheck
-          - wrapcheck

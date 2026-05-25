@@ -17,8 +17,8 @@ type Message[T any] struct {
 }
 
 // Headers groups the metadata fields that travel alongside a Message
-// payload. Headers are propagated end-to-end through every Channel and
-// every Publisher/Subscriber handler.
+// payload. Headers are propagated end-to-end through every Channel
+// handler.
 //
 // The current set covers the minimum required for in-process pub/sub
 // (correlation, time-of-publish, publishing-module identity, plus a

@@ -5,17 +5,11 @@
 // implementations are provided in-process:
 //
 //   - PipelineChannel[T]: synchronous in-goroutine dispatch — Send invokes
-//     every subscribed handler on the caller's goroutine.
-//   - TopicChannel[T]: asynchronous, buffered dispatch via a single
-//     worker goroutine. Implements common/lifecycle.Component so it can
-//     be wired into the application lifecycle with graceful drain on
-//     Stop.
-//
-// On top of Channel[T] the package layers a Publisher/Subscriber facade
-// that routes events by Go type (Publish[T]/Subscribe[T]) rather than
-// string topic. The facade owns a registry keyed by reflect.Type and
-// allocates one channel per payload type lazily; consumers can override
-// the channel constructor with WithChannelFactory.
+//     every subscribed handler on the caller's goroutine, in order,
+//     fail-fast with a ChainError trace.
+//   - TopicChannel[T]: asynchronous, buffered fan-out via a worker
+//     goroutine. Implements common/lifecycle.Component so it can be
+//     wired into the application lifecycle with graceful drain on Stop.
 //
 // Concurrency: all public types in this package are safe for concurrent
 // use by multiple goroutines.
@@ -32,8 +26,6 @@ import (
 var (
 	_ Channel[any] = (*pipelineChannel[any])(nil)
 	_ Channel[any] = (*TopicChannel[any])(nil)
-	_ Publisher    = (*PubSub)(nil)
-	_ Subscriber   = (*PubSub)(nil)
 )
 
 // Handler is the function type for a message handler. The Handler
