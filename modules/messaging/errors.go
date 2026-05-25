@@ -55,6 +55,11 @@ var (
 	// because at least one step returned an error. The full step trace
 	// is available on the returned *ChainError.
 	ErrChainFailed = errors.New("pipeline chain failed")
+	// ErrNoSubscribers indicates that a QueueChannel worker pulled a
+	// message from the inbound buffer but no subscribers were
+	// registered to receive it. The message is dropped and routed
+	// through the ErrorHandler hook for visibility.
+	ErrNoSubscribers = errors.New("no subscribers registered")
 )
 
 // StepStatus classifies the outcome of a single pipeline step in a

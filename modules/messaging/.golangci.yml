@@ -119,3 +119,13 @@ linters:
       - path: pipeline\.go
         linters:
           - contextcheck
+      # queue.go: same cassert.NotNil pattern as topic.go + wrapcheck on
+      # lifecycle.ErrShutdown (domain factory, no value in re-wrapping).
+      - path: queue\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      # broadcast.go: cassert.NotNil guards receiver invariants.
+      - path: broadcast\.go
+        linters:
+          - contextcheck

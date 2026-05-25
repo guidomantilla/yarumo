@@ -5,10 +5,12 @@ import (
 	"time"
 )
 
-// Default buffer and drain bounds for TopicChannel.
+// Default buffer, drain bounds, and worker pool size for the
+// async channels.
 const (
 	defaultBufferSize   = 64
 	defaultDrainTimeout = 5 * time.Second
+	defaultWorkerCount  = 1
 )
 
 // ErrorHandler is the function type for the per-handler error
@@ -26,10 +28,12 @@ type ErrorHandler func(ctx context.Context, msg any, err error)
 // Option is a functional option for configuring messaging Options.
 type Option func(opts *Options)
 
-// Options holds the configuration for a TopicChannel.
+// Options holds the configuration for async channels (TopicChannel,
+// QueueChannel).
 type Options struct {
 	bufferSize   int
 	drainTimeout time.Duration
+	workerCount  int
 	errorHandler ErrorHandler
 }
 
@@ -39,6 +43,7 @@ func NewOptions(opts ...Option) *Options {
 	options := &Options{
 		bufferSize:   defaultBufferSize,
 		drainTimeout: defaultDrainTimeout,
+		workerCount:  defaultWorkerCount,
 	}
 
 	for _, opt := range opts {
@@ -77,6 +82,19 @@ func WithErrorHandler(handler ErrorHandler) Option {
 	return func(opts *Options) {
 		if handler != nil {
 			opts.errorHandler = handler
+		}
+	}
+}
+
+// WithWorkerCount sets the number of worker goroutines a
+// QueueChannel spawns to consume from the inbound buffer. Workers
+// compete for messages — each message goes to exactly one worker
+// (and from there to exactly one subscriber via round-robin). Non-
+// positive values are ignored.
+func WithWorkerCount(n int) Option {
+	return func(opts *Options) {
+		if n > 0 {
+			opts.workerCount = n
 		}
 	}
 }
