@@ -1,0 +1,16 @@
+version: "1.0"
+rules:
+  - field: URL
+    rules:
+      - required
+      - url
+  - field: Events
+    rules:
+      - non_empty
+      - name: for_each
+        rules:
+          - {one_of: [order.created, order.updated, order.deleted]}
+  - field: Secret
+    rules:
+      - required
+      - {min_len: 16}

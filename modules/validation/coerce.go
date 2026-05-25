@@ -2,7 +2,10 @@ package validation
 
 import (
 	"errors"
+	"net"
 	"reflect"
+	"regexp"
+	"time"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
 )
@@ -82,6 +85,121 @@ func asStringParam(params []any, i int) (string, error) {
 	}
 
 	return s, nil
+}
+
+// asTime coerces value into time.Time. RFC 3339 strings are parsed; values
+// that already are time.Time pass through unchanged.
+func asTime(value any) (time.Time, error) {
+	t, ok := value.(time.Time)
+	if ok {
+		return t, nil
+	}
+
+	s, ok := value.(string)
+	if !ok {
+		return time.Time{}, ErrEngine(cerrs.Wrap(ErrBadParams, errBadParam))
+	}
+
+	parsed, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return time.Time{}, ErrEngine(cerrs.Wrap(ErrBadParams, err))
+	}
+
+	return parsed, nil
+}
+
+// asTimeParam coerces params[i] into time.Time.
+func asTimeParam(params []any, i int) (time.Time, error) {
+	if i >= len(params) {
+		return time.Time{}, ErrEngine(ErrBadParams)
+	}
+
+	return asTime(params[i])
+}
+
+// asDuration coerces value into time.Duration. String inputs are parsed via
+// time.ParseDuration (e.g. "5s", "100ms"); numbers are treated as
+// nanoseconds for consistency with time.Duration's underlying int64.
+func asDuration(value any) (time.Duration, error) {
+	d, ok := value.(time.Duration)
+	if ok {
+		return d, nil
+	}
+
+	s, ok := value.(string)
+	if ok {
+		parsed, err := time.ParseDuration(s)
+		if err != nil {
+			return 0, ErrEngine(cerrs.Wrap(ErrBadParams, err))
+		}
+
+		return parsed, nil
+	}
+
+	f, err := asFloat(value)
+	if err != nil {
+		return 0, err
+	}
+
+	return time.Duration(f), nil
+}
+
+// asRegex coerces value into *regexp.Regexp. Strings are compiled on the
+// fly; pre-compiled regexps pass through.
+func asRegex(value any) (*regexp.Regexp, error) {
+	re, ok := value.(*regexp.Regexp)
+	if ok {
+		return re, nil
+	}
+
+	s, ok := value.(string)
+	if !ok {
+		return nil, ErrEngine(cerrs.Wrap(ErrBadParams, errBadParam))
+	}
+
+	compiled, err := regexp.Compile(s)
+	if err != nil {
+		return nil, ErrEngine(cerrs.Wrap(ErrBadParams, err))
+	}
+
+	return compiled, nil
+}
+
+// asIP coerces value into net.IP. Strings are parsed via net.ParseIP;
+// net.IP values pass through.
+func asIP(value any) (net.IP, error) {
+	ip, ok := value.(net.IP)
+	if ok {
+		return ip, nil
+	}
+
+	s, ok := value.(string)
+	if !ok {
+		return nil, ErrEngine(cerrs.Wrap(ErrBadParams, errBadParam))
+	}
+
+	parsed := net.ParseIP(s)
+	if parsed == nil {
+		return nil, ErrEngine(cerrs.Wrap(ErrBadParams, errBadParam))
+	}
+
+	return parsed, nil
+}
+
+// asCIDR coerces value into the (ip, network) pair returned by
+// net.ParseCIDR. Only string inputs are accepted.
+func asCIDR(value any) (net.IP, *net.IPNet, error) {
+	s, ok := value.(string)
+	if !ok {
+		return nil, nil, ErrEngine(cerrs.Wrap(ErrBadParams, errBadParam))
+	}
+
+	ip, network, err := net.ParseCIDR(s)
+	if err != nil {
+		return nil, nil, ErrEngine(cerrs.Wrap(ErrBadParams, err))
+	}
+
+	return ip, network, nil
 }
 
 // asSlice coerces value into []any. Plain []any inputs pass through;

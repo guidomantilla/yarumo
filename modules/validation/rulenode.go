@@ -10,18 +10,33 @@ import (
 // Ruleset is the in-memory shape of a validation configuration. A Ruleset is
 // a flat list of top-level rule nodes; each node may itself be a group with
 // nested children.
+//
+// Version, when set, declares the schema version the ruleset targets. An
+// empty Version is treated as "unversioned" and accepted for backward
+// compatibility; a non-empty Version is checked against CurrentVersion at
+// load time when WithStrictVersion is enabled.
+//
+// Defines maps fragment names to reusable rule lists. Callers reference a
+// fragment via RuleNode.Use; Expand substitutes each Use reference with
+// the named fragment before the engine sees the tree.
 type Ruleset struct {
-	Rules []RuleNode `json:"rules,omitempty" yaml:"rules,omitempty"`
+	Version string                `json:"version,omitempty" yaml:"version,omitempty"`
+	Rules   []RuleNode            `json:"rules,omitempty"   yaml:"rules,omitempty"`
+	Defines map[string][]RuleNode `json:"defines,omitempty" yaml:"defines,omitempty"`
 }
 
 // RuleNode is a node in the rule tree.
 //
 // Exactly one of the following shapes is meaningful per node:
-//   - Group: Field or When (or both) set and Rules is non-empty.
-//   - Leaf:  Name set; Params optional.
+//   - Group:      Field or When (or both) set and Rules is non-empty.
+//   - Leaf:       Name set; Params optional.
+//   - Combinator: Name is "any_of" / "all_of" / "not" / "for_each" and
+//     Rules is non-empty. Combinators are special leaves that compose
+//     nested rules with custom semantics (see runAnyOf / runAllOf /
+//     runNot / runForEach).
 //
-// Mixing a Group-shaped node with a Name field is not supported and produces
-// a configuration error at load time.
+// Mixing a Group-shaped node with a non-combinator Name is not supported
+// and produces a configuration error at load time.
 type RuleNode struct {
 	// Field selects a value out of the target object via dotted path. When
 	// empty the group operates on the current value (root or the field of an
@@ -32,35 +47,80 @@ type RuleNode struct {
 	// expression evaluates to a truthy value against the engine context.
 	When string `json:"when,omitempty" yaml:"when,omitempty"`
 
-	// Name selects a leaf validator registered with the engine.
+	// Name selects a leaf validator registered with the engine, or names a
+	// combinator (any_of / all_of / not / for_each) that the engine
+	// dispatches before consulting the registry.
 	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	// Params carries optional positional arguments for the leaf validator.
 	Params []any `json:"params,omitempty" yaml:"params,omitempty"`
 
-	// Rules holds nested rule nodes. Only meaningful when this node is a
-	// group.
+	// Rules holds nested rule nodes. Meaningful for groups, combinators,
+	// and the for_each node.
 	Rules []RuleNode `json:"rules,omitempty" yaml:"rules,omitempty"`
+
+	// Optional, when true, skips the entire node (and its nested Rules)
+	// whenever the resolved value is the zero value of its type. This
+	// mirrors common/validation/.Optional for the leaf API.
+	Optional bool `json:"optional,omitempty" yaml:"optional,omitempty"`
+
+	// Message overrides the default error wording when this node produces a
+	// violation. The string is wrapped around the underlying cause so
+	// callers see the friendly text and still have errors.Is access to the
+	// sentinel. Empty disables the override.
+	Message string `json:"message,omitempty" yaml:"message,omitempty"`
+
+	// Use references a fragment declared in Ruleset.Defines. The engine
+	// itself never sees a node with Use set — callers must call Expand
+	// before NewEngine so references are substituted with the actual rule
+	// list.
+	Use string `json:"use,omitempty" yaml:"use,omitempty"`
+}
+
+// Combinator names — special Name values dispatched before the registry
+// lookup in runNode.
+const (
+	combinatorAnyOf   = "any_of"
+	combinatorAllOf   = "all_of"
+	combinatorNot     = "not"
+	combinatorForEach = "for_each"
+)
+
+// isCombinator reports whether name is one of the engine's built-in
+// combinator pseudo-leaves.
+func isCombinator(name string) bool {
+	switch name {
+	case combinatorAnyOf, combinatorAllOf, combinatorNot, combinatorForEach:
+		return true
+	default:
+		return false
+	}
 }
 
 // reservedKeys lists the structural keys that, when present, force a node to
 // be parsed as a full RuleNode rather than as a sugar-style leaf.
 var reservedKeys = map[string]struct{}{
-	"field":  {},
-	"when":   {},
-	"name":   {},
-	"params": {},
-	"rules":  {},
+	"field":    {},
+	"when":     {},
+	"name":     {},
+	"params":   {},
+	"rules":    {},
+	"optional": {},
+	"message":  {},
+	"use":      {},
 }
 
 // ruleNodeRaw mirrors RuleNode for YAML/JSON decoding without inheriting its
 // custom unmarshaller, avoiding infinite recursion.
 type ruleNodeRaw struct {
-	Field  string     `json:"field,omitempty"  yaml:"field,omitempty"`
-	When   string     `json:"when,omitempty"   yaml:"when,omitempty"`
-	Name   string     `json:"name,omitempty"   yaml:"name,omitempty"`
-	Params []any      `json:"params,omitempty" yaml:"params,omitempty"`
-	Rules  []RuleNode `json:"rules,omitempty"  yaml:"rules,omitempty"`
+	Field    string     `json:"field,omitempty"    yaml:"field,omitempty"`
+	When     string     `json:"when,omitempty"     yaml:"when,omitempty"`
+	Name     string     `json:"name,omitempty"     yaml:"name,omitempty"`
+	Params   []any      `json:"params,omitempty"   yaml:"params,omitempty"`
+	Rules    []RuleNode `json:"rules,omitempty"    yaml:"rules,omitempty"`
+	Optional bool       `json:"optional,omitempty" yaml:"optional,omitempty"`
+	Message  string     `json:"message,omitempty"  yaml:"message,omitempty"`
+	Use      string     `json:"use,omitempty"      yaml:"use,omitempty"`
 }
 
 // UnmarshalYAML supports three shapes for a rule entry:

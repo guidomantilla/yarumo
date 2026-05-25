@@ -29,23 +29,36 @@ var (
 	_ PathOfFn         = PathOf
 	_ NewRegistryFn    = NewRegistry
 	_ NewRegistryFn    = DefaultRegistry
+	_ ValidateRulesetFn = Validate
 
 	_ ErrLoadFn   = ErrLoad
 	_ ErrEngineFn = ErrEngine
 )
 
+// CurrentVersion is the schema version this engine implements. Rulesets
+// that declare a Version must match (subject to WithStrictVersion); rulesets
+// with no Version declared are accepted unconditionally for backward
+// compatibility.
+const CurrentVersion = "1.0"
+
 // Engine is the public abstraction for a config-driven validator.
 //
 // Implementations must be safe for concurrent use by multiple goroutines:
 // callers may share a single Engine across handlers and invoke Validate
-// concurrently against different objects. The Engine retains a reference to
-// the Ruleset and Options supplied at construction time; the caller must not
-// mutate them after the Engine has been built.
+// or Run concurrently against different objects. The Engine retains a
+// reference to the Ruleset and Options supplied at construction time; the
+// caller must not mutate them after the Engine has been built.
 type Engine interface {
 	// Validate runs the loaded ruleset against obj. ctx exposes variables to
 	// any "when" expressions evaluated during the run. The returned error, if
 	// non-nil, is the domain *cvalidation.Error joining every violation.
 	Validate(obj any, ctx map[string]any) error
+
+	// Run is the structured counterpart to Validate. It returns a slice of
+	// Violation suitable for callers that want to render UI, build telemetry,
+	// or filter failures by rule/path without parsing error strings. The
+	// returned slice is nil when validation passes.
+	Run(obj any, ctx map[string]any) []Violation
 }
 
 // RuleFn is the function signature for engine leaves. It receives the
@@ -63,6 +76,11 @@ type LoadFromReaderFn func(r io.Reader, load LoadFn) (Ruleset, error)
 
 // PathOfFn is the function type for PathOf.
 type PathOfFn func(err error) string
+
+// ValidateRulesetFn is the function type for Validate (the static linter
+// that walks a Ruleset and aggregates every structural / referential
+// issue).
+type ValidateRulesetFn func(rs Ruleset, opts ...Option) error
 
 // NewRegistryFn is the function type for NewRegistry and DefaultRegistry.
 type NewRegistryFn func() *Registry

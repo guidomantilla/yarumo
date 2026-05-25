@@ -1,0 +1,19 @@
+version: "1.0"
+rules:
+  - field: Email
+    rules:
+      - required
+      - email
+  - field: Password
+    rules:
+      - required
+      - {min_len: 8}
+  - field: ConfirmPassword
+    rules:
+      - {equal: "secret123"}
+  - field: Age
+    rules:
+      - {in_range: [13, 120]}
+  - field: TermsAccepted
+    rules:
+      - required

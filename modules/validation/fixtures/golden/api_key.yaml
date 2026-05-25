@@ -1,0 +1,16 @@
+version: "1.0"
+rules:
+  - field: Name
+    rules:
+      - required
+      - {min_len: 3}
+      - {max_len: 50}
+  - field: Scopes
+    rules:
+      - non_empty
+      - name: for_each
+        rules:
+          - {one_of: [read, write, admin]}
+  - field: ExpiresAt
+    rules:
+      - rfc3339

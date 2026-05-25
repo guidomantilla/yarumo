@@ -36,10 +36,18 @@ var (
 	ErrBadParams         = errors.New("rule parameters are invalid")
 	ErrWhenEvalFailed    = errors.New("when expression evaluation failed")
 	ErrWhenNotBoolean    = errors.New("when expression must evaluate to a boolean")
+	ErrWhenParseFailed   = errors.New("when expression parse failed")
 	ErrFieldLookupFailed = errors.New("field lookup failed")
 	ErrEngineNil         = errors.New("engine is nil")
 	ErrReaderNil         = errors.New("reader is nil")
 	ErrDataNil           = errors.New("data is nil")
+	ErrEmptyGroup        = errors.New("group node has no rules and no leaf name")
+	ErrMixedShape        = errors.New("node mixes group fields and leaf name")
+	ErrUnknownVersion    = errors.New("ruleset version is not supported by this engine")
+	ErrLintFailed        = errors.New("ruleset lint failed")
+	ErrCycleDetected     = errors.New("ruleset define references itself transitively")
+	ErrUndefinedUse      = errors.New("use references a name not declared in defines")
+	ErrUnknownField      = errors.New("field path does not resolve against the bound type")
 )
 
 // ErrLoad creates an engine domain error joining the given causes with
@@ -94,4 +102,21 @@ func (u *unknownRuleError) Error() string {
 // errUnknownRuleName creates a leaf error tagged with the offending rule name.
 func errUnknownRuleName(name string) error {
 	return &unknownRuleError{name: name}
+}
+
+// messageError carries a node's custom Message so AsErrorInfo surfaces the
+// caller-supplied wording above the underlying sentinel.
+type messageError struct {
+	message string
+}
+
+// Error returns the custom message verbatim.
+func (m *messageError) Error() string {
+	return m.message
+}
+
+// errMessage wraps a custom message into an error suitable for prepending
+// to a violation chain via cerrs.Wrap.
+func errMessage(msg string) error {
+	return &messageError{message: msg}
 }

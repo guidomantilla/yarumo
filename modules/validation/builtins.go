@@ -1,26 +1,88 @@
 package validation
 
 import (
-	extuids "github.com/guidomantilla/yarumo/extensions/common/uids"
 	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	extuids "github.com/guidomantilla/yarumo/extensions/common/uids"
 )
 
 // builtins is the default leaf catalogue. Each entry adapts a typed function
 // from common/validation/ into the RuleFn shape expected by the engine.
+// Entries lean on the Adapt* helpers from adapters.go so most rows are a
+// single line.
 var builtins = map[string]RuleFn{
+	// presence / required
 	"required":          ruleRequired,
 	"must_be_undefined": ruleMustBeUndefined,
-	"min_len":           ruleMinLen,
-	"max_len":           ruleMaxLen,
-	"regex":             ruleRegex,
-	"email":             ruleEmail,
-	"url":               ruleURL,
-	"min":               ruleMin,
-	"max":               ruleMax,
-	"in_range":          ruleInRange,
-	"uuid":              ruleUUID,
-	"ulid":              ruleULID,
-	"non_empty":         ruleNonEmpty,
+
+	// string length / pattern
+	"min_len": AdaptStringWithInt(cvalidation.MinLen),
+	"max_len": AdaptStringWithInt(cvalidation.MaxLen),
+	"regex":   AdaptStringWithParam(cvalidation.MatchesRegex),
+
+	// string content
+	"contains":   AdaptStringWithParam(cvalidation.Contains),
+	"has_prefix": AdaptStringWithParam(cvalidation.HasPrefix),
+	"has_suffix": AdaptStringWithParam(cvalidation.HasSuffix),
+
+	// string format
+	"email":          AdaptString(cvalidation.IsEmail),
+	"url":            AdaptString(cvalidation.IsURL),
+	"lowercase":      AdaptString(cvalidation.IsLowercase),
+	"uppercase":      AdaptString(cvalidation.IsUppercase),
+	"alpha":          AdaptString(cvalidation.IsAlpha),
+	"alphanumeric":   AdaptString(cvalidation.IsAlphanumeric),
+	"numeric_string": AdaptString(cvalidation.IsNumeric),
+	"ascii":          AdaptString(cvalidation.IsASCII),
+	"hex":            AdaptString(cvalidation.IsHex),
+	"base64":         AdaptString(cvalidation.IsBase64),
+	"trimmed":        AdaptString(cvalidation.IsTrimmed),
+	"jwt":            AdaptString(cvalidation.IsJWT),
+	"semver":         AdaptString(cvalidation.IsSemver),
+	"integer_string": AdaptString(cvalidation.IsIntegerString),
+	"float_string":   AdaptString(cvalidation.IsFloatString),
+
+	// unique identifier formats (algorithm picked by the engine)
+	"uuid": ruleUUID,
+	"ulid": ruleULID,
+
+	// network / transport
+	"ip":       AdaptString(cvalidation.IsIP),
+	"ipv4":     AdaptString(cvalidation.IsIPv4),
+	"ipv6":     AdaptString(cvalidation.IsIPv6),
+	"cidr":     AdaptString(cvalidation.IsCIDR),
+	"mac":      AdaptString(cvalidation.IsMAC),
+	"hostname": AdaptString(cvalidation.IsHostname),
+	"fqdn":     AdaptString(cvalidation.IsFQDN),
+	"port":     AdaptNumeric(cvalidation.IsPort[float64]),
+
+	// date / time
+	"rfc3339":      AdaptString(cvalidation.IsRFC3339),
+	"date_layout":  AdaptStringWithParam(cvalidation.IsDate),
+	"before":       ruleBefore,
+	"after":        ruleAfter,
+	"between_time": ruleBetweenTime,
+
+	// numeric
+	"min":         AdaptNumericBinary(cvalidation.Min[float64]),
+	"max":         AdaptNumericBinary(cvalidation.Max[float64]),
+	"in_range":    AdaptNumericRange(cvalidation.InRange[float64]),
+	"positive":    AdaptNumeric(cvalidation.Positive[float64]),
+	"negative":    AdaptNumeric(cvalidation.Negative[float64]),
+	"nonzero":     AdaptNumeric(cvalidation.NonZero[float64]),
+	"multiple_of": ruleMultipleOf,
+
+	// equality / set
+	"equal":             AdaptStringWithParam(cvalidation.Equal[string]),
+	"not_equal":         AdaptStringWithParam(cvalidation.NotEqual[string]),
+	"equal_ignore_case": AdaptStringWithParam(cvalidation.EqualIgnoreCase),
+	"one_of":            AdaptStringSet(cvalidation.OneOf[string]),
+	"not_in":            AdaptStringSet(cvalidation.NotIn[string]),
+
+	// collection
+	"non_empty":      ruleNonEmpty,
+	"min_count":      AdaptCollectionWithInt(cvalidation.MinCount[any]),
+	"max_count":      AdaptCollectionWithInt(cvalidation.MaxCount[any]),
+	"count_in_range": ruleCountInRange,
 }
 
 // ruleRequired delegates to common/validation/.IsRequired.
@@ -31,121 +93,6 @@ func ruleRequired(value any, _ []any) error {
 // ruleMustBeUndefined delegates to common/validation/.MustBeUndefined.
 func ruleMustBeUndefined(value any, _ []any) error {
 	return cvalidation.MustBeUndefined(value)
-}
-
-// ruleMinLen reads min_len from params[0] and delegates to common/validation/.MinLen.
-func ruleMinLen(value any, params []any) error {
-	s, err := asString(value)
-	if err != nil {
-		return err
-	}
-
-	n, err := asInt(params, 0)
-	if err != nil {
-		return err
-	}
-
-	return cvalidation.MinLen(s, n)
-}
-
-// ruleMaxLen reads max_len from params[0] and delegates to common/validation/.MaxLen.
-func ruleMaxLen(value any, params []any) error {
-	s, err := asString(value)
-	if err != nil {
-		return err
-	}
-
-	n, err := asInt(params, 0)
-	if err != nil {
-		return err
-	}
-
-	return cvalidation.MaxLen(s, n)
-}
-
-// ruleRegex reads the pattern from params[0] and delegates to common/validation/.MatchesRegex.
-func ruleRegex(value any, params []any) error {
-	s, err := asString(value)
-	if err != nil {
-		return err
-	}
-
-	pattern, err := asStringParam(params, 0)
-	if err != nil {
-		return err
-	}
-
-	return cvalidation.MatchesRegex(s, pattern)
-}
-
-// ruleEmail delegates to common/validation/.IsEmail.
-func ruleEmail(value any, _ []any) error {
-	s, err := asString(value)
-	if err != nil {
-		return err
-	}
-
-	return cvalidation.IsEmail(s)
-}
-
-// ruleURL delegates to common/validation/.IsURL.
-func ruleURL(value any, _ []any) error {
-	s, err := asString(value)
-	if err != nil {
-		return err
-	}
-
-	return cvalidation.IsURL(s)
-}
-
-// ruleMin delegates to common/validation/.Min on float64-coerced inputs.
-func ruleMin(value any, params []any) error {
-	v, err := asFloat(value)
-	if err != nil {
-		return err
-	}
-
-	lo, err := asFloatParam(params, 0)
-	if err != nil {
-		return err
-	}
-
-	return cvalidation.Min(v, lo)
-}
-
-// ruleMax delegates to common/validation/.Max on float64-coerced inputs.
-func ruleMax(value any, params []any) error {
-	v, err := asFloat(value)
-	if err != nil {
-		return err
-	}
-
-	hi, err := asFloatParam(params, 0)
-	if err != nil {
-		return err
-	}
-
-	return cvalidation.Max(v, hi)
-}
-
-// ruleInRange delegates to common/validation/.InRange on float64-coerced inputs.
-func ruleInRange(value any, params []any) error {
-	v, err := asFloat(value)
-	if err != nil {
-		return err
-	}
-
-	lo, err := asFloatParam(params, 0)
-	if err != nil {
-		return err
-	}
-
-	hi, err := asFloatParam(params, 1)
-	if err != nil {
-		return err
-	}
-
-	return cvalidation.InRange(v, lo, hi)
 }
 
 // ruleUUID delegates to cvalidation.IsUID with the UUID predicate from
@@ -181,5 +128,93 @@ func ruleNonEmpty(value any, _ []any) error {
 	}
 
 	return cvalidation.NonEmpty(xs)
+}
+
+// ruleBefore reads ref from params[0] as an RFC 3339 string and delegates
+// to common/validation/.Before.
+func ruleBefore(value any, params []any) error {
+	t, err := asTime(value)
+	if err != nil {
+		return err
+	}
+
+	ref, err := asTimeParam(params, 0)
+	if err != nil {
+		return err
+	}
+
+	return cvalidation.Before(t, ref)
+}
+
+// ruleAfter reads ref from params[0] and delegates to
+// common/validation/.After.
+func ruleAfter(value any, params []any) error {
+	t, err := asTime(value)
+	if err != nil {
+		return err
+	}
+
+	ref, err := asTimeParam(params, 0)
+	if err != nil {
+		return err
+	}
+
+	return cvalidation.After(t, ref)
+}
+
+// ruleBetweenTime reads lo from params[0] and hi from params[1].
+func ruleBetweenTime(value any, params []any) error {
+	t, err := asTime(value)
+	if err != nil {
+		return err
+	}
+
+	lo, err := asTimeParam(params, 0)
+	if err != nil {
+		return err
+	}
+
+	hi, err := asTimeParam(params, 1)
+	if err != nil {
+		return err
+	}
+
+	return cvalidation.BetweenTime(t, lo, hi)
+}
+
+// ruleCountInRange reads lo from params[0] and hi from params[1].
+func ruleCountInRange(value any, params []any) error {
+	xs, err := asSlice(value)
+	if err != nil {
+		return err
+	}
+
+	lo, err := asInt(params, 0)
+	if err != nil {
+		return err
+	}
+
+	hi, err := asInt(params, 1)
+	if err != nil {
+		return err
+	}
+
+	return cvalidation.CountInRange(xs, lo, hi)
+}
+
+// ruleMultipleOf coerces the runtime value and factor to int64 (since
+// common/validation/.MultipleOf is integer-only) and delegates.
+func ruleMultipleOf(value any, params []any) error {
+	v, err := asFloat(value)
+	if err != nil {
+		return err
+	}
+
+	factor, err := asFloatParam(params, 0)
+	if err != nil {
+		return err
+	}
+
+	return cvalidation.MultipleOf(int64(v), int64(factor))
 }
 

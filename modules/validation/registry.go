@@ -75,3 +75,59 @@ func DefaultRegistry() *Registry {
 
 	return r
 }
+
+// RegistryFrom builds a registry from a literal map of rule names to
+// RuleFn implementations. Useful for callers shipping their own catalogue.
+// A nil map produces an empty registry — never panics.
+func RegistryFrom(rules map[string]RuleFn) *Registry {
+	r := NewRegistry()
+
+	for name, fn := range rules {
+		r.Register(name, fn)
+	}
+
+	return r
+}
+
+// MergeRegistries returns a new registry containing every entry from base
+// merged with each overlay in order. Overlay entries take precedence on
+// name collision; the original registries are not mutated.
+func MergeRegistries(base *Registry, overlays ...*Registry) *Registry {
+	r := NewRegistry()
+
+	if base != nil {
+		copyInto(base, r)
+	}
+
+	for _, overlay := range overlays {
+		if overlay == nil {
+			continue
+		}
+
+		copyInto(overlay, r)
+	}
+
+	return r
+}
+
+// Clone returns an independent copy of r so callers can mutate the copy
+// without affecting the original (typical use: start from DefaultRegistry
+// and add custom rules without touching the package-default).
+func (r *Registry) Clone() *Registry {
+	cassert.NotNil(r, "registry is nil")
+
+	out := NewRegistry()
+	copyInto(r, out)
+
+	return out
+}
+
+// copyInto copies every entry from src into dst, overwriting collisions.
+func copyInto(src, dst *Registry) {
+	src.lock.RLock()
+	defer src.lock.RUnlock()
+
+	for name, fn := range src.rules {
+		dst.Register(name, fn)
+	}
+}
