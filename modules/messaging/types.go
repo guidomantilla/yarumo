@@ -29,6 +29,10 @@ import (
 	"context"
 )
 
+var (
+	_ Channel[any] = (*directChannel[any])(nil)
+)
+
 // Handler is the function type for a message handler. The Handler
 // receives the propagated context and the typed Message envelope and
 // returns an error to signal failure. DirectChannel propagates the
