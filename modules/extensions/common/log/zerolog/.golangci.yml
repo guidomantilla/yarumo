@@ -1,0 +1,101 @@
+version: "2"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters:
+  default: all
+
+  disable:
+    - dupl
+    - err113
+    - exhaustruct
+    - godot
+    - gomoddirectives
+    - iface
+    - ireturn
+    - lll
+    - mnd
+    - nlreturn
+    - revive
+    - tagliatelle
+    - testpackage
+    - varnamelen
+    - whitespace
+    - wsl
+    - wsl_v5
+
+  settings:
+    depguard:
+      rules:
+        main:
+          list-mode: original
+          deny:
+            - pkg: "^log$"
+              desc: "use log/slog or zerolog instead of stdlib log"
+            - pkg: "github.com/sirupsen/logrus"
+              desc: "use log/slog or zerolog instead of logrus"
+            - pkg: "go.uber.org/zap"
+              desc: "use log/slog or zerolog instead of zap"
+            - pkg: "github.com/stretchr/testify"
+              desc: "use t.Fatal/t.Fatalf instead of testify assertions"
+            - pkg: "github.com/pkg/errors"
+              desc: "use errs.Wrap(sentinel, err) with a sentinel from errors.go"
+            - pkg: "io/ioutil"
+              desc: "ioutil is deprecated since Go 1.16"
+            - pkg: "github.com/spf13/viper"
+              desc: "viper is not allowed in zerolog module"
+
+    forbidigo:
+      forbid:
+        - pattern: ^(fmt\.Print(|f|ln)|fmt\.Fprint(|f|ln)|print|println)$
+          msg: "use the project logger (log/slog or zerolog) instead of direct print statements"
+
+    funlen:
+      lines: 220
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+  exclusions:
+    rules:
+      # Exclude some linters from running on tests files.
+      - path: _test\.go
+        linters:
+          - cyclop
+          - errcheck
+          - errchkjson
+          - errname
+          - forbidigo
+          - containedctx
+          - funlen
+          - gocognit
+          - gocyclo
+          - gosec
+          - maintidx
+          - noctx
+          - wrapcheck
+          - forcetypeassert
+      # Type compliance vars in types.go are package-level by design.
+      - path: types\.go
+        linters:
+          - gochecknoglobals
+      # logger.go: osExit indirection for error-path testing.
+      - path: logger\.go
+        linters:
+          - gochecknoglobals
+      # internals.go runtime-type switch is exhaustive by design and the
+      # emit helper deliberately takes ctx as a non-first parameter to
+      # mirror the Logger method signature.
+      - path: internals\.go
+        linters:
+          - contextcheck
+          - revive
+      # logger_test.go's TestLogger_Fatal cannot use t.Parallel() because
+      # it mutates the package-level osExit slot via withOsExit; a parallel
+      # peer would race the restore.
+      - path: logger_test\.go
+        linters:
+          - paralleltest
+          - tparallel

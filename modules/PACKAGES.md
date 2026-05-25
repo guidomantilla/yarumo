@@ -162,6 +162,7 @@ Top-level module que aloja **implementaciones concretas** de la interface `commo
 |---|---|---|
 | `log/slog/` | Excepción (struct público concreto, no interface) | Adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `*Logger` como struct público concreto e implementa `common/log.Logger` por typing estructural. Incluye `Options` (`WithLevel`/`WithWriter`/`WithHandlers`/`WithContextExtractors`), `NewFanoutHandler`, `NewContextHandler`, `ReplaceLevel`, `SlogctxExtractor`. |
 | `log/slog/slogctx/` | Shape A | Bag context-bound de `slog.Attr` (`WithAttrs`, `SetAttrs`, `Attrs`) para propagar atributos por `context.Context`. Sin estado de paquete. |
+| `log/zerolog/` (NEW module) | Shape B | Adapter sobre `github.com/rs/zerolog`. `NewLogger(opts ...Option) clog.Logger` retorna la interface (patrón canónico; slog es la excepción histórica). Options: `WithLevel`/`WithWriter`/`WithConsole`/`WithTimeFormat`/`WithSampling`. Args variádicos se parsean como pares clave-valor con dispatch tipado en `internals.go`. Sin registry, sin pluggable. |
 
 Los tests de la facade `common/log/` son intencionalmente seriales (sin `t.Parallel()`) porque mutan el slot global. Documentado en cabecera de `common/log/functions_test.go` y en `common/log/doc.go`. Los subpaquetes de `modules/extensions/common/log/` (`slog/`, `slog/slogctx/`) corren con `t.Parallel()` en todos sus tests.
 
