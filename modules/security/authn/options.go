@@ -1,4 +1,4 @@
-package token
+package authn
 
 // Default claim keys used to map a token payload onto a Principal.
 // They match the most common naming conventions (RFC 7519 "sub" for

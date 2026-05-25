@@ -17,9 +17,9 @@ transport / backend lives in its own subpackage:
 
 | Package | Path | External deps |
 |---|---|---|
-| `authn/token/` | `modules/security/authn/token/` (this module) | `crypto/tokens` (→ `golang-jwt/v5`). Works with all 15 algorithms (JWT + opaque AEAD). |
-| `authn/http/` | `modules/extensions/security/authn/http/` (separate module) | `net/http` (stdlib). |
-| `authn/grpc/` | `modules/extensions/security/authn/grpc/` (separate module) | `google.golang.org/grpc`. |
+| `authn` (root) | `modules/security/authn/` | `crypto/tokens` (→ `golang-jwt/v5`). Ships the `Authenticator` contract + the canonical `tokenAuthenticator` impl that works with all 15 algorithms (JWT + opaque AEAD). |
+| `authn/http` | `modules/extensions/security/authn/http/` (separate module) | `net/http` (stdlib). |
+| `authn/grpc` | `modules/extensions/security/authn/grpc/` (separate module) | `google.golang.org/grpc`. |
 
 The two transport adapters live in their own top-level modules under
 `modules/extensions/security/authn/`. This keeps `google.golang.org/grpc`
@@ -27,6 +27,11 @@ out of the `go.mod` graph of any consumer that does not import the gRPC
 adapter — sub-package isolation inside a single module still leaves
 heavy deps in the consumer's `go.sum` via MVS, so true isolation
 requires separate `go.mod` boundaries.
+
+The `tokenAuthenticator` impl stays inside `security/authn` because it
+only depends on the contract itself plus `crypto/tokens` (a workspace
+module). It is the canonical backend; future in-module backends would
+sit beside it in the root package, not as nested subpackages.
 
 ### Failure contract
 

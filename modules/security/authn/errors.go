@@ -46,6 +46,14 @@ var (
 	// *Principal with no error. Treated by middleware as an invalid
 	// token to keep the 401 contract uniform.
 	ErrPrincipalNil = errors.New("principal is nil")
+	// ErrMethodNil indicates a nil *tokens.Method was supplied to
+	// NewTokenAuthenticator.
+	ErrMethodNil = errors.New("tokens method is nil")
+	// ErrSubjectClaimMissing indicates the resolved subject-claim key
+	// was not present in the token payload, or its value was not a
+	// non-empty string. The Principal cannot be constructed without an
+	// ID.
+	ErrSubjectClaimMissing = errors.New("subject claim missing in token payload")
 )
 
 // Error is the domain error type for authentication operations.

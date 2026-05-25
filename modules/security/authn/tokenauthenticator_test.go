@@ -1,4 +1,4 @@
-package token
+package authn
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	ctokens "github.com/guidomantilla/yarumo/crypto/tokens"
-	"github.com/guidomantilla/yarumo/security/authn"
 )
 
 func newTestMethod(t *testing.T) *ctokens.Method {
@@ -109,11 +108,11 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			t.Fatal("Validate(\"\") returned nil error, want non-nil")
 		}
 
-		if !errors.Is(err, authn.ErrTokenEmpty) {
+		if !errors.Is(err, ErrTokenEmpty) {
 			t.Fatalf("error %v does not match ErrTokenEmpty", err)
 		}
 
-		if !errors.Is(err, authn.ErrAuthenticationFailed) {
+		if !errors.Is(err, ErrAuthenticationFailed) {
 			t.Fatalf("error %v does not match ErrAuthenticationFailed", err)
 		}
 	})
@@ -128,7 +127,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			t.Fatal("Validate(garbage) returned nil error, want non-nil")
 		}
 
-		if !errors.Is(err, authn.ErrTokenInvalid) {
+		if !errors.Is(err, ErrTokenInvalid) {
 			t.Fatalf("error %v does not match ErrTokenInvalid", err)
 		}
 	})
@@ -148,7 +147,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			t.Fatal("Validate with wrong-key token returned nil error")
 		}
 
-		if !errors.Is(err, authn.ErrTokenInvalid) {
+		if !errors.Is(err, ErrTokenInvalid) {
 			t.Fatalf("error %v does not match ErrTokenInvalid", err)
 		}
 	})
@@ -172,7 +171,7 @@ func TestTokenAuthenticator_Validate(t *testing.T) {
 			t.Fatalf("error %v does not match ErrSubjectClaimMissing", err)
 		}
 
-		if !errors.Is(err, authn.ErrTokenInvalid) {
+		if !errors.Is(err, ErrTokenInvalid) {
 			t.Fatalf("error %v does not match ErrTokenInvalid", err)
 		}
 	})

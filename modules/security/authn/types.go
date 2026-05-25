@@ -59,6 +59,8 @@ var (
 	_ WithPrincipalFn     = WithPrincipal
 	_ FromContextFn       = FromContext
 	_ ErrAuthenticationFn = ErrAuthentication
+
+	_ Authenticator = (*tokenAuthenticator)(nil)
 )
 
 // WithPrincipalFn is the function type for WithPrincipal.

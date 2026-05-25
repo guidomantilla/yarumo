@@ -1,18 +1,17 @@
-package token
+package authn
 
 import (
 	"context"
 
 	cassert "github.com/guidomantilla/yarumo/common/assert"
 	ctokens "github.com/guidomantilla/yarumo/crypto/tokens"
-	"github.com/guidomantilla/yarumo/security/authn"
 )
 
-// tokenAuthenticator is the token-backed authn.Authenticator. It
-// delegates verification to *tokens.Method (which dispatches across the
-// JWT and opaque AEAD algorithm families supported by crypto/tokens)
-// and reshapes the resulting Payload map into a *Principal according
-// to the configured claim keys.
+// tokenAuthenticator is the token-backed Authenticator. It delegates
+// verification to *tokens.Method (which dispatches across the JWT and
+// opaque AEAD algorithm families supported by crypto/tokens) and
+// reshapes the resulting Payload map into a *Principal according to the
+// configured claim keys.
 type tokenAuthenticator struct {
 	method       *ctokens.Method
 	subjectClaim string
@@ -20,8 +19,8 @@ type tokenAuthenticator struct {
 	rolesClaim   string
 }
 
-// NewTokenAuthenticator returns a stateless authn.Authenticator backed
-// by the given *tokens.Method. Works with every algorithm supported by
+// NewTokenAuthenticator returns a stateless Authenticator backed by the
+// given *tokens.Method. Works with every algorithm supported by
 // modules/crypto/tokens — the JWT family (HS/RS/PS/ES/EdDSA) and the
 // opaque AEAD family (OPAQUE_AES_GCM, OPAQUE_XCHACHA20_POLY1305) —
 // since dispatch is owned by Method.Validate. The Method must have
@@ -34,7 +33,7 @@ type tokenAuthenticator struct {
 // Principal.Name, "roles" → Principal.Roles. All other Payload keys
 // flow into Principal.Attributes verbatim. Override via WithSubjectClaim
 // / WithNameClaim / WithRolesClaim.
-func NewTokenAuthenticator(method *ctokens.Method, options ...Option) authn.Authenticator {
+func NewTokenAuthenticator(method *ctokens.Method, options ...Option) Authenticator {
 	cassert.NotNil(method, "tokens method is nil")
 
 	opts := NewOptions(options...)
@@ -49,24 +48,24 @@ func NewTokenAuthenticator(method *ctokens.Method, options ...Option) authn.Auth
 
 // Validate verifies the token via the underlying *tokens.Method and
 // reshapes the resulting Payload into a *Principal. The returned error
-// is always wrapped through authn.ErrAuthentication so transport
-// middleware can translate verification failures to a uniform 401
-// without inspecting concrete error types.
-func (a *tokenAuthenticator) Validate(_ context.Context, token string) (*authn.Principal, error) {
+// is always wrapped through ErrAuthentication so transport middleware
+// can translate verification failures to a uniform 401 without
+// inspecting concrete error types.
+func (a *tokenAuthenticator) Validate(_ context.Context, token string) (*Principal, error) {
 	cassert.NotNil(a, "tokenAuthenticator is nil")
 
 	if token == "" {
-		return nil, authn.ErrAuthentication(authn.ErrTokenEmpty)
+		return nil, ErrAuthentication(ErrTokenEmpty)
 	}
 
 	payload, err := a.method.Validate(token)
 	if err != nil {
-		return nil, authn.ErrAuthentication(authn.ErrTokenInvalid, err)
+		return nil, ErrAuthentication(ErrTokenInvalid, err)
 	}
 
 	principal, err := principalFromPayload(payload, a.subjectClaim, a.nameClaim, a.rolesClaim)
 	if err != nil {
-		return nil, authn.ErrAuthentication(authn.ErrTokenInvalid, err)
+		return nil, ErrAuthentication(ErrTokenInvalid, err)
 	}
 
 	return principal, nil
@@ -83,7 +82,7 @@ func (a *tokenAuthenticator) Validate(_ context.Context, token string) (*authn.P
 //     produces an empty (non-nil) slice.
 //   - Every payload entry that is NOT one of the three mapped claims is
 //     copied into Principal.Attributes verbatim.
-func principalFromPayload(payload ctokens.Payload, subjectClaim, nameClaim, rolesClaim string) (*authn.Principal, error) {
+func principalFromPayload(payload ctokens.Payload, subjectClaim, nameClaim, rolesClaim string) (*Principal, error) {
 	subject, ok := payload[subjectClaim].(string)
 	if !ok || subject == "" {
 		return nil, ErrSubjectClaimMissing
@@ -102,7 +101,7 @@ func principalFromPayload(payload ctokens.Payload, subjectClaim, nameClaim, role
 		attributes[key] = value
 	}
 
-	return &authn.Principal{
+	return &Principal{
 		ID:         subject,
 		Name:       name,
 		Roles:      roles,
