@@ -27,8 +27,8 @@ func TestNewMessage(t *testing.T) {
 		msg := NewMessage[int](42, nil)
 		after := time.Now()
 
-		if msg.Timestamp.Before(before) || msg.Timestamp.After(after) {
-			t.Fatalf("timestamp %v not within [%v, %v]", msg.Timestamp, before, after)
+		if msg.Headers.Timestamp.Before(before) || msg.Headers.Timestamp.After(after) {
+			t.Fatalf("timestamp %v not within [%v, %v]", msg.Headers.Timestamp, before, after)
 		}
 	})
 
@@ -36,8 +36,8 @@ func TestNewMessage(t *testing.T) {
 		t.Parallel()
 
 		msg := NewMessage[int](7, nil)
-		if msg.CorrelationID != "" {
-			t.Fatalf("expected empty correlation id, got %q", msg.CorrelationID)
+		if msg.Headers.CorrelationID != "" {
+			t.Fatalf("expected empty correlation id, got %q", msg.Headers.CorrelationID)
 		}
 	})
 
@@ -49,8 +49,8 @@ func TestNewMessage(t *testing.T) {
 		})
 
 		msg := NewMessage[int](7, uid)
-		if msg.CorrelationID != "id-1" {
-			t.Fatalf("expected correlation id %q, got %q", "id-1", msg.CorrelationID)
+		if msg.Headers.CorrelationID != "id-1" {
+			t.Fatalf("expected correlation id %q, got %q", "id-1", msg.Headers.CorrelationID)
 		}
 	})
 
@@ -62,8 +62,8 @@ func TestNewMessage(t *testing.T) {
 		})
 
 		msg := NewMessage[int](7, uid)
-		if msg.CorrelationID != "" {
-			t.Fatalf("expected empty correlation id on error, got %q", msg.CorrelationID)
+		if msg.Headers.CorrelationID != "" {
+			t.Fatalf("expected empty correlation id on error, got %q", msg.Headers.CorrelationID)
 		}
 	})
 
@@ -71,8 +71,8 @@ func TestNewMessage(t *testing.T) {
 		t.Parallel()
 
 		msg := NewMessage[int](1, nil)
-		if msg.Source != "" {
-			t.Fatalf("expected empty source, got %q", msg.Source)
+		if msg.Headers.Source != "" {
+			t.Fatalf("expected empty source, got %q", msg.Headers.Source)
 		}
 	})
 
@@ -80,8 +80,8 @@ func TestNewMessage(t *testing.T) {
 		t.Parallel()
 
 		msg := NewMessage[int](1, nil)
-		if msg.Custom != nil {
-			t.Fatalf("expected nil Custom, got %v", msg.Custom)
+		if msg.Headers.Custom != nil {
+			t.Fatalf("expected nil Custom, got %v", msg.Headers.Custom)
 		}
 	})
 }
