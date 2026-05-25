@@ -32,9 +32,6 @@ linters:
         main:
           list-mode: original
           deny:
-            # ------------------------------------------------------------------------
-            # LOGGING
-            # ------------------------------------------------------------------------
             - pkg: "^log$"
               desc: "use log/slog instead of stdlib log"
             - pkg: "github.com/sirupsen/logrus"
@@ -43,36 +40,16 @@ linters:
               desc: "use log/slog instead of zap"
             - pkg: "github.com/rs/zerolog"
               desc: "use log/slog instead of zerolog"
-
-            # ------------------------------------------------------------------------
-            # TESTING
-            # ------------------------------------------------------------------------
             - pkg: "github.com/stretchr/testify"
               desc: "use t.Fatal/t.Fatalf instead of testify assertions"
-
-            # ------------------------------------------------------------------------
-            # LEGACY ERRORS
-            # ------------------------------------------------------------------------
             - pkg: "github.com/pkg/errors"
               desc: "use errs.Wrap(sentinel, err) with a sentinel from errors.go"
-
-            # ------------------------------------------------------------------------
-            # DEPRECATED IO
-            # ------------------------------------------------------------------------
             - pkg: "io/ioutil"
               desc: "ioutil is deprecated since Go 1.16"
-
-            # ------------------------------------------------------------------------
-            # DEPRECATED PROTOBUF
-            # ------------------------------------------------------------------------
             - pkg: "github.com/golang/protobuf"
               desc: "use google.golang.org/protobuf instead (v1 API is deprecated)"
-
-            # ------------------------------------------------------------------------
-            # BANNED DEPENDENCIES
-            # ------------------------------------------------------------------------
             - pkg: "github.com/spf13/viper"
-              desc: "viper is not allowed in authn module"
+              desc: "viper is not allowed in authn/grpc module"
 
     forbidigo:
       forbid:
@@ -87,7 +64,6 @@ linters:
 
   exclusions:
     rules:
-      # Exclude some linters from running on tests files.
       - path: _test\.go
         linters:
           - cyclop
@@ -113,13 +89,15 @@ linters:
           - nilnil
           - nolintlint
           - ineffassign
-      # sentinel errors and type compliance vars are package-level by design
-      - path: (errors|types)\.go
+      - path: types\.go
         linters:
           - gochecknoglobals
-      # Domain errors funnel through authn.ErrAuthentication which is
-      # the canonical wrap factory — additional wrapping adds no value.
-      - path: authenticator\.go
+      # authenticatedStream embeds a ctx so its Context() override can
+      # carry the principal. This is the canonical pattern documented by
+      # google.golang.org/grpc itself; the stream has only one valid
+      # lifetime so the ctx field is not a leak.
+      - path: interceptor\.go
         linters:
           - wrapcheck
           - contextcheck
+          - containedctx

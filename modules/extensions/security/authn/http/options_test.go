@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	authnhttp "github.com/guidomantilla/yarumo/security/authn/http"
+	authnhttp "github.com/guidomantilla/yarumo/extensions/security/authn/http"
 )
 
 func TestNewOptions(t *testing.T) {

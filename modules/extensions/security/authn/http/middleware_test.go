@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/guidomantilla/yarumo/security/authn"
-	authnhttp "github.com/guidomantilla/yarumo/security/authn/http"
+	authnhttp "github.com/guidomantilla/yarumo/extensions/security/authn/http"
 )
 
 // fakeAuthenticator is a test double for authn.Authenticator. The

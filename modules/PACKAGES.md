@@ -212,17 +212,17 @@ Top-level module que ofrece primitivas de mensajería tipada in-process. Expone 
 ## Módulo `modules/security/authn/`
 
 Top-level module that owns the authentication contract for the
-workspace. The root package defines the abstraction; concrete backends
-and transport adapters live in subpackages so consumers pull only the
-dependencies they actually use. Classification: **Shape B with
-subpackage isolation per backend / transport**.
+workspace. Defines the abstraction and ships one backend (`token`).
+Transport adapters live in their own top-level modules under
+`modules/extensions/security/authn/` so a consumer of the contract
+never pulls heavy transport deps unless it explicitly imports the
+adapter. Classification: **Shape B with subpackage isolation per
+backend; transports split to separate go-modules**.
 
 | Subpaquete | Shape | Externos | Qué hace |
 |---|---|---|---|
 | `authn` (root) | Shape B | — | Define `Principal` (id/name/roles/attributes), interfaz `Authenticator`, helpers `WithPrincipal` / `FromContext`, dominio de error (`AuthnType`, `ErrAuthentication`, sentinels). Sin lifecycle, sin goroutines. |
 | `authn/token` | Shape B | `crypto/tokens` (→ `golang-jwt/v5`) | `NewTokenAuthenticator(method, opts...) authn.Authenticator` que delega verificación a `*tokens.Method`. Funciona con los 15 algoritmos soportados por `crypto/tokens` (familia JWT — HS/RS/PS/ES/EdDSA — y familia opaque AEAD — OPAQUE_AES_GCM, OPAQUE_XCHACHA20_POLY1305) porque el dispatch lo hace `Method.Validate`. Mapea claims del Payload a `*Principal` con claves configurables (`WithSubjectClaim`/`WithNameClaim`/`WithRolesClaim`). |
-| `authn/http` | Shape B | `net/http` (stdlib) | `NewMiddleware(authenticator, opts...) Middleware` — server-side middleware `func(http.Handler) http.Handler` que extrae `Authorization: Bearer <token>`, valida, inyecta `*Principal` en ctx. Failure modes → 401 vía `ErrorHandler` configurable. |
-| `authn/grpc` | Shape B | `google.golang.org/grpc` | `NewUnaryInterceptor` + `NewStreamInterceptor` — interceptors gRPC que leen el token del metadata key `authorization`, validan, inyectan `*Principal`. Failure modes → `codes.Unauthenticated`. |
 
 **Tipos públicos del root:**
 - `Principal` — struct con `ID`/`Name`/`Roles`/`Attributes`.
@@ -232,9 +232,29 @@ subpackage isolation per backend / transport**.
 - `Error` + `ErrAuthentication(causes...)` factory.
 - Sentinels: `ErrAuthenticationFailed`, `ErrTokenEmpty`, `ErrTokenInvalid`, `ErrAuthenticatorNil`, `ErrHeaderMissing`, `ErrHeaderMalformed`, `ErrPrincipalNil`.
 
-**Contrato de fallo.** Todas las impls de `Authenticator` envuelven errores vía `authn.ErrAuthentication(causes...)`. Esto garantiza `errors.Is(err, authn.ErrAuthenticationFailed) == true` para cualquier fallo del módulo, permitiendo a los middlewares de transporte traducir uniformemente a 401 / `codes.Unauthenticated` sin inspeccionar errores concretos.
+**Contrato de fallo.** Todas las impls de `Authenticator` envuelven errores vía `authn.ErrAuthentication(causes...)`. Esto garantiza `errors.Is(err, authn.ErrAuthenticationFailed) == true` para cualquier fallo, permitiendo a los transport adapters traducir uniformemente a 401 / `codes.Unauthenticated` sin inspeccionar errores concretos.
 
-**Aislamiento de dependencias.** Un consumer que no usa JWT no arrastra `golang-jwt/v5`. Un consumer HTTP-only no arrastra `google.golang.org/grpc`. La regla canónica del módulo: el root sólo define abstracciones; cada backend / transporte vive en su propio subpaquete con sus deps.
+**Aislamiento de dependencias.** Un consumer del contrato no arrastra `google.golang.org/grpc` ni `net/http` server (más allá de stdlib) — esas viven en go-modules separados (`extensions/security/authn/http`, `extensions/security/authn/grpc`). El subpackage `token` queda dentro del módulo porque `crypto/tokens` es la impl canónica del workspace y vive en el mismo plano. Subpackage isolation interna ya no es suficiente: por MVS, cualquier `require` en un go.mod consumido se materializa en el `go.sum` del consumer aunque no compile el código importador — la separación en go-modules es la única que evita esto.
 
 **Sin lifecycle.** El módulo no aloja `lifecycle.Component`. Cada autenticador es un validador stateless. Si una impl futura necesitara caching o background refresh, debe ir a un top-level `modules/managed/<name>/` y exponer `Authenticator` para wirearse contra este contrato.
+
+## Módulo `modules/extensions/security/authn/http/`
+
+Transport adapter: server-side `net/http` Bearer middleware sobre el contrato `security/authn`. Módulo independiente para mantener `google.golang.org/grpc` fuera del closure de cualquier consumer HTTP-only (y viceversa).
+
+| Paquete | Shape | Externos | Qué hace |
+|---|---|---|---|
+| `http` | Shape B | `net/http` (stdlib), `security/authn` | `NewMiddleware(authenticator, opts...) Middleware` — `func(http.Handler) http.Handler` que extrae `Authorization: Bearer <token>` (header + scheme configurables), valida vía `Authenticator`, inyecta `*Principal` en `r.Context()`. Fallos → 401 vía `ErrorHandler` configurable (`WithErrorHandler`). |
+
+**Options públicas:** `WithHeaderName(string)`, `WithScheme(string)`, `WithErrorHandler(func(http.ResponseWriter, *http.Request, error))`.
+
+## Módulo `modules/extensions/security/authn/grpc/`
+
+Transport adapter: gRPC unary + stream server interceptors sobre el contrato `security/authn`. Módulo independiente para que `google.golang.org/grpc` no se filtre vía MVS a consumers que sólo necesitan el contrato o HTTP.
+
+| Paquete | Shape | Externos | Qué hace |
+|---|---|---|---|
+| `grpc` | Shape B | `google.golang.org/grpc`, `security/authn` | `NewUnaryInterceptor(authenticator, opts...)` y `NewStreamInterceptor(authenticator, opts...)` — leen el token del metadata key `authorization` (configurable), validan, inyectan `*Principal` en `ctx`. Fallos → `status.Error(codes.Unauthenticated, ...)`. Stream wraps el server stream con `Context()` override para propagar el ctx con el Principal sin reasignar. |
+
+**Options públicas:** `WithMetadataKey(string)`, `WithScheme(string)`.
 

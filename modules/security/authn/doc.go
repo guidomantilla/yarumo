@@ -33,12 +33,18 @@
 //     AEAD family (OPAQUE_AES_GCM, OPAQUE_XCHACHA20_POLY1305) — since
 //     dispatch is owned by *tokens.Method. Pulls golang-jwt/v5
 //     transitively only when imported.
-//   - authn/http: net/http middleware extracting the Authorization
-//     header, validating the bearer token, and injecting the Principal
-//     into the request ctx.
-//   - authn/grpc: gRPC unary + stream server interceptors mirroring the
-//     HTTP middleware, reading the bearer token from the "authorization"
-//     metadata key.
+//
+// Transport adapters live in their own top-level modules under
+// modules/extensions/security/authn/ so a consumer of this contract
+// never pulls google.golang.org/grpc unless it imports the grpc
+// adapter explicitly:
+//
+//   - extensions/security/authn/http: net/http server middleware
+//     extracting the Authorization header, validating the bearer
+//     token, and injecting the Principal into the request ctx.
+//   - extensions/security/authn/grpc: gRPC unary + stream server
+//     interceptors mirroring the HTTP middleware, reading the bearer
+//     token from the "authorization" metadata key.
 //
 // The package owns no lifecycle and spawns no goroutines: Authenticators
 // are stateless validators, transport middleware are pure function

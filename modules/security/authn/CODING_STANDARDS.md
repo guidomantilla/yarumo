@@ -15,16 +15,18 @@ The root `authn` package owns only the abstraction — `Principal`,
 `Authenticator`, `WithPrincipal`, `FromContext`, the error domain. Each
 transport / backend lives in its own subpackage:
 
-| Subpackage | Purpose | External deps |
+| Package | Path | External deps |
 |---|---|---|
-| `authn/token/` | Token-backed Authenticator over `modules/crypto/tokens`. Works with all 15 algorithms (JWT + opaque AEAD). | `crypto/tokens` (→ `golang-jwt/v5`). |
-| `authn/http/` | Server-side `net/http` Bearer middleware. | `net/http` (stdlib). |
-| `authn/grpc/` | Unary + stream gRPC interceptors. | `google.golang.org/grpc`. |
+| `authn/token/` | `modules/security/authn/token/` (this module) | `crypto/tokens` (→ `golang-jwt/v5`). Works with all 15 algorithms (JWT + opaque AEAD). |
+| `authn/http/` | `modules/extensions/security/authn/http/` (separate module) | `net/http` (stdlib). |
+| `authn/grpc/` | `modules/extensions/security/authn/grpc/` (separate module) | `google.golang.org/grpc`. |
 
-Consumers that wire a non-token backend never pull `golang-jwt/v5`
-into their build graph. Consumers that only serve gRPC never pull the
-HTTP package and vice versa. This is the canonical pattern: keep the
-root abstraction free of backend / transport deps.
+The two transport adapters live in their own top-level modules under
+`modules/extensions/security/authn/`. This keeps `google.golang.org/grpc`
+out of the `go.mod` graph of any consumer that does not import the gRPC
+adapter — sub-package isolation inside a single module still leaves
+heavy deps in the consumer's `go.sum` via MVS, so true isolation
+requires separate `go.mod` boundaries.
 
 ### Failure contract
 

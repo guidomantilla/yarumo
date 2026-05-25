@@ -3,7 +3,7 @@ package grpc_test
 import (
 	"testing"
 
-	authngrpc "github.com/guidomantilla/yarumo/security/authn/grpc"
+	authngrpc "github.com/guidomantilla/yarumo/extensions/security/authn/grpc"
 )
 
 func TestNewOptions(t *testing.T) {
