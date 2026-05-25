@@ -1,19 +1,32 @@
-// Package main demonstrates the in-process messaging primitives end-to-
-// end: PipelineChannel synchronous dispatch, TopicChannel async dispatch
-// with lifecycle.Build + graceful drain, and subscription cancel.
+// Package main demonstrates the four in-process messaging primitives
+// end-to-end:
+//
+//   - PipelineChannel: synchronous, sequential fan-out (fail-fast,
+//     ChainError trace).
+//   - BroadcastChannel: synchronous, parallel fan-out with barrier
+//     semantics (joined errors).
+//   - TopicChannel: asynchronous fan-out via a worker goroutine
+//     (lifecycle.Build + graceful drain).
+//   - QueueChannel: asynchronous point-to-point with worker pool and
+//     round-robin distribution.
+//
+// Each demo prints a labeled section so the runtime ordering is
+// obvious.
 package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/guidomantilla/yarumo/common/lifecycle"
 	"github.com/guidomantilla/yarumo/messaging"
 )
 
-// OrderCreated is a sample domain event published by the order service.
+// OrderCreated is a sample domain event published throughout the demos.
 type OrderCreated struct {
 	ID     string
 	Amount float64
@@ -32,10 +45,20 @@ func run() error {
 
 	err := demoPipelineChannel(ctx)
 	if err != nil {
-		return fmt.Errorf("direct channel: %w", err)
+		return fmt.Errorf("pipeline channel: %w", err)
+	}
+
+	err = demoBroadcastChannel(ctx)
+	if err != nil {
+		return fmt.Errorf("broadcast channel: %w", err)
 	}
 
 	err = demoTopicChannel(ctx)
+	if err != nil {
+		return fmt.Errorf("topic channel: %w", err)
+	}
+
+	err = demoQueueChannel(ctx)
 	if err != nil {
 		return fmt.Errorf("queue channel: %w", err)
 	}
@@ -48,16 +71,16 @@ func run() error {
 	return nil
 }
 
-// demoPipelineChannel shows synchronous in-goroutine dispatch: Send invokes
-// every subscribed handler in the caller's goroutine, in registration
-// order.
+// demoPipelineChannel shows synchronous sequential dispatch: Send
+// invokes every subscribed handler in the caller's goroutine, in
+// registration order, fail-fast.
 func demoPipelineChannel(ctx context.Context) error {
-	fmt.Println("=== PipelineChannel (synchronous) ===")
+	fmt.Println("=== PipelineChannel (sync, sequential, fail-fast) ===")
 
 	channel := messaging.NewPipelineChannel[OrderCreated]()
 
 	_, err := channel.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
-		fmt.Printf("  audit: order %s recorded\n", msg.Payload.ID)
+		fmt.Printf("  [0] audit:   order %s recorded\n", msg.Payload.ID)
 		return nil
 	})
 	if err != nil {
@@ -65,7 +88,102 @@ func demoPipelineChannel(ctx context.Context) error {
 	}
 
 	_, err = channel.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
-		fmt.Printf("  billing: charge $%.2f for order %s\n", msg.Payload.Amount, msg.Payload.ID)
+		fmt.Printf("  [1] billing: charge $%.2f for order %s\n", msg.Payload.Amount, msg.Payload.ID)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	err = channel.Send(ctx, messaging.Message[OrderCreated]{Payload: OrderCreated{ID: "ord-001", Amount: 19.95}})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println()
+
+	return nil
+}
+
+// demoBroadcastChannel shows synchronous parallel dispatch: Send
+// spawns one goroutine per subscriber, waits at a barrier for all
+// handlers to finish, and returns the joined errors of failures (no
+// fail-fast — every handler runs).
+func demoBroadcastChannel(ctx context.Context) error {
+	fmt.Println("=== BroadcastChannel (sync, parallel barrier) ===")
+
+	channel := messaging.NewBroadcastChannel[OrderCreated]()
+
+	_, err := channel.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
+		time.Sleep(40 * time.Millisecond) // slow validator
+		fmt.Printf("  [0] inventory check: ok for %s\n", msg.Payload.ID)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = channel.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
+		time.Sleep(10 * time.Millisecond) // fast validator
+		fmt.Printf("  [1] fraud check: ok for %s\n", msg.Payload.ID)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = channel.Subscribe(func(_ context.Context, _ messaging.Message[OrderCreated]) error {
+		time.Sleep(20 * time.Millisecond)
+		return errors.New("limit exceeded")
+	})
+	if err != nil {
+		return err
+	}
+
+	start := time.Now()
+	err = channel.Send(ctx, messaging.Message[OrderCreated]{Payload: OrderCreated{ID: "ord-100", Amount: 200.00}})
+	elapsed := time.Since(start)
+
+	fmt.Printf("  Send returned after %v (= max handler time, not sum)\n", elapsed.Round(time.Millisecond))
+
+	if err != nil {
+		fmt.Printf("  errors from failing handlers: %v\n", err)
+	}
+
+	fmt.Println()
+
+	return nil
+}
+
+// demoTopicChannel shows asynchronous fan-out: Send returns
+// immediately, a single worker goroutine dispatches each message to
+// every subscriber, lifecycle.Build wires Start/Stop into the app
+// lifecycle.
+func demoTopicChannel(ctx context.Context) error {
+	fmt.Println("=== TopicChannel (async fan-out + lifecycle drain) ===")
+
+	channel := messaging.NewTopicChannel[OrderCreated]("orders-topic",
+		messaging.WithBufferSize(8),
+		messaging.WithDrainTimeout(2*time.Second),
+	)
+
+	errChan := make(chan error, 1)
+
+	closeFn, err := lifecycle.Build(ctx, channel, errChan)
+	if err != nil {
+		return err
+	}
+
+	_, err = channel.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
+		fmt.Printf("  [analytics]    order %s captured\n", msg.Payload.ID)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = channel.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
+		fmt.Printf("  [notification] email queued for order %s\n", msg.Payload.ID)
 		return nil
 	})
 	if err != nil {
@@ -73,8 +191,8 @@ func demoPipelineChannel(ctx context.Context) error {
 	}
 
 	orders := []OrderCreated{
-		{ID: "ord-001", Amount: 19.95},
-		{ID: "ord-002", Amount: 249.00},
+		{ID: "ord-200", Amount: 12.50},
+		{ID: "ord-201", Amount: 75.00},
 	}
 
 	for _, order := range orders {
@@ -82,70 +200,77 @@ func demoPipelineChannel(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+
+		fmt.Printf("  Send(%s) returned immediately\n", order.ID)
 	}
+
+	closeFn(ctx, 5*time.Second)
+	<-channel.Done()
 
 	fmt.Println()
 
 	return nil
 }
 
-// demoTopicChannel shows asynchronous dispatch via a worker goroutine,
-// wired into the lifecycle with lifecycle.Build, and the graceful drain
-// performed by Stop.
-func demoTopicChannel(ctx context.Context) error {
-	fmt.Println("=== TopicChannel (async + lifecycle.Build + drain) ===")
+// demoQueueChannel shows asynchronous point-to-point distribution:
+// each message goes to EXACTLY ONE subscriber via round-robin. With 3
+// workers across 2 subscribers, six messages alternate between them.
+func demoQueueChannel(ctx context.Context) error {
+	fmt.Println("=== QueueChannel (async point-to-point round-robin) ===")
 
-	queue := messaging.NewTopicChannel[OrderCreated]("orders-queue",
-		messaging.WithBufferSize(8),
+	channel := messaging.NewQueueChannel[OrderCreated]("orders-queue",
+		messaging.WithBufferSize(16),
+		messaging.WithWorkerCount(3),
 		messaging.WithDrainTimeout(2*time.Second),
 	)
 
 	errChan := make(chan error, 1)
 
-	closeFn, err := lifecycle.Build(ctx, queue, errChan)
+	closeFn, err := lifecycle.Build(ctx, channel, errChan)
 	if err != nil {
 		return err
 	}
 
-	_, err = queue.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
-		// Simulate non-trivial work to make async visible.
-		time.Sleep(50 * time.Millisecond)
-		fmt.Printf("  fulfillment: shipped order %s ($%.2f)\n", msg.Payload.ID, msg.Payload.Amount)
+	var workerA, workerB int32
+
+	_, err = channel.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
+		n := atomic.AddInt32(&workerA, 1)
+		fmt.Printf("  worker-A picks %s  (worker-A total: %d)\n", msg.Payload.ID, n)
 		return nil
 	})
 	if err != nil {
 		return err
 	}
 
-	orders := []OrderCreated{
-		{ID: "ord-100", Amount: 12.50},
-		{ID: "ord-101", Amount: 75.00},
-		{ID: "ord-102", Amount: 320.00},
+	_, err = channel.Subscribe(func(_ context.Context, msg messaging.Message[OrderCreated]) error {
+		n := atomic.AddInt32(&workerB, 1)
+		fmt.Printf("  worker-B picks %s  (worker-B total: %d)\n", msg.Payload.ID, n)
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
-	for _, order := range orders {
-		err = queue.Send(ctx, messaging.Message[OrderCreated]{Payload: order})
+	for i := range 6 {
+		err = channel.Send(ctx, messaging.Message[OrderCreated]{Payload: OrderCreated{ID: fmt.Sprintf("ord-3%02d", i)}})
 		if err != nil {
 			return err
 		}
-
-		fmt.Printf("  enqueued order %s (Send returned immediately)\n", order.ID)
 	}
 
-	fmt.Println("  closing channel — drain pending messages...")
 	closeFn(ctx, 5*time.Second)
+	<-channel.Done()
 
-	// Wait for the worker to fully exit so its prints appear in order.
-	<-queue.Done()
-
-	fmt.Println("  drain complete; worker exited.")
+	a := atomic.LoadInt32(&workerA)
+	b := atomic.LoadInt32(&workerB)
+	fmt.Printf("  final totals: A=%d B=%d  (each msg went to exactly ONE subscriber, total=%d)\n", a, b, a+b)
 	fmt.Println()
 
 	return nil
 }
 
-// demoCancel shows that the Cancel returned by Subscribe detaches the
-// handler: subsequent Sends do not reach it.
+// demoCancel shows that the Cancel returned by Subscribe detaches
+// the handler.
 func demoCancel(ctx context.Context) error {
 	fmt.Println("=== Cancel subscription ===")
 
@@ -159,28 +284,22 @@ func demoCancel(ctx context.Context) error {
 		return err
 	}
 
-	err = channel.Send(ctx, messaging.Message[OrderCreated]{Payload: OrderCreated{ID: "ord-300"}})
+	err = channel.Send(ctx, messaging.Message[OrderCreated]{Payload: OrderCreated{ID: "ord-400"}})
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("  calling Cancel()...")
 	cancel()
 
-	err = channel.Send(ctx, messaging.Message[OrderCreated]{Payload: OrderCreated{ID: "ord-301"}})
+	err = channel.Send(ctx, messaging.Message[OrderCreated]{Payload: OrderCreated{ID: "ord-401"}})
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("  (ord-301 was sent but no handler is attached anymore)")
+	fmt.Println("  (ord-401 was sent but no handler is attached anymore)")
 
-	// Idempotent cancel: calling it again is a no-op.
 	cancel()
 	fmt.Println("  Cancel is idempotent — second call did nothing.")
-
-	// Quiet linter: assert the CloseFn type at compile time without using
-	// it (the queue demo already exercised it at runtime).
-	var _ lifecycle.CloseFn = func(context.Context, time.Duration) {}
 
 	return nil
 }
