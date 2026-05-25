@@ -2,7 +2,7 @@
 
 MODULES := modules/common modules/config modules/managed/telemetry/otel
 MODULES += modules/compute/math modules/compute/engine modules/compute/tests/acceptance
-MODULES += modules/validation modules/crypto
+MODULES += modules/validation modules/crypto modules/datasource modules/datasource/gorm
 MODULES += modules/managed/cache/redis modules/managed/cache/ristretto modules/managed/cron modules/managed/diagnostics modules/managed/grpc modules/managed/http modules/managed/keep-alive
 MODULES += modules/extensions/common/cast modules/extensions/common/http/breaker modules/extensions/common/http/limiter modules/extensions/common/http/retry modules/extensions/common/log modules/extensions/common/resilience/breaker modules/extensions/common/resilience/limiter modules/extensions/common/resilience/retry modules/extensions/common/uids modules/extensions/telemetry/otel/http modules/extensions/telemetry/otel/slog
 MODULES += sdks/decisions/core
