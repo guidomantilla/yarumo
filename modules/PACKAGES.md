@@ -209,3 +209,32 @@ Top-level module que ofrece primitivas de mensajería tipada in-process. Expone 
 - `channel_queue.go` + tests.
 - `examples/` — submódulo propio con `go.mod`, demos runnable de los 4 channels.
 
+## Módulo `modules/security/authn/`
+
+Top-level module that owns the authentication contract for the
+workspace. The root package defines the abstraction; concrete backends
+and transport adapters live in subpackages so consumers pull only the
+dependencies they actually use. Classification: **Shape B with
+subpackage isolation per backend / transport**.
+
+| Subpaquete | Shape | Externos | Qué hace |
+|---|---|---|---|
+| `authn` (root) | Shape B | — | Define `Principal` (id/name/roles/attributes), interfaz `Authenticator`, helpers `WithPrincipal` / `FromContext`, dominio de error (`AuthnType`, `ErrAuthentication`, sentinels). Sin lifecycle, sin goroutines. |
+| `authn/jwt` | Shape B | `crypto/tokens` (→ `golang-jwt/v5`) | `NewJWTAuthenticator(method, opts...) authn.Authenticator` que delega verificación a `*tokens.Method`. Mapea claims del Payload a `*Principal` con claves configurables (`WithSubjectClaim`/`WithNameClaim`/`WithRolesClaim`). |
+| `authn/http` | Shape B | `net/http` (stdlib) | `NewMiddleware(authenticator, opts...) Middleware` — server-side middleware `func(http.Handler) http.Handler` que extrae `Authorization: Bearer <token>`, valida, inyecta `*Principal` en ctx. Failure modes → 401 vía `ErrorHandler` configurable. |
+| `authn/grpc` | Shape B | `google.golang.org/grpc` | `NewUnaryInterceptor` + `NewStreamInterceptor` — interceptors gRPC que leen el token del metadata key `authorization`, validan, inyectan `*Principal`. Failure modes → `codes.Unauthenticated`. |
+
+**Tipos públicos del root:**
+- `Principal` — struct con `ID`/`Name`/`Roles`/`Attributes`.
+- `Authenticator` — interface (`Validate(ctx, token) (*Principal, error)`).
+- `WithPrincipal(ctx, *Principal) context.Context` — propagación.
+- `FromContext(ctx) (*Principal, bool)` — recuperación.
+- `Error` + `ErrAuthentication(causes...)` factory.
+- Sentinels: `ErrAuthenticationFailed`, `ErrTokenEmpty`, `ErrTokenInvalid`, `ErrAuthenticatorNil`, `ErrHeaderMissing`, `ErrHeaderMalformed`, `ErrPrincipalNil`.
+
+**Contrato de fallo.** Todas las impls de `Authenticator` envuelven errores vía `authn.ErrAuthentication(causes...)`. Esto garantiza `errors.Is(err, authn.ErrAuthenticationFailed) == true` para cualquier fallo del módulo, permitiendo a los middlewares de transporte traducir uniformemente a 401 / `codes.Unauthenticated` sin inspeccionar errores concretos.
+
+**Aislamiento de dependencias.** Un consumer que no usa JWT no arrastra `golang-jwt/v5`. Un consumer HTTP-only no arrastra `google.golang.org/grpc`. La regla canónica del módulo: el root sólo define abstracciones; cada backend / transporte vive en su propio subpaquete con sus deps.
+
+**Sin lifecycle.** El módulo no aloja `lifecycle.Component`. Cada autenticador es un validador stateless. Si una impl futura necesitara caching o background refresh, debe ir a un top-level `modules/managed/<name>/` y exponer `Authenticator` para wirearse contra este contrato.
+

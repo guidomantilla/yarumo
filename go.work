@@ -41,6 +41,7 @@ use (
 	./modules/managed/telemetry/otel
 	./modules/messaging
 	./modules/messaging/examples
+	./modules/security/authn
 	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples
