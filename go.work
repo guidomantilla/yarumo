@@ -25,6 +25,8 @@ use (
 	./modules/extensions/common/uids
 	./modules/extensions/security/authn/grpc
 	./modules/extensions/security/authn/http
+	./modules/extensions/security/authz/grpc
+	./modules/extensions/security/authz/http
 	./modules/extensions/telemetry/otel/http
 	./modules/extensions/telemetry/otel/slog
 	./modules/managed/cache/redis
@@ -44,6 +46,7 @@ use (
 	./modules/messaging
 	./modules/messaging/examples
 	./modules/security/authn
+	./modules/security/authz
 	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples

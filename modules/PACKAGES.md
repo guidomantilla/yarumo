@@ -252,3 +252,72 @@ Transport adapter: gRPC unary + stream server interceptors sobre el contrato `se
 
 **Options públicas:** `WithMetadataKey(string)`, `WithScheme(string)`.
 
+## Módulo `modules/security/authz/`
+
+Top-level module que aloja el contrato de autorización (`Policy`,
+`Decision`, `Request`, `PrincipalReader`) + utilidades libres
+(`Allow`/`Deny`/`Abstain`, `ChainPolicies`, `DefaultAuditHook`,
+`SilentAuditHook`, `LocalIP`) + la impl canónica de RBAC bajo `rbac/`.
+Transport adapters viven en sus propios go-modules bajo
+`modules/extensions/security/authz/` para que `google.golang.org/grpc`
+no se filtre vía MVS a consumers que sólo necesitan el contrato.
+Classification: **Shape B + sub-paquete `rbac/` Shape B; transports
+split a módulos hermanos**.
+
+| Paquete | Shape | Externos | Qué hace |
+|---|---|---|---|
+| `authz` (root) | Shape B | — (sólo common) | Contrato + helpers libres + dominio de error. Define `Policy`, `Decision{Effect,Reason,Metadata}`, `Request{Principal,Resource,Action,Environment}`, `PrincipalReader`/`PrincipalReaderFn`, `AuditHookFn`. Funciones libres: `NewRequest`, `Allow`/`Deny`/`Abstain`, `ChainPolicies` (devuelve struct privado `chain` que implementa Policy), `DefaultAuditHook`/`SilentAuditHook`, `LocalIP`. |
+| `authz/rbac` | Shape B | — (sólo common + contrato authz) | Engine RBAC: roles + permission strings con wildcard ("orders.*", "*"), herencia (`admin > editor > viewer`), `RolesStore` interface + `InMemoryRolesStore` concreto. `NewPolicy(opts...) authz.Policy` no-fallible (ciclos en la herencia instalan una policy deny-only). |
+
+**Tipos / símbolos públicos del root `authz`:**
+- `Effect` enum + constants `EffectAllow`/`EffectDeny`/`EffectAbstain`.
+- `Decision` struct (`Effect`/`Reason`/`Metadata`).
+- `Resource`, `Environment`, `Request` structs.
+- `Policy` interface (`Evaluate(ctx, Request) Decision`).
+- `PrincipalReader` interface + `PrincipalReaderFn` function adapter.
+- `AuditHookFn` function type.
+- Fn aliases en `types.go`: `NewRequestFn`, `AllowFn`, `DenyFn`, `AbstainFn`, `ChainPoliciesFn`, `LocalIPFn`, `ErrAuthzFn`. Compliance exhaustiva.
+- `AuthzType` const + `Error` struct + sentinels (`ErrAuthzFailed`, `ErrDenied`, `ErrAbstained`, `ErrPolicyNil`, `ErrPrincipalNil`, `ErrPrincipalReaderNil`, `ErrActionEmpty`) + `ErrAuthz(causes...)` factory.
+
+**Tipos / símbolos públicos del sub-paquete `rbac`:**
+- `RolesStore` interface (`Roles(ctx, principalID) ([]string, error)`).
+- `InMemoryRolesStore` struct (exposed) + `NewInMemoryRolesStore() *InMemoryRolesStore`.
+- `PrincipalIDResolverFn` function type.
+- `Option` / `Options` / `NewOptions` + `WithRolePermissions`/`WithInheritance`/`WithRolesStore`/`WithPrincipalIDResolver`/`WithAuditHook`.
+- `NewPolicy(opts...) authz.Policy`.
+- `RBACType` const + `Error` struct + sentinels propios (`ErrRBACFailed`, `ErrRoleEmpty`, `ErrPermissionEmpty`, `ErrInheritanceCycle`) + `ErrRBAC(causes...)` factory.
+
+**Decisiones de diseño:**
+- `Request.Principal` es `any`. authz no depende de authn; cada policy castea al tipo que su capa authn produce.
+- El acoplamiento authn↔authz se wira via `PrincipalReader` (opción en cada transport adapter), no via ctx-key hardcoded.
+- Default audit hook (`DefaultAuditHook`) loguea cada Decision por `common/log` (Allow→Info, Deny/Abstain→Warn). Opt-out vía `WithAuditHook(SilentAuditHook)`. Mismo precedente que `messaging.DefaultErrorHandler`.
+- `rbac/` queda como sub-paquete (no se fusiona al root ni se separa a hermano) porque tiene vocabulario propio rico (`RolesStore`, `InMemoryRolesStore`, `PrincipalIDResolverFn`, 5 `With*` propios, sentinels propios) que generaría colisiones (especialmente `Options`/`Option`/`NewOptions`) si se fusionara con el root.
+
+**Sin lifecycle.** No aloja `lifecycle.Component`. Stateless. Si una policy futura necesitara caching o background refresh, va a `modules/managed/<name>/` y expone `Policy` para wirearse contra este contrato.
+
+**Layout plano.** No hay subpaquetes anidados más allá de `rbac/` (excepción documentada arriba). Sub-dominios nuevos (ej. ABAC genérico, OPA adapter) van como módulos hermanos en `modules/extensions/security/authz/<x>/` si traen dep externa, o como subpaquete in-module si son contrato puro + impl trivial.
+
+## Módulo `modules/extensions/security/authz/http/`
+
+Transport adapter: HTTP server-side `Require` middleware sobre el contrato `security/authz`. Módulo independiente para evitar que `google.golang.org/grpc` (del sibling gRPC) se filtre a consumers HTTP-only.
+
+| Paquete | Shape | Externos | Qué hace |
+|---|---|---|---|
+| `http` | Shape B | `net/http` (stdlib), `security/authz` | `RequireHTTP(policy, action, opts...) func(http.Handler) http.Handler` que lee Principal del ctx vía `PrincipalReader`, llama `Policy.Evaluate`, y en Deny/Abstain responde 403 con `Decision.Reason` en body JSON (`{"error":"forbidden","reason":"..."}`) + header `X-Authz-Reason`. Falla cerrada al construir (nil policy o action vacío → panic). |
+
+**Options públicas:** `WithPrincipalReader(authz.PrincipalReader)`, `WithAuditHook(authz.AuditHookFn)`, `WithResourceResolver(HTTPResourceResolverFn)`.
+
+**Fn aliases:** `RequireHTTPFn`, `HTTPResourceResolverFn`.
+
+## Módulo `modules/extensions/security/authz/grpc/`
+
+Transport adapter: gRPC unary + stream interceptors sobre el contrato `security/authz`. Módulo independiente para mantener `google.golang.org/grpc` fuera del closure de cualquier consumer que no haga gRPC.
+
+| Paquete | Shape | Externos | Qué hace |
+|---|---|---|---|
+| `grpc` | Shape B | `google.golang.org/grpc`, `security/authz` | `RequireUnary(policy, action, opts...)` y `RequireStream(policy, action, opts...)` — leen Principal del ctx, evalúan policy, inyectan `grpc_method` en `env.Attrs`, y en Deny/Abstain devuelven `status.Error(codes.PermissionDenied, Decision.Reason)`. Falla cerrada al construir. |
+
+**Options públicas:** `WithPrincipalReader(authz.PrincipalReader)`, `WithAuditHook(authz.AuditHookFn)`, `WithResourceResolver(GRPCResourceResolverFn)`.
+
+**Fn aliases:** `RequireUnaryFn`, `RequireStreamFn`, `GRPCResourceResolverFn`.
+
