@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	cslog "github.com/guidomantilla/yarumo/extensions/common/log/slog"
+	cslog "github.com/guidomantilla/yarumo/extension/common/log/slog"
 )
 
 // Test_dump cannot be parallel: calls clog.Info which uses global logger state.

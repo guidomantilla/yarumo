@@ -1,7 +1,7 @@
 // Package main demonstrates common/uids: the abstract UID contract plus
 // the Register / Lookup / Supported registry. The package carries NO
 // concrete generators — the canonical UUID/ULID/NanoID/etc. implementations
-// live in modules/extensions/common/uids/. This demo wires a couple of
+// live in modules/extension/common/uids/. This demo wires a couple of
 // tiny in-memory generators to exercise the registry end-to-end without
 // pulling external dependencies.
 package main

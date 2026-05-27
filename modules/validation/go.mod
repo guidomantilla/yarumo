@@ -4,11 +4,11 @@ go 1.25.5
 
 replace github.com/guidomantilla/yarumo/common => ../common
 
-replace github.com/guidomantilla/yarumo/extensions/common/uids => ../extensions/common/uids
+replace github.com/guidomantilla/yarumo/extension/common/uids => ../extension/common/uids
 
 require (
 	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000
-	github.com/guidomantilla/yarumo/extensions/common/uids v0.0.0-00010101000000-000000000000
+	github.com/guidomantilla/yarumo/extension/common/uids v0.0.0-00010101000000-000000000000
 	go.yaml.in/yaml/v3 v3.0.4
 )
 

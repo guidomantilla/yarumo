@@ -4,11 +4,11 @@ go 1.25.5
 
 replace github.com/guidomantilla/yarumo/common => ../common
 
-replace github.com/guidomantilla/yarumo/extensions/common/log/slog => ../extensions/common/log/slog
+replace github.com/guidomantilla/yarumo/extension/common/log/slog => ../extension/common/log/slog
 
 require (
 	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000
-	github.com/guidomantilla/yarumo/extensions/common/log/slog v0.0.0-00010101000000-000000000000
+	github.com/guidomantilla/yarumo/extension/common/log/slog v0.0.0-00010101000000-000000000000
 	github.com/spf13/viper v1.21.0
 )
 

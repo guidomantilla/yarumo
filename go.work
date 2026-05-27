@@ -28,34 +28,34 @@ use (
 	./modules/compute/tests/acceptance
 	./modules/config
 	./modules/crypto
-	./modules/extensions/common/cast
-	./modules/extensions/common/cast/examples
-	./modules/extensions/common/http/breaker
-	./modules/extensions/common/http/breaker/examples
-	./modules/extensions/common/http/limiter
-	./modules/extensions/common/http/limiter/examples
-	./modules/extensions/common/http/retry
-	./modules/extensions/common/http/retry/examples
-	./modules/extensions/common/log/slog
-	./modules/extensions/common/log/slog/examples
-	./modules/extensions/common/log/zerolog
-	./modules/extensions/common/log/zerolog/examples
-	./modules/extensions/common/resilience/breaker
-	./modules/extensions/common/resilience/breaker/examples
-	./modules/extensions/common/resilience/limiter
-	./modules/extensions/common/resilience/limiter/examples
-	./modules/extensions/common/resilience/retry
-	./modules/extensions/common/resilience/retry/examples
-	./modules/extensions/common/uids
-	./modules/extensions/common/uids/examples
-	./modules/extensions/security/authn/grpc
-	./modules/extensions/security/authn/grpc/examples
-	./modules/extensions/security/authn/http
-	./modules/extensions/security/authn/http/examples
-	./modules/extensions/telemetry/otel/http
-	./modules/extensions/telemetry/otel/http/examples
-	./modules/extensions/telemetry/otel/slog
-	./modules/extensions/telemetry/otel/slog/examples
+	./modules/extension/common/cast
+	./modules/extension/common/cast/examples
+	./modules/extension/common/http/breaker
+	./modules/extension/common/http/breaker/examples
+	./modules/extension/common/http/limiter
+	./modules/extension/common/http/limiter/examples
+	./modules/extension/common/http/retry
+	./modules/extension/common/http/retry/examples
+	./modules/extension/common/log/slog
+	./modules/extension/common/log/slog/examples
+	./modules/extension/common/log/zerolog
+	./modules/extension/common/log/zerolog/examples
+	./modules/extension/common/resilience/breaker
+	./modules/extension/common/resilience/breaker/examples
+	./modules/extension/common/resilience/limiter
+	./modules/extension/common/resilience/limiter/examples
+	./modules/extension/common/resilience/retry
+	./modules/extension/common/resilience/retry/examples
+	./modules/extension/common/uids
+	./modules/extension/common/uids/examples
+	./modules/extension/security/authn/grpc
+	./modules/extension/security/authn/grpc/examples
+	./modules/extension/security/authn/http
+	./modules/extension/security/authn/http/examples
+	./modules/extension/telemetry/otel/http
+	./modules/extension/telemetry/otel/http/examples
+	./modules/extension/telemetry/otel/slog
+	./modules/extension/telemetry/otel/slog/examples
 	./modules/managed/cache/redis
 	./modules/managed/cache/redis/examples
 	./modules/managed/cache/ristretto

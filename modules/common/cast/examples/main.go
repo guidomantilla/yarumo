@@ -2,7 +2,7 @@
 // package declares function-type aliases (ToBoolFn, ToIntFn, ToDurationFn,
 // ...) so consumers can type-check casting implementations against the
 // contract without pulling external dependencies. Concrete implementations
-// live in modules/extensions/common/cast/ (the spf13/cast wrapper); this
+// live in modules/extension/common/cast/ (the spf13/cast wrapper); this
 // demo writes its own toy implementations and asserts they satisfy the
 // contract via the declared Fn types.
 package main

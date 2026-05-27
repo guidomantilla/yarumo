@@ -1,5 +1,5 @@
 // Package cast declares the function-type aliases for the type-safe casting
-// contract. Concrete implementations live in modules/extensions/common/cast/
+// contract. Concrete implementations live in modules/extension/common/cast/
 // (the spf13/cast wrapper); this package carries only the signatures so
 // consumers can type-check against the contract without pulling external
 // casting deps.

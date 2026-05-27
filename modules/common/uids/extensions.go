@@ -8,7 +8,7 @@ import (
 
 // methods is the package-level registry of UID generators. It starts
 // empty; callers populate it via Register. The canonical generators
-// shipped by modules/extensions/common/uids/ register themselves via that
+// shipped by modules/extension/common/uids/ register themselves via that
 // package's init().
 var methods = map[string]UID{}
 

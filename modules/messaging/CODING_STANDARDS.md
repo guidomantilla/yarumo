@@ -12,7 +12,7 @@ single interface (no canonical impl)** — see the messaging section in
 
 The four `Channel[T]` implementations follow R1 "Múltiples peers de
 una interface sin canónica": file name `channel_<variant>.go`, struct
-name `<variant>Channel`. Precedent: `extensions/common/log/slog`'s
+name `<variant>Channel`. Precedent: `extension/common/log/slog`'s
 `handler_fanout.go` + `handler_context.go`.
 
 | File | Struct |

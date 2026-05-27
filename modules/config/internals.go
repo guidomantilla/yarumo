@@ -11,7 +11,7 @@ import (
 
 	clog "github.com/guidomantilla/yarumo/common/log"
 	cutils "github.com/guidomantilla/yarumo/common/utils"
-	cslog "github.com/guidomantilla/yarumo/extensions/common/log/slog"
+	cslog "github.com/guidomantilla/yarumo/extension/common/log/slog"
 )
 
 const maskedValue = "********"

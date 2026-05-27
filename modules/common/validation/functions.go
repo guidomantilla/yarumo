@@ -304,7 +304,7 @@ func NotIn[T comparable](v T, forbidden []T) error {
 // declared in common/uids so this package does not depend on any concrete
 // UID library. Callers compose with the canonical algorithm of their choice
 // (UUID, ULID, XID, NanoID, CUID2, …) by passing the matching predicate
-// from modules/extensions/common/uids, e.g.
+// from modules/extension/common/uids, e.g.
 // validation.IsUID(s, extuids.IsUUID).
 func IsUID(s string, f cuids.IsUIDFn) error {
 	if s == "" {

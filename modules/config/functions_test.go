@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	clog "github.com/guidomantilla/yarumo/common/log"
-	cslogctx "github.com/guidomantilla/yarumo/extensions/common/log/slog/slogctx"
+	cslogctx "github.com/guidomantilla/yarumo/extension/common/log/slog/slogctx"
 )
 
 // TestDefault cannot be parallel: sets environment variables and modifies

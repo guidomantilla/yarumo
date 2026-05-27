@@ -35,14 +35,14 @@
 //     transitively only when imported.
 //
 // Transport adapters live in their own top-level modules under
-// modules/extensions/security/authn/ so a consumer of this contract
+// modules/extension/security/authn/ so a consumer of this contract
 // never pulls google.golang.org/grpc unless it imports the grpc
 // adapter explicitly:
 //
-//   - extensions/security/authn/http: net/http server middleware
+//   - extension/security/authn/http: net/http server middleware
 //     extracting the Authorization header, validating the bearer
 //     token, and injecting the Principal into the request ctx.
-//   - extensions/security/authn/grpc: gRPC unary + stream server
+//   - extension/security/authn/grpc: gRPC unary + stream server
 //     interceptors mirroring the HTTP middleware, reading the bearer
 //     token from the "authorization" metadata key.
 //

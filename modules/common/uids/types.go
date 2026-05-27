@@ -4,7 +4,7 @@
 // that wraps any UIDFn into a UID value.
 //
 // This package carries NO concrete generator implementations and NO
-// external dependencies — those live in modules/extensions/common/uids/,
+// external dependencies — those live in modules/extension/common/uids/,
 // which registers the canonical algorithms (UUIDv4/UUIDv7/ULID/NanoID/
 // CUID2/XID) into this package's registry via its package init().
 // Consumers that only need the abstract contract or to register custom

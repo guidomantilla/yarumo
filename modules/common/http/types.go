@@ -6,14 +6,14 @@
 //
 // All concrete middleware transports (rate limiting, retry, tracing,
 // metrics, auth, ...) live in their own modules under
-// modules/extensions/common/http/<name>/ so consumers pull only what
+// modules/extension/common/http/<name>/ so consumers pull only what
 // they use. Each is an http.RoundTripper that wraps another, and the
 // caller composes the chain explicitly:
 //
 //	import (
 //	    chttp        "github.com/guidomantilla/yarumo/common/http"
-//	    chttplimiter "github.com/guidomantilla/yarumo/extensions/common/http/limiter"
-//	    chttpretry   "github.com/guidomantilla/yarumo/extensions/common/http/retry"
+//	    chttplimiter "github.com/guidomantilla/yarumo/extension/common/http/limiter"
+//	    chttpretry   "github.com/guidomantilla/yarumo/extension/common/http/retry"
 //	)
 //
 //	transport := chttpretry.NewRetryTransport(

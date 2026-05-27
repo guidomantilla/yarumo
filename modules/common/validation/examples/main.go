@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	extuids "github.com/guidomantilla/yarumo/extensions/common/uids"
+	extuids "github.com/guidomantilla/yarumo/extension/common/uids"
 	cvalidation "github.com/guidomantilla/yarumo/common/validation"
 )
 

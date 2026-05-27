@@ -2,7 +2,7 @@ package validation
 
 import (
 	cvalidation "github.com/guidomantilla/yarumo/common/validation"
-	extuids "github.com/guidomantilla/yarumo/extensions/common/uids"
+	extuids "github.com/guidomantilla/yarumo/extension/common/uids"
 )
 
 // builtins is the default leaf catalogue. Each entry adapts a typed function
@@ -96,7 +96,7 @@ func ruleMustBeUndefined(value any, _ []any) error {
 }
 
 // ruleUUID delegates to cvalidation.IsUID with the UUID predicate from
-// extensions/common/uids — the engine module owns the choice of algorithm
+// extension/common/uids — the engine module owns the choice of algorithm
 // since the validation leaves are algorithm-agnostic.
 func ruleUUID(value any, _ []any) error {
 	s, err := asString(value)
@@ -108,7 +108,7 @@ func ruleUUID(value any, _ []any) error {
 }
 
 // ruleULID delegates to cvalidation.IsUID with the ULID predicate from
-// extensions/common/uids.
+// extension/common/uids.
 func ruleULID(value any, _ []any) error {
 	s, err := asString(value)
 	if err != nil {

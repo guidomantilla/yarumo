@@ -8,7 +8,7 @@ replace github.com/guidomantilla/yarumo/common => ../../../../common
 
 replace github.com/guidomantilla/yarumo/config => ../../../../config
 
-replace github.com/guidomantilla/yarumo/extensions/common/log/slog => ../../../../extensions/common/log/slog
+replace github.com/guidomantilla/yarumo/extension/common/log/slog => ../../../../extension/common/log/slog
 
 require (
 	github.com/guidomantilla/yarumo/config v0.0.0-00010101000000-000000000000
@@ -26,7 +26,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.4 // indirect
 	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000 // indirect
-	github.com/guidomantilla/yarumo/extensions/common/log/slog v0.0.0-00010101000000-000000000000 // indirect
+	github.com/guidomantilla/yarumo/extension/common/log/slog v0.0.0-00010101000000-000000000000 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect

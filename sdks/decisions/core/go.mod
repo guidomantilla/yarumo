@@ -6,14 +6,14 @@ require (
 	github.com/guidomantilla/yarumo/common v0.0.0
 	github.com/guidomantilla/yarumo/compute/engine v0.0.0
 	github.com/guidomantilla/yarumo/compute/math v0.0.0
-	github.com/guidomantilla/yarumo/extensions/common/uids v0.0.0
+	github.com/guidomantilla/yarumo/extension/common/uids v0.0.0
 )
 
 replace (
 	github.com/guidomantilla/yarumo/common => ../../../modules/common
 	github.com/guidomantilla/yarumo/compute/engine => ../../../modules/compute/engine
 	github.com/guidomantilla/yarumo/compute/math => ../../../modules/compute/math
-	github.com/guidomantilla/yarumo/extensions/common/uids => ../../../modules/extensions/common/uids
+	github.com/guidomantilla/yarumo/extension/common/uids => ../../../modules/extension/common/uids
 )
 
 require (
