@@ -12,9 +12,6 @@ func TestNewOptions(t *testing.T) {
 		t.Parallel()
 
 		opts := NewOptions()
-		if opts.name != DefaultName {
-			t.Fatalf("name = %q, want %q", opts.name, DefaultName)
-		}
 		if opts.maxRequests != DefaultMaxRequests {
 			t.Fatalf("maxRequests = %d, want %d", opts.maxRequests, DefaultMaxRequests)
 		}
@@ -36,15 +33,11 @@ func TestNewOptions(t *testing.T) {
 		t.Parallel()
 
 		opts := NewOptions(
-			WithName("svc"),
 			WithMaxRequests(5),
 			WithInterval(30*time.Second),
 			WithTimeout(5*time.Second),
 			WithConsecutiveFailures(10),
 		)
-		if opts.name != "svc" {
-			t.Fatalf("name = %q, want %q", opts.name, "svc")
-		}
 		if opts.maxRequests != 5 {
 			t.Fatalf("maxRequests = %d, want 5", opts.maxRequests)
 		}
@@ -56,28 +49,6 @@ func TestNewOptions(t *testing.T) {
 		}
 		if opts.consecutiveFailures != 10 {
 			t.Fatalf("consecutiveFailures = %d, want 10", opts.consecutiveFailures)
-		}
-	})
-}
-
-func TestWithName(t *testing.T) {
-	t.Parallel()
-
-	t.Run("sets name when non-empty", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithName("payments"))
-		if opts.name != "payments" {
-			t.Fatalf("name = %q, want %q", opts.name, "payments")
-		}
-	})
-
-	t.Run("ignores empty, preserves default", func(t *testing.T) {
-		t.Parallel()
-
-		opts := NewOptions(WithName(""))
-		if opts.name != DefaultName {
-			t.Fatalf("name = %q, want default %q", opts.name, DefaultName)
 		}
 	})
 }
@@ -185,7 +156,7 @@ func TestWithOnStateChange(t *testing.T) {
 	t.Run("sets hook when non-nil", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithOnStateChange(func(_ string, _, _ State) {}))
+		opts := NewOptions(WithOnStateChange(func(_, _ State) {}))
 		if opts.onStateChange == nil {
 			t.Fatal("onStateChange not set")
 		}

@@ -227,9 +227,8 @@ func TestBreaker_OnStateChangeHook(t *testing.T) {
 	var lastFrom, lastTo atomic.Int32
 
 	b := NewBreaker(
-		WithName("payments"),
 		WithConsecutiveFailures(1),
-		WithOnStateChange(func(_ string, from, to State) {
+		WithOnStateChange(func(from, to State) {
 			transitions.Add(1)
 			lastFrom.Store(int32(from))
 			lastTo.Store(int32(to))

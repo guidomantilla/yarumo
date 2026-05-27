@@ -16,15 +16,14 @@ func settingsFor(opts *Options) gobreaker.Settings {
 	hook := opts.onStateChange
 
 	return gobreaker.Settings{
-		Name:        opts.name,
 		MaxRequests: opts.maxRequests,
 		Interval:    opts.interval,
 		Timeout:     opts.timeout,
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
 			return counts.ConsecutiveFailures >= threshold
 		},
-		OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
-			hook(name, fromGobreakerState(from), fromGobreakerState(to))
+		OnStateChange: func(_ string, from gobreaker.State, to gobreaker.State) {
+			hook(fromGobreakerState(from), fromGobreakerState(to))
 		},
 	}
 }

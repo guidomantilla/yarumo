@@ -9,10 +9,6 @@ import (
 // transitioning to half-open; in half-open it lets through 1 probe at a
 // time; in closed it resets internal counters every 60s.
 const (
-	// DefaultName is the breaker identifier used when the caller does not
-	// configure it explicitly. The name is passed to the OnStateChange
-	// hook so a process running multiple breakers can disambiguate logs.
-	DefaultName = "breaker"
 	// DefaultMaxRequests is the max number of probes allowed in half-open
 	// state before the breaker closes or re-opens.
 	DefaultMaxRequests uint32 = 1
@@ -33,12 +29,11 @@ type Option func(opts *Options)
 // Options holds the configuration applied to a Breaker at construction
 // time. Fields are unexported; callers configure them through With*.
 type Options struct {
-	name                 string
-	maxRequests          uint32
-	interval             time.Duration
-	timeout              time.Duration
-	consecutiveFailures  uint32
-	onStateChange        OnStateChangeFn
+	maxRequests         uint32
+	interval            time.Duration
+	timeout             time.Duration
+	consecutiveFailures uint32
+	onStateChange       OnStateChangeFn
 }
 
 // NewOptions creates Options with safe defaults and applies the given
@@ -46,7 +41,6 @@ type Options struct {
 // interval, 15s timeout, 5 consecutive failures, NoopOnStateChange hook.
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		name:                DefaultName,
 		maxRequests:         DefaultMaxRequests,
 		interval:            DefaultInterval,
 		timeout:             DefaultTimeout,
@@ -59,16 +53,6 @@ func NewOptions(opts ...Option) *Options {
 	}
 
 	return options
-}
-
-// WithName sets the breaker identifier surfaced via the OnStateChange
-// hook. Empty values are ignored, preserving the default.
-func WithName(name string) Option {
-	return func(opts *Options) {
-		if name != "" {
-			opts.name = name
-		}
-	}
 }
 
 // WithMaxRequests sets the number of probes allowed in half-open state

@@ -37,10 +37,10 @@ var (
 
 // OnStateChangeFn is the hook invoked when the breaker transitions
 // between states (Closed ↔ Half-Open ↔ Open). The hook receives the
-// breaker name (configured via WithName) plus the previous and next
-// states. Implementations must be safe for concurrent use; the hook runs
-// inline on the goroutine that triggered the transition.
-type OnStateChangeFn func(name string, from State, to State)
+// previous and next states. Implementations must be safe for concurrent
+// use; the hook runs inline on the goroutine that triggered the
+// transition.
+type OnStateChangeFn func(from State, to State)
 
 // ErrBreakerFn is the function type for ErrBreaker.
 type ErrBreakerFn func(causes ...error) error

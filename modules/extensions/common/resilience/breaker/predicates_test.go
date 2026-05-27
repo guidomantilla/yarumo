@@ -10,8 +10,8 @@ func TestNoopOnStateChange(t *testing.T) {
 	t.Run("does not panic on any input", func(t *testing.T) {
 		t.Parallel()
 
-		NoopOnStateChange("", StateClosed, StateOpen)
-		NoopOnStateChange("payments", StateOpen, StateHalfOpen)
-		NoopOnStateChange("any-name", StateHalfOpen, StateClosed)
+		NoopOnStateChange(StateClosed, StateOpen)
+		NoopOnStateChange(StateOpen, StateHalfOpen)
+		NoopOnStateChange(StateHalfOpen, StateClosed)
 	})
 }

@@ -15,11 +15,11 @@ type breaker struct {
 	cb *gobreaker.CircuitBreaker
 }
 
-// NewBreaker constructs a Breaker configured via opts. Defaults: name
-// "breaker", 5 consecutive failures trip closed → open, 15s open timeout
-// before half-open, 1 probe in half-open, 60s counter reset cycle in
-// closed, no state-change hook. The returned Breaker is safe for
-// concurrent use.
+// NewBreaker constructs a Breaker configured via opts. Defaults: 5
+// consecutive failures trip closed → open, 15s open timeout before
+// half-open, 1 probe in half-open, 60s counter reset cycle in closed,
+// no state-change hook. The returned Breaker is safe for concurrent
+// use.
 func NewBreaker(opts ...Option) Breaker {
 	options := NewOptions(opts...)
 

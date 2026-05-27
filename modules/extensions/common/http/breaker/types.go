@@ -14,7 +14,6 @@
 //	)
 //
 //	b := rbreaker.NewBreaker(
-//	    rbreaker.WithName("payments"),
 //	    rbreaker.WithConsecutiveFailures(5),
 //	    rbreaker.WithTimeout(15*time.Second),
 //	)

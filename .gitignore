@@ -20,6 +20,10 @@ profile.cov
 # Local analyzer binary built by `make build-inlineassign`
 tools/lint/inlineassign/bin/
 
+# Example binaries produced by `go build` inside examples/ dirs
+# (each example dir compiles to a binary with the same name).
+**/examples/examples
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
 

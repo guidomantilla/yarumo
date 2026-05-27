@@ -7,6 +7,21 @@ use (
 	./internal/tutorials/compute-engine
 	./internal/tutorials/compute-math
 	./modules/common
+	./modules/common/assert/examples
+	./modules/common/cache/examples
+	./modules/common/cast/examples
+	./modules/common/constraints/examples
+	./modules/common/errs/examples
+	./modules/common/expressions/examples
+	./modules/common/http/examples
+	./modules/common/lifecycle/examples
+	./modules/common/log/examples
+	./modules/common/pointer/examples
+	./modules/common/random/examples
+	./modules/common/rest/examples
+	./modules/common/types/examples
+	./modules/common/uids/examples
+	./modules/common/utils/examples
 	./modules/common/validation/examples
 	./modules/compute/engine
 	./modules/compute/math
@@ -14,19 +29,33 @@ use (
 	./modules/config
 	./modules/crypto
 	./modules/extensions/common/cast
+	./modules/extensions/common/cast/examples
 	./modules/extensions/common/http/breaker
+	./modules/extensions/common/http/breaker/examples
 	./modules/extensions/common/http/limiter
+	./modules/extensions/common/http/limiter/examples
 	./modules/extensions/common/http/retry
+	./modules/extensions/common/http/retry/examples
 	./modules/extensions/common/log/slog
+	./modules/extensions/common/log/slog/examples
 	./modules/extensions/common/log/zerolog
+	./modules/extensions/common/log/zerolog/examples
 	./modules/extensions/common/resilience/breaker
+	./modules/extensions/common/resilience/breaker/examples
 	./modules/extensions/common/resilience/limiter
+	./modules/extensions/common/resilience/limiter/examples
 	./modules/extensions/common/resilience/retry
+	./modules/extensions/common/resilience/retry/examples
 	./modules/extensions/common/uids
+	./modules/extensions/common/uids/examples
 	./modules/extensions/security/authn/grpc
+	./modules/extensions/security/authn/grpc/examples
 	./modules/extensions/security/authn/http
+	./modules/extensions/security/authn/http/examples
 	./modules/extensions/telemetry/otel/http
+	./modules/extensions/telemetry/otel/http/examples
 	./modules/extensions/telemetry/otel/slog
+	./modules/extensions/telemetry/otel/slog/examples
 	./modules/managed/cache/redis
 	./modules/managed/cache/redis/examples
 	./modules/managed/cache/ristretto
@@ -40,7 +69,9 @@ use (
 	./modules/managed/http
 	./modules/managed/http/examples
 	./modules/managed/keep-alive
+	./modules/managed/keep-alive/examples
 	./modules/managed/telemetry/otel
+	./modules/managed/telemetry/otel/examples
 	./modules/messaging
 	./modules/messaging/examples
 	./modules/security/authn

@@ -209,3 +209,49 @@ func (m *Method) DecodeUnsafe(tokenString string) (Payload, error) {
 
 	return claims.Payload, nil
 }
+
+// With returns a clone of m with the given options applied on top of
+// the original configuration. The receiver m is never mutated, so the
+// predefined JWT_*/OPAQUE_* singletons remain reusable as templates.
+//
+// Typical use:
+//
+//	method := tokens.JWT_HS256.With(tokens.WithKey([]byte(secret)))
+//	token, err := method.Generate("alice", payload)
+//
+// Or chained for asymmetric variants:
+//
+//	method := tokens.JWT_RS256.With(
+//	    tokens.WithSigningKey(privKey),
+//	    tokens.WithVerifyingKey(pubKey),
+//	    tokens.WithIssuer("ltk"),
+//	)
+func (m *Method) With(options ...Option) *Method {
+	cassert.NotNil(m, "method is nil")
+
+	opts := &Options{
+		signingKey:   m.signingKey,
+		verifyingKey: m.verifyingKey,
+		issuer:       m.issuer,
+		timeout:      m.timeout,
+		generateFn:   m.generateFn,
+		validateFn:   m.validateFn,
+	}
+
+	for _, opt := range options {
+		opt(opts)
+	}
+
+	return &Method{
+		name:          m.name,
+		algorithm:     m.algorithm,
+		signingMethod: m.signingMethod,
+		cipher:        m.cipher,
+		signingKey:    opts.signingKey,
+		verifyingKey:  opts.verifyingKey,
+		issuer:        opts.issuer,
+		timeout:       opts.timeout,
+		generateFn:    opts.generateFn,
+		validateFn:    opts.validateFn,
+	}
+}
