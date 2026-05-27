@@ -12,6 +12,7 @@ replace github.com/guidomantilla/yarumo/extension/common/log/slog => ../../../lo
 
 require (
 	github.com/guidomantilla/yarumo/config v0.0.0-00010101000000-000000000000
+	github.com/guidomantilla/yarumo/core/common v0.0.0-00010101000000-000000000000
 	github.com/guidomantilla/yarumo/extension/common/resilience/retry v0.0.0-00010101000000-000000000000
 )
 
@@ -20,7 +21,6 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/guidomantilla/yarumo/core/common v0.0.0-00010101000000-000000000000 // indirect
 	github.com/guidomantilla/yarumo/extension/common/log/slog v0.0.0-00010101000000-000000000000 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect

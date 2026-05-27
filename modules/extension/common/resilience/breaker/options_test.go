@@ -3,6 +3,8 @@ package breaker
 import (
 	"testing"
 	"time"
+
+	cbreaker "github.com/guidomantilla/yarumo/core/common/resilience/breaker"
 )
 
 func TestNewOptions(t *testing.T) {
@@ -156,7 +158,7 @@ func TestWithOnStateChange(t *testing.T) {
 	t.Run("sets hook when non-nil", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithOnStateChange(func(_, _ State) {}))
+		opts := NewOptions(WithOnStateChange(func(_, _ cbreaker.State) {}))
 		if opts.onStateChange == nil {
 			t.Fatal("onStateChange not set")
 		}

@@ -1,23 +1,39 @@
 # Coding Standards — modules/extension/common/resilience/breaker/
 
 This module follows the workspace-wide standards documented in
-[`modules/core/common/CODING_STANDARDS.md`](../../../../common/CODING_STANDARDS.md).
+[`modules/core/common/CODING_STANDARDS.md`](../../../../core/common/CODING_STANDARDS.md).
+
+This module is the **implementation** of the contract defined in
+[`modules/core/common/resilience/breaker/`](../../../../core/common/resilience/breaker/).
+The contract package owns the `Breaker` interface, the `State` enum,
+the `OnStateChangeFn` hook signature, and the domain error type +
+sentinels. This package owns the concrete implementation, the
+`Option`/`Options` configuration surface, and the `gobreaker` adapter.
 
 ## Applicable Criteria
 
 | # | Criterion | Applies | Notes |
 |---|-----------|---------|-------|
 | 1 | Bullet proof review | Yes | |
-| 2 | Type Compliance | Yes | `var _ Breaker = (*breaker)(nil)` in `types.go` |
-| 3 | Public Interface, Private Implementation | Yes | Returns `Breaker`; impl `*breaker` is private |
-| 4 | Constructor returns interface | Yes | `NewBreaker(opts ...Option) Breaker` |
-| 5 | Options | Yes | `Options` + `WithName` / `WithMaxRequests` / `WithInterval` / `WithTimeout` / `WithConsecutiveFailures` / `WithOnStateChange`, defaults via `NewOptions` |
+| 2 | Type Compliance | Yes | `var _ cbreaker.Breaker = (*breaker)(nil)` in `types.go` |
+| 3 | Public Interface, Private Implementation | Yes | Returns `cbreaker.Breaker`; impl `*breaker` is private |
+| 4 | Constructor returns interface | Yes | `NewBreaker(opts ...Option) cbreaker.Breaker` |
+| 5 | Options | Yes | `Options` + `WithMaxRequests` / `WithInterval` / `WithTimeout` / `WithConsecutiveFailures` / `WithOnStateChange`, defaults via `NewOptions` |
 | 6 | Preconfigured Default Singletons | No | No registry, no facade, no singleton. Callers construct instances directly via `NewBreaker(opts...)`. |
 | 7 | Linter | Yes | |
 | 8 | Tests | Yes | |
 | 9 | Documentation | Yes | |
 
 ## Overrides
+
+### Override: Contract split
+
+The `Breaker` interface, `State` enum, `OnStateChangeFn` signature,
+domain `Error` type, and sentinels live in
+[`core/common/resilience/breaker`](../../../../core/common/resilience/breaker/).
+This package imports them under the short alias `cbreaker` so the
+local impl type `breaker` does not clash with the contract package
+name.
 
 ### Override: No registry, no pluggable
 
@@ -32,21 +48,14 @@ module deliberately drops both:
   underlying `*gobreaker.CircuitBreaker` directly; `Execute`/`State`
   delegate. No closures captured at construction.
 
-Per PACKAGES.md L68 (R2 Excepción adicional), the constructor
-`NewBreaker(opts ...Option) Breaker` does NOT declare an Fn alias or
-compliance var — the contract is fixed by the `Option` type at the entry
-and by `Breaker` + its compliance at the output. Per L32 the methods
-`Execute` and `State` do not get Fn aliases either.
-
 ### Override: Wraps `github.com/sony/gobreaker`
 
 The state machine (Closed → Open → Half-Open → Closed) and the failure
-counting come from `sony/gobreaker`. Layout follows the canonical Shape B
-template: `types.go` (interface + Fn aliases + compliance), `states.go`
-(State enum + String), `breaker.go` (private impl + `NewBreaker`),
-`options.go` (`Option`/`Options`/`With*`), `errors.go` (domain error type
-+ `ErrBreaker`), `predicates.go` (default `OnStateChangeFn` hook),
-`internals.go` (gobreaker-to-domain mappers).
+counting come from `sony/gobreaker`. Layout: `types.go` (package doc +
+compliance var), `breaker.go` (private impl + `NewBreaker`),
+`options.go` (`Option`/`Options`/`With*`), `internals.go`
+(gobreaker-to-contract mappers). Contract-level files (errors,
+predicates, states) live in the core package.
 
 ### Override: Sibling to `extension/common/resilience/{limiter,retry}`
 

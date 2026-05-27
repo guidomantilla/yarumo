@@ -6,6 +6,7 @@ import (
 	"golang.org/x/time/rate"
 
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	climiter "github.com/guidomantilla/yarumo/core/common/resilience/limiter"
 )
 
 // limiter is the private implementation of the Limiter interface. It
@@ -18,7 +19,7 @@ type limiter struct {
 // NewLimiter constructs a Limiter configured via opts. Defaults: ~10 rps
 // (one token every 100ms), burst 10. The returned Limiter is safe for
 // concurrent use.
-func NewLimiter(opts ...Option) Limiter {
+func NewLimiter(opts ...Option) climiter.Limiter {
 	options := NewOptions(opts...)
 
 	return &limiter{
@@ -40,12 +41,12 @@ func (l *limiter) Wait(ctx context.Context) error {
 	cassert.NotNil(l, "limiter is nil")
 
 	if ctx == nil {
-		return ErrWait(ErrContextNil)
+		return climiter.ErrWait(climiter.ErrContextNil)
 	}
 
 	err := l.bucket.Wait(ctx)
 	if err != nil {
-		return ErrWait(err)
+		return climiter.ErrWait(err)
 	}
 
 	return nil

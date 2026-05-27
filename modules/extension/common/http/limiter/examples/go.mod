@@ -8,6 +8,7 @@ replace github.com/guidomantilla/yarumo/extension/common/resilience/limiter => .
 
 replace github.com/guidomantilla/yarumo/core/common => ../../../../../core/common
 
+
 replace github.com/guidomantilla/yarumo/config => ../../../../../config
 
 replace github.com/guidomantilla/yarumo/extension/common/log/slog => ../../../log/slog

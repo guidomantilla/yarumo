@@ -2,6 +2,8 @@ package breaker
 
 import (
 	"time"
+
+	cbreaker "github.com/guidomantilla/yarumo/core/common/resilience/breaker"
 )
 
 // Default values for breaker configuration. The defaults yield: 5
@@ -33,7 +35,7 @@ type Options struct {
 	interval            time.Duration
 	timeout             time.Duration
 	consecutiveFailures uint32
-	onStateChange       OnStateChangeFn
+	onStateChange       cbreaker.OnStateChangeFn
 }
 
 // NewOptions creates Options with safe defaults and applies the given
@@ -45,7 +47,7 @@ func NewOptions(opts ...Option) *Options {
 		interval:            DefaultInterval,
 		timeout:             DefaultTimeout,
 		consecutiveFailures: DefaultConsecutiveFailures,
-		onStateChange:       NoopOnStateChange,
+		onStateChange:       cbreaker.NoopOnStateChange,
 	}
 
 	for _, opt := range opts {
@@ -101,7 +103,7 @@ func WithConsecutiveFailures(failures uint32) Option {
 
 // WithOnStateChange sets the hook invoked on every state transition. Nil
 // values are ignored, preserving the default (NoopOnStateChange).
-func WithOnStateChange(hook OnStateChangeFn) Option {
+func WithOnStateChange(hook cbreaker.OnStateChangeFn) Option {
 	return func(opts *Options) {
 		if hook != nil {
 			opts.onStateChange = hook

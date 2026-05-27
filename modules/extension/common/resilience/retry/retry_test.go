@@ -6,6 +6,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	cretry "github.com/guidomantilla/yarumo/core/common/resilience/retry"
 )
 
 func TestNewRetry(t *testing.T) {
@@ -68,7 +70,7 @@ func TestRetry_Do(t *testing.T) {
 		t.Parallel()
 
 		var calls atomic.Int32
-		r := NewRetry(WithAttempts(3), WithDelay(time.Millisecond), WithBackoff(BackoffFixed))
+		r := NewRetry(WithAttempts(3), WithDelay(time.Millisecond), WithBackoff(cretry.BackoffFixed))
 
 		err := r.Do(context.Background(), func() error {
 			n := calls.Add(1)
@@ -89,7 +91,7 @@ func TestRetry_Do(t *testing.T) {
 		t.Parallel()
 
 		var calls atomic.Int32
-		r := NewRetry(WithAttempts(3), WithDelay(time.Millisecond), WithBackoff(BackoffFixed))
+		r := NewRetry(WithAttempts(3), WithDelay(time.Millisecond), WithBackoff(cretry.BackoffFixed))
 
 		err := r.Do(context.Background(), func() error {
 			calls.Add(1)
@@ -98,7 +100,7 @@ func TestRetry_Do(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected non-nil error after budget exhaustion")
 		}
-		if !errors.Is(err, ErrRetryFailed) {
+		if !errors.Is(err, cretry.ErrRetryFailed) {
 			t.Fatalf("expected wrap of ErrRetryFailed, got %v", err)
 		}
 		if calls.Load() != 3 {
@@ -115,7 +117,7 @@ func TestRetry_Do(t *testing.T) {
 		r := NewRetry(
 			WithAttempts(5),
 			WithDelay(time.Millisecond),
-			WithBackoff(BackoffFixed),
+			WithBackoff(cretry.BackoffFixed),
 			WithRetryIf(func(err error) bool { return !errors.Is(err, permanent) }),
 		)
 
@@ -126,7 +128,7 @@ func TestRetry_Do(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected non-nil error")
 		}
-		if !errors.Is(err, ErrRetryFailed) {
+		if !errors.Is(err, cretry.ErrRetryFailed) {
 			t.Fatalf("expected wrap of ErrRetryFailed, got %v", err)
 		}
 		if calls.Load() != 1 {
@@ -141,7 +143,7 @@ func TestRetry_Do(t *testing.T) {
 		r := NewRetry(
 			WithAttempts(3),
 			WithDelay(time.Millisecond),
-			WithBackoff(BackoffFixed),
+			WithBackoff(cretry.BackoffFixed),
 			WithOnRetry(func(_ uint, _ error) { hookCalls.Add(1) }),
 		)
 
@@ -160,10 +162,10 @@ func TestRetry_Do(t *testing.T) {
 		r := NewRetry()
 		//nolint:staticcheck // intentionally passing nil ctx to exercise the guard
 		err := r.Do(nil, func() error { return nil })
-		if !errors.Is(err, ErrContextNil) {
+		if !errors.Is(err, cretry.ErrContextNil) {
 			t.Fatalf("expected wrap of ErrContextNil, got %v", err)
 		}
-		if !errors.Is(err, ErrRetryFailed) {
+		if !errors.Is(err, cretry.ErrRetryFailed) {
 			t.Fatalf("expected wrap of ErrRetryFailed, got %v", err)
 		}
 	})
@@ -173,10 +175,10 @@ func TestRetry_Do(t *testing.T) {
 
 		r := NewRetry()
 		err := r.Do(context.Background(), nil)
-		if !errors.Is(err, ErrFnNil) {
+		if !errors.Is(err, cretry.ErrFnNil) {
 			t.Fatalf("expected wrap of ErrFnNil, got %v", err)
 		}
-		if !errors.Is(err, ErrRetryFailed) {
+		if !errors.Is(err, cretry.ErrRetryFailed) {
 			t.Fatalf("expected wrap of ErrRetryFailed, got %v", err)
 		}
 	})
@@ -185,7 +187,7 @@ func TestRetry_Do(t *testing.T) {
 		t.Parallel()
 
 		var calls atomic.Int32
-		r := NewRetry(WithAttempts(100), WithDelay(50*time.Millisecond), WithBackoff(BackoffFixed))
+		r := NewRetry(WithAttempts(100), WithDelay(50*time.Millisecond), WithBackoff(cretry.BackoffFixed))
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
 		defer cancel()
@@ -197,7 +199,7 @@ func TestRetry_Do(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected non-nil error when ctx times out")
 		}
-		if !errors.Is(err, ErrRetryFailed) {
+		if !errors.Is(err, cretry.ErrRetryFailed) {
 			t.Fatalf("expected wrap of ErrRetryFailed, got %v", err)
 		}
 		if calls.Load() >= 100 {

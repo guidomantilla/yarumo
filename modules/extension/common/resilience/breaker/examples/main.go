@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/config"
+	cbreaker "github.com/guidomantilla/yarumo/core/common/resilience/breaker"
 	"github.com/guidomantilla/yarumo/extension/common/resilience/breaker"
 )
 
@@ -88,11 +89,11 @@ func demoTrip(ctx context.Context) error {
 	fmt.Printf("  state after %d failures: %s\n", 3, b.State())
 
 	err := b.Execute(ctx, func() error { return nil })
-	if !errors.Is(err, breaker.ErrBreakerOpen) {
+	if !errors.Is(err, cbreaker.ErrBreakerOpen) {
 		return fmt.Errorf("expected ErrBreakerOpen, got %v", err)
 	}
 
-	fmt.Printf("  rejected call wraps ErrBreakerOpen: %v\n", errors.Is(err, breaker.ErrBreakerOpen))
+	fmt.Printf("  rejected call wraps ErrBreakerOpen: %v\n", errors.Is(err, cbreaker.ErrBreakerOpen))
 
 	return nil
 }
@@ -102,7 +103,7 @@ func demoHook(ctx context.Context) error {
 	b := breaker.NewBreaker(
 		breaker.WithConsecutiveFailures(2),
 		breaker.WithTimeout(200*time.Millisecond),
-		breaker.WithOnStateChange(func(from, to breaker.State) {
+		breaker.WithOnStateChange(func(from, to cbreaker.State) {
 			fmt.Printf("  hook: %s -> %s\n", from, to)
 		}),
 	)

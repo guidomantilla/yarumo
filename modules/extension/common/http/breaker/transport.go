@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
-	rbreaker "github.com/guidomantilla/yarumo/extension/common/resilience/breaker"
+	rbreaker "github.com/guidomantilla/yarumo/core/common/resilience/breaker"
 )
 
 // breakerTransport wraps another http.RoundTripper and gates each

@@ -20,6 +20,7 @@ use (
 	./modules/core/common/http/examples
 	./modules/core/common/lifecycle/examples
 	./modules/core/common/log/examples
+	./modules/core/common/messaging/examples
 	./modules/core/common/pointer/examples
 	./modules/core/common/random/examples
 	./modules/core/common/rest/examples
@@ -28,8 +29,6 @@ use (
 	./modules/core/common/utils/examples
 	./modules/core/common/validation/examples
 	./modules/core/crypto
-	./modules/core/messaging
-	./modules/core/messaging/examples
 	./modules/core/security/authn
 	./modules/core/telemetry/otel
 	./modules/core/telemetry/otel/examples

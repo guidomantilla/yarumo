@@ -9,7 +9,8 @@ import (
 	"testing"
 	"time"
 
-	rbreaker "github.com/guidomantilla/yarumo/extension/common/resilience/breaker"
+	rbreaker "github.com/guidomantilla/yarumo/core/common/resilience/breaker"
+	rbreakerimpl "github.com/guidomantilla/yarumo/extension/common/resilience/breaker"
 )
 
 // fakeRoundTripper produces a configurable response sequence. Each call
@@ -44,7 +45,7 @@ func TestNewBreakerTransport(t *testing.T) {
 	t.Run("returns non-nil transport", func(t *testing.T) {
 		t.Parallel()
 
-		rt := NewBreakerTransport(http.DefaultTransport, rbreaker.NewBreaker())
+		rt := NewBreakerTransport(http.DefaultTransport, rbreakerimpl.NewBreaker())
 		if rt == nil {
 			t.Fatal("expected non-nil transport")
 		}
@@ -53,7 +54,7 @@ func TestNewBreakerTransport(t *testing.T) {
 	t.Run("falls back to http.DefaultTransport when base is nil", func(t *testing.T) {
 		t.Parallel()
 
-		rt := NewBreakerTransport(nil, rbreaker.NewBreaker())
+		rt := NewBreakerTransport(nil, rbreakerimpl.NewBreaker())
 		if rt == nil {
 			t.Fatal("expected non-nil transport")
 		}
@@ -67,7 +68,7 @@ func TestBreakerTransport_RoundTrip(t *testing.T) {
 		t.Parallel()
 
 		base := &fakeRoundTripper{responses: []*http.Response{okResponse()}, errors: []error{nil}}
-		rt := NewBreakerTransport(base, rbreaker.NewBreaker())
+		rt := NewBreakerTransport(base, rbreakerimpl.NewBreaker())
 
 		req, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
 		res, err := rt.RoundTrip(req)
@@ -92,7 +93,7 @@ func TestBreakerTransport_RoundTrip(t *testing.T) {
 			responses: []*http.Response{nil, nil, nil},
 			errors:    []error{boom, boom, boom},
 		}
-		b := rbreaker.NewBreaker(rbreaker.WithConsecutiveFailures(2))
+		b := rbreakerimpl.NewBreaker(rbreakerimpl.WithConsecutiveFailures(2))
 		rt := NewBreakerTransport(base, b)
 
 		req, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
@@ -113,7 +114,7 @@ func TestBreakerTransport_RoundTrip(t *testing.T) {
 			responses: []*http.Response{statusResponse(500), statusResponse(500), statusResponse(500)},
 			errors:    []error{nil, nil, nil},
 		}
-		b := rbreaker.NewBreaker(rbreaker.WithConsecutiveFailures(2))
+		b := rbreakerimpl.NewBreaker(rbreakerimpl.WithConsecutiveFailures(2))
 		rt := NewBreakerTransport(base, b, WithFailOnResponse(FailOn5xxAnd429))
 
 		req, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
@@ -146,7 +147,7 @@ func TestBreakerTransport_RoundTrip(t *testing.T) {
 			responses: []*http.Response{nil, nil, nil},
 			errors:    []error{errors.New("fail"), errors.New("fail"), errors.New("fail")},
 		}
-		b := rbreaker.NewBreaker(rbreaker.WithConsecutiveFailures(1))
+		b := rbreakerimpl.NewBreaker(rbreakerimpl.WithConsecutiveFailures(1))
 		rt := NewBreakerTransport(base, b)
 
 		req, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
@@ -181,7 +182,7 @@ func TestBreakerTransport_RoundTrip(t *testing.T) {
 			responses: []*http.Response{statusResponse(500), statusResponse(500), statusResponse(500)},
 			errors:    []error{nil, nil, nil},
 		}
-		b := rbreaker.NewBreaker(rbreaker.WithConsecutiveFailures(2))
+		b := rbreakerimpl.NewBreaker(rbreakerimpl.WithConsecutiveFailures(2))
 		rt := NewBreakerTransport(base, b) // no FailOnResponse
 
 		req, _ := http.NewRequest(http.MethodGet, "http://example.com", nil)
@@ -204,10 +205,10 @@ func TestBreakerTransport_RoundTrip(t *testing.T) {
 			responses: []*http.Response{nil, nil, okResponse()},
 			errors:    []error{errors.New("fail"), errors.New("fail"), nil},
 		}
-		b := rbreaker.NewBreaker(
-			rbreaker.WithConsecutiveFailures(2),
-			rbreaker.WithTimeout(30*time.Millisecond),
-			rbreaker.WithMaxRequests(1),
+		b := rbreakerimpl.NewBreaker(
+			rbreakerimpl.WithConsecutiveFailures(2),
+			rbreakerimpl.WithTimeout(30*time.Millisecond),
+			rbreakerimpl.WithMaxRequests(1),
 		)
 		rt := NewBreakerTransport(base, b)
 
@@ -236,7 +237,7 @@ func TestBreakerTransport_RoundTrip(t *testing.T) {
 		t.Parallel()
 
 		base := &fakeRoundTripper{responses: []*http.Response{okResponse()}, errors: []error{nil}}
-		b := rbreaker.NewBreaker()
+		b := rbreakerimpl.NewBreaker()
 		rt := NewBreakerTransport(base, b)
 
 		ctx, cancel := context.WithCancel(context.Background())

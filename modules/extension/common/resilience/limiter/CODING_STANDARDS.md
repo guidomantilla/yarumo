@@ -1,16 +1,23 @@
 # Coding Standards — modules/extension/common/resilience/limiter/
 
 This module follows the workspace-wide standards documented in
-[`modules/core/common/CODING_STANDARDS.md`](../../../../common/CODING_STANDARDS.md).
+[`modules/core/common/CODING_STANDARDS.md`](../../../../core/common/CODING_STANDARDS.md).
+
+This module is the **implementation** of the contract defined in
+[`modules/core/common/resilience/limiter/`](../../../../core/common/resilience/limiter/).
+The contract package owns the `Limiter` interface and the domain
+error type + sentinels. This package owns the concrete implementation,
+the `Option`/`Options` configuration surface, and the
+`golang.org/x/time/rate` adapter.
 
 ## Applicable Criteria
 
 | # | Criterion | Applies | Notes |
 |---|-----------|---------|-------|
 | 1 | Bullet proof review | Yes | |
-| 2 | Type Compliance | Yes | `var _ Limiter = (*limiter)(nil)` in `types.go` |
-| 3 | Public Interface, Private Implementation | Yes | Returns `Limiter`; impl `*limiter` is private |
-| 4 | Constructor returns interface | Yes | `NewLimiter(opts ...Option) Limiter` |
+| 2 | Type Compliance | Yes | `var _ climiter.Limiter = (*limiter)(nil)` in `types.go` |
+| 3 | Public Interface, Private Implementation | Yes | Returns `climiter.Limiter`; impl `*limiter` is private |
+| 4 | Constructor returns interface | Yes | `NewLimiter(opts ...Option) climiter.Limiter` |
 | 5 | Options | Yes | `Options` + `WithRate` / `WithBurst`, defaults via `NewOptions` |
 | 6 | Preconfigured Default Singletons | No | No registry, no facade, no singleton. Callers construct instances directly via `NewLimiter(opts...)`. |
 | 7 | Linter | Yes | |
@@ -18,6 +25,14 @@ This module follows the workspace-wide standards documented in
 | 9 | Documentation | Yes | |
 
 ## Overrides
+
+### Override: Contract split
+
+The `Limiter` interface, domain `Error` type, and sentinels live in
+[`core/common/resilience/limiter`](../../../../core/common/resilience/limiter/).
+This package imports them under the short alias `climiter` so the
+local impl type `limiter` does not clash with the contract package
+name.
 
 ### Override: No registry, no pluggable
 
@@ -33,21 +48,9 @@ module deliberately drops both:
   underlying `*rate.Limiter` directly; `Allow`/`Wait` are plain methods
   that delegate. No closures captured at construction.
 
-If a future consumer genuinely needs lazy-by-name discovery, build a
-registry on top of `Limiter`; do not push the indirection into this module.
-
 ### Override: Wraps `golang.org/x/time/rate.Limiter`
 
 The underlying token-bucket comes from the standard `golang.org/x/time/rate`
-library. Layout follows the canonical Shape B template: `types.go`
-(interface + Fn aliases + compliance), `limiter.go` (private impl +
-`NewLimiter`), `options.go` (`Option`/`Options`/`With*`), `errors.go`
-(domain error type + `ErrWait`). Per PACKAGES.md L68 (R2 Excepción
-adicional), the constructor `NewLimiter(opts ...Option) Limiter` does
-NOT declare an Fn alias or compliance var — the contract is already
-fixed by the `Option` type at the entry and by `Limiter` + its
-compliance at the output. The `Limiter` interface is owned by this module
-and matches the same shape as
-`extension/common/http/limiter.NewLimiterTransport` (which takes a
-preconstructed `*rate.Limiter`); the two modules cover different layers
-(generic vs HTTP-transport).
+library. Layout: `types.go` (package doc + compliance var), `limiter.go`
+(private impl + `NewLimiter`), `options.go` (`Option`/`Options`/`With*`).
+Contract-level files (errors) live in the core package.

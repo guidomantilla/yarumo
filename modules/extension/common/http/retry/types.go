@@ -1,8 +1,9 @@
 // Package retry provides an http.RoundTripper that retries failed requests
-// by delegating the retry loop to a generic retry.Retry instance from
-// modules/extension/common/resilience/retry/. This module is a thin
-// adapter: it accepts a pre-configured retry policy and wraps each
-// RoundTrip call in retrier.Do.
+// by delegating the retry loop to a generic retry.Retry instance — the
+// contract is defined in modules/core/common/resilience/retry/ and
+// implemented in modules/extension/common/resilience/retry/. This module
+// is a thin adapter: it accepts a pre-configured retry policy and wraps
+// each RoundTrip call in retrier.Do.
 //
 // Compose it like any other RoundTripper:
 //

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/config"
+	cretry "github.com/guidomantilla/yarumo/core/common/resilience/retry"
 	"github.com/guidomantilla/yarumo/extension/common/resilience/retry"
 )
 
@@ -59,7 +60,7 @@ func demoEventualSuccess(ctx context.Context) error {
 	r := retry.NewRetry(
 		retry.WithAttempts(5),
 		retry.WithDelay(20*time.Millisecond),
-		retry.WithBackoff(retry.BackoffFixed),
+		retry.WithBackoff(cretry.BackoffFixed),
 		retry.WithOnRetry(func(attempt uint, err error) {
 			fmt.Printf("  retry attempt #%d: err=%v\n", attempt, err)
 		}),
@@ -115,7 +116,7 @@ func demoFixedBackoff(ctx context.Context) error {
 	r := retry.NewRetry(
 		retry.WithAttempts(3),
 		retry.WithDelay(50*time.Millisecond),
-		retry.WithBackoff(retry.BackoffFixed),
+		retry.WithBackoff(cretry.BackoffFixed),
 	)
 
 	var last time.Time
@@ -149,7 +150,7 @@ func demoExhausted(ctx context.Context) error {
 		return fmt.Errorf("expected retry to give up")
 	}
 
-	if !errors.Is(err, retry.ErrRetryFailed) {
+	if !errors.Is(err, cretry.ErrRetryFailed) {
 		return fmt.Errorf("expected ErrRetryFailed, got %v", err)
 	}
 

@@ -10,7 +10,8 @@ import (
 	"testing"
 	"time"
 
-	rretry "github.com/guidomantilla/yarumo/extension/common/resilience/retry"
+	rretry "github.com/guidomantilla/yarumo/core/common/resilience/retry"
+	rretryimpl "github.com/guidomantilla/yarumo/extension/common/resilience/retry"
 )
 
 // fakeRoundTripper produces a configurable response sequence. Each call
@@ -43,11 +44,11 @@ func statusResponse(code int) *http.Response {
 // stay fast. attempts is the total attempt count (1 original + N-1
 // retries).
 func fastRetrier(attempts uint) rretry.Retry {
-	return rretry.NewRetry(
-		rretry.WithAttempts(attempts),
-		rretry.WithDelay(time.Millisecond),
-		rretry.WithBackoff(rretry.BackoffFixed),
-		rretry.WithRetryIf(RetryIfHttpError),
+	return rretryimpl.NewRetry(
+		rretryimpl.WithAttempts(attempts),
+		rretryimpl.WithDelay(time.Millisecond),
+		rretryimpl.WithBackoff(rretry.BackoffFixed),
+		rretryimpl.WithRetryIf(RetryIfHttpError),
 	)
 }
 
@@ -178,12 +179,12 @@ func TestRetryTransport_RoundTrip(t *testing.T) {
 		}
 
 		var hookCalls atomic.Int64
-		retrier := rretry.NewRetry(
-			rretry.WithAttempts(3),
-			rretry.WithDelay(time.Millisecond),
-			rretry.WithBackoff(rretry.BackoffFixed),
-			rretry.WithRetryIf(RetryIfHttpError),
-			rretry.WithOnRetry(func(_ uint, _ error) { hookCalls.Add(1) }),
+		retrier := rretryimpl.NewRetry(
+			rretryimpl.WithAttempts(3),
+			rretryimpl.WithDelay(time.Millisecond),
+			rretryimpl.WithBackoff(rretry.BackoffFixed),
+			rretryimpl.WithRetryIf(RetryIfHttpError),
+			rretryimpl.WithOnRetry(func(_ uint, _ error) { hookCalls.Add(1) }),
 		)
 		rt := NewRetryTransport(base, retrier, WithRetryOnResponse(RetryOn5xxAnd429))
 

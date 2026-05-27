@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	cretry "github.com/guidomantilla/yarumo/core/common/resilience/retry"
 )
 
 func TestNewOptions(t *testing.T) {
@@ -40,7 +42,7 @@ func TestNewOptions(t *testing.T) {
 			WithAttempts(5),
 			WithDelay(50*time.Millisecond),
 			WithMaxDelay(time.Second),
-			WithBackoff(BackoffFixed),
+			WithBackoff(cretry.BackoffFixed),
 		)
 		if opts.attempts != 5 {
 			t.Fatalf("attempts = %d, want 5", opts.attempts)
@@ -51,8 +53,8 @@ func TestNewOptions(t *testing.T) {
 		if opts.maxDelay != time.Second {
 			t.Fatalf("maxDelay = %v, want 1s", opts.maxDelay)
 		}
-		if opts.backoff != BackoffFixed {
-			t.Fatalf("backoff = %d, want %d", opts.backoff, BackoffFixed)
+		if opts.backoff != cretry.BackoffFixed {
+			t.Fatalf("backoff = %d, want %d", opts.backoff, cretry.BackoffFixed)
 		}
 	})
 }
@@ -147,7 +149,7 @@ func TestWithBackoff(t *testing.T) {
 	t.Run("sets known backoff types", func(t *testing.T) {
 		t.Parallel()
 
-		for _, b := range []Backoff{BackoffFixed, BackoffExponential, BackoffRandom} {
+		for _, b := range []cretry.Backoff{cretry.BackoffFixed, cretry.BackoffExponential, cretry.BackoffRandom} {
 			opts := NewOptions(WithBackoff(b))
 			if opts.backoff != b {
 				t.Fatalf("backoff = %d, want %d", opts.backoff, b)
@@ -158,7 +160,7 @@ func TestWithBackoff(t *testing.T) {
 	t.Run("ignores invalid backoff, preserves default", func(t *testing.T) {
 		t.Parallel()
 
-		opts := NewOptions(WithBackoff(Backoff(99)))
+		opts := NewOptions(WithBackoff(cretry.Backoff(99)))
 		if opts.backoff != DefaultBackoff {
 			t.Fatalf("backoff = %d, want default %d", opts.backoff, DefaultBackoff)
 		}
@@ -209,4 +211,3 @@ func TestWithOnRetry(t *testing.T) {
 		}
 	})
 }
-

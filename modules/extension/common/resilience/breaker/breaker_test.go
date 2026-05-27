@@ -6,6 +6,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	cbreaker "github.com/guidomantilla/yarumo/core/common/resilience/breaker"
 )
 
 func TestNewBreaker(t *testing.T) {
@@ -24,8 +26,8 @@ func TestNewBreaker(t *testing.T) {
 		t.Parallel()
 
 		b := NewBreaker()
-		if b.State() != StateClosed {
-			t.Fatalf("State = %s, want %s", b.State(), StateClosed)
+		if b.State() != cbreaker.StateClosed {
+			t.Fatalf("State = %s, want %s", b.State(), cbreaker.StateClosed)
 		}
 	})
 
@@ -40,10 +42,10 @@ func TestNewBreaker(t *testing.T) {
 			_ = b1.Execute(context.Background(), func() error { return errors.New("fail") })
 		}
 
-		if b1.State() != StateOpen {
+		if b1.State() != cbreaker.StateOpen {
 			t.Fatalf("b1 State = %s, want open", b1.State())
 		}
-		if b2.State() != StateClosed {
+		if b2.State() != cbreaker.StateClosed {
 			t.Fatalf("b2 State = %s, want closed (independent)", b2.State())
 		}
 	})
@@ -60,7 +62,7 @@ func TestBreaker_Execute(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Execute: %v", err)
 		}
-		if b.State() != StateClosed {
+		if b.State() != cbreaker.StateClosed {
 			t.Fatalf("State = %s, want closed", b.State())
 		}
 	})
@@ -78,10 +80,10 @@ func TestBreaker_Execute(t *testing.T) {
 		if !errors.Is(err, want) {
 			t.Fatalf("expected wrap of original cause, got %v", err)
 		}
-		if !errors.Is(err, ErrBreakerFailed) {
+		if !errors.Is(err, cbreaker.ErrBreakerFailed) {
 			t.Fatalf("expected wrap of ErrBreakerFailed, got %v", err)
 		}
-		if b.State() != StateClosed {
+		if b.State() != cbreaker.StateClosed {
 			t.Fatal("breaker should still be closed (one failure < threshold)")
 		}
 	})
@@ -95,7 +97,7 @@ func TestBreaker_Execute(t *testing.T) {
 			_ = b.Execute(context.Background(), func() error { return errors.New("fail") })
 		}
 
-		if b.State() != StateOpen {
+		if b.State() != cbreaker.StateOpen {
 			t.Fatalf("State = %s, want open", b.State())
 		}
 	})
@@ -116,7 +118,7 @@ func TestBreaker_Execute(t *testing.T) {
 			return nil
 		})
 
-		if !errors.Is(err, ErrBreakerOpen) {
+		if !errors.Is(err, cbreaker.ErrBreakerOpen) {
 			t.Fatalf("expected wrap of ErrBreakerOpen, got %v", err)
 		}
 		if ran.Load() {
@@ -136,7 +138,7 @@ func TestBreaker_Execute(t *testing.T) {
 		for range 2 {
 			_ = b.Execute(context.Background(), func() error { return errors.New("fail") })
 		}
-		if b.State() != StateOpen {
+		if b.State() != cbreaker.StateOpen {
 			t.Fatalf("expected open before timeout, got %s", b.State())
 		}
 
@@ -147,7 +149,7 @@ func TestBreaker_Execute(t *testing.T) {
 		if err != nil {
 			t.Fatalf("probe call: %v", err)
 		}
-		if b.State() != StateClosed {
+		if b.State() != cbreaker.StateClosed {
 			t.Fatalf("State = %s, want closed after successful probe", b.State())
 		}
 	})
@@ -158,10 +160,10 @@ func TestBreaker_Execute(t *testing.T) {
 		b := NewBreaker()
 		//nolint:staticcheck // intentionally passing nil ctx to exercise the guard
 		err := b.Execute(nil, func() error { return nil })
-		if !errors.Is(err, ErrContextNil) {
+		if !errors.Is(err, cbreaker.ErrContextNil) {
 			t.Fatalf("expected wrap of ErrContextNil, got %v", err)
 		}
-		if !errors.Is(err, ErrBreakerFailed) {
+		if !errors.Is(err, cbreaker.ErrBreakerFailed) {
 			t.Fatalf("expected wrap of ErrBreakerFailed, got %v", err)
 		}
 	})
@@ -171,10 +173,10 @@ func TestBreaker_Execute(t *testing.T) {
 
 		b := NewBreaker()
 		err := b.Execute(context.Background(), nil)
-		if !errors.Is(err, ErrFnNil) {
+		if !errors.Is(err, cbreaker.ErrFnNil) {
 			t.Fatalf("expected wrap of ErrFnNil, got %v", err)
 		}
-		if !errors.Is(err, ErrBreakerFailed) {
+		if !errors.Is(err, cbreaker.ErrBreakerFailed) {
 			t.Fatalf("expected wrap of ErrBreakerFailed, got %v", err)
 		}
 	})
@@ -203,7 +205,7 @@ func TestBreaker_State(t *testing.T) {
 		t.Parallel()
 
 		b := NewBreaker()
-		if b.State() != StateClosed {
+		if b.State() != cbreaker.StateClosed {
 			t.Fatalf("State = %s, want closed", b.State())
 		}
 	})
@@ -214,7 +216,7 @@ func TestBreaker_State(t *testing.T) {
 		b := NewBreaker(WithConsecutiveFailures(1))
 		_ = b.Execute(context.Background(), func() error { return errors.New("fail") })
 
-		if b.State() != StateOpen {
+		if b.State() != cbreaker.StateOpen {
 			t.Fatalf("State = %s, want open", b.State())
 		}
 	})
@@ -228,7 +230,7 @@ func TestBreaker_OnStateChangeHook(t *testing.T) {
 
 	b := NewBreaker(
 		WithConsecutiveFailures(1),
-		WithOnStateChange(func(from, to State) {
+		WithOnStateChange(func(from, to cbreaker.State) {
 			transitions.Add(1)
 			lastFrom.Store(int32(from))
 			lastTo.Store(int32(to))
@@ -240,7 +242,7 @@ func TestBreaker_OnStateChangeHook(t *testing.T) {
 	if transitions.Load() < 1 {
 		t.Fatalf("transitions = %d, want at least 1 (closed → open)", transitions.Load())
 	}
-	if State(lastTo.Load()) != StateOpen {
-		t.Fatalf("lastTo = %s, want open", State(lastTo.Load()))
+	if cbreaker.State(lastTo.Load()) != cbreaker.StateOpen {
+		t.Fatalf("lastTo = %s, want open", cbreaker.State(lastTo.Load()))
 	}
 }

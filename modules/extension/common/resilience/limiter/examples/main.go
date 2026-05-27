@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/config"
+	climiter "github.com/guidomantilla/yarumo/core/common/resilience/limiter"
 	"github.com/guidomantilla/yarumo/extension/common/resilience/limiter"
 )
 
@@ -113,7 +114,7 @@ func demoWaitCanceled(parentCtx context.Context) error {
 		return fmt.Errorf("expected Wait to fail under deadline")
 	}
 
-	if !errors.Is(err, limiter.ErrWaitFailed) {
+	if !errors.Is(err, climiter.ErrWaitFailed) {
 		return fmt.Errorf("expected ErrWaitFailed, got %v", err)
 	}
 

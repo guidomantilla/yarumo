@@ -1,5 +1,6 @@
 // Package breaker provides an http.RoundTripper that wraps each request
-// in a resilience.Breaker (from
+// in a resilience.Breaker (the contract from
+// modules/core/common/resilience/breaker/, implemented in
 // modules/extension/common/resilience/breaker/). This module is a thin
 // adapter: it accepts a pre-configured Breaker and lets the breaker
 // decide whether to admit, reject (open state), or probe (half-open

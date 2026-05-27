@@ -2,20 +2,8 @@ package retry
 
 import (
 	"time"
-)
 
-// Backoff names the delay schedule applied between retry attempts.
-type Backoff int
-
-const (
-	// BackoffFixed waits the configured Delay between every attempt.
-	BackoffFixed Backoff = iota
-	// BackoffExponential doubles the delay on each attempt, capped at
-	// MaxDelay. This is the default.
-	BackoffExponential
-	// BackoffRandom waits a uniformly random duration between 0 and Delay
-	// before each attempt.
-	BackoffRandom
+	cretry "github.com/guidomantilla/yarumo/core/common/resilience/retry"
 )
 
 // Default values for retry configuration. The defaults yield 3 attempts
@@ -30,7 +18,7 @@ const (
 	// DefaultMaxDelay is the cap on the exponential backoff growth.
 	DefaultMaxDelay = 5 * time.Second
 	// DefaultBackoff is the default delay schedule (exponential).
-	DefaultBackoff = BackoffExponential
+	DefaultBackoff = cretry.BackoffExponential
 )
 
 // Option is a functional option for configuring Options.
@@ -42,9 +30,9 @@ type Options struct {
 	attempts uint
 	delay    time.Duration
 	maxDelay time.Duration
-	backoff  Backoff
-	retryIf  RetryIfFn
-	onRetry  OnRetryFn
+	backoff  cretry.Backoff
+	retryIf  cretry.RetryIfFn
+	onRetry  cretry.OnRetryFn
 }
 
 // NewOptions creates Options with safe defaults and applies the given
@@ -56,8 +44,8 @@ func NewOptions(opts ...Option) *Options {
 		delay:    DefaultDelay,
 		maxDelay: DefaultMaxDelay,
 		backoff:  DefaultBackoff,
-		retryIf:  AlwaysRetry,
-		onRetry:  NoopOnRetry,
+		retryIf:  cretry.AlwaysRetry,
+		onRetry:  cretry.NoopOnRetry,
 	}
 
 	for _, opt := range opts {
@@ -102,10 +90,10 @@ func WithMaxDelay(maxDelay time.Duration) Option {
 
 // WithBackoff sets the delay schedule between attempts. Invalid values
 // are ignored, preserving the default.
-func WithBackoff(backoff Backoff) Option {
+func WithBackoff(backoff cretry.Backoff) Option {
 	return func(opts *Options) {
 		switch backoff {
-		case BackoffFixed, BackoffExponential, BackoffRandom:
+		case cretry.BackoffFixed, cretry.BackoffExponential, cretry.BackoffRandom:
 			opts.backoff = backoff
 		}
 	}
@@ -114,7 +102,7 @@ func WithBackoff(backoff Backoff) Option {
 // WithRetryIf sets the predicate that decides whether an error should
 // trigger a retry. Nil values are ignored, preserving the default
 // (AlwaysRetry).
-func WithRetryIf(predicate RetryIfFn) Option {
+func WithRetryIf(predicate cretry.RetryIfFn) Option {
 	return func(opts *Options) {
 		if predicate != nil {
 			opts.retryIf = predicate
@@ -124,11 +112,10 @@ func WithRetryIf(predicate RetryIfFn) Option {
 
 // WithOnRetry sets the hook invoked before each retry attempt. Nil values
 // are ignored, preserving the default (NoopOnRetry).
-func WithOnRetry(hook OnRetryFn) Option {
+func WithOnRetry(hook cretry.OnRetryFn) Option {
 	return func(opts *Options) {
 		if hook != nil {
 			opts.onRetry = hook
 		}
 	}
 }
-

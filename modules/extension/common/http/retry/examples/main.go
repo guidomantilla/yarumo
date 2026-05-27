@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/config"
+	cretry "github.com/guidomantilla/yarumo/core/common/resilience/retry"
 	chttpretry "github.com/guidomantilla/yarumo/extension/common/http/retry"
 	rretry "github.com/guidomantilla/yarumo/extension/common/resilience/retry"
 )
@@ -76,7 +77,7 @@ func demoEventualSuccess(ctx context.Context) error {
 	r := rretry.NewRetry(
 		rretry.WithAttempts(5),
 		rretry.WithDelay(20*time.Millisecond),
-		rretry.WithBackoff(rretry.BackoffFixed),
+		rretry.WithBackoff(cretry.BackoffFixed),
 		rretry.WithRetryIf(chttpretry.RetryIfHttpError),
 		rretry.WithOnRetry(func(attempt uint, err error) {
 			fmt.Printf("  retry #%d triggered by: %v\n", attempt, err)
@@ -116,7 +117,7 @@ func demoExhausted(ctx context.Context) error {
 	r := rretry.NewRetry(
 		rretry.WithAttempts(2),
 		rretry.WithDelay(10*time.Millisecond),
-		rretry.WithBackoff(rretry.BackoffFixed),
+		rretry.WithBackoff(cretry.BackoffFixed),
 		rretry.WithRetryIf(chttpretry.RetryIfHttpError),
 	)
 

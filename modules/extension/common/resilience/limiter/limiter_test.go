@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	climiter "github.com/guidomantilla/yarumo/core/common/resilience/limiter"
 )
 
 func TestNewLimiter(t *testing.T) {
@@ -99,7 +101,7 @@ func TestLimiter_Wait(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected Wait to fail when ctx times out")
 		}
-		if !errors.Is(err, ErrWaitFailed) {
+		if !errors.Is(err, climiter.ErrWaitFailed) {
 			t.Fatalf("expected wrap of ErrWaitFailed, got %v", err)
 		}
 	})
@@ -113,10 +115,10 @@ func TestLimiter_Wait(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected Wait to fail with nil ctx")
 		}
-		if !errors.Is(err, ErrContextNil) {
+		if !errors.Is(err, climiter.ErrContextNil) {
 			t.Fatalf("expected wrap of ErrContextNil, got %v", err)
 		}
-		if !errors.Is(err, ErrWaitFailed) {
+		if !errors.Is(err, climiter.ErrWaitFailed) {
 			t.Fatalf("expected wrap of ErrWaitFailed, got %v", err)
 		}
 	})

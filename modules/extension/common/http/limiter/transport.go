@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
-	rlimiter "github.com/guidomantilla/yarumo/extension/common/resilience/limiter"
+	rlimiter "github.com/guidomantilla/yarumo/core/common/resilience/limiter"
 )
 
 // limiterTransport gates each outgoing request on the provided

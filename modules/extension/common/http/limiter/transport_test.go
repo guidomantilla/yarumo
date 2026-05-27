@@ -9,7 +9,8 @@ import (
 	"testing"
 	"time"
 
-	rlimiter "github.com/guidomantilla/yarumo/extension/common/resilience/limiter"
+	rlimiter "github.com/guidomantilla/yarumo/core/common/resilience/limiter"
+	rlimiterimpl "github.com/guidomantilla/yarumo/extension/common/resilience/limiter"
 )
 
 // fakeRoundTripper records the number of RoundTrip calls and returns a
@@ -33,9 +34,9 @@ func newOKResponse() *http.Response {
 // test usage (very high rate, large burst). Used by tests that do not
 // exercise throttling behavior.
 func permissiveLimiter() rlimiter.Limiter {
-	return rlimiter.NewLimiter(
-		rlimiter.WithRate(1_000_000, time.Second),
-		rlimiter.WithBurst(1_000_000),
+	return rlimiterimpl.NewLimiter(
+		rlimiterimpl.WithRate(1_000_000, time.Second),
+		rlimiterimpl.WithBurst(1_000_000),
 	)
 }
 
@@ -111,7 +112,7 @@ func TestLimiterTransport_RoundTrip(t *testing.T) {
 
 		base := &fakeRoundTripper{response: newOKResponse()}
 		// 1 token then refill every 50ms. Second immediate request waits.
-		l := rlimiter.NewLimiter(rlimiter.WithRate(1, 50*time.Millisecond), rlimiter.WithBurst(1))
+		l := rlimiterimpl.NewLimiter(rlimiterimpl.WithRate(1, 50*time.Millisecond), rlimiterimpl.WithBurst(1))
 		rt := NewLimiterTransport(base, l)
 
 		req, err := http.NewRequest(http.MethodGet, "http://example.com", nil)
@@ -144,7 +145,7 @@ func TestLimiterTransport_RoundTrip(t *testing.T) {
 
 		base := &fakeRoundTripper{response: newOKResponse()}
 		// Effectively unreachable second token within a short context.
-		l := rlimiter.NewLimiter(rlimiter.WithRate(1, time.Hour), rlimiter.WithBurst(1))
+		l := rlimiterimpl.NewLimiter(rlimiterimpl.WithRate(1, time.Hour), rlimiterimpl.WithBurst(1))
 		rt := NewLimiterTransport(base, l)
 
 		// Burn the initial token.

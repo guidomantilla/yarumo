@@ -11,8 +11,8 @@ replace github.com/guidomantilla/yarumo/config => ../../../config
 replace github.com/guidomantilla/yarumo/extension/common/log/slog => ../../../extension/common/log/slog
 
 require (
-	github.com/guidomantilla/yarumo/core/common v0.0.0-00010101000000-000000000000
 	github.com/guidomantilla/yarumo/config v0.0.0-00010101000000-000000000000
+	github.com/guidomantilla/yarumo/core/common v0.0.0-00010101000000-000000000000
 	github.com/guidomantilla/yarumo/managed/grpc v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.79.1
 )
@@ -29,8 +29,6 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spf13/viper v1.21.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	go.opentelemetry.io/otel v1.43.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v1.43.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect

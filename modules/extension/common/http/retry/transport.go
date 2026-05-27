@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
-	rretry "github.com/guidomantilla/yarumo/extension/common/resilience/retry"
+	rretry "github.com/guidomantilla/yarumo/core/common/resilience/retry"
 )
 
 // retryTransport wraps another http.RoundTripper and delegates the retry

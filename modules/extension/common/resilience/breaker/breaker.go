@@ -6,6 +6,7 @@ import (
 	"github.com/sony/gobreaker"
 
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	cbreaker "github.com/guidomantilla/yarumo/core/common/resilience/breaker"
 )
 
 // breaker is the private implementation of the Breaker interface. It
@@ -20,7 +21,7 @@ type breaker struct {
 // half-open, 1 probe in half-open, 60s counter reset cycle in closed,
 // no state-change hook. The returned Breaker is safe for concurrent
 // use.
-func NewBreaker(opts ...Option) Breaker {
+func NewBreaker(opts ...Option) cbreaker.Breaker {
 	options := NewOptions(opts...)
 
 	return &breaker{
@@ -36,10 +37,10 @@ func (b *breaker) Execute(ctx context.Context, fn func() error) error {
 	cassert.NotNil(b, "breaker receiver is nil")
 
 	if ctx == nil {
-		return ErrBreaker(ErrContextNil)
+		return cbreaker.ErrBreaker(cbreaker.ErrContextNil)
 	}
 	if fn == nil {
-		return ErrBreaker(ErrFnNil)
+		return cbreaker.ErrBreaker(cbreaker.ErrFnNil)
 	}
 
 	_, err := b.cb.Execute(func() (any, error) {
@@ -50,14 +51,14 @@ func (b *breaker) Execute(ctx context.Context, fn func() error) error {
 		return nil, fn()
 	})
 	if err != nil {
-		return ErrBreaker(translateBreakerError(err))
+		return cbreaker.ErrBreaker(translateBreakerError(err))
 	}
 
 	return nil
 }
 
 // State returns the current operating state of the breaker.
-func (b *breaker) State() State {
+func (b *breaker) State() cbreaker.State {
 	cassert.NotNil(b, "breaker receiver is nil")
 
 	return fromGobreakerState(b.cb.State())

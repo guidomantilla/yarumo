@@ -65,7 +65,7 @@ type Cancel func()
 // invoked after the channel has been closed; Subscribe must return the
 // same error on closed channels.
 type Channel[T any] interface {
-	// Send dispatches msg to all currently subscribed handlers. The
+	// Send dispatches msg to all currently subscribed handlers. Thehipote
 	// returned error reflects the dispatch outcome per implementation:
 	// PipelineChannel propagates the first handler error; TopicChannel
 	// returns ErrClosed if the worker is no longer accepting work, or

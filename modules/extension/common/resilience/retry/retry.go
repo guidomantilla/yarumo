@@ -7,6 +7,7 @@ import (
 	retrygo "github.com/avast/retry-go/v4"
 
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	cretry "github.com/guidomantilla/yarumo/core/common/resilience/retry"
 )
 
 // retry is the private implementation of the Retry interface. It captures
@@ -16,16 +17,16 @@ type retry struct {
 	attempts uint
 	delay    time.Duration
 	maxDelay time.Duration
-	backoff  Backoff
-	retryIf  RetryIfFn
-	onRetry  OnRetryFn
+	backoff  cretry.Backoff
+	retryIf  cretry.RetryIfFn
+	onRetry  cretry.OnRetryFn
 }
 
 // NewRetry constructs a Retry configured via opts. Defaults: 3 attempts
 // (1 original + 2 retries), 100ms base delay with exponential backoff
 // capped at 5s, always retry on non-nil error, no per-attempt hook. The
 // returned Retry is safe for concurrent use.
-func NewRetry(opts ...Option) Retry {
+func NewRetry(opts ...Option) cretry.Retry {
 	options := NewOptions(opts...)
 
 	return &retry{
@@ -45,10 +46,10 @@ func (r *retry) Do(ctx context.Context, fn func() error) error {
 	cassert.NotNil(r, "retry receiver is nil")
 
 	if ctx == nil {
-		return ErrRetry(ErrContextNil)
+		return cretry.ErrRetry(cretry.ErrContextNil)
 	}
 	if fn == nil {
-		return ErrRetry(ErrFnNil)
+		return cretry.ErrRetry(cretry.ErrFnNil)
 	}
 
 	err := retrygo.Do(fn,
@@ -62,9 +63,8 @@ func (r *retry) Do(ctx context.Context, fn func() error) error {
 		retrygo.LastErrorOnly(true),
 	)
 	if err != nil {
-		return ErrRetry(err)
+		return cretry.ErrRetry(err)
 	}
 
 	return nil
 }
-

@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/core/common/lifecycle"
-	"github.com/guidomantilla/yarumo/core/messaging"
+	"github.com/guidomantilla/yarumo/core/common/messaging"
 )
 
 // OrderCreated is a sample domain event published throughout the demos.
