@@ -40,6 +40,7 @@ var (
 	_ Channel[any] = (*broadcast[any])(nil)
 	_ Channel[any] = (*topic[any])(nil)
 	_ Channel[any] = (*queue[any])(nil)
+	_ Channel[any] = (*null[any])(nil)
 )
 
 // Handler is the function type for a message handler. The Handler

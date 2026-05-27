@@ -60,6 +60,11 @@ var (
 	// registered to receive it. The message is dropped and routed
 	// through the ErrorHandler hook for visibility.
 	ErrNoSubscribers = errors.New("no subscribers registered")
+	// ErrDropped indicates a message was intentionally discarded by a
+	// sink channel (NullChannel) or an overflow policy. Surfaced
+	// through the ErrorHandler hook so test/observability paths see
+	// the drop without it being a hard error to the Send caller.
+	ErrDropped = errors.New("message dropped")
 )
 
 // StepStatus classifies the outcome of a single pipeline step in a
