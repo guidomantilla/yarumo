@@ -4,7 +4,7 @@ profile: .reports/testcoverage.out
 
 # (optional; but recommended to set)
 # When specified, reported file paths will not contain local prefix in the output
-local-prefix: "github.com/guidomantilla/yarumo/validation"
+local-prefix: "github.com/guidomantilla/yarumo/core/validation"
 
 # Holds coverage thresholds percentages, values should be in range [0-100]
 threshold:

@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/guidomantilla/yarumo/config"
-	telemetry "github.com/guidomantilla/yarumo/telemetry/otel"
+	telemetry "github.com/guidomantilla/yarumo/core/telemetry/otel"
 )
 
 func main() {

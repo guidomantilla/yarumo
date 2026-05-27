@@ -1,8 +1,8 @@
-module github.com/guidomantilla/yarumo/messaging
+module github.com/guidomantilla/yarumo/core/messaging
 
 go 1.25.5
 
-replace github.com/guidomantilla/yarumo/core/common => ../core/common
+replace github.com/guidomantilla/yarumo/core/common => ../common
 
 require github.com/guidomantilla/yarumo/core/common v0.0.0-00010101000000-000000000000
 

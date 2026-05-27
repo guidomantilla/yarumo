@@ -28,7 +28,12 @@ use (
 	./modules/core/common/utils/examples
 	./modules/core/common/validation/examples
 	./modules/core/crypto
+	./modules/core/messaging
+	./modules/core/messaging/examples
 	./modules/core/security/authn
+	./modules/core/telemetry/otel
+	./modules/core/telemetry/otel/examples
+	./modules/core/validation
 	./modules/extension/common/cache/redis
 	./modules/extension/common/cache/redis/examples
 	./modules/extension/common/cache/ristretto
@@ -71,11 +76,6 @@ use (
 	./modules/managed/http/examples
 	./modules/managed/keep-alive
 	./modules/managed/keep-alive/examples
-	./modules/messaging
-	./modules/messaging/examples
-	./modules/telemetry/otel
-	./modules/telemetry/otel/examples
-	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples
 	./tools

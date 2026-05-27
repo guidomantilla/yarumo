@@ -1,10 +1,10 @@
 .PHONY: verify-tools install tidy graph generate imports format vet lint lint-inline build-inlineassign test bench coverage check validate build ci update-dependencies
 
-MODULES := modules/core/common modules/config modules/telemetry/otel
+MODULES := modules/core/common modules/config modules/core/telemetry/otel
 MODULES += modules/compute/math modules/compute/engine modules/compute/tests/acceptance
-MODULES += modules/validation modules/core/crypto modules/core/security/authn
+MODULES += modules/core/validation modules/core/crypto modules/core/security/authn
 MODULES += modules/extension/common/cache/redis modules/extension/common/cache/ristretto modules/managed/cron modules/managed/diagnostics modules/managed/grpc modules/managed/http modules/managed/keep-alive
-MODULES += modules/messaging
+MODULES += modules/core/messaging
 MODULES += modules/extension/common/cast modules/extension/common/http/breaker modules/extension/common/http/limiter modules/extension/common/http/retry modules/extension/common/log/slog modules/extension/common/log/zerolog modules/extension/common/resilience/breaker modules/extension/common/resilience/limiter modules/extension/common/resilience/retry modules/extension/common/uids modules/extension/security/authn/grpc modules/extension/security/authn/http modules/extension/telemetry/otel/http modules/extension/telemetry/otel/slog
 MODULES += sdks/decisions/core
 ENABLE_INTERNAL := false
@@ -15,7 +15,7 @@ INTERNAL += internal/temporal/courses/edu-101-go-code internal/temporal/courses/
 # Other modules (compute/math, compute/engine) still carry historical
 # violations tracked under follow-up tickets; expand this list as those
 # modules are cleaned up.
-INLINE_MODULES := modules/core/common modules/validation modules/cache modules/core/crypto modules/messaging
+INLINE_MODULES := modules/core/common modules/core/validation modules/core/crypto modules/core/messaging
 
 # Built inlineassign binary location. The cmd/inlineassign main package lives
 # under tools/lint/inlineassign and is wired into go.work for local builds.
