@@ -1,7 +1,7 @@
 package validation
 
 import (
-	cexpressions "github.com/guidomantilla/yarumo/common/expressions"
+	cexpressions "github.com/guidomantilla/yarumo/core/common/expressions"
 )
 
 // Options holds the engine configuration.

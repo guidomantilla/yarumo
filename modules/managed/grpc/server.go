@@ -8,8 +8,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 )
 
 // server implements Server. It wraps a *grpc.Server and exposes the configured

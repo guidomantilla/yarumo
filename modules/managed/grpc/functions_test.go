@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
 )
 
 type fakeServerStream struct {

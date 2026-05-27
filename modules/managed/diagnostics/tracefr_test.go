@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
+	lctests "github.com/guidomantilla/yarumo/core/common/lifecycle/tests"
 )
 
 // TestNewTraceFlightRecorder constructs the recorder and checks basic

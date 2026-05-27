@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 	cuids "github.com/guidomantilla/yarumo/extension/common/uids"
 
 	"github.com/guidomantilla/yarumo/decisions/core/repository"

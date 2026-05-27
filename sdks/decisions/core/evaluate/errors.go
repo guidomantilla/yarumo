@@ -3,7 +3,7 @@ package evaluate
 import (
 	"errors"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 // EvaluateType is the error type for evaluate engine errors.

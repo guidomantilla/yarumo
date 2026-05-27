@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/guidomantilla/yarumo/common/expressions"
+	"github.com/guidomantilla/yarumo/core/common/expressions"
 
 	"github.com/guidomantilla/yarumo/decisions/core/evaluate"
 	"github.com/guidomantilla/yarumo/decisions/core/schema"

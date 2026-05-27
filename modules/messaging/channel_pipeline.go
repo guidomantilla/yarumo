@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // pipeline implements Channel[T] as a Transactional Handler

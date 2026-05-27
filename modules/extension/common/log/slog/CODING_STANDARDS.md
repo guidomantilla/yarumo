@@ -1,7 +1,7 @@
 # Coding Standards — modules/extension/common/log/
 
 This module follows the workspace-wide standards documented in
-[`modules/common/CODING_STANDARDS.md`](../common/CODING_STANDARDS.md).
+[`modules/core/common/CODING_STANDARDS.md`](../common/CODING_STANDARDS.md).
 
 ## Applicable Criteria
 
@@ -21,10 +21,10 @@ This module follows the workspace-wide standards documented in
 
 ### Override: Top-level module (not under common/)
 
-`modules/common/` is a pure library and its packages must remain free of
+`modules/core/common/` is a pure library and its packages must remain free of
 process-level lifecycle state. The root `log/` package carries a
 process-global default logger slot that callers `Use` once during startup.
-For symmetry with `modules/managed/telemetry/otel/` (its primary downstream
+For symmetry with `modules/telemetry/otel/` (its primary downstream
 consumer) and to keep the swap-on-startup contract obvious from the
 import path, `log/` lives at the top-level module layer.
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 func TestErrMarkov_wraps_sentinels(t *testing.T) {

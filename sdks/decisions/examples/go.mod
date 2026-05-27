@@ -3,7 +3,7 @@ module github.com/guidomantilla/yarumo/decisions/examples
 go 1.25.5
 
 require (
-	github.com/guidomantilla/yarumo/common v0.0.0
+	github.com/guidomantilla/yarumo/core/common v0.0.0
 	github.com/guidomantilla/yarumo/compute/engine v0.0.0
 	github.com/guidomantilla/yarumo/compute/math v0.0.0
 	github.com/guidomantilla/yarumo/decisions/core v0.0.0
@@ -15,7 +15,7 @@ require (
 )
 
 replace (
-	github.com/guidomantilla/yarumo/common => ../../../modules/common
+	github.com/guidomantilla/yarumo/core/common => ../../../modules/core/common
 	github.com/guidomantilla/yarumo/compute/engine => ../../../modules/compute/engine
 	github.com/guidomantilla/yarumo/compute/math => ../../../modules/compute/math
 	github.com/guidomantilla/yarumo/decisions/core => ../core

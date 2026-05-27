@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	cexpressions "github.com/guidomantilla/yarumo/common/expressions"
+	cexpressions "github.com/guidomantilla/yarumo/core/common/expressions"
 
 	"github.com/guidomantilla/yarumo/decisions/core/explain"
 	"github.com/guidomantilla/yarumo/decisions/core/schema"

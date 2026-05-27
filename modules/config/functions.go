@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/viper"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	clog "github.com/guidomantilla/yarumo/common/log"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
 )
 
 // Default configures the application's cross-cutting concerns: environment

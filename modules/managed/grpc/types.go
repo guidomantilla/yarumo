@@ -23,7 +23,7 @@ package grpc
 import (
 	"google.golang.org/grpc"
 
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 )
 
 var (

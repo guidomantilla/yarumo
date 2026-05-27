@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 // BreakerTransportType is the domain type tag attached to every Error

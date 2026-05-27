@@ -1,7 +1,7 @@
 # Coding Standards — modules/managed/diagnostics/
 
 This module follows the workspace-wide standards documented in
-[`modules/common/CODING_STANDARDS.md`](../../common/CODING_STANDARDS.md).
+[`modules/core/common/CODING_STANDARDS.md`](../../common/CODING_STANDARDS.md).
 
 ## Applicable Criteria
 
@@ -21,13 +21,13 @@ This module follows the workspace-wide standards documented in
 
 ### Override: Top-level module (not under common/)
 
-`modules/common/` is a pure library with no lifecycle opinions. The
+`modules/core/common/` is a pure library with no lifecycle opinions. The
 `TraceFlightRecorder` and `BlockProfiling` types returned here own
 lifecycle: `Start(ctx)` enables a runtime hook (flight recorder buffer
 or block-profile sampling) that must be released via `Stop(ctx)`. That
-violates the "no lifecycle" clause of `modules/common/`. The diagnostics
+violates the "no lifecycle" clause of `modules/core/common/`. The diagnostics
 module lives at the top-level module layer alongside `modules/managed/cron/`,
-`modules/managed/grpc/`, `modules/managed/http/`, `modules/managed/`, `modules/managed/cache/`,
+`modules/managed/grpc/`, `modules/managed/http/`, `modules/managed/`, `modules/extension/common/cache/`,
 `modules/managed/telemetry/` and `modules/config/`.
 
 ### Override: Shape B (canonical Shape B layout)

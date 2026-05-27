@@ -26,7 +26,7 @@ import (
 
 	"github.com/guidomantilla/yarumo/config"
 	authngrpc "github.com/guidomantilla/yarumo/extension/security/authn/grpc"
-	"github.com/guidomantilla/yarumo/security/authn"
+	"github.com/guidomantilla/yarumo/core/security/authn"
 )
 
 const bufSize = 1024 * 1024

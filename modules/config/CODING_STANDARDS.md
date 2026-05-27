@@ -1,6 +1,6 @@
 # Coding Standards
 
-This package follows the conventions defined in [`modules/common/CODING_STANDARDS.md`](../common/CODING_STANDARDS.md) with the overrides documented below.
+This package follows the conventions defined in [`modules/core/common/CODING_STANDARDS.md`](../common/CODING_STANDARDS.md) with the overrides documented below.
 
 ## Applicable Criteria
 

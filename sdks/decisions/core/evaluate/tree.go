@@ -3,8 +3,8 @@ package evaluate
 import (
 	"context"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cexpressions "github.com/guidomantilla/yarumo/common/expressions"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
+	cexpressions "github.com/guidomantilla/yarumo/core/common/expressions"
 
 	"github.com/guidomantilla/yarumo/decisions/core/explain"
 	"github.com/guidomantilla/yarumo/decisions/core/schema"

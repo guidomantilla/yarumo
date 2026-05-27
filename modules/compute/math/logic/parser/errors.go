@@ -4,8 +4,8 @@ package parser
 import (
 	"errors"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 // Error domain type for parser errors.

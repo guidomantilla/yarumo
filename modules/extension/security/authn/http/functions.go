@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	"github.com/guidomantilla/yarumo/security/authn"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	"github.com/guidomantilla/yarumo/core/security/authn"
 )
 
 // NewMiddleware returns a server-side net/http Middleware that

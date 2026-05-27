@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	rbreaker "github.com/guidomantilla/yarumo/extension/common/resilience/breaker"
 )
 

@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 // RepositoryType is the error type for repository errors.

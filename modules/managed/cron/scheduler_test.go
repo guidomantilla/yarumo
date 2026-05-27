@@ -7,7 +7,7 @@ import (
 
 	cron "github.com/robfig/cron/v3"
 
-	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
+	lctests "github.com/guidomantilla/yarumo/core/common/lifecycle/tests"
 )
 
 func TestNewScheduler(t *testing.T) {

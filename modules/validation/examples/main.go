@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 
 	"github.com/guidomantilla/yarumo/validation"
 )

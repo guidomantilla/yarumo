@@ -138,7 +138,7 @@ linters:
       ignore-package-globs:
         - github.com/guidomantilla/yarumo/compute/engine/*
         - github.com/guidomantilla/yarumo/compute/math/*
-        - github.com/guidomantilla/yarumo/common/expressions
+        - github.com/guidomantilla/yarumo/core/common/expressions
 
     funlen:
       lines: 220
@@ -163,4 +163,4 @@ linters:
         - github.com/guidomantilla/yarumo/compute/engine/fuzzy/rules.Rule
         - github.com/guidomantilla/yarumo/compute/math/logic.Formula
         - github.com/guidomantilla/yarumo/compute/math/fuzzy.MembershipFn
-        - github.com/guidomantilla/yarumo/common/expressions.Expr
+        - github.com/guidomantilla/yarumo/core/common/expressions.Expr

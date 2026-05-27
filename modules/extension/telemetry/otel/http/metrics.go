@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // metricsTransport wraps a base RoundTripper and records a counter and a

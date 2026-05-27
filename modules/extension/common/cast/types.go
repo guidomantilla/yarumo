@@ -5,7 +5,7 @@
 package cast
 
 import (
-	ccast "github.com/guidomantilla/yarumo/common/cast"
+	ccast "github.com/guidomantilla/yarumo/core/common/cast"
 )
 
 var (

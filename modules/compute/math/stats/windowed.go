@@ -3,7 +3,7 @@ package stats
 import (
 	"math"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // WindowedStats computes statistics over a sliding window using a circular buffer.

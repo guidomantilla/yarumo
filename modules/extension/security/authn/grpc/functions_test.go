@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/guidomantilla/yarumo/security/authn"
+	"github.com/guidomantilla/yarumo/core/security/authn"
 )
 
 // fakeAuthenticator is a test double for authn.Authenticator.

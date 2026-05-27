@@ -1,7 +1,7 @@
 # Coding Standards — modules/managed/cron/
 
 This module follows the workspace-wide standards documented in
-[`modules/common/CODING_STANDARDS.md`](../../common/CODING_STANDARDS.md).
+[`modules/core/common/CODING_STANDARDS.md`](../../common/CODING_STANDARDS.md).
 
 ## Applicable Criteria
 
@@ -21,13 +21,13 @@ This module follows the workspace-wide standards documented in
 
 ### Override: Top-level module (not under common/)
 
-`modules/common/` is a pure library with no lifecycle opinions. The
+`modules/core/common/` is a pure library with no lifecycle opinions. The
 `Scheduler` interface returned by `NewScheduler` is a lifecycle-owning
 abstraction — `Start()` launches a goroutine, `Stop()` halts it and
 returns a context that completes when running jobs finish. For that
 reason the cron wrapper lives at the top-level module layer alongside
-`modules/managed/`, `modules/managed/grpc/`, `modules/managed/cache/`, `modules/managed/telemetry/`
-and `modules/config/`, never inside `modules/common/`.
+`modules/managed/`, `modules/managed/grpc/`, `modules/extension/common/cache/`, `modules/managed/telemetry/`
+and `modules/config/`, never inside `modules/core/common/`.
 
 ### Override: Exception shape (thin wrapper over external library)
 

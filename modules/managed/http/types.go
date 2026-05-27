@@ -19,7 +19,7 @@
 package http
 
 import (
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 )
 
 var (

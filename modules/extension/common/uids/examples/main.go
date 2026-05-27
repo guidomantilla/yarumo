@@ -14,7 +14,7 @@ import (
 	"os"
 	"sort"
 
-	cuids "github.com/guidomantilla/yarumo/common/uids"
+	cuids "github.com/guidomantilla/yarumo/core/common/uids"
 	"github.com/guidomantilla/yarumo/config"
 	uids "github.com/guidomantilla/yarumo/extension/common/uids"
 )

@@ -24,7 +24,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 	"github.com/guidomantilla/yarumo/config"
 	cghttp "github.com/guidomantilla/yarumo/managed/http"
 )

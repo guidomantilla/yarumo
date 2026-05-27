@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // broadcastChannel implements Channel[T] as a synchronous parallel

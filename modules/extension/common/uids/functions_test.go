@@ -7,7 +7,7 @@ import (
 	ulidpkg "github.com/oklog/ulid/v2"
 	"github.com/rs/xid"
 
-	cuids "github.com/guidomantilla/yarumo/common/uids"
+	cuids "github.com/guidomantilla/yarumo/core/common/uids"
 )
 
 func generateFor(t *testing.T, name string) string {

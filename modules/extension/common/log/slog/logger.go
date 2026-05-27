@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
 )
 
 // osExit is an indirection to os.Exit to allow error-path testing.

@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // authenticatedStream wraps a grpc.ServerStream so its Context()

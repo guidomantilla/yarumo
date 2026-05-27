@@ -1,6 +1,6 @@
 package stats
 
-import cassert "github.com/guidomantilla/yarumo/common/assert"
+import cassert "github.com/guidomantilla/yarumo/core/common/assert"
 
 // RunningStats computes mean and variance incrementally using Welford's online algorithm.
 type RunningStats struct {

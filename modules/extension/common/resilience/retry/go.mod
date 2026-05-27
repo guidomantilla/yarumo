@@ -2,11 +2,11 @@ module github.com/guidomantilla/yarumo/extension/common/resilience/retry
 
 go 1.25.5
 
-replace github.com/guidomantilla/yarumo/common => ../../../../common
+replace github.com/guidomantilla/yarumo/core/common => ../../../../core/common
 
 require (
 	github.com/avast/retry-go/v4 v4.7.0
-	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000
+	github.com/guidomantilla/yarumo/core/common v0.0.0-00010101000000-000000000000
 )
 
 require (

@@ -4,8 +4,8 @@ import (
 	"context"
 	"maps"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cexpressions "github.com/guidomantilla/yarumo/common/expressions"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
+	cexpressions "github.com/guidomantilla/yarumo/core/common/expressions"
 	bengine "github.com/guidomantilla/yarumo/compute/engine/bayesian/engine"
 	"github.com/guidomantilla/yarumo/compute/engine/bayesian/evidence"
 	cengine "github.com/guidomantilla/yarumo/compute/engine/deductive/engine"

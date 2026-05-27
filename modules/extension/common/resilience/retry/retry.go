@@ -6,7 +6,7 @@ import (
 
 	retrygo "github.com/avast/retry-go/v4"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // retry is the private implementation of the Retry interface. It captures

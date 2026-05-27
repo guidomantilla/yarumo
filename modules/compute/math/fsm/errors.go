@@ -3,7 +3,7 @@ package fsm
 import (
 	"errors"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 // Error domain type for fsm errors.

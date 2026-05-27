@@ -3,7 +3,7 @@ package messaging
 import (
 	"time"
 
-	cuids "github.com/guidomantilla/yarumo/common/uids"
+	cuids "github.com/guidomantilla/yarumo/core/common/uids"
 )
 
 // Message is the typed envelope dispatched through a Channel[T]. It pairs

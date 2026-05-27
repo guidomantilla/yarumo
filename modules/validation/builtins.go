@@ -1,7 +1,7 @@
 package validation
 
 import (
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/core/common/validation"
 	extuids "github.com/guidomantilla/yarumo/extension/common/uids"
 )
 

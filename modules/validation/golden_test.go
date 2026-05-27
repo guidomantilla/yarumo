@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/core/common/validation"
 )
 
 // goldenRuleset loads a YAML ruleset from fixtures/golden/ and returns the

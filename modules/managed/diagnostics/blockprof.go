@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"sync"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // blockprof is the canonical BlockProfiling implementation. It owns

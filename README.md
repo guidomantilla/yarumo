@@ -12,10 +12,10 @@ Yarumo is organized as a Go workspace with independent modules that can be impor
 
 | Module | Import Path | Description |
 |--------|-------------|-------------|
-| **common** | `github.com/guidomantilla/yarumo/common` | Core library — 16 packages covering assertions, crypto, errors, HTTP, gRPC, logging, and more |
+| **common** | `github.com/guidomantilla/yarumo/core/common` | Core library — 16 packages covering assertions, crypto, errors, HTTP, gRPC, logging, and more |
 | **config** | `github.com/guidomantilla/yarumo/config` | One-shot bootstrap for application configuration via environment variables |
 | **managed** | `github.com/guidomantilla/yarumo/managed` | Lifecycle management for components (Start/Stop/Done) |
-| **managed/telemetry/otel** | `github.com/guidomantilla/yarumo/managed/telemetry/otel` | OpenTelemetry setup for tracing, metrics, and logging |
+| **managed/telemetry/otel** | `github.com/guidomantilla/yarumo/telemetry/otel` | OpenTelemetry setup for tracing, metrics, and logging |
 | **maths** | `github.com/guidomantilla/yarumo/maths` | Mathematical primitives — propositional logic, discrete probability, fuzzy logic |
 | **inference** | `github.com/guidomantilla/yarumo/inference` | Multi-paradigm inference engines — classical, bayesian, fuzzy |
 
@@ -89,7 +89,7 @@ telemetry/otel    managed    config
 ### Install
 
 ```bash
-go get github.com/guidomantilla/yarumo/common@latest
+go get github.com/guidomantilla/yarumo/core/common@latest
 go get github.com/guidomantilla/yarumo/maths@latest
 go get github.com/guidomantilla/yarumo/inference@latest
 ```

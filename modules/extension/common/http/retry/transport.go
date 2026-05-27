@@ -3,7 +3,7 @@ package retry
 import (
 	"net/http"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	rretry "github.com/guidomantilla/yarumo/extension/common/resilience/retry"
 )
 

@@ -35,7 +35,7 @@ package grpc
 import (
 	"google.golang.org/grpc"
 
-	"github.com/guidomantilla/yarumo/security/authn"
+	"github.com/guidomantilla/yarumo/core/security/authn"
 )
 
 var (

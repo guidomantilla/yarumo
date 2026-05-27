@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 )
 
 func TestNewQueueChannel(t *testing.T) {

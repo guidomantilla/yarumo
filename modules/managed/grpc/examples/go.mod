@@ -2,16 +2,16 @@ module github.com/guidomantilla/yarumo/managed/grpc/examples
 
 go 1.25.5
 
-replace github.com/guidomantilla/yarumo/managed/grpc => ../
+replace github.com/guidomantilla/yarumo/managed/grpc => ..
 
-replace github.com/guidomantilla/yarumo/common => ../../../common
+replace github.com/guidomantilla/yarumo/core/common => ../../../core/common
 
 replace github.com/guidomantilla/yarumo/config => ../../../config
 
 replace github.com/guidomantilla/yarumo/extension/common/log/slog => ../../../extension/common/log/slog
 
 require (
-	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000
+	github.com/guidomantilla/yarumo/core/common v0.0.0-00010101000000-000000000000
 	github.com/guidomantilla/yarumo/config v0.0.0-00010101000000-000000000000
 	github.com/guidomantilla/yarumo/managed/grpc v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.79.1

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
 )
 
 // Hook is the observability extension point. Implementations are notified

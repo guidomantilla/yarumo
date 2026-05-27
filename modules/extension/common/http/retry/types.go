@@ -7,7 +7,7 @@
 // Compose it like any other RoundTripper:
 //
 //	import (
-//	    chttp      "github.com/guidomantilla/yarumo/common/http"
+//	    chttp      "github.com/guidomantilla/yarumo/core/common/http"
 //	    chttpretry "github.com/guidomantilla/yarumo/extension/common/http/retry"
 //	    rretry     "github.com/guidomantilla/yarumo/extension/common/resilience/retry"
 //	)

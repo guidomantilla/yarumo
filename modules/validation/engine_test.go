@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
+	cvalidation "github.com/guidomantilla/yarumo/core/common/validation"
 )
 
 type pokemon struct {

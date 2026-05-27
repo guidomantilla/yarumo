@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 // MessagingType is the error domain identifier for messaging operations.

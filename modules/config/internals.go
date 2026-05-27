@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/viper"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
-	cutils "github.com/guidomantilla/yarumo/common/utils"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
+	cutils "github.com/guidomantilla/yarumo/core/common/utils"
 	cslog "github.com/guidomantilla/yarumo/extension/common/log/slog"
 )
 

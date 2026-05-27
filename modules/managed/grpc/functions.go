@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
 )
 
 // RecoveryInterceptor returns a unary server interceptor that recovers from panics.

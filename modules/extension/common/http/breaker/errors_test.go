@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 func TestErrBreakerRejected(t *testing.T) {

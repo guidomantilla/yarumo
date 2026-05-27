@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
 	cslogctx "github.com/guidomantilla/yarumo/extension/common/log/slog/slogctx"
 )
 

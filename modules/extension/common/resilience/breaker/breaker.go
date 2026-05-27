@@ -5,7 +5,7 @@ import (
 
 	"github.com/sony/gobreaker"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // breaker is the private implementation of the Breaker interface. It

@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 
 	"github.com/guidomantilla/yarumo/decisions/core/schema"
 )

@@ -22,7 +22,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 	"github.com/guidomantilla/yarumo/messaging"
 )
 

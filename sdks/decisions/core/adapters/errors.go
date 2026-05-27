@@ -3,7 +3,7 @@ package adapters
 import (
 	"errors"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 // AdapterType is the error type for adapter errors.

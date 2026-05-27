@@ -1,7 +1,7 @@
 package config
 
 import (
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
 )
 
 // Option is a functional option for configuring Default's behavior.

@@ -14,7 +14,7 @@
 // describe the user-visible request including retries:
 //
 //	import (
-//	    chttp        "github.com/guidomantilla/yarumo/common/http"
+//	    chttp        "github.com/guidomantilla/yarumo/core/common/http"
 //	    chttplimiter "github.com/guidomantilla/yarumo/extension/common/http/limiter"
 //	    chttpretry   "github.com/guidomantilla/yarumo/extension/common/http/retry"
 //	    otelhttp     "github.com/guidomantilla/yarumo/extension/telemetry/otel/http"

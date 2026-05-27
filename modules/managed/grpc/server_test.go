@@ -8,8 +8,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/guidomantilla/yarumo/common/lifecycle"
-	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
+	lctests "github.com/guidomantilla/yarumo/core/common/lifecycle/tests"
 )
 
 type testService any

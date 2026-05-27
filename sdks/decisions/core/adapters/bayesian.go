@@ -1,7 +1,7 @@
 package adapters
 
 import (
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	"github.com/guidomantilla/yarumo/compute/engine/bayesian"
 	bengine "github.com/guidomantilla/yarumo/compute/engine/bayesian/engine"
 	"github.com/guidomantilla/yarumo/compute/engine/bayesian/network"

@@ -9,8 +9,8 @@ import (
 	ulid "github.com/oklog/ulid/v2"
 	"github.com/rs/xid"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cuids "github.com/guidomantilla/yarumo/common/uids"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
+	cuids "github.com/guidomantilla/yarumo/core/common/uids"
 )
 
 // nanoIDRegex matches the default NanoID format: 21 characters from the

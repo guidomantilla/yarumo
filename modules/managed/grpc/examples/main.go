@@ -27,7 +27,7 @@ import (
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 	"github.com/guidomantilla/yarumo/config"
 	cgrpc "github.com/guidomantilla/yarumo/managed/grpc"
 )

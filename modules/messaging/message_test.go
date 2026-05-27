@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	cuids "github.com/guidomantilla/yarumo/common/uids"
+	cuids "github.com/guidomantilla/yarumo/core/common/uids"
 )
 
 func TestNewMessage(t *testing.T) {

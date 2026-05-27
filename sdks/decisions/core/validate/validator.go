@@ -3,8 +3,8 @@ package validate
 import (
 	"fmt"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	cexpressions "github.com/guidomantilla/yarumo/common/expressions"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	cexpressions "github.com/guidomantilla/yarumo/core/common/expressions"
 	"github.com/guidomantilla/yarumo/compute/math/logic"
 	"github.com/guidomantilla/yarumo/compute/math/logic/entailment"
 

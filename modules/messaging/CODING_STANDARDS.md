@@ -1,7 +1,7 @@
 # Coding Standards — modules/messaging/
 
 This module follows the workspace-wide standards documented in
-[`modules/common/CODING_STANDARDS.md`](../common/CODING_STANDARDS.md).
+[`modules/core/common/CODING_STANDARDS.md`](../common/CODING_STANDARDS.md).
 The PACKAGES.md classification is **Shape B with multiple peers of a
 single interface (no canonical impl)** — see the messaging section in
 [`modules/PACKAGES.md`](../PACKAGES.md).

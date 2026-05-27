@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	"github.com/guidomantilla/yarumo/security/authn"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	"github.com/guidomantilla/yarumo/core/security/authn"
 )
 
 // NewUnaryInterceptor returns a grpc.UnaryServerInterceptor that

@@ -1,0 +1,217 @@
+package otel
+
+import (
+	"context"
+	"time"
+
+	runtimemetrics "go.opentelemetry.io/contrib/instrumentation/runtime"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/log/global"
+	"go.opentelemetry.io/otel/propagation"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
+)
+
+// Observe sets up full OpenTelemetry observability (logging, tracing, metrics)
+// and returns ctx, a combined stop function, and any setup error.
+//
+// On success the returned ctx is the same ctx that was passed in; callers may
+// keep using it. The returned StopFn tears down all providers in reverse-
+// startup order (LIFO).
+//
+// On error it unwinds every provider that had already started before the
+// failing step, returns the original ctx, a noop StopFn, and an error chain
+// wrapping the failing step via the matching Err* factory.
+func Observe(ctx context.Context, serviceName string, serviceVersion string, env string, options ...Option) (context.Context, lifecycle.CloseFn, error) {
+
+	res, err := Resources(ctx, serviceName, serviceVersion, env)
+	if err != nil {
+		return ctx, noopStop, ErrObserve(ErrResource(err))
+	}
+
+	options = append(options, WithResource(res))
+
+	var stopFns []lifecycle.CloseFn
+	unwind := func() {
+		for i := len(stopFns) - 1; i >= 0; i-- {
+			stopFns[i](ctx, unwindTimeout)
+		}
+	}
+
+	stopLogger, err := Logger(ctx, options...)
+	if err != nil {
+		return ctx, noopStop, ErrObserve(ErrLogger(err))
+	}
+	stopFns = append(stopFns, stopLogger)
+
+	stopTracer, err := Tracer(ctx, options...)
+	if err != nil {
+		unwind()
+		return ctx, noopStop, ErrObserve(ErrTracer(err))
+	}
+	stopFns = append(stopFns, stopTracer)
+
+	stopMetrics, err := Meter(ctx, options...)
+	if err != nil {
+		unwind()
+		return ctx, noopStop, ErrObserve(ErrMeter(err))
+	}
+	stopFns = append(stopFns, stopMetrics)
+
+	stopFn := func(ctx context.Context, timeout time.Duration) {
+		for i := len(stopFns) - 1; i >= 0; i-- {
+			stopFns[i](ctx, timeout)
+		}
+	}
+
+	return ctx, stopFn, nil
+}
+
+// Resources creates an OpenTelemetry resource with the given service name, version, and environment.
+func Resources(ctx context.Context, serviceName string, serviceVersion string, env string) (*resource.Resource, error) {
+	res, err := resource.New(ctx,
+		resource.WithFromEnv(), resource.WithTelemetrySDK(), resource.WithHost(),
+		resource.WithAttributes(semconv.ServiceName(serviceName), semconv.ServiceVersion(serviceVersion), semconv.DeploymentEnvironment(env)),
+	)
+
+	if err != nil {
+		return nil, ErrResource(err)
+	}
+
+	return res, nil
+}
+
+// Tracer sets up an OpenTelemetry trace provider with OTLP gRPC exporter.
+func Tracer(ctx context.Context, options ...Option) (lifecycle.CloseFn, error) {
+	clog.Info(ctx, "starting up", "stage", "startup", "component", "otel tracer")
+
+	opts := NewOptions(options...)
+
+	opts.tracerPropagators = append(opts.tracerPropagators, propagation.TraceContext{}, propagation.Baggage{})
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(opts.tracerPropagators...))
+
+	if opts.secure {
+		opts.tracerExporterOptions = append(opts.tracerExporterOptions, otlptracegrpc.WithEndpoint(opts.endpoint))
+	} else {
+		opts.tracerExporterOptions = append(opts.tracerExporterOptions, otlptracegrpc.WithEndpoint(opts.endpoint), otlptracegrpc.WithInsecure())
+	}
+	exporter, err := otlptracegrpc.New(ctx, opts.tracerExporterOptions...)
+	if err != nil {
+		clog.Error(ctx, "error starting tracer", "stage", "startup", "component", "otel tracer", "error", err)
+		return noopStop, ErrTracer(err)
+	}
+
+	opts.tracerProviderOptions = append(opts.tracerProviderOptions, sdktrace.WithResource(opts.resource), sdktrace.WithBatcher(exporter))
+	tracerProvider := sdktrace.NewTracerProvider(opts.tracerProviderOptions...)
+
+	otel.SetTracerProvider(tracerProvider)
+
+	stopFn := func(ctx context.Context, timeout time.Duration) {
+		clog.Info(ctx, "stopping", "stage", "shutdown", "component", "otel tracer")
+		defer clog.Info(ctx, "stopped", "stage", "shutdown", "component", "otel tracer")
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
+		err := tracerProvider.Shutdown(timeoutCtx)
+		if err != nil {
+			clog.Error(ctx, "error shutting down tracer", "stage", "shutdown", "component", "otel tracer", "error", err)
+		}
+	}
+
+	return stopFn, nil
+}
+
+// Meter sets up an OpenTelemetry meter provider with OTLP gRPC exporter.
+func Meter(ctx context.Context, options ...Option) (lifecycle.CloseFn, error) {
+	clog.Info(ctx, "starting up", "stage", "startup", "component", "otel meter")
+
+	opts := NewOptions(options...)
+
+	if opts.secure {
+		opts.meterExporterOptions = append(opts.meterExporterOptions, otlpmetricgrpc.WithEndpoint(opts.endpoint))
+	} else {
+		opts.meterExporterOptions = append(opts.meterExporterOptions, otlpmetricgrpc.WithEndpoint(opts.endpoint), otlpmetricgrpc.WithInsecure())
+	}
+	exporter, err := otlpmetricgrpc.New(ctx, opts.meterExporterOptions...)
+	if err != nil {
+		clog.Error(ctx, "error starting meter", "stage", "startup", "component", "otel meter", "error", err)
+		return noopStop, ErrMeter(err)
+	}
+
+	opts.meterProviderOptions = append(opts.meterProviderOptions, sdkmetric.WithResource(opts.resource), sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(opts.meterInterval))))
+	meterProvider := sdkmetric.NewMeterProvider(opts.meterProviderOptions...)
+
+	otel.SetMeterProvider(meterProvider)
+
+	if opts.meterRuntimeMetricsEnabled {
+		opts.meterRuntimeMetricsOptions = append(opts.meterRuntimeMetricsOptions, runtimemetrics.WithMinimumReadMemStatsInterval(opts.meterRuntimeMetricsInterval))
+		err = runtimemetrics.Start(opts.meterRuntimeMetricsOptions...)
+		if err != nil {
+			clog.Error(ctx, "error starting runtime metrics", "stage", "startup", "component", "otel meter", "error", err)
+			return noopStop, ErrMeter(err)
+		}
+	}
+
+	stopFn := func(ctx context.Context, timeout time.Duration) {
+		clog.Info(ctx, "stopping", "stage", "shutdown", "component", "otel meter")
+		defer clog.Info(ctx, "stopped", "stage", "shutdown", "component", "otel meter")
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
+		err := meterProvider.Shutdown(timeoutCtx)
+		if err != nil {
+			clog.Error(ctx, "error shutting down meter", "stage", "shutdown", "component", "otel meter", "error", err)
+		}
+	}
+
+	return stopFn, nil
+}
+
+// Logger sets up an OpenTelemetry logger provider with OTLP gRPC exporter.
+func Logger(ctx context.Context, options ...Option) (lifecycle.CloseFn, error) {
+	clog.Info(ctx, "starting up", "stage", "startup", "component", "otel logger")
+
+	opts := NewOptions(options...)
+
+	if opts.secure {
+		opts.loggerExporterOptions = append(opts.loggerExporterOptions, otlploggrpc.WithEndpoint(opts.endpoint))
+	} else {
+		opts.loggerExporterOptions = append(opts.loggerExporterOptions, otlploggrpc.WithEndpoint(opts.endpoint), otlploggrpc.WithInsecure())
+	}
+	exporter, err := otlploggrpc.New(ctx, opts.loggerExporterOptions...)
+	if err != nil {
+		clog.Error(ctx, "error starting logger", "stage", "startup", "component", "otel logger", "error", err)
+		return noopStop, ErrLogger(err)
+	}
+
+	opts.loggerProviderOptions = append(opts.loggerProviderOptions, sdklog.WithResource(opts.resource), sdklog.WithProcessor(sdklog.NewSimpleProcessor(exporter)))
+	loggerProvider := sdklog.NewLoggerProvider(opts.loggerProviderOptions...)
+
+	global.SetLoggerProvider(loggerProvider)
+
+	stopFn := func(ctx context.Context, timeout time.Duration) {
+		clog.Info(ctx, "stopping", "stage", "shutdown", "component", "otel logger")
+		defer clog.Info(ctx, "stopped", "stage", "shutdown", "component", "otel logger")
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
+		err := loggerProvider.Shutdown(timeoutCtx)
+		if err != nil {
+			clog.Error(ctx, "error shutting down logger", "stage", "shutdown", "component", "otel logger", "error", err)
+		}
+	}
+
+	return stopFn, nil
+}

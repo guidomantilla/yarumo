@@ -7,7 +7,7 @@
 package uids
 
 import (
-	cuids "github.com/guidomantilla/yarumo/common/uids"
+	cuids "github.com/guidomantilla/yarumo/core/common/uids"
 )
 
 var (

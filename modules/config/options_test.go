@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
 )
 
 // fakeLogger is a no-op clog.Logger used to verify WithLogger replaces the

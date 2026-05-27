@@ -3,7 +3,7 @@ package validation
 import (
 	"sync"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // Registry maps rule names to RuleFn implementations. It is safe for

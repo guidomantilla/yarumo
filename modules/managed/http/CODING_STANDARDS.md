@@ -1,7 +1,7 @@
 # Coding Standards — modules/managed/http/
 
 This module follows the workspace-wide standards documented in
-[`modules/common/CODING_STANDARDS.md`](../../common/CODING_STANDARDS.md).
+[`modules/core/common/CODING_STANDARDS.md`](../../common/CODING_STANDARDS.md).
 
 ## Applicable Criteria
 
@@ -23,11 +23,11 @@ This module follows the workspace-wide standards documented in
 
 The HTTP server has lifecycle: it launches a goroutine listening on a
 socket and must be cleanly shut down via `Shutdown`/`Close`. That violates
-the "no lifecycle" clause of `modules/common/`. The HTTP server wrapper
+the "no lifecycle" clause of `modules/core/common/`. The HTTP server wrapper
 lives at the top-level module layer alongside `modules/managed/grpc/`,
-`modules/managed/cron/`, `modules/managed/`, `modules/managed/cache/`, `modules/managed/telemetry/`
+`modules/managed/cron/`, `modules/managed/`, `modules/extension/common/cache/`, `modules/managed/telemetry/`
 and `modules/config/`. The HTTP **client** (stateless) stays in
-`modules/common/http/` — only the server moved out.
+`modules/core/common/http/` — only the server moved out.
 
 ### Override: Shape B (canonical Shape B layout)
 

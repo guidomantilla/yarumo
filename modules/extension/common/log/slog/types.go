@@ -5,7 +5,7 @@ import (
 	"context"
 	"log/slog"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
 )
 
 // Interface compliance: this package's private logger satisfies the

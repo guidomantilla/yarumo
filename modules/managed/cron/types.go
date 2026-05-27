@@ -18,7 +18,7 @@ import (
 
 	cron "github.com/robfig/cron/v3"
 
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 )
 
 var (

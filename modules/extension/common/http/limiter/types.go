@@ -3,7 +3,7 @@
 // base RoundTripper:
 //
 //	import (
-//	    chttp        "github.com/guidomantilla/yarumo/common/http"
+//	    chttp        "github.com/guidomantilla/yarumo/core/common/http"
 //	    chttplimiter "github.com/guidomantilla/yarumo/extension/common/http/limiter"
 //	)
 //

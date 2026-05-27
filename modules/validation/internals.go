@@ -5,8 +5,8 @@ import (
 
 	yaml "go.yaml.in/yaml/v3"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
+	cvalidation "github.com/guidomantilla/yarumo/core/common/validation"
 )
 
 // annotatePath prefixes a violation message with the field path so callers

@@ -1,7 +1,7 @@
 # Coding Standards — modules/managed/keep-alive/
 
 This module follows the workspace-wide standards documented in
-[`modules/common/CODING_STANDARDS.md`](../../common/CODING_STANDARDS.md).
+[`modules/core/common/CODING_STANDARDS.md`](../../common/CODING_STANDARDS.md).
 
 ## Applicable Criteria
 
@@ -21,7 +21,7 @@ This module follows the workspace-wide standards documented in
 
 ### Override: Top-level module (not under common/)
 
-`modules/common/` is a pure library with no lifecycle opinions. The
+`modules/core/common/` is a pure library with no lifecycle opinions. The
 `KeepAlive` constructor returns a `lifecycle.Component` — Start is a no-op
 and Done closes when Stop is called. It exists to serve as the canonical
 "basic component" building block for daemons that do not own a network
@@ -29,7 +29,7 @@ listener (heartbeats, long-running workers, application keep-alive loops).
 For that reason it lives at the top-level module layer alongside
 `modules/managed/cron/`, `modules/managed/grpc/`, `modules/managed/http/`,
 `modules/managed/diagnostics/` and `modules/managed/telemetry/`, never
-inside `modules/common/`.
+inside `modules/core/common/`.
 
 ### Override: Exception shape (thin component without owned interface)
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	clog "github.com/guidomantilla/yarumo/common/log"
+	clog "github.com/guidomantilla/yarumo/core/common/log"
 )
 
 // Default buffer, drain bounds, and worker pool size for the

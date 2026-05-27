@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/core/common/validation"
 )
 
 type dslTarget struct {

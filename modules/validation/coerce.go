@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"time"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 // errBadParam is the package-internal sentinel for parameter conversion

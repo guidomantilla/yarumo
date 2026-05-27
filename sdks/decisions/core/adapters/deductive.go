@@ -1,7 +1,7 @@
 package adapters
 
 import (
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	cengine "github.com/guidomantilla/yarumo/compute/engine/deductive/engine"
 	crules "github.com/guidomantilla/yarumo/compute/engine/deductive/rules"
 	"github.com/guidomantilla/yarumo/compute/math/logic"

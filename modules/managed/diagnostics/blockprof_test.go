@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	lctests "github.com/guidomantilla/yarumo/common/lifecycle/tests"
+	lctests "github.com/guidomantilla/yarumo/core/common/lifecycle/tests"
 )
 
 // blockProfRateMu serialises tests that mutate runtime.SetBlockProfileRate.

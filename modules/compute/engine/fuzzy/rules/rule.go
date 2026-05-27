@@ -1,6 +1,6 @@
 package rules
 
-import cassert "github.com/guidomantilla/yarumo/common/assert"
+import cassert "github.com/guidomantilla/yarumo/core/common/assert"
 
 type rule struct {
 	name       string

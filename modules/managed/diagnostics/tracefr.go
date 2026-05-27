@@ -6,7 +6,7 @@ import (
 	"runtime/trace"
 	"sync"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // tracefr is the canonical TraceFlightRecorder implementation. It

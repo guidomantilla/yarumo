@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // PluggableTraceFlightRecorder is a TraceFlightRecorder implementation

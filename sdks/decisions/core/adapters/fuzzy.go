@@ -1,7 +1,7 @@
 package adapters
 
 import (
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	fengine "github.com/guidomantilla/yarumo/compute/engine/fuzzy/engine"
 	frules "github.com/guidomantilla/yarumo/compute/engine/fuzzy/rules"
 	"github.com/guidomantilla/yarumo/compute/engine/fuzzy/variable"

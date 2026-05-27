@@ -9,7 +9,7 @@
 - Pueden mantener **estado mutable interno** detrás de las funciones libres (PRNG state, slot `current` swappable vía `Use`, registry map, regex caches). La pureza "mismos args ⇒ mismo resultado" es ideal pero no requisito: ver bloque "Estado mutable de paquete" al final de esta sección.
 - Ejemplos en el repo: `common/assert/`, `extension/common/cast/`, `common/utils/`, `common/pointer/`, `common/random/`, `extension/common/validation/`, `common/log/`, `extension/common/uids/`.
 
-### Inventario en `modules/common/`
+### Inventario en `modules/core/common/`
 
 | Paquete | Qué hace |
 |---|---|
@@ -42,7 +42,7 @@ Aplican las 4 reglas universales con las siguientes extensiones cuando el paquet
 - Expone tipos con estado: structs que mantienen invariantes entre llamadas (claves, contadores, buffers, conexiones, configuración) y se operan a través de métodos.
 - El API entra por uno o más constructores `NewXxx(opts ...Option) Interface` que devuelven una **interface** declarada en `types.go`. El struct concreto la implementa.
 
-### Inventario en `modules/common/`
+### Inventario en `modules/core/common/`
 
 | Paquete | Qué hace |
 |---|---|
@@ -112,12 +112,12 @@ Las reglas universales del repo (doc terminado en punto, comenzar por el nombre 
 - **Funciones (públicas y privadas)**: describen resultado o condición de error, no implementación. Las privadas de `internals.go` con el mismo rigor que las públicas.
 - **Structs (públicos y privados)**: cada `type Xxx struct` lleva doc-comment de 1-2 líneas describiendo qué representa o qué papel cumple (ej. "client implements Client.", "serviceRegistration carries a service impl + its descriptor for late registration."). Aplica también a los structs auxiliares dentro de `options.go` y a los structs implementadores en archivos per-tipo de Shape B.
 - **`constants.go`**: comentario de grupo encima del bloque `const (...)`. Sin doc por constante salvo que el nombre no sea autoexplicativo.
-- **`options.go`**: cada identificador (`Options`, `NewOptions`, `Option`, cada `WithXxx`) con doc dedicado. Modelo de referencia: `modules/common/utils/options.go`.
+- **`options.go`**: cada identificador (`Options`, `NewOptions`, `Option`, cada `WithXxx`) con doc dedicado. Modelo de referencia: `modules/core/common/utils/options.go`.
 - **`errors.go`**:
   - Sentinels: comentario de grupo encima del bloque `var (...)`; cada sentinel se autodocumenta con su mensaje.
   - `Error` struct + factory `ErrXxx`: doc-comment dedicado a cada uno.
 
-**Referencia operativa**: `modules/common/utils/` y `modules/extension/common/validation/` cubren entre los dos todos los casos. Si dudás cómo documentar algo, mirá esos paquetes.
+**Referencia operativa**: `modules/core/common/utils/` y `modules/extension/common/validation/` cubren entre los dos todos los casos. Si dudás cómo documentar algo, mirá esos paquetes.
 
 ## Excepciones a los shapes
 
@@ -126,12 +126,12 @@ Algunos paquetes bajo `common/` no encajan en ningún shape — porque son envol
 - `modules/extension/common/log/slog/` — adapter sobre `log/slog` stdlib que **extiende** el tipo con métodos propios (`Trace`, `Fatal`). Expone `Logger` como **struct público concreto** (no como interface) e implementa la interface `common/log.Logger` (typing estructural). Vive como módulo top-level porque depende de `common/log` (interface) en dirección consumer → abstracción; el ciclo arquitectónico inverso (common → impl) queda eliminado. Esta forma encaja en la excepción 4 de `CODING_STANDARDS.md` (criterio 4) y rompe también el patrón Shape B clásico, así que vive acá.
 - `common/constraints/` — solo declara type constraints genéricas (`Signed`, `Unsigned`, `Integer`, `Float`, `Complex`, `Number`) + aliases (`Comparable`, `Ordenable`). Sin funciones libres, sin métodos, sin estado. Análogo a `golang.org/x/exp/constraints`. No tiene `functions.go` (no hay funciones); el package doc + declaraciones viven en `types.go` (único archivo).
 - `common/types/` — solo declara el tipo `Bytes []byte` con métodos puros (`ToHex`, `ToBase64Std`/`ToBase64RawStd`/`ToBase64Url`/`ToBase64RawUrl`). Sin funciones libres del paquete. Encaja parcialmente en R1 variante 1 de Shape A (DTO público con métodos puros), pero no cumple el trío base porque no hay funciones libres que justifiquen `functions.go` ni un `types.go` separado del concern: el package doc + tipo + métodos viven todos en `bytes.go` (único archivo).
-- **Subpaquetes de `modules/crypto/`** (14 paquetes — ver inventario abajo) — siguen el **Crypto Subpackage Standard** documentado en `modules/crypto/CODING_STANDARDS.md`. El standard define file structure propia (`types.go`, `errors.go`, `<name>.go`, `functions.go`, `options.go`, `extensions.go`, `text_codec.go`) y overrides explícitos a 3 criterios del documento general: criterion 3 (struct público concreto, no interface), criterion 4 (constructor devuelve `*Method` con pluggable function fields), criterion 6 (registry multi-instance, no singleton `Use`). Aplica al universo crypto completo, con 3 utility packages (`random/`, `certs/`, `passwords/generator/`) que no usan el Method pattern y siguen Shape A. Para detalles y compliance ver el standard; PACKAGES.md no duplica esas reglas.
+- **Subpaquetes de `modules/core/crypto/`** (14 paquetes — ver inventario abajo) — siguen el **Crypto Subpackage Standard** documentado en `modules/core/crypto/CODING_STANDARDS.md`. El standard define file structure propia (`types.go`, `errors.go`, `<name>.go`, `functions.go`, `options.go`, `extensions.go`, `text_codec.go`) y overrides explícitos a 3 criterios del documento general: criterion 3 (struct público concreto, no interface), criterion 4 (constructor devuelve `*Method` con pluggable function fields), criterion 6 (registry multi-instance, no singleton `Use`). Aplica al universo crypto completo, con 3 utility packages (`random/`, `certs/`, `passwords/generator/`) que no usan el Method pattern y siguen Shape A. Para detalles y compliance ver el standard; PACKAGES.md no duplica esas reglas.
 - **`common/lifecycle/`** — única excepción al principio "common no tiene lifecycle ni dispara goroutines". El paquete **es la primitiva del lifecycle del workspace**: declara la interface `Component` (Name/Start/Stop/Done), los helpers `Start`/`Stop` que coordinan el run lifecycle, los tipos `ErrChan`/`CloseFn`, y los `Build*` builders canónicos que componen un `Component` con su goroutine de arranque y su `CloseFn` de teardown. Está permitido — y esperado — que sus funciones disparen goroutines (`go component.Start(...)` dentro de `Build*`) y que importen `common/log` para emitir las líneas de boundary (`starting up` / `stopping` / `stopped` / `failed to start` / `shutdown failed`). El resto de `common/` sigue sin lifecycle. Este es el único punto del subsistema común autorizado a manejar concurrencia activa; consumers que necesiten un lifecycle propio extienden la interface, no replican la maquinaria. Code reviews deben tratar cualquier `go ...` o `Build*` fuera de `common/lifecycle/` como red flag — pertenece a un módulo top-level (`http/`, `cron/`, `grpc/`, `diagnostics/`, etc.), no a `common/`.
 
-## Módulo `modules/crypto/`
+## Módulo `modules/core/crypto/`
 
-Módulo top-level extraído de `modules/common/crypto/` (issue #170). Reúne 14 subpaquetes con un único `go.mod` y un standard propio (`modules/crypto/CODING_STANDARDS.md`).
+Módulo top-level extraído de `modules/core/common/crypto/` (issue #170). Reúne 14 subpaquetes con un único `go.mod` y un standard propio (`modules/core/crypto/CODING_STANDARDS.md`).
 
 ### Inventario
 
@@ -209,7 +209,7 @@ Top-level module que ofrece primitivas de mensajería tipada in-process. Expone 
 - `channel_queue.go` + tests.
 - `examples/` — submódulo propio con `go.mod`, demos runnable de los 4 channels.
 
-## Módulo `modules/security/authn/`
+## Módulo `modules/core/security/authn/`
 
 Top-level module que aloja el contrato de autenticación + la impl canónica `tokenAuthenticator` (in-module porque sólo depende de `crypto/tokens`, otro módulo del workspace). Transport adapters viven en sus propios go-modules bajo `modules/extension/security/authn/` para que `google.golang.org/grpc` no se filtre vía MVS a consumers que sólo necesitan el contrato. Classification: **Shape B con package único; transports split a módulos hermanos**.
 
@@ -230,7 +230,7 @@ Top-level module que aloja el contrato de autenticación + la impl canónica `to
 
 **Sin lifecycle.** El módulo no aloja `lifecycle.Component`. Cada autenticador es un validador stateless. Si una impl futura necesitara caching o background refresh, debe ir a un top-level `modules/managed/<name>/` y exponer `Authenticator` para wirearse contra este contrato.
 
-**Layout plano.** No hay subpaquetes anidados. Futuros backends sin dep externa (apikey, chain, mock, ...) viven en el root junto a `tokenAuthenticator`. Backends con dep externa van a `modules/extension/security/authn/<x>/`. Sub-dominios nuevos (ej. sessions) son **hermanos top-level**: `modules/security/sessions/`, no `modules/security/authn/sessions/`.
+**Layout plano.** No hay subpaquetes anidados. Futuros backends sin dep externa (apikey, chain, mock, ...) viven en el root junto a `tokenAuthenticator`. Backends con dep externa van a `modules/extension/security/authn/<x>/`. Sub-dominios nuevos (ej. sessions) son **hermanos top-level**: `modules/core/security/sessions/`, no `modules/core/security/authn/sessions/`.
 
 ## Módulo `modules/extension/security/authn/http/`
 

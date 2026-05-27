@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cvalidation "github.com/guidomantilla/yarumo/core/common/validation"
 )
 
 func TestValidate_HappyPath(t *testing.T) {

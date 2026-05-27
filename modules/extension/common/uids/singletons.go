@@ -1,6 +1,6 @@
 package uids
 
-import cuids "github.com/guidomantilla/yarumo/common/uids"
+import cuids "github.com/guidomantilla/yarumo/core/common/uids"
 
 // Default UID generators preconfigured with the canonical algorithms
 // shipped by this package. Consumers can use them directly or look them

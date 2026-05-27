@@ -2,10 +2,10 @@ module github.com/guidomantilla/yarumo/extension/telemetry/otel/http
 
 go 1.25.5
 
-replace github.com/guidomantilla/yarumo/common => ../../../../common
+replace github.com/guidomantilla/yarumo/core/common => ../../../../core/common
 
 require (
-	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000
+	github.com/guidomantilla/yarumo/core/common v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/metric v1.43.0
 	go.opentelemetry.io/otel/sdk v1.43.0

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 
 	"github.com/guidomantilla/yarumo/decisions/core/schema"
 )

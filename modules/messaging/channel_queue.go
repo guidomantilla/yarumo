@@ -6,8 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 )
 
 // QueueChannel is the point-to-point async Channel[T] implementation:

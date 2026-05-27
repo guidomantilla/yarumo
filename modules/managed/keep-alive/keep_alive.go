@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 )
 
 // keepAlive is the basic lifecycle.Component implementation. Its Start is

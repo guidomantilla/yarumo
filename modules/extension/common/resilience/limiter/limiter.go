@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/time/rate"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // limiter is the private implementation of the Limiter interface. It

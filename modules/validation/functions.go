@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 	yaml "go.yaml.in/yaml/v3"
 )
 

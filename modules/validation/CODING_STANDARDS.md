@@ -1,7 +1,7 @@
 # Coding Standards — modules/validation/
 
 This module follows the workspace-wide standards documented in
-[`modules/common/CODING_STANDARDS.md`](../common/CODING_STANDARDS.md).
+[`modules/core/common/CODING_STANDARDS.md`](../common/CODING_STANDARDS.md).
 
 ## Module-specific overrides
 

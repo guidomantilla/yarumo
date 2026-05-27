@@ -6,28 +6,33 @@ use (
 	./internal/temporal/courses/edu-102-go-code
 	./internal/tutorials/compute-engine
 	./internal/tutorials/compute-math
-	./modules/common
-	./modules/common/assert/examples
-	./modules/common/cache/examples
-	./modules/common/cast/examples
-	./modules/common/constraints/examples
-	./modules/common/errs/examples
-	./modules/common/expressions/examples
-	./modules/common/http/examples
-	./modules/common/lifecycle/examples
-	./modules/common/log/examples
-	./modules/common/pointer/examples
-	./modules/common/random/examples
-	./modules/common/rest/examples
-	./modules/common/types/examples
-	./modules/common/uids/examples
-	./modules/common/utils/examples
-	./modules/common/validation/examples
 	./modules/compute/engine
 	./modules/compute/math
 	./modules/compute/tests/acceptance
 	./modules/config
-	./modules/crypto
+	./modules/core/common
+	./modules/core/common/assert/examples
+	./modules/core/common/cache/examples
+	./modules/core/common/cast/examples
+	./modules/core/common/constraints/examples
+	./modules/core/common/errs/examples
+	./modules/core/common/expressions/examples
+	./modules/core/common/http/examples
+	./modules/core/common/lifecycle/examples
+	./modules/core/common/log/examples
+	./modules/core/common/pointer/examples
+	./modules/core/common/random/examples
+	./modules/core/common/rest/examples
+	./modules/core/common/types/examples
+	./modules/core/common/uids/examples
+	./modules/core/common/utils/examples
+	./modules/core/common/validation/examples
+	./modules/core/crypto
+	./modules/core/security/authn
+	./modules/extension/common/cache/redis
+	./modules/extension/common/cache/redis/examples
+	./modules/extension/common/cache/ristretto
+	./modules/extension/common/cache/ristretto/examples
 	./modules/extension/common/cast
 	./modules/extension/common/cast/examples
 	./modules/extension/common/http/breaker
@@ -56,10 +61,6 @@ use (
 	./modules/extension/telemetry/otel/http/examples
 	./modules/extension/telemetry/otel/slog
 	./modules/extension/telemetry/otel/slog/examples
-	./modules/managed/cache/redis
-	./modules/managed/cache/redis/examples
-	./modules/managed/cache/ristretto
-	./modules/managed/cache/ristretto/examples
 	./modules/managed/cron
 	./modules/managed/cron/examples
 	./modules/managed/diagnostics
@@ -70,11 +71,10 @@ use (
 	./modules/managed/http/examples
 	./modules/managed/keep-alive
 	./modules/managed/keep-alive/examples
-	./modules/managed/telemetry/otel
-	./modules/managed/telemetry/otel/examples
 	./modules/messaging
 	./modules/messaging/examples
-	./modules/security/authn
+	./modules/telemetry/otel
+	./modules/telemetry/otel/examples
 	./modules/validation
 	./sdks/decisions/core
 	./sdks/decisions/examples

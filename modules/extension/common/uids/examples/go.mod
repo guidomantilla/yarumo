@@ -2,16 +2,16 @@ module github.com/guidomantilla/yarumo/extension/common/uids/examples
 
 go 1.25.5
 
-replace github.com/guidomantilla/yarumo/extension/common/uids => ../
+replace github.com/guidomantilla/yarumo/extension/common/uids => ..
 
-replace github.com/guidomantilla/yarumo/common => ../../../../common
+replace github.com/guidomantilla/yarumo/core/common => ../../../../core/common
 
 replace github.com/guidomantilla/yarumo/config => ../../../../config
 
 replace github.com/guidomantilla/yarumo/extension/common/log/slog => ../../log/slog
 
 require (
-	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000
+	github.com/guidomantilla/yarumo/core/common v0.0.0-00010101000000-000000000000
 	github.com/guidomantilla/yarumo/config v0.0.0-00010101000000-000000000000
 	github.com/guidomantilla/yarumo/extension/common/uids v0.0.0-00010101000000-000000000000
 )

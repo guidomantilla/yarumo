@@ -1,9 +1,9 @@
 package validation
 
 import (
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cexpressions "github.com/guidomantilla/yarumo/common/expressions"
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
+	cexpressions "github.com/guidomantilla/yarumo/core/common/expressions"
+	cvalidation "github.com/guidomantilla/yarumo/core/common/validation"
 )
 
 // Validate is the static linter for a Ruleset. It walks every node and

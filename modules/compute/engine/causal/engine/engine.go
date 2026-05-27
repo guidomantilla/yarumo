@@ -4,7 +4,7 @@ import (
 	"maps"
 	"strconv"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 
 	"github.com/guidomantilla/yarumo/compute/engine/causal/explain"
 	"github.com/guidomantilla/yarumo/compute/engine/causal/model"

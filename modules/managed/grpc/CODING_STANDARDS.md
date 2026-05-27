@@ -1,7 +1,7 @@
 # Coding Standards — modules/managed/grpc/
 
 This module follows the workspace-wide standards documented in
-[`modules/common/CODING_STANDARDS.md`](../../common/CODING_STANDARDS.md).
+[`modules/core/common/CODING_STANDARDS.md`](../../common/CODING_STANDARDS.md).
 
 ## Applicable Criteria
 
@@ -23,10 +23,10 @@ This module follows the workspace-wide standards documented in
 
 `google.golang.org/grpc` plus `google.golang.org/protobuf` and
 `google.golang.org/genproto/googleapis/rpc` account for the largest share
-of `modules/common/`'s transitive footprint by source size. Most consumers
+of `modules/core/common/`'s transitive footprint by source size. Most consumers
 of `common` never use gRPC. For that reason the gRPC wrapper lives at the
-top-level module layer alongside `modules/managed/`, `modules/managed/cache/`,
-`modules/managed/telemetry/` and `modules/config/`, never inside `modules/common/`.
+top-level module layer alongside `modules/managed/`, `modules/extension/common/cache/`,
+`modules/managed/telemetry/` and `modules/config/`, never inside `modules/core/common/`.
 
 ### Override: Shape B (canonical Shape B layout)
 

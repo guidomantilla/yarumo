@@ -36,7 +36,7 @@ package http
 import (
 	"net/http"
 
-	"github.com/guidomantilla/yarumo/security/authn"
+	"github.com/guidomantilla/yarumo/core/security/authn"
 )
 
 var (

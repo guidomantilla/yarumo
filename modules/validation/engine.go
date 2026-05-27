@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
-	cexpressions "github.com/guidomantilla/yarumo/common/expressions"
-	cutils "github.com/guidomantilla/yarumo/common/utils"
-	cvalidation "github.com/guidomantilla/yarumo/common/validation"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
+	cexpressions "github.com/guidomantilla/yarumo/core/common/expressions"
+	cutils "github.com/guidomantilla/yarumo/core/common/utils"
+	cvalidation "github.com/guidomantilla/yarumo/core/common/validation"
 )
 
 // engine is the default Engine implementation.

@@ -2,7 +2,7 @@
 package engine
 
 import (
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	fuzzym "github.com/guidomantilla/yarumo/compute/math/fuzzy"
 
 	"github.com/guidomantilla/yarumo/compute/engine/fuzzy/explain"

@@ -2,7 +2,7 @@ module github.com/guidomantilla/yarumo/extension/telemetry/otel/slog
 
 go 1.25.5
 
-replace github.com/guidomantilla/yarumo/common => ../../../../common
+replace github.com/guidomantilla/yarumo/core/common => ../../../../core/common
 
 replace github.com/guidomantilla/yarumo/extension/common/log/slog => ../../../common/log/slog
 
@@ -17,7 +17,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/guidomantilla/yarumo/common v0.0.0-00010101000000-000000000000 // indirect
+	github.com/guidomantilla/yarumo/core/common v0.0.0-00010101000000-000000000000 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect

@@ -20,7 +20,7 @@ import (
 
 	"github.com/guidomantilla/yarumo/config"
 	authnhttp "github.com/guidomantilla/yarumo/extension/security/authn/http"
-	"github.com/guidomantilla/yarumo/security/authn"
+	"github.com/guidomantilla/yarumo/core/security/authn"
 )
 
 func main() {

@@ -6,8 +6,8 @@ import (
 
 	cron "github.com/robfig/cron/v3"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 )
 
 // scheduler implements Scheduler. It embeds *cron.Cron by pointer so the

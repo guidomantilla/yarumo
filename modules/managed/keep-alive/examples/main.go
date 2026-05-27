@@ -18,7 +18,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/guidomantilla/yarumo/common/lifecycle"
+	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 	"github.com/guidomantilla/yarumo/config"
 	keepalive "github.com/guidomantilla/yarumo/managed/keep-alive"
 )

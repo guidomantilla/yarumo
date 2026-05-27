@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
-	cerrs "github.com/guidomantilla/yarumo/common/errs"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
+	cerrs "github.com/guidomantilla/yarumo/core/common/errs"
 )
 
 // EngineType is the error type classification used when the engine itself

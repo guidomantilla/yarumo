@@ -1,7 +1,7 @@
 package model
 
 import (
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	"github.com/guidomantilla/yarumo/compute/math/graph"
 
 	"github.com/guidomantilla/yarumo/compute/engine/causal"

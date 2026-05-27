@@ -5,7 +5,7 @@ import (
 	"context"
 	"text/template"
 
-	cassert "github.com/guidomantilla/yarumo/common/assert"
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
 
 // templateExplainer generates explanations using pre-compiled Go text/template templates.
