@@ -108,3 +108,21 @@ func NewMessage[T any](payload T, uid cuids.UID) Message[T] {
 		},
 	}
 }
+
+// DeadLetter is the envelope routed to a Dead Letter Channel when a
+// handler dispatched by Topic or Queue returns a non-nil error. It
+// preserves the original Message[T], the error that caused the
+// failure, and the moment the failure was observed so downstream
+// consumers (audit, retry, dashboards) can reconstruct the timeline.
+//
+// DeadLetter is paid into the channel-wide DLQ configured via
+// WithDLQChannel. Channels expect a Channel[DeadLetter[T]] as the
+// destination; T must match the source channel's payload type.
+type DeadLetter[T any] struct {
+	// Original is the message the handler failed to process.
+	Original Message[T]
+	// LastError is the non-nil error returned by the handler.
+	LastError error
+	// FailedAt is the wall-clock time the failure was observed.
+	FailedAt time.Time
+}

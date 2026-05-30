@@ -77,6 +77,9 @@ var (
 	_ Channel[any] = (*topic[any])(nil)
 	_ Channel[any] = (*queue[any])(nil)
 	_ Channel[any] = (*null[any])(nil)
+
+	_ ErrorHandler = DefaultErrorHandler
+	_ ErrorHandler = SilentErrorHandler
 )
 
 // Handler is the function type for a message handler. The Handler

@@ -40,6 +40,7 @@ type queue[T any] struct {
 	drainTimeout   time.Duration
 	errorHandler   ErrorHandler
 	overflowPolicy OverflowPolicy
+	dlq            Channel[DeadLetter[T]]
 
 	inbound chan envelope[T]
 	done    chan struct{}
@@ -74,6 +75,7 @@ func NewQueueChannel[T any](name string, opts ...Option) Channel[T] {
 		drainTimeout:   options.drainTimeout,
 		errorHandler:   options.errorHandler,
 		overflowPolicy: options.overflowPolicy,
+		dlq:            extractDLQ[T](options.dlq),
 		inbound:        make(chan envelope[T], options.bufferSize),
 		done:           make(chan struct{}),
 		byID:           map[uint64]Handler[T]{},
@@ -279,4 +281,6 @@ func (c *queue[T]) dispatch(workerCtx context.Context, env envelope[T]) {
 	if c.errorHandler != nil {
 		c.errorHandler(handlerCtx, env.msg, err)
 	}
+
+	publishDeadLetter(handlerCtx, c.dlq, env.msg, err)
 }

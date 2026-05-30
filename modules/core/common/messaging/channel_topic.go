@@ -68,6 +68,7 @@ type topic[T any] struct {
 	drainTimeout   time.Duration
 	errorHandler   ErrorHandler
 	overflowPolicy OverflowPolicy
+	dlq            Channel[DeadLetter[T]]
 
 	started      atomic.Bool
 	closed       atomic.Bool
@@ -116,6 +117,7 @@ func NewTopicChannel[T any](name string, opts ...Option) Channel[T] {
 		drainTimeout:   options.drainTimeout,
 		errorHandler:   options.errorHandler,
 		overflowPolicy: options.overflowPolicy,
+		dlq:            extractDLQ[T](options.dlq),
 		done:           make(chan struct{}),
 		subs:           map[uint64]*subscriber[T]{},
 	}
@@ -386,8 +388,12 @@ func (c *topic[T]) spawnSubWorker(workerCtx context.Context, sub *subscriber[T])
 				handlerCtx := mergeContexts(workerCtx, env.sendCtx)
 
 				err := invokeHandler(handlerCtx, env.msg, sub.handler)
-				if err != nil && c.errorHandler != nil {
-					c.errorHandler(handlerCtx, env.msg, err)
+				if err != nil {
+					if c.errorHandler != nil {
+						c.errorHandler(handlerCtx, env.msg, err)
+					}
+
+					publishDeadLetter(handlerCtx, c.dlq, env.msg, err)
 				}
 			case <-sub.done:
 				return

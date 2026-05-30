@@ -186,10 +186,11 @@ Sub-paquete de `modules/core/common/` (comparte `go.mod` con el resto de `common
 - `Handler[T] func(ctx, Message[T]) error` — signature del subscriber, en `types.go`.
 - `Cancel func()` — handle idempotente retornado por Subscribe, en `types.go`.
 - `ErrorHandler func(ctx, msg any, err error)` — hook de observabilidad para impls async/sink, en `types.go`.
+- `DeadLetter[T]` envelope (en `message.go` junto a `Message[T]`) + **`WithDLQChannel[T any]` Option** (channel-wide): Topic/Queue publican automáticamente un `DeadLetter[T]` a un `Channel[DeadLetter[T]]` cuando un handler falla. Paralelo a `WithErrorHandler` (observability vs reprocess queue, complementarios). Type parameter T se valida en el constructor vía `extractDLQ` + cassert. Publish es best-effort (errores del DLQ Send se ignoran).
 - `Message[T]` — envelope con `Payload T` + `Headers`, en `message.go`.
 - `Headers` — 13 campos curados desde Spring Integration (MessageID, CorrelationID, CausationID, ReplyTo, Type, Priority, ContentType, ExpirationTime, SequenceNumber, SequenceSize, Timestamp, Source, Custom). Detalle field-by-field en la memoria [[reference-message-headers]].
 - `OverflowPolicy` enum con 4 valores: `OverflowBlock`, `OverflowDropNewest`, `OverflowDropOldest`, `OverflowReject` (default).
-- `Options` + Option pattern: `WithBufferSize`, `WithDrainTimeout`, `WithWorkerCount`, `WithErrorHandler`, `WithOverflowPolicy`.
+- `Options` + Option pattern: `WithBufferSize`, `WithDrainTimeout`, `WithWorkerCount`, `WithErrorHandler`, `WithOverflowPolicy`, `WithDLQChannel[T]` (generic; channel-wide DLQ for Topic/Queue dispatchers).
 - `DefaultErrorHandler` / `SilentErrorHandler` — defaults para configurar `WithErrorHandler`, en `functions.go`.
 - `StepStatus` enum + `StepResult` + `ChainError` — trace de PipelineChannel, en `errors.go`.
 - `Error` struct con sentinels: `ErrSendFailed`, `ErrSubscribeFailed`, `ErrClosed`, `ErrHandlerNil`, `ErrContextNil`, `ErrTimeout`, `ErrDrainTimeout`, `ErrHandlerPanic`, `ErrChainFailed`, `ErrNoSubscribers`, `ErrDropped`, `ErrOverflow`, `ErrBufferFull`.
@@ -219,8 +220,8 @@ Sub-paquete de `modules/core/common/` (comparte `go.mod` con el resto de `common
 **Estructura de archivos:**
 - `types.go` — `Channel[T]` interface + `Handler`/`Cancel`/`ErrorHandler` types + compliance vars + package doc.
 - `functions.go` — funciones libres públicas: `DefaultErrorHandler`, `SilentErrorHandler`.
-- `internals.go` — helpers libres privados compartidos: `snapshotHandlers`, `invokeHandler`, `invokeStep`, `generateID`, `sendWithPolicy`.
-- `message.go` — `Message[T]` + `Headers` + `NewMessage`.
+- `internals.go` — helpers libres privados compartidos: `snapshotHandlers`, `invokeHandler`, `invokeStep`, `generateID`, `sendWithPolicy`, `extractDLQ`, `publishDeadLetter`.
+- `message.go` — `Message[T]` + `Headers` + `NewMessage` + `DeadLetter[T]` envelope.
 - `context.go` — `envelope[T]` + `mergedContext` + `mergeContexts` (concern de propagación async).
 - `errors.go` — `Error` struct, sentinels, `ErrXxx` factories, `ChainError` + `StepResult`.
 - `options.go` — `Options` + `Option` + `WithXxx`.

@@ -180,3 +180,12 @@ func TestWithOverflowPolicy_OutOfRangeIgnored(t *testing.T) {
 		}
 	})
 }
+
+func TestWithDLQChannel_NilIgnored(t *testing.T) {
+	t.Parallel()
+
+	opts := NewOptions(WithDLQChannel[int](nil))
+	if opts.dlq != nil {
+		t.Fatalf("expected nil DLQ to be ignored, got %v", opts.dlq)
+	}
+}

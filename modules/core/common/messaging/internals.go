@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	cuids "github.com/guidomantilla/yarumo/core/common/uids"
 )
 
@@ -171,6 +172,40 @@ func sendBlock[T any](ctx context.Context, env envelope[T], inbound chan envelop
 	case <-ctx.Done():
 		return ErrSend(ErrTimeout, ctx.Err())
 	}
+}
+
+// extractDLQ converts the type-erased Options.dlq field into a
+// concrete Channel[DeadLetter[T]] at channel construction time.
+// Returns nil when raw is nil (no DLQ configured); panics via cassert
+// when raw holds a Channel parameterized by a different T than the
+// channel being constructed (programmer error caught at build, not at
+// first failed dispatch).
+func extractDLQ[T any](raw any) Channel[DeadLetter[T]] {
+	if raw == nil {
+		return nil
+	}
+
+	typed, ok := raw.(Channel[DeadLetter[T]])
+	cassert.True(ok, "WithDLQChannel type parameter does not match channel type T")
+
+	return typed
+}
+
+// publishDeadLetter wraps the publish-to-DLQ side-effect used by
+// Topic and Queue dispatchers when a handler returns an error. The
+// Send error is intentionally swallowed — DLQ-of-DLQ is out of scope
+// and the worker already reported the underlying handler error via
+// the ErrorHandler hook.
+func publishDeadLetter[T any](ctx context.Context, dlq Channel[DeadLetter[T]], msg Message[T], handlerErr error) {
+	if dlq == nil {
+		return
+	}
+
+	_ = dlq.Send(ctx, NewMessage(DeadLetter[T]{
+		Original:  msg,
+		LastError: handlerErr,
+		FailedAt:  time.Now(),
+	}, nil))
 }
 
 // generateID returns uid.Generate() or empty when uid is nil or the

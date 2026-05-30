@@ -1095,6 +1095,181 @@ func TestTopicChannel_ConcurrentSubscribeStop_NoLeak(t *testing.T) {
 	}
 }
 
+func TestTopicChannel_WithDLQChannel_PublishesOnHandlerError(t *testing.T) {
+	t.Parallel()
+
+	dlq := NewPipelineChannel[DeadLetter[int]]()
+
+	var (
+		mu       sync.Mutex
+		captured []DeadLetter[int]
+	)
+
+	_, err := dlq.Subscribe(func(_ context.Context, m Message[DeadLetter[int]]) error {
+		mu.Lock()
+		captured = append(captured, m.Payload)
+		mu.Unlock()
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("dlq Subscribe: %v", err)
+	}
+
+	wantErr := errors.New("topic boom")
+
+	ch := NewTopicChannel[int]("t-dlq",
+		WithBufferSize(8),
+		WithDrainTimeout(time.Second),
+		WithDLQChannel(dlq),
+	).(*topic[int])
+
+	_, err = ch.Subscribe(func(_ context.Context, _ Message[int]) error {
+		return wantErr
+	})
+	if err != nil {
+		t.Fatalf("Subscribe: %v", err)
+	}
+
+	err = ch.Start(context.Background())
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+
+	err = ch.Send(context.Background(), NewMessage[int](42, nil))
+	if err != nil {
+		t.Fatalf("Send: %v", err)
+	}
+
+	_ = ch.Stop(context.Background())
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if len(captured) != 1 {
+		t.Fatalf("expected 1 DLQ publication, got %d", len(captured))
+	}
+
+	dl := captured[0]
+	if dl.Original.Payload != 42 {
+		t.Fatalf("expected DeadLetter.Original.Payload=42, got %d", dl.Original.Payload)
+	}
+	if !errors.Is(dl.LastError, wantErr) {
+		t.Fatalf("expected DeadLetter.LastError=%v, got %v", wantErr, dl.LastError)
+	}
+}
+
+func TestTopicChannel_WithDLQChannel_ErrorHandlerAndDLQBothFire(t *testing.T) {
+	t.Parallel()
+
+	dlq := NewPipelineChannel[DeadLetter[int]]()
+
+	var (
+		mu       sync.Mutex
+		captured []DeadLetter[int]
+	)
+
+	_, err := dlq.Subscribe(func(_ context.Context, m Message[DeadLetter[int]]) error {
+		mu.Lock()
+		captured = append(captured, m.Payload)
+		mu.Unlock()
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("dlq Subscribe: %v", err)
+	}
+
+	var hookHits int
+
+	ch := NewTopicChannel[int]("t-both",
+		WithBufferSize(8),
+		WithDrainTimeout(time.Second),
+		WithErrorHandler(func(_ context.Context, _ any, _ error) {
+			hookHits++
+		}),
+		WithDLQChannel(dlq),
+	).(*topic[int])
+
+	_, err = ch.Subscribe(func(_ context.Context, _ Message[int]) error {
+		return errors.New("boom")
+	})
+	if err != nil {
+		t.Fatalf("Subscribe: %v", err)
+	}
+
+	err = ch.Start(context.Background())
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+
+	_ = ch.Send(context.Background(), NewMessage[int](1, nil))
+
+	_ = ch.Stop(context.Background())
+
+	mu.Lock()
+	dlqCount := len(captured)
+	mu.Unlock()
+
+	if hookHits != 1 {
+		t.Fatalf("expected ErrorHandler fired once, got %d", hookHits)
+	}
+	if dlqCount != 1 {
+		t.Fatalf("expected DLQ published once, got %d", dlqCount)
+	}
+}
+
+func TestTopicChannel_WithDLQChannel_HappyPathNoDLQ(t *testing.T) {
+	t.Parallel()
+
+	dlq := NewPipelineChannel[DeadLetter[int]]()
+
+	var (
+		mu       sync.Mutex
+		captured []DeadLetter[int]
+	)
+
+	_, err := dlq.Subscribe(func(_ context.Context, m Message[DeadLetter[int]]) error {
+		mu.Lock()
+		captured = append(captured, m.Payload)
+		mu.Unlock()
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("dlq Subscribe: %v", err)
+	}
+
+	ch := NewTopicChannel[int]("t-nodlq",
+		WithBufferSize(8),
+		WithDrainTimeout(time.Second),
+		WithDLQChannel(dlq),
+	).(*topic[int])
+
+	_, err = ch.Subscribe(func(_ context.Context, _ Message[int]) error {
+		return nil // success
+	})
+	if err != nil {
+		t.Fatalf("Subscribe: %v", err)
+	}
+
+	err = ch.Start(context.Background())
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+
+	_ = ch.Send(context.Background(), NewMessage[int](1, nil))
+
+	_ = ch.Stop(context.Background())
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if len(captured) != 0 {
+		t.Fatalf("expected 0 DLQ publications on success, got %d", len(captured))
+	}
+}
+
 func TestTopicChannel_Stop_DrainTimeoutDefaultWhenFieldZero(t *testing.T) {
 	t.Parallel()
 

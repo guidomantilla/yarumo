@@ -49,12 +49,20 @@ type Option func(opts *Options)
 
 // Options holds the configuration for async channels (TopicChannel,
 // QueueChannel).
+//
+// dlq is stored as any because the Channel[DeadLetter[T]] it holds is
+// parameterized by T, which Options itself is not (kept non-generic
+// to avoid a workspace-wide breaking change). The concrete channel
+// constructor type-asserts dlq to Channel[DeadLetter[T]] at build
+// time and panics via cassert when the T from WithDLQChannel does
+// not match the T of the channel being constructed.
 type Options struct {
 	bufferSize     int
 	drainTimeout   time.Duration
 	workerCount    int
 	errorHandler   ErrorHandler
 	overflowPolicy OverflowPolicy
+	dlq            any
 }
 
 // NewOptions creates a new Options with sensible defaults and applies
@@ -135,6 +143,28 @@ func WithOverflowPolicy(p OverflowPolicy) Option {
 	return func(opts *Options) {
 		if p >= OverflowBlock && p <= OverflowReject {
 			opts.overflowPolicy = p
+		}
+	}
+}
+
+// WithDLQChannel installs a Dead Letter Channel destination on a
+// TopicChannel or QueueChannel. When a handler returns a non-nil
+// error during dispatch, the channel publishes a DeadLetter[T]
+// envelope (Original, LastError, FailedAt) to dlq best-effort —
+// failures of the DLQ Send itself are swallowed. The ErrorHandler
+// hook (see WithErrorHandler) fires INDEPENDENTLY from the DLQ
+// publication; the two are complementary (observability vs reprocess
+// queue), not alternatives.
+//
+// Type parameter T must match the channel's T at construction;
+// mismatches are caught with cassert at build time. Nil dlq is
+// ignored (the previously installed DLQ is preserved). Channels
+// without a dispatcher (NullChannel) accept the option silently
+// without using it.
+func WithDLQChannel[T any](dlq Channel[DeadLetter[T]]) Option {
+	return func(opts *Options) {
+		if dlq != nil {
+			opts.dlq = dlq
 		}
 	}
 }
