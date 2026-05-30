@@ -20,7 +20,8 @@ use (
 	./modules/core/common/http/examples
 	./modules/core/common/lifecycle/examples
 	./modules/core/common/log/examples
-	./modules/core/common/messaging/examples
+	./modules/messaging
+	./modules/messaging/examples
 	./modules/core/common/pointer/examples
 	./modules/core/common/random/examples
 	./modules/core/common/rest/examples
@@ -65,7 +66,6 @@ use (
 	./modules/extension/telemetry/otel/http/examples
 	./modules/extension/telemetry/otel/slog
 	./modules/extension/telemetry/otel/slog/examples
-	./modules/integration
 	./modules/managed/cron
 	./modules/managed/cron/examples
 	./modules/managed/diagnostics

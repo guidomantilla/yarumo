@@ -50,7 +50,6 @@ Aplican las 4 reglas universales con las siguientes extensiones cuando el paquet
 | `expressions/` | `Evaluator` de expresiones — lexer/parser/eval sobre AST con scope. |
 | `health/` | Aggregator de health checks que orquesta múltiples sondas. |
 | `http/` | `Client` + `Server` HTTP con retry/limiter, defaults seguros para timeouts/headers. |
-| `messaging/` | Primitivas de mensajería tipada in-process — `Channel[T]` + 5 variantes (Pipeline/Broadcast/Topic/Queue/Null) + `Message[T]` con `Headers` extendido. Detalle en sección dedicada abajo. |
 
 **Concerns ajenos en archivos `<concern>.go`** — mismo principio que R1 de Shape A (concern por archivo) aplicado a funciones libres: cuando dos grupos de funciones libres pertenecen a concerns ajenos entre sí, se separan en archivos `<concern>.go` en vez de mezclarse en `functions.go`. Precedentes: `uids/extensions.go` (registry global del paquete con state + `Register`/`Get`/`Use`/`Generate`/`Supported`, distinto de los generadores/validadores libres en `functions.go`); `diagnostics/handlers.go` (HTTP handlers `NewPprofHandler` distintos de las capturas de profile en `functions.go`) — ahora en `modules/managed/diagnostics/` tras el split de #175.
 
@@ -169,17 +168,21 @@ Los tests de la facade `common/log/` son intencionalmente seriales (sin `t.Paral
 
 Histórico: `common/log/` fue extraído como módulo top-level en #173, pero esto cerró un ciclo arquitectónico con `common/assert` que dependía de log. La reorganización en ese PR devolvió la **interface** a `common/log/` y dejó en `modules/extension/common/log/` solo las **implementaciones concretas** — patrón paralelo a `commons-logging`/`slf4j-api` vs binding impls. Tras la entrada de `zerolog/` como módulo separado, el directorio `extension/common/log/` se reestructuró: el `go.mod` parent se eliminó y `slog/` se promovió a módulo hermano, restaurando la simetría (`slog/` y `zerolog/` son peers, cada uno con go.mod propio).
 
-## Sub-paquete `messaging/` (de `modules/core/common/`)
+## Módulo `modules/messaging/`
 
-Sub-paquete de `modules/core/common/` (comparte `go.mod` con el resto de `common/`) que ofrece primitivas de mensajería tipada in-process. Expone una sola interface pública `Channel[T]` con cinco implementaciones equivalentes que cubren los ejes ortogonales sync/async × fan-out/point-to-point + sink. Sigue **Shape B con múltiples peers de una interface sin canónica** — file naming `channel_<variant>.go`, structs `<variant>` per R1.
+Top-level module que aloja **dos capas** de la stack de mensajería in-process: el **paquete root** con las primitivas (`Channel[T]`, `Message[T]`, las 5 implementaciones de canal), y los **sub-paquetes** con patrones EIP que componen sobre esas primitivas (router, filter, bridge — más patterns por venir). Cada sub-paquete importa el root package; el root no importa nada de sub-paquetes (sin ciclos). Comparten `go.mod` — el módulo entero arrastra solo `core/common` y stdlib, sin deps externas pesadas. Transports a brokers externos (Kafka, NATS, etc.) viven en `extension/messaging/<broker>/` cuando se implementen.
+
+### Capa 1: Primitives (root del módulo)
+
+Expone una sola interface pública `Channel[T]` con cinco implementaciones equivalentes que cubren los ejes ortogonales sync/async × fan-out/point-to-point + sink. Sigue **Shape B con múltiples peers de una interface sin canónica** — file naming `<variant>.go`, structs `<variant>` per R1.
 
 | Variante | Archivo | Struct | Roles | Qué hace |
 |---|---|---|---|---|
-| Pipeline | `channel_pipeline.go` | `pipeline[T]` | `Channel[T]` | Sync sequential fan-out en la goroutine del caller. Fail-fast con `*ChainError` trace (step por step: ok / error / panic / skipped). Patrón "Transactional Handler Chain" (cf. MediatR pipeline behaviors). |
-| Broadcast | `channel_broadcast.go` | `broadcast[T]` | `Channel[T]` | Sync parallel fan-out con barrier (`sync.WaitGroup`). Send dispara N goroutines, espera a todas, joina errores con `errors.Join`. Sin fail-fast — todos los handlers corren. |
-| Topic | `channel_topic.go` | `topic[T]` | `Channel[T]` + `lifecycle.Component` | Async buffered fan-out con **cola y worker dedicado por subscriber** (per-sub model). Cada Subscribe asigna su propio inbox + goroutine; un handler lento solo bloquea su propia cola. Send hace fan-out sequential a TODOS los inboxes via `sendWithPolicy` y agrega errores per-sub con `errors.Join`. Implementa lifecycle.Component; callers wirean via type assertion `ch.(lifecycle.Component)` + `lifecycle.Build`. Subscribe pre-Start difiere el worker hasta Start; post-Start spawn inmediato. |
-| Queue | `channel_queue.go` | `queue[T]` | `Channel[T]` + `lifecycle.Component` | Async point-to-point distribution: 1 msg → 1 subscriber via round-robin. Worker pool configurable con `WithWorkerCount(n)`. Caller fire-and-forget. Errores via hook. |
-| Null | `channel_null.go` | `null[T]` | `Channel[T]` | Sink `/dev/null` — Send descarta el mensaje y dispara el `ErrorHandler` hook con `ErrDropped`. Subscribe registra handlers para shape compatibility pero nunca los invoca. Sin goroutines, sin buffering, sin lifecycle. Para test doubles o wiring "flujo deshabilitado". |
+| Pipeline | `pipeline.go` | `pipeline[T]` | `Channel[T]` | Sync sequential fan-out en la goroutine del caller. Fail-fast con `*ChainError` trace (step por step: ok / error / panic / skipped). Patrón "Transactional Handler Chain" (cf. MediatR pipeline behaviors). |
+| Broadcast | `broadcast.go` | `broadcast[T]` | `Channel[T]` | Sync parallel fan-out con barrier (`sync.WaitGroup`). Send dispara N goroutines, espera a todas, joina errores con `errors.Join`. Sin fail-fast — todos los handlers corren. |
+| Topic | `topic.go` | `topic[T]` | `Channel[T]` + `lifecycle.Component` | Async buffered fan-out con **cola y worker dedicado por subscriber** (per-sub model). Cada Subscribe asigna su propio inbox + goroutine; un handler lento solo bloquea su propia cola. Send hace fan-out sequential a TODOS los inboxes via `sendWithPolicy` y agrega errores per-sub con `errors.Join`. Implementa lifecycle.Component; callers wirean via type assertion `ch.(lifecycle.Component)` + `lifecycle.Build`. Subscribe pre-Start difiere el worker hasta Start; post-Start spawn inmediato. |
+| Queue | `queue.go` | `queue[T]` | `Channel[T]` + `lifecycle.Component` | Async point-to-point distribution: 1 msg → 1 subscriber via round-robin. Worker pool configurable con `WithWorkerCount(n)`. Caller fire-and-forget. Errores via hook. |
+| Null | `null.go` | `null[T]` | `Channel[T]` | Sink `/dev/null` — Send descarta el mensaje y dispara el `ErrorHandler` hook con `ErrDropped`. Subscribe acepta handlers para shape compatibility pero nunca los invoca. Sin estado, sin goroutines, sin buffering, sin lifecycle. Para test doubles o wiring "flujo deshabilitado". |
 
 **Tipos públicos del paquete:**
 - `Channel[T]` — interface (Send/Subscribe), en `types.go`.
@@ -217,7 +220,7 @@ Sub-paquete de `modules/core/common/` (comparte `go.mod` con el resto de `common
 
 **Breaking change YA-0180**: el default cambió de `OverflowBlock` a `OverflowReject`. Código que asuma que `Send` bloquea hasta drain debe pasar `WithOverflowPolicy(OverflowBlock)` explícitamente. La motivación es forzar al operador a tomar una decisión consciente sobre saturación en producción en lugar de heredar bloqueo silencioso. Dispatch implementado en `sendWithPolicy` (`internals.go`); helper compartido entre `topic.Send` y `queue.Send`.
 
-**Estructura de archivos:**
+**Estructura de archivos del root package:**
 - `types.go` — `Channel[T]` interface + `Handler`/`Cancel`/`ErrorHandler` types + compliance vars + package doc.
 - `functions.go` — funciones libres públicas: `DefaultErrorHandler`, `SilentErrorHandler`.
 - `internals.go` — helpers libres privados compartidos: `snapshotHandlers`, `invokeHandler`, `invokeStep`, `generateID`, `sendWithPolicy`, `extractDLQ`, `publishDeadLetter`.
@@ -225,12 +228,39 @@ Sub-paquete de `modules/core/common/` (comparte `go.mod` con el resto de `common
 - `context.go` — `envelope[T]` + `mergedContext` + `mergeContexts` (concern de propagación async).
 - `errors.go` — `Error` struct, sentinels, `ErrXxx` factories, `ChainError` + `StepResult`.
 - `options.go` — `Options` + `Option` + `WithXxx`.
-- `channel_pipeline.go` + tests.
-- `channel_broadcast.go` + tests.
-- `channel_topic.go` + tests — incluye `subscriber[T]` struct privado (inbox + done + handler) por R1 (concern del archivo de impl).
-- `channel_queue.go` + tests.
-- `channel_null.go` + tests.
-- `examples/` — submódulo propio con `go.mod`, demos runnable de los 5 channels.
+- `pipeline.go` + tests.
+- `broadcast.go` + tests.
+- `topic.go` + tests — incluye `subscriber[T]` struct privado (inbox + done + handler) por R1 (concern del archivo de impl).
+- `queue.go` + tests.
+- `null.go` + tests.
+- `examples/` — submódulo propio con `go.mod`, demos runnable de los 5 channels + features cross-cutting.
+
+### Capa 2: EIP Patterns (sub-paquetes)
+
+Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el root para usar `Channel[T]`/`Message[T]`/etc. Comparten el mismo `go.mod` que el root. Classification: **Shape B**, struct privado `<name>[T]`, constructor devuelve `lifecycle.Component`. Standard propio en `modules/messaging/CODING_STANDARDS.md`.
+
+| Sub-paquete | Struct | Roles | Qué hace |
+|---|---|---|---|
+| `bridge/` | `bridge[T]` | `lifecycle.Component` | One-to-one channel forwarder: subscribe a `src`, reenvía cada `Message[T]` a `dst` sin alteración. Patrón identity transform — valor estructural (sync↔async decoupling, etiqueta nombrada en wiring graph, hook point de observabilidad). |
+| `filter/` | `filter[T]` | `lifecycle.Component` | Message Filter: subscribe a `src`, reenvía a `dst` solo cuando `PredicateFn` retorna true. Dos hooks separados — `WithErrorHandler` (fallos reales: predicate error/panic, forward fail) y `WithDropHandler` (drops intencionales, silent default). |
+| `router/` | `router[T]` | `lifecycle.Component` | Content-Based Router (key → `Channel[T]`): subscribe a `src`, evalúa `RouteFn(msg) → key`, busca destino en `routes[key]` y reenvía. `WithDefaultChannel` opcional para política NoRoute; sin él, NoRoute drops + reporta vía `ErrorHandler`. |
+
+**Constructores:**
+- `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
+- `NewFilter[T](name, src, dst, predicate, opts...) lifecycle.Component`
+- `NewRouter[T](name, src, decide, routes, opts...) lifecycle.Component`
+
+**Override de la regla universal — errors no propagan al source channel.** Cada pattern subscribe a `src` con un handler que **siempre retorna nil**. Fallos de routing/filtering/forwarding NO son fallos del source channel; el caller del source no debe verlos. Los errores del pattern fluyen vía el `WithErrorHandler` propio (default: `messaging.DefaultErrorHandler` que loguea via `common/log`; opt-out con `messaging.SilentErrorHandler`). Documentado en `modules/messaging/CODING_STANDARDS.md`.
+
+**Lifecycle.** Los patterns implementan `lifecycle.Component` worker-style: Start registra subscription en source channel, Stop la cancela y cierra Done. Ningún pattern spawna goroutines propias — la concurrencia de dispatch se hereda del source channel.
+
+**Estructura de archivos (por sub-paquete):**
+- `types.go` — package doc + `Fn` types públicos (`RouteFn`, `PredicateFn`, `DropHandler`, `ErrXxxFn`) + compliance vars.
+- `errors.go` — `XxxType` constant, sentinels, `Error` struct, `ErrXxx` factory.
+- `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx`.
+- `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
+
+**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 
 ## Módulo `modules/core/security/authn/`
 
@@ -274,33 +304,4 @@ Transport adapter: gRPC unary + stream server interceptors sobre el contrato `se
 | `grpc` | Shape B | `google.golang.org/grpc`, `security/authn` | `NewUnaryInterceptor(authenticator, opts...)` y `NewStreamInterceptor(authenticator, opts...)` — leen el token del metadata key `authorization` (configurable), validan, inyectan `*Principal` en `ctx`. Fallos → `status.Error(codes.Unauthenticated, ...)`. Stream wraps el server stream con `Context()` override para propagar el ctx con el Principal sin reasignar. |
 
 **Options públicas:** `WithMetadataKey(string)`, `WithScheme(string)`.
-
-## Módulo `modules/integration/`
-
-Top-level module que aloja Enterprise Integration Patterns (EIP) que componen sobre las primitivas de `modules/core/common/messaging/`. La frontera es firme: `messaging/` posee los **transportes** (`Channel[T]`, `Message[T]`, las 5 variantes de canal); `integration/` posee los **patrones de composición** que cablean instancias de `Channel[T]` para expresar routing, filtering, transformación, agregación, splitting, gateways y adapters. Standard propio en `modules/integration/CODING_STANDARDS.md`.
-
-Cada patrón vive en su propio sub-package bajo `modules/integration/`. Los sub-packages comparten el `go.mod` del módulo (no hay per-pattern modules) — ningún patrón actual arrastra dependencias externas pesadas, por lo que MVS no justifica separación. Classification: **Shape B**, struct privado `<name>[T]`, constructor devuelve `lifecycle.Component`.
-
-| Sub-paquete | Struct | Roles | Qué hace |
-|---|---|---|---|
-| `bridge/` | `bridge[T]` | `lifecycle.Component` | One-to-one channel forwarder: subscribe a `src`, reenvía cada `Message[T]` a `dst` sin alteración. Patrón identity transform — valor estructural (sync↔async decoupling, etiqueta nombrada en wiring graph, hook point de observabilidad). |
-| `filter/` | `filter[T]` | `lifecycle.Component` | Message Filter: subscribe a `src`, reenvía a `dst` solo cuando `PredicateFn` retorna true. Dos hooks separados — `WithErrorHandler` (fallos reales: predicate error/panic, forward fail) y `WithDropHandler` (drops intencionales, silent default). |
-| `router/` | `router[T]` | `lifecycle.Component` | Content-Based Router (key → `Channel[T]`): subscribe a `src`, evalúa `RouteFn(msg) → key`, busca destino en `routes[key]` y reenvía. `WithDefaultChannel` opcional para política NoRoute; sin él, NoRoute drops + reporta vía `ErrorHandler`. |
-
-**Constructores:**
-- `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
-- `NewFilter[T](name, src, dst, predicate, opts...) lifecycle.Component`
-- `NewRouter[T](name, src, decide, routes, opts...) lifecycle.Component`
-
-**Override de la regla universal — errors no propagan al source channel.** Cada pattern subscribe a `src` con un handler que **siempre retorna nil**. Fallos de routing/filtering/forwarding NO son fallos del source channel; el caller del source no debe verlos. Los errores del pattern fluyen vía el `WithErrorHandler` propio (default: `messaging.DefaultErrorHandler` que loguea via `common/log`; opt-out con `messaging.SilentErrorHandler`). Documentado en `modules/integration/CODING_STANDARDS.md`.
-
-**Lifecycle.** Los 3 patterns implementan `lifecycle.Component` worker-style: Start registra subscription en source channel, Stop la cancela y cierra Done. Ningún pattern spawna goroutines propias — la concurrencia de dispatch se hereda del source channel.
-
-**Estructura de archivos (por sub-paquete):**
-- `types.go` — package doc + `Fn` types públicos (`RouteFn`, `PredicateFn`, `DropHandler`, `ErrXxxFn`) + compliance vars.
-- `errors.go` — `XxxType` constant, sentinels, `Error` struct, `ErrXxx` factory.
-- `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx` (router usa `Option[T]` por carrying T-typed values; bridge/filter usan `Option` sin generics).
-- `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle (`Name`/`Start`/`Stop`/`Done`) + handler privado.
-
-**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `delayer/`, `endpoint/`, `controlbus/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 

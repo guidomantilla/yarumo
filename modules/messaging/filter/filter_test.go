@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/guidomantilla/yarumo/core/common/lifecycle"
-	"github.com/guidomantilla/yarumo/core/common/messaging"
+	"github.com/guidomantilla/yarumo/messaging"
 )
 
 // captureErrors returns a thread-safe ErrorHandler that appends every

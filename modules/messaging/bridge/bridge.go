@@ -6,7 +6,7 @@ import (
 
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	"github.com/guidomantilla/yarumo/core/common/lifecycle"
-	"github.com/guidomantilla/yarumo/core/common/messaging"
+	"github.com/guidomantilla/yarumo/messaging"
 )
 
 // bridge is the one-to-one channel forwarder implementation. It owns a

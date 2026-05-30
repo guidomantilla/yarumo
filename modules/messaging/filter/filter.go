@@ -7,7 +7,7 @@ import (
 
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	"github.com/guidomantilla/yarumo/core/common/lifecycle"
-	"github.com/guidomantilla/yarumo/core/common/messaging"
+	"github.com/guidomantilla/yarumo/messaging"
 )
 
 // filter is the Message Filter implementation. It owns a single

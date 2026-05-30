@@ -1,7 +1,7 @@
 package filter
 
 import (
-	"github.com/guidomantilla/yarumo/core/common/messaging"
+	"github.com/guidomantilla/yarumo/messaging"
 )
 
 // Option is a functional option for configuring filter Options. Filter

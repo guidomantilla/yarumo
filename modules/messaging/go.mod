@@ -1,4 +1,4 @@
-module github.com/guidomantilla/yarumo/integration
+module github.com/guidomantilla/yarumo/messaging
 
 go 1.25.5
 
