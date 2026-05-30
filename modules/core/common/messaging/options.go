@@ -1,10 +1,7 @@
 package messaging
 
 import (
-	"context"
 	"time"
-
-	clog "github.com/guidomantilla/yarumo/core/common/log"
 )
 
 // Default buffer, drain bounds, and worker pool size for the
@@ -14,40 +11,6 @@ const (
 	defaultDrainTimeout = 5 * time.Second
 	defaultWorkerCount  = 1
 )
-
-// ErrorHandler is the function type for the per-handler error
-// observability hook installed on a TopicChannel or QueueChannel via
-// WithErrorHandler.
-//
-// The hook fires once per failed handler invocation, after the
-// dispatcher has recovered any panic. err carries the handler's
-// returned error or, on panic, an error wrapping ErrHandlerPanic
-// with the recovered value. msg is type-erased; cast it inside the
-// hook when payload-specific behavior is needed. The hook is invoked
-// from the worker goroutine and must not block — long observability
-// work should be dispatched asynchronously by the implementer.
-//
-// The default hook logs every failure via common/log so a consumer
-// that forgets to wire observability still gets a record of handler
-// errors. Callers that genuinely want silence must opt out by
-// installing a no-op hook explicitly (see DefaultErrorHandler and
-// SilentErrorHandler below).
-type ErrorHandler func(ctx context.Context, msg any, err error)
-
-// DefaultErrorHandler is the hook installed by NewOptions when the
-// caller does not pass WithErrorHandler. It logs every failure via
-// common/log at Error level so handler bugs surface in standard
-// telemetry without explicit caller wiring.
-func DefaultErrorHandler(ctx context.Context, _ any, err error) {
-	clog.Error(ctx, "messaging handler failed",
-		"error", err.Error(),
-	)
-}
-
-// SilentErrorHandler is a no-op ErrorHandler. Use it when the caller
-// genuinely wants to suppress error logging — for example, in tests
-// that intentionally drive failure paths.
-func SilentErrorHandler(_ context.Context, _ any, _ error) {}
 
 // Option is a functional option for configuring messaging Options.
 type Option func(opts *Options)

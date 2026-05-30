@@ -53,7 +53,7 @@ func (c *broadcast[T]) Send(ctx context.Context, msg Message[T]) error {
 
 	cassert.NotNil(c, "broadcastChannel is nil")
 
-	handlers := c.snapshot()
+	handlers := snapshotHandlers(&c.mu, &c.order, c.byID)
 	if len(handlers) == 0 {
 		return nil
 	}
@@ -126,19 +126,4 @@ func (c *broadcast[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 	}
 
 	return cancel, nil
-}
-
-// snapshot returns a stable copy of the handler list. The Send loop
-// reads it once outside any lock so handler invocations never hold
-// the channel's mutex.
-func (c *broadcast[T]) snapshot() []Handler[T] {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	out := make([]Handler[T], 0, len(c.order))
-	for _, id := range c.order {
-		out = append(out, c.byID[id])
-	}
-
-	return out
 }

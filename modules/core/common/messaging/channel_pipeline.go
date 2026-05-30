@@ -2,9 +2,7 @@ package messaging
 
 import (
 	"context"
-	"fmt"
 	"sync"
-	"time"
 
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 )
@@ -61,7 +59,7 @@ func (c *pipeline[T]) Send(ctx context.Context, msg Message[T]) error {
 
 	cassert.NotNil(c, "pipeline is nil")
 
-	handlers := c.snapshot()
+	handlers := snapshotHandlers(&c.mu, &c.order, c.byID)
 
 	steps := make([]StepResult, len(handlers))
 	failed := -1
@@ -84,37 +82,6 @@ func (c *pipeline[T]) Send(ctx context.Context, msg Message[T]) error {
 	}
 
 	return ErrSend(&ChainError{Steps: steps, Failed: failed}, ErrChainFailed)
-}
-
-// invokeStep runs one handler with panic recovery and timing. The work
-// runs inside an anonymous function so the defer-recover lands BEFORE
-// the outer return captures the StepResult value — keeping the outer
-// signature free of a named return.
-func invokeStep[T any](ctx context.Context, msg Message[T], index int, handler Handler[T]) StepResult {
-	out := StepResult{Index: index, Status: StepStatusOK}
-	start := time.Now()
-
-	func() {
-		defer func() {
-			out.Duration = time.Since(start)
-
-			r := recover()
-			if r == nil {
-				return
-			}
-
-			out.Status = StepStatusPanic
-			out.Err = fmt.Errorf("%w: %v", ErrHandlerPanic, r)
-		}()
-
-		err := handler(ctx, msg)
-		if err != nil {
-			out.Status = StepStatusError
-			out.Err = err
-		}
-	}()
-
-	return out
 }
 
 // Subscribe registers handler at the end of the chain and returns a
@@ -161,20 +128,4 @@ func (c *pipeline[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 	}
 
 	return cancel, nil
-}
-
-// snapshot returns a stable copy of the handler list in Subscribe
-// order. It exists so the Send dispatch loop holds the read lock for
-// as little time as possible — handlers should not be invoked while
-// holding any lock.
-func (c *pipeline[T]) snapshot() []Handler[T] {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	out := make([]Handler[T], 0, len(c.order))
-	for _, id := range c.order {
-		out = append(out, c.byID[id])
-	}
-
-	return out
 }

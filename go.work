@@ -65,6 +65,7 @@ use (
 	./modules/extension/telemetry/otel/http/examples
 	./modules/extension/telemetry/otel/slog
 	./modules/extension/telemetry/otel/slog/examples
+	./modules/integration
 	./modules/managed/cron
 	./modules/managed/cron/examples
 	./modules/managed/diagnostics

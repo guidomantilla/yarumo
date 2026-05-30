@@ -25,6 +25,14 @@ import (
 // Use this primitive for work distribution: N equivalent subscribers
 // share the load and each message is processed once. Contrast with
 // TopicChannel where each message goes to every subscriber.
+//
+// Context propagation: the Send ctx travels with the message in the
+// internal buffer but its cancellation does NOT abort the handler —
+// async dispatch must outlive the publisher's request. The handler
+// receives a ctx whose Done / Deadline / Err follow the worker's
+// lifecycle ctx (the one passed to Start) and whose Value lookups
+// fall through to the Send ctx so trace span, correlation id and
+// slogctx attributes propagate from the publisher.
 type queue[T any] struct {
 	name         string
 	bufferSize   int
@@ -32,7 +40,7 @@ type queue[T any] struct {
 	drainTimeout time.Duration
 	errorHandler ErrorHandler
 
-	inbound chan Message[T]
+	inbound chan envelope[T]
 	done    chan struct{}
 	closed  atomic.Bool
 
@@ -64,7 +72,7 @@ func NewQueueChannel[T any](name string, opts ...Option) Channel[T] {
 		workerCount:  options.workerCount,
 		drainTimeout: options.drainTimeout,
 		errorHandler: options.errorHandler,
-		inbound:      make(chan Message[T], options.bufferSize),
+		inbound:      make(chan envelope[T], options.bufferSize),
 		done:         make(chan struct{}),
 		byID:         map[uint64]Handler[T]{},
 	}
@@ -153,7 +161,7 @@ func (c *queue[T]) Send(ctx context.Context, msg Message[T]) error {
 	}
 
 	select {
-	case c.inbound <- msg:
+	case c.inbound <- envelope[T]{sendCtx: ctx, msg: msg}:
 		return nil
 	case <-ctx.Done():
 		return ErrSend(ErrTimeout, ctx.Err())
@@ -212,20 +220,27 @@ func (c *queue[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 
 // run is one worker's loop. It consumes from inbound until the
 // channel is closed, then exits and decrements the worker WaitGroup.
-func (c *queue[T]) run(ctx context.Context) {
+func (c *queue[T]) run(workerCtx context.Context) {
 	defer c.workerWG.Done()
 
-	for msg := range c.inbound {
-		c.dispatch(ctx, msg)
+	for env := range c.inbound {
+		c.dispatch(workerCtx, env)
 	}
 }
 
 // dispatch selects the next subscriber via round-robin and invokes
-// its handler with panic recovery. Errors and recovered panics are
-// routed through the configured ErrorHandler (default: no-op).
-// Messages arriving when no subscribers are registered are dropped
-// and surfaced via the hook.
-func (c *queue[T]) dispatch(ctx context.Context, msg Message[T]) {
+// its handler with panic recovery. The handler ctx is the worker's
+// lifecycle ctx merged with the publisher's Send ctx values (see
+// mergeContexts): cancellation, deadline and Err follow the worker
+// so a publisher abandoning its request does NOT abort in-flight
+// handlers; Value lookups fall through to the publisher's ctx so
+// trace span, correlation id and slogctx attrs reach the handler.
+// Errors and recovered panics are routed through the configured
+// ErrorHandler. Messages arriving when no subscribers are registered
+// are dropped and surfaced via the hook with ErrNoSubscribers.
+func (c *queue[T]) dispatch(workerCtx context.Context, env envelope[T]) {
+	handlerCtx := mergeContexts(workerCtx, env.sendCtx)
+
 	c.mu.Lock()
 
 	n := len(c.order)
@@ -233,7 +248,7 @@ func (c *queue[T]) dispatch(ctx context.Context, msg Message[T]) {
 		c.mu.Unlock()
 
 		if c.errorHandler != nil {
-			c.errorHandler(ctx, msg, ErrNoSubscribers)
+			c.errorHandler(handlerCtx, env.msg, ErrNoSubscribers)
 		}
 
 		return
@@ -244,12 +259,12 @@ func (c *queue[T]) dispatch(ctx context.Context, msg Message[T]) {
 	handler := c.byID[c.order[idx]]
 	c.mu.Unlock()
 
-	err := invokeHandler(ctx, msg, handler)
+	err := invokeHandler(handlerCtx, env.msg, handler)
 	if err == nil {
 		return
 	}
 
 	if c.errorHandler != nil {
-		c.errorHandler(ctx, msg, err)
+		c.errorHandler(handlerCtx, env.msg, err)
 	}
 }

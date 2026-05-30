@@ -3,6 +3,7 @@
 MODULES := modules/compute/math modules/compute/engine modules/compute/tests/acceptance
 MODULES += modules/config modules/core/common modules/core/crypto modules/core/security/authn modules/core/telemetry/otel modules/core/validation
 MODULES += modules/extension/common/cache/redis modules/extension/common/cache/ristretto modules/extension/common/cast modules/extension/common/http/breaker modules/extension/common/http/limiter modules/extension/common/http/retry modules/extension/common/log/slog modules/extension/common/log/zerolog modules/extension/common/resilience/breaker modules/extension/common/resilience/limiter modules/extension/common/resilience/retry modules/extension/common/uids modules/extension/security/authn/grpc modules/extension/security/authn/http modules/extension/telemetry/otel/http modules/extension/telemetry/otel/slog
+MODULES += modules/integration
 MODULES += modules/managed/cron modules/managed/diagnostics modules/managed/grpc modules/managed/http modules/managed/keep-alive
 MODULES += sdks/decisions/core
 ENABLE_INTERNAL := false

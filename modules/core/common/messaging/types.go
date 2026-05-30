@@ -26,6 +26,26 @@
 // Concurrency: all public types in this package are safe for concurrent
 // use by multiple goroutines.
 //
+// # Context propagation
+//
+// The ctx the Handler receives depends on the channel's dispatch
+// model:
+//
+//   - Synchronous channels (PipelineChannel, BroadcastChannel) run
+//     handlers in the caller's goroutine and pass the ctx given to
+//     Send straight through. Deadline, cancellation and values from
+//     the publisher all reach the handler.
+//   - Asynchronous channels (TopicChannel, QueueChannel) decouple
+//     publisher and consumer lifetimes. The handler ctx merges the
+//     worker's lifecycle ctx (the one passed to Start) with the
+//     publisher's Send ctx: Done / Deadline / Err follow the worker
+//     so publisher cancellation does NOT abort in-flight handlers,
+//     but Value lookups fall through to the Send ctx so trace span,
+//     correlation id and slogctx attributes propagate from the
+//     publisher to the handler. Use Headers.CorrelationID for
+//     request-to-handler correlation when ctx-based cancellation
+//     propagation is undesirable for the async pattern.
+//
 // Scope: in-process only. Broker drivers and outbox patterns will be
 // added later under the same Channel[T] shape; this module owns no
 // external transport dependencies beyond the standard library.
@@ -54,6 +74,24 @@ type Handler[T any] func(ctx context.Context, msg Message[T]) error
 // it more than once is safe and is a no-op after the first call.
 type Cancel func()
 
+// ErrorHandler is the function type for the per-handler error
+// observability hook installed on a TopicChannel, QueueChannel, or
+// NullChannel via WithErrorHandler.
+//
+// The hook fires once per failed handler invocation, after the
+// dispatcher has recovered any panic. err carries the handler's
+// returned error or, on panic, an error wrapping ErrHandlerPanic with
+// the recovered value. msg is type-erased; cast it inside the hook
+// when payload-specific behavior is needed. The hook is invoked from
+// the worker goroutine and must not block — long observability work
+// should be dispatched asynchronously by the implementer.
+//
+// The default hook (DefaultErrorHandler) logs every failure via
+// common/log so a consumer that forgets to wire observability still
+// gets a record of handler errors. Callers that genuinely want silence
+// must opt out by installing SilentErrorHandler explicitly.
+type ErrorHandler func(ctx context.Context, msg any, err error)
+
 // Channel defines the contract for an in-process typed message channel.
 //
 // Implementations dispatch published Message[T] envelopes to all
@@ -65,12 +103,20 @@ type Cancel func()
 // goroutines. Send must return ErrClosed (matched via errors.Is) when
 // invoked after the channel has been closed; Subscribe must return the
 // same error on closed channels.
+//
+// Context propagation: see the package doc. Sync impls forward the
+// Send ctx to each handler; async impls forward a ctx whose lifecycle
+// follows the worker and whose Value lookups fall through to the Send
+// ctx (so trace spans and slogctx values propagate but publisher
+// cancellation does not abort in-flight handlers).
 type Channel[T any] interface {
-	// Send dispatches msg to all currently subscribed handlers. Thehipote
+	// Send dispatches msg to all currently subscribed handlers. The
 	// returned error reflects the dispatch outcome per implementation:
 	// PipelineChannel propagates the first handler error; TopicChannel
 	// returns ErrClosed if the worker is no longer accepting work, or
-	// nil after successful enqueue. ctx propagates to each Handler.
+	// nil after successful enqueue. ctx gates the enqueue/dispatch
+	// step; how it reaches the Handler depends on the implementation
+	// (see package doc).
 	Send(ctx context.Context, msg Message[T]) error
 	// Subscribe registers handler and returns a Cancel that detaches
 	// it. Cancel is idempotent. Subscribe returns an error if the

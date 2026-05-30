@@ -9,6 +9,12 @@ import (
 // Message is the typed envelope dispatched through a Channel[T]. It pairs
 // the strongly-typed Payload with a Headers value carrying routing and
 // provenance metadata.
+//
+// For async channels the publisher's ctx is not carried inside Message —
+// Headers.CorrelationID is the canonical cross-handler correlation
+// mechanism. ctx.Value propagation still happens (see the package doc on
+// context propagation) but ctx-based cancellation never crosses the
+// async boundary.
 type Message[T any] struct {
 	// Payload is the typed event payload.
 	Payload T
@@ -101,19 +107,4 @@ func NewMessage[T any](payload T, uid cuids.UID) Message[T] {
 			Timestamp:     time.Now(),
 		},
 	}
-}
-
-// generateID returns uid.Generate() or empty when uid is nil or the
-// generator fails.
-func generateID(uid cuids.UID) string {
-	if uid == nil {
-		return ""
-	}
-
-	id, err := uid.Generate()
-	if err != nil {
-		return ""
-	}
-
-	return id
 }

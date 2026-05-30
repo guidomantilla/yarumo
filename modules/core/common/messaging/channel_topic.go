@@ -2,7 +2,6 @@ package messaging
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -25,13 +24,21 @@ import (
 // (returns immediately after enqueue) until the buffer fills; once
 // full, Send blocks until either the worker drains a slot or ctx
 // expires.
+//
+// Context propagation: the Send ctx travels with the message in the
+// internal buffer but its cancellation does NOT abort the handler —
+// async dispatch must outlive the publisher's request. The handler
+// receives a ctx whose Done / Deadline / Err follow the worker's
+// lifecycle ctx (the one passed to Start) and whose Value lookups
+// fall through to the Send ctx so trace span, correlation id and
+// slogctx attributes propagate from the publisher.
 type topic[T any] struct {
 	name         string
 	bufferSize   int
 	drainTimeout time.Duration
 	errorHandler ErrorHandler
 
-	inbound chan Message[T]
+	inbound chan envelope[T]
 	done    chan struct{}
 	closed  atomic.Bool
 
@@ -60,7 +67,7 @@ func NewTopicChannel[T any](name string, opts ...Option) Channel[T] {
 		bufferSize:   options.bufferSize,
 		drainTimeout: options.drainTimeout,
 		errorHandler: options.errorHandler,
-		inbound:      make(chan Message[T], options.bufferSize),
+		inbound:      make(chan envelope[T], options.bufferSize),
 		done:         make(chan struct{}),
 		byID:         map[uint64]Handler[T]{},
 	}
@@ -139,7 +146,7 @@ func (c *topic[T]) Send(ctx context.Context, msg Message[T]) error {
 	}
 
 	select {
-	case c.inbound <- msg:
+	case c.inbound <- envelope[T]{sendCtx: ctx, msg: msg}:
 		return nil
 	case <-ctx.Done():
 		return ErrSend(ErrTimeout, ctx.Err())
@@ -196,51 +203,38 @@ func (c *topic[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 // run is the worker loop. It reads from inbound until the channel is
 // closed, dispatching each message to every registered handler. It
 // closes done exactly once when the loop exits.
-func (c *topic[T]) run(ctx context.Context) {
+func (c *topic[T]) run(workerCtx context.Context) {
 	defer c.doneOnce.Do(func() { close(c.done) })
 
-	for msg := range c.inbound {
-		c.dispatch(ctx, msg)
+	for env := range c.inbound {
+		c.dispatch(workerCtx, env)
 	}
 }
 
 // dispatch invokes every registered handler for the given message in
-// Subscribe order. Each handler runs under panic recovery so one bad
-// message cannot kill the worker. Handler errors and recovered panics
-// are routed through the configured ErrorHandler (default: no-op)
-// since async dispatch has no return path to the publisher.
-func (c *topic[T]) dispatch(ctx context.Context, msg Message[T]) {
-	c.mu.RLock()
-	snapshot := make([]Handler[T], 0, len(c.order))
-	for _, id := range c.order {
-		snapshot = append(snapshot, c.byID[id])
-	}
-	c.mu.RUnlock()
+// Subscribe order. The handler ctx is the worker's lifecycle ctx
+// merged with the publisher's Send ctx values (see mergeContexts):
+// cancellation, deadline and Err follow the worker so a publisher
+// abandoning its request does NOT abort in-flight handlers; Value
+// lookups fall through to the publisher's ctx so trace span,
+// correlation id and slogctx attrs reach the handler. Each handler
+// runs under panic recovery so one bad message cannot kill the
+// worker. Handler errors and recovered panics are routed through
+// the configured ErrorHandler since async dispatch has no return
+// path to the publisher.
+func (c *topic[T]) dispatch(workerCtx context.Context, env envelope[T]) {
+	snapshot := snapshotHandlers(&c.mu, &c.order, c.byID)
+
+	handlerCtx := mergeContexts(workerCtx, env.sendCtx)
 
 	for _, handler := range snapshot {
-		err := invokeHandler(ctx, msg, handler)
+		err := invokeHandler(handlerCtx, env.msg, handler)
 		if err == nil {
 			continue
 		}
 
 		if c.errorHandler != nil {
-			c.errorHandler(ctx, msg, err)
+			c.errorHandler(handlerCtx, env.msg, err)
 		}
 	}
-}
-
-// invokeHandler runs one handler with panic recovery. Returned error
-// is nil on success, the handler's error on a normal failure, or an
-// ErrHandlerPanic-wrapping error on panic.
-func invokeHandler[T any](ctx context.Context, msg Message[T], handler Handler[T]) (err error) {
-	defer func() {
-		r := recover()
-		if r == nil {
-			return
-		}
-
-		err = fmt.Errorf("%w: %v", ErrHandlerPanic, r)
-	}()
-
-	return handler(ctx, msg)
 }
