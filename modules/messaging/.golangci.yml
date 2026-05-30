@@ -119,3 +119,7 @@ linters:
         linters:
           - contextcheck
           - wrapcheck
+      - path: aggregator/aggregator\.go
+        linters:
+          - contextcheck
+          - wrapcheck
