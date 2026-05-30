@@ -49,10 +49,20 @@ import (
 )
 
 var (
-	_ lifecycle.Component = (*bridge[any])(nil)
+	_ Bridge[any] = (*bridge[any])(nil)
 
 	_ ErrBridgeFn = ErrBridge
 )
+
+// Bridge is the public interface for a one-to-one channel forwarder.
+// It embeds lifecycle.Component so callers wire it up with
+// lifecycle.Build. The interface exists (rather than returning
+// lifecycle.Component directly) so the consumer's API surface
+// preserves "this is a Bridge" semantics and the type stays open to
+// future bridge-specific methods without breaking callers.
+type Bridge[T any] interface {
+	lifecycle.Component
+}
 
 // ErrBridgeFn is the function type for ErrBridge.
 type ErrBridgeFn func(causes ...error) error

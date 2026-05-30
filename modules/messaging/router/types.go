@@ -52,10 +52,20 @@ import (
 )
 
 var (
-	_ lifecycle.Component = (*router[any])(nil)
+	_ Router[any] = (*router[any])(nil)
 
 	_ ErrRouteFn = ErrRoute
 )
+
+// Router is the public interface for a Content-Based Router. It
+// embeds lifecycle.Component so callers wire it up with
+// lifecycle.Build. The interface exists (rather than returning
+// lifecycle.Component directly) so the consumer's API surface
+// preserves "this is a Router" semantics and the type stays open to
+// future router-specific methods without breaking callers.
+type Router[T any] interface {
+	lifecycle.Component
+}
 
 // RouteFn returns the destination key for msg, or an error. The key is
 // looked up in the routes map provided to NewRouter; a missing key

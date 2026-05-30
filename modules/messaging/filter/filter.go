@@ -44,7 +44,7 @@ type filter[T any] struct {
 //     custom hook for predicate errors/panics and forward failures.
 //   - WithDropHandler installs an optional hook for observing
 //     intentional drops; nil by default (silent drop).
-func NewFilter[T any](name string, src messaging.Channel[T], dst messaging.Channel[T], predicate PredicateFn[T], opts ...Option) lifecycle.Component {
+func NewFilter[T any](name string, src messaging.Channel[T], dst messaging.Channel[T], predicate PredicateFn[T], opts ...Option) Filter[T] {
 	cassert.NotEmpty(name, "name is empty")
 	cassert.NotNil(src, "source channel is nil")
 	cassert.NotNil(dst, "destination channel is nil")

@@ -45,7 +45,7 @@ type router[T any] struct {
 //   - WithErrorHandler overrides the default messaging.DefaultErrorHandler
 //     (which logs via common/log) with a custom hook or
 //     messaging.SilentErrorHandler.
-func NewRouter[T any](name string, src messaging.Channel[T], decide RouteFn[T], routes map[string]messaging.Channel[T], opts ...Option[T]) lifecycle.Component {
+func NewRouter[T any](name string, src messaging.Channel[T], decide RouteFn[T], routes map[string]messaging.Channel[T], opts ...Option[T]) Router[T] {
 	cassert.NotEmpty(name, "name is empty")
 	cassert.NotNil(src, "source channel is nil")
 	cassert.NotNil(decide, "route function is nil")

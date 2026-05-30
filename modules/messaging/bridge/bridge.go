@@ -37,7 +37,7 @@ type bridge[T any] struct {
 // are mandatory. The only optional behavior is the ErrorHandler hook
 // installed via WithErrorHandler (defaulting to
 // messaging.DefaultErrorHandler which logs via common/log).
-func NewBridge[T any](name string, src messaging.Channel[T], dst messaging.Channel[T], opts ...Option) lifecycle.Component {
+func NewBridge[T any](name string, src messaging.Channel[T], dst messaging.Channel[T], opts ...Option) Bridge[T] {
 	cassert.NotEmpty(name, "name is empty")
 	cassert.NotNil(src, "source channel is nil")
 	cassert.NotNil(dst, "destination channel is nil")

@@ -55,10 +55,20 @@ import (
 )
 
 var (
-	_ lifecycle.Component = (*filter[any])(nil)
+	_ Filter[any] = (*filter[any])(nil)
 
 	_ ErrFilterFn = ErrFilter
 )
+
+// Filter is the public interface for a Message Filter. It embeds
+// lifecycle.Component so callers wire it up with lifecycle.Build. The
+// interface exists (rather than returning lifecycle.Component
+// directly) so the consumer's API surface preserves "this is a
+// Filter" semantics and the type stays open to future filter-specific
+// methods without breaking callers.
+type Filter[T any] interface {
+	lifecycle.Component
+}
 
 // PredicateFn returns true to forward msg to the destination channel
 // and false to drop it. An error returned by PredicateFn is wrapped in
