@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"context"
+	"slices"
 	"sync"
 
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
@@ -53,11 +54,11 @@ func NewPipelineChannel[T any]() Channel[T] {
 // with Status StepStatusPanic, and reported through the same
 // *ChainError flow. They never propagate to the caller.
 func (c *pipeline[T]) Send(ctx context.Context, msg Message[T]) error {
+	cassert.NotNil(c, "pipeline is nil")
+
 	if ctx == nil {
 		return ErrSend(ErrContextNil)
 	}
-
-	cassert.NotNil(c, "pipeline is nil")
 
 	handlers := snapshotHandlers(&c.mu, &c.order, c.byID)
 
@@ -88,10 +89,11 @@ func (c *pipeline[T]) Send(ctx context.Context, msg Message[T]) error {
 // Cancel that detaches it. Cancel is idempotent. Subscribe returns
 // ErrSubscribe(ErrHandlerNil) when handler is nil.
 //
-// Handlers run in Subscribe order: the first Subscribe call becomes
-// step 0, the second becomes step 1, and so on. Cancelling a handler
-// does not renumber the remaining steps — subsequent traces simply
-// omit the cancelled handler.
+// Handlers run in Subscribe order. StepResult.Index reflects the
+// position within the current Send's snapshot, not the original
+// Subscribe call number: cancelling a handler causes subsequent
+// traces to renumber the remaining handlers without gaps (the second
+// remaining handler becomes step 1, and so on).
 func (c *pipeline[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 	cassert.NotNil(c, "pipeline is nil")
 
@@ -115,14 +117,8 @@ func (c *pipeline[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 
 			delete(c.byID, id)
 
-			for i, candidate := range c.order {
-				if candidate != id {
-					continue
-				}
-
-				c.order = append(c.order[:i], c.order[i+1:]...)
-
-				break
+			if i := slices.Index(c.order, id); i >= 0 {
+				c.order = slices.Delete(c.order, i, i+1)
 			}
 		})
 	}

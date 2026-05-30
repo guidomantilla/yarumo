@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -98,9 +99,7 @@ func (c *queue[T]) Start(ctx context.Context) error {
 
 	c.startOnce.Do(func() {
 		for range c.workerCount {
-			c.workerWG.Add(1)
-
-			go c.run(ctx)
+			c.workerWG.Go(func() { c.run(ctx) })
 		}
 
 		go c.awaitDrain()
@@ -217,14 +216,8 @@ func (c *queue[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 
 			delete(c.byID, id)
 
-			for i, candidate := range c.order {
-				if candidate != id {
-					continue
-				}
-
-				c.order = append(c.order[:i], c.order[i+1:]...)
-
-				break
+			if i := slices.Index(c.order, id); i >= 0 {
+				c.order = slices.Delete(c.order, i, i+1)
 			}
 		})
 	}
@@ -233,10 +226,9 @@ func (c *queue[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 }
 
 // run is one worker's loop. It consumes from inbound until the
-// channel is closed, then exits and decrements the worker WaitGroup.
+// channel is closed, then exits. The WaitGroup accounting is handled
+// by the wg.Go call site in Start.
 func (c *queue[T]) run(workerCtx context.Context) {
-	defer c.workerWG.Done()
-
 	for env := range c.inbound {
 		c.dispatch(workerCtx, env)
 	}

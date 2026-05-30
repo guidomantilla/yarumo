@@ -3,6 +3,8 @@ package messaging
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -80,7 +82,6 @@ type topic[T any] struct {
 
 	mu     sync.RWMutex
 	nextID uint64
-	order  []uint64
 	subs   map[uint64]*subscriber[T]
 
 	startOnce    sync.Once
@@ -151,10 +152,7 @@ func (c *topic[T]) Start(ctx context.Context) error {
 		c.workerCtx = workerCtx
 		c.workerCancel = workerCancel
 
-		pending := make([]*subscriber[T], 0, len(c.order))
-		for _, id := range c.order {
-			pending = append(pending, c.subs[id])
-		}
+		pending := slices.Collect(maps.Values(c.subs))
 
 		c.started.Store(true)
 		c.mu.Unlock()
@@ -269,10 +267,7 @@ func (c *topic[T]) Send(ctx context.Context, msg Message[T]) error {
 	}
 
 	c.mu.RLock()
-	snapshot := make([]*subscriber[T], 0, len(c.order))
-	for _, id := range c.order {
-		snapshot = append(snapshot, c.subs[id])
-	}
+	snapshot := slices.Collect(maps.Values(c.subs))
 	c.mu.RUnlock()
 
 	if len(snapshot) == 0 {
@@ -297,8 +292,10 @@ func (c *topic[T]) Send(ctx context.Context, msg Message[T]) error {
 }
 
 // Subscribe registers handler with its own bounded inbox and worker
-// goroutine. Subscribers receive messages in Subscribe order during
-// the fan-out loop in Send. Cancel is idempotent. Subscribe returns
+// goroutine. Subscribe order is NOT a contract: each subscriber owns
+// its own inbox and worker, so the fan-out loop in Send enqueues to
+// subs in non-deterministic order and they process independently in
+// parallel. Cancel is idempotent and O(1). Subscribe returns
 // ErrSubscribe(ErrHandlerNil) when handler is nil and
 // ErrSubscribe(ErrClosed) when the channel has been stopped.
 //
@@ -334,7 +331,6 @@ func (c *topic[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 	c.nextID++
 	id := c.nextID
 	c.subs[id] = sub
-	c.order = append(c.order, id)
 	shouldSpawn := c.started.Load()
 	workerCtx := c.workerCtx
 	c.mu.Unlock()
@@ -349,16 +345,6 @@ func (c *topic[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 		once.Do(func() {
 			c.mu.Lock()
 			delete(c.subs, id)
-
-			for i, candidate := range c.order {
-				if candidate != id {
-					continue
-				}
-
-				c.order = append(c.order[:i], c.order[i+1:]...)
-
-				break
-			}
 			c.mu.Unlock()
 
 			close(sub.done)
