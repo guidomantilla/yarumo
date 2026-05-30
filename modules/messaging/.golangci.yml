@@ -119,3 +119,15 @@ linters:
         linters:
           - contextcheck
           - wrapcheck
+      - path: transformer/transformer\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: wiretap/wiretap\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: splitter/splitter\.go
+        linters:
+          - contextcheck
+          - wrapcheck
