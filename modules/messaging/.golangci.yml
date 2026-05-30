@@ -119,3 +119,15 @@ linters:
         linters:
           - contextcheck
           - wrapcheck
+      - path: recipientlist/recipientlist\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: headerfilter/headerfilter\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: enricher/enricher\.go
+        linters:
+          - contextcheck
+          - wrapcheck
