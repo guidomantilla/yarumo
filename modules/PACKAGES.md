@@ -177,7 +177,7 @@ Sub-paquete de `modules/core/common/` (comparte `go.mod` con el resto de `common
 |---|---|---|---|---|
 | Pipeline | `channel_pipeline.go` | `pipeline[T]` | `Channel[T]` | Sync sequential fan-out en la goroutine del caller. Fail-fast con `*ChainError` trace (step por step: ok / error / panic / skipped). Patrón "Transactional Handler Chain" (cf. MediatR pipeline behaviors). |
 | Broadcast | `channel_broadcast.go` | `broadcast[T]` | `Channel[T]` | Sync parallel fan-out con barrier (`sync.WaitGroup`). Send dispara N goroutines, espera a todas, joina errores con `errors.Join`. Sin fail-fast — todos los handlers corren. |
-| Topic | `channel_topic.go` | `topic[T]` | `Channel[T]` + `lifecycle.Component` | Async buffered fan-out via worker único. Caller fire-and-forget. Errores via `WithErrorHandler` hook. Implementa lifecycle.Component (Start/Stop/Done/Name); callers wirean via type assertion `ch.(lifecycle.Component)` + `lifecycle.Build`. |
+| Topic | `channel_topic.go` | `topic[T]` | `Channel[T]` + `lifecycle.Component` | Async buffered fan-out con **cola y worker dedicado por subscriber** (per-sub model). Cada Subscribe asigna su propio inbox + goroutine; un handler lento solo bloquea su propia cola. Send hace fan-out sequential a TODOS los inboxes via `sendWithPolicy` y agrega errores per-sub con `errors.Join`. Implementa lifecycle.Component; callers wirean via type assertion `ch.(lifecycle.Component)` + `lifecycle.Build`. Subscribe pre-Start difiere el worker hasta Start; post-Start spawn inmediato. |
 | Queue | `channel_queue.go` | `queue[T]` | `Channel[T]` + `lifecycle.Component` | Async point-to-point distribution: 1 msg → 1 subscriber via round-robin. Worker pool configurable con `WithWorkerCount(n)`. Caller fire-and-forget. Errores via hook. |
 | Null | `channel_null.go` | `null[T]` | `Channel[T]` | Sink `/dev/null` — Send descarta el mensaje y dispara el `ErrorHandler` hook con `ErrDropped`. Subscribe registra handlers para shape compatibility pero nunca los invoca. Sin goroutines, sin buffering, sin lifecycle. Para test doubles o wiring "flujo deshabilitado". |
 
@@ -188,10 +188,11 @@ Sub-paquete de `modules/core/common/` (comparte `go.mod` con el resto de `common
 - `ErrorHandler func(ctx, msg any, err error)` — hook de observabilidad para impls async/sink, en `types.go`.
 - `Message[T]` — envelope con `Payload T` + `Headers`, en `message.go`.
 - `Headers` — 13 campos curados desde Spring Integration (MessageID, CorrelationID, CausationID, ReplyTo, Type, Priority, ContentType, ExpirationTime, SequenceNumber, SequenceSize, Timestamp, Source, Custom). Detalle field-by-field en la memoria [[reference-message-headers]].
-- `Options` + Option pattern: `WithBufferSize`, `WithDrainTimeout`, `WithWorkerCount`, `WithErrorHandler`.
+- `OverflowPolicy` enum con 4 valores: `OverflowBlock`, `OverflowDropNewest`, `OverflowDropOldest`, `OverflowReject` (default).
+- `Options` + Option pattern: `WithBufferSize`, `WithDrainTimeout`, `WithWorkerCount`, `WithErrorHandler`, `WithOverflowPolicy`.
 - `DefaultErrorHandler` / `SilentErrorHandler` — defaults para configurar `WithErrorHandler`, en `functions.go`.
 - `StepStatus` enum + `StepResult` + `ChainError` — trace de PipelineChannel, en `errors.go`.
-- `Error` struct con sentinels: `ErrSendFailed`, `ErrSubscribeFailed`, `ErrClosed`, `ErrHandlerNil`, `ErrContextNil`, `ErrTimeout`, `ErrDrainTimeout`, `ErrHandlerPanic`, `ErrChainFailed`, `ErrNoSubscribers`, `ErrDropped`.
+- `Error` struct con sentinels: `ErrSendFailed`, `ErrSubscribeFailed`, `ErrClosed`, `ErrHandlerNil`, `ErrContextNil`, `ErrTimeout`, `ErrDrainTimeout`, `ErrHandlerPanic`, `ErrChainFailed`, `ErrNoSubscribers`, `ErrDropped`, `ErrOverflow`, `ErrBufferFull`.
 
 **Constructores:**
 - `NewPipelineChannel[T]() Channel[T]`
@@ -205,17 +206,27 @@ Sub-paquete de `modules/core/common/` (comparte `go.mod` con el resto de `common
 
 **Context propagation en async channels.** `topic` y `queue` no propagan la cancelación del `ctx` del publisher al handler — el dispatch async debe sobrevivir al request del publisher. El handler recibe un ctx fusionado (`mergeContexts` en `context.go`) cuyo Done/Deadline/Err siguen al ctx del worker pero cuyos Value lookups caen primero en el ctx del publisher (propaga trace span, correlation id, slogctx attrs). Detalle en el package doc de `types.go`.
 
+**Per-subscriber model (Topic, YA-0167).** `TopicChannel` aísla a sus subscribers: cada `Subscribe` allocates su propio `chan envelope[T]` (tamaño `WithBufferSize`) y spawna su propio worker goroutine. `Send` fan-outs el mensaje a TODOS los inboxes secuencialmente usando `sendWithPolicy` per-inbox, y agrega errores per-sub con `errors.Join`. Resultado: un handler lento no bloquea a los rápidos (cada uno avanza a su propio ritmo); `OverflowPolicy` y `WithBufferSize` aplican por-subscriber. Subscribe antes de Start difiere el worker hasta Start; post-Start lo spawna inmediato. Cancel cierra `sub.done` (worker exit fire-and-forget); messages in-flight a un sub cancelado se pierden naturalmente. Stop cierra todos los inboxes + cancela workerCtx → workers exit → `awaitDrain` cierra `done`. Sentinel `workerWG.Add(1)` en Start mantiene el WG > 0 para evitar la race de Wait-vs-Add-de-cero con post-Start Subscribes.
+
+**Overflow policy (Topic + Queue).** `OverflowPolicy` selecciona el comportamiento de `Send` cuando el buffer está full:
+- `OverflowReject` (**default**) — `Send` retorna `ErrSend(ErrBufferFull)` inmediatamente. Sin block, sin drop, sin hook. Caller decide retry/shed/fallback.
+- `OverflowBlock` — `Send` bloquea hasta que abra un slot o ctx expire. Sin pérdida. Comportamiento histórico (pre-YA-0180).
+- `OverflowDropNewest` — `Send` retorna `nil`, dropea el mensaje nuevo, fires hook con `ErrOverflow|ErrDropped`.
+- `OverflowDropOldest` — `Send` retorna `nil`, evicts head del buffer (fires hook con el evicted msg), enqueue el nuevo. Single retry best-effort si race con otros producers.
+
+**Breaking change YA-0180**: el default cambió de `OverflowBlock` a `OverflowReject`. Código que asuma que `Send` bloquea hasta drain debe pasar `WithOverflowPolicy(OverflowBlock)` explícitamente. La motivación es forzar al operador a tomar una decisión consciente sobre saturación en producción en lugar de heredar bloqueo silencioso. Dispatch implementado en `sendWithPolicy` (`internals.go`); helper compartido entre `topic.Send` y `queue.Send`.
+
 **Estructura de archivos:**
 - `types.go` — `Channel[T]` interface + `Handler`/`Cancel`/`ErrorHandler` types + compliance vars + package doc.
 - `functions.go` — funciones libres públicas: `DefaultErrorHandler`, `SilentErrorHandler`.
-- `internals.go` — helpers libres privados compartidos: `snapshotHandlers`, `invokeHandler`, `invokeStep`, `generateID`.
+- `internals.go` — helpers libres privados compartidos: `snapshotHandlers`, `invokeHandler`, `invokeStep`, `generateID`, `sendWithPolicy`.
 - `message.go` — `Message[T]` + `Headers` + `NewMessage`.
 - `context.go` — `envelope[T]` + `mergedContext` + `mergeContexts` (concern de propagación async).
 - `errors.go` — `Error` struct, sentinels, `ErrXxx` factories, `ChainError` + `StepResult`.
 - `options.go` — `Options` + `Option` + `WithXxx`.
 - `channel_pipeline.go` + tests.
 - `channel_broadcast.go` + tests.
-- `channel_topic.go` + tests.
+- `channel_topic.go` + tests — incluye `subscriber[T]` struct privado (inbox + done + handler) por R1 (concern del archivo de impl).
 - `channel_queue.go` + tests.
 - `channel_null.go` + tests.
 - `examples/` — submódulo propio con `go.mod`, demos runnable de los 5 channels.

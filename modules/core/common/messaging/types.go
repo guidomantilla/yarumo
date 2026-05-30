@@ -46,6 +46,22 @@
 //     request-to-handler correlation when ctx-based cancellation
 //     propagation is undesirable for the async pattern.
 //
+// # Overflow policy (async channels)
+//
+// TopicChannel and QueueChannel honor a configurable OverflowPolicy
+// (see WithOverflowPolicy) selecting what happens when Send finds the
+// internal buffer at capacity:
+//
+//   - OverflowReject (the default for NewOptions): Send returns
+//     ErrSend(ErrBufferFull) immediately. The caller decides — retry,
+//     shed, fallback — and saturation is loud rather than silent.
+//   - OverflowBlock: Send blocks until a slot opens or the caller's
+//     ctx expires; the historical behavior, useful when message loss
+//     is unacceptable and the publisher can absorb backpressure.
+//   - OverflowDropNewest / OverflowDropOldest: Send returns nil and the
+//     ErrorHandler hook fires with ErrOverflow joined with ErrDropped;
+//     useful for telemetry / metrics where eviction is acceptable.
+//
 // Scope: in-process only. Broker drivers and outbox patterns will be
 // added later under the same Channel[T] shape; this module owns no
 // external transport dependencies beyond the standard library.

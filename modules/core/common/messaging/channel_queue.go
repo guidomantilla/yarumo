@@ -34,11 +34,12 @@ import (
 // fall through to the Send ctx so trace span, correlation id and
 // slogctx attributes propagate from the publisher.
 type queue[T any] struct {
-	name         string
-	bufferSize   int
-	workerCount  int
-	drainTimeout time.Duration
-	errorHandler ErrorHandler
+	name           string
+	bufferSize     int
+	workerCount    int
+	drainTimeout   time.Duration
+	errorHandler   ErrorHandler
+	overflowPolicy OverflowPolicy
 
 	inbound chan envelope[T]
 	done    chan struct{}
@@ -67,14 +68,15 @@ func NewQueueChannel[T any](name string, opts ...Option) Channel[T] {
 	options := NewOptions(opts...)
 
 	return &queue[T]{
-		name:         name,
-		bufferSize:   options.bufferSize,
-		workerCount:  options.workerCount,
-		drainTimeout: options.drainTimeout,
-		errorHandler: options.errorHandler,
-		inbound:      make(chan envelope[T], options.bufferSize),
-		done:         make(chan struct{}),
-		byID:         map[uint64]Handler[T]{},
+		name:           name,
+		bufferSize:     options.bufferSize,
+		workerCount:    options.workerCount,
+		drainTimeout:   options.drainTimeout,
+		errorHandler:   options.errorHandler,
+		overflowPolicy: options.overflowPolicy,
+		inbound:        make(chan envelope[T], options.bufferSize),
+		done:           make(chan struct{}),
+		byID:           map[uint64]Handler[T]{},
 	}
 }
 
@@ -146,9 +148,11 @@ func (c *queue[T]) Done() <-chan struct{} {
 }
 
 // Send enqueues msg for asynchronous dispatch. Send returns
-// ErrSend(ErrClosed) after Stop. When the buffer is full, Send
-// blocks until a slot opens or ctx expires; on ctx expiry Send
-// returns ErrSend with the ctx error joined.
+// ErrSend(ErrClosed) after Stop. The behavior when the internal
+// buffer is full depends on the configured OverflowPolicy (see
+// WithOverflowPolicy): Block waits until a slot opens or ctx
+// expires; DropNewest/DropOldest drop and fire the hook; Reject
+// (the default) returns ErrSend(ErrBufferFull) immediately.
 func (c *queue[T]) Send(ctx context.Context, msg Message[T]) error {
 	cassert.NotNil(c, "QueueChannel is nil")
 
@@ -160,12 +164,7 @@ func (c *queue[T]) Send(ctx context.Context, msg Message[T]) error {
 		return ErrSend(ErrClosed)
 	}
 
-	select {
-	case c.inbound <- envelope[T]{sendCtx: ctx, msg: msg}:
-		return nil
-	case <-ctx.Done():
-		return ErrSend(ErrTimeout, ctx.Err())
-	}
+	return sendWithPolicy(ctx, c.inbound, msg, c.overflowPolicy, c.errorHandler)
 }
 
 // Subscribe registers handler at the end of the rotation pool and

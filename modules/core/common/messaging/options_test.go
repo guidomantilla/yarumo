@@ -141,3 +141,42 @@ func TestWithErrorHandler_NilPreservesDefault(t *testing.T) {
 	}
 }
 
+func TestNewOptions_DefaultOverflowPolicyIsReject(t *testing.T) {
+	t.Parallel()
+
+	opts := NewOptions()
+	if opts.overflowPolicy != OverflowReject {
+		t.Fatalf("expected default OverflowReject, got %v", opts.overflowPolicy)
+	}
+}
+
+func TestWithOverflowPolicy_AppliesValid(t *testing.T) {
+	t.Parallel()
+
+	opts := NewOptions(WithOverflowPolicy(OverflowDropOldest))
+	if opts.overflowPolicy != OverflowDropOldest {
+		t.Fatalf("expected OverflowDropOldest, got %v", opts.overflowPolicy)
+	}
+}
+
+func TestWithOverflowPolicy_OutOfRangeIgnored(t *testing.T) {
+	t.Parallel()
+
+	t.Run("positive out of range", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithOverflowPolicy(OverflowPolicy(99)))
+		if opts.overflowPolicy != OverflowReject {
+			t.Fatalf("expected default preserved, got %v", opts.overflowPolicy)
+		}
+	})
+
+	t.Run("negative ignored", func(t *testing.T) {
+		t.Parallel()
+
+		opts := NewOptions(WithOverflowPolicy(OverflowPolicy(-1)))
+		if opts.overflowPolicy != OverflowReject {
+			t.Fatalf("expected default preserved, got %v", opts.overflowPolicy)
+		}
+	})
+}

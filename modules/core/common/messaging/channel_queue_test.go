@@ -331,3 +331,94 @@ func TestQueueChannel_StopIsIdempotent(t *testing.T) {
 		t.Fatalf("second Stop returned %v", err)
 	}
 }
+
+func TestQueueChannel_OverflowReject_ReturnsErrBufferFull(t *testing.T) {
+	t.Parallel()
+
+	ch := NewQueueChannel[int]("q-reject", WithBufferSize(1)).(*queue[int])
+
+	err := ch.Send(context.Background(), NewMessage[int](1, nil))
+	if err != nil {
+		t.Fatalf("first Send returned %v", err)
+	}
+
+	err = ch.Send(context.Background(), NewMessage[int](2, nil))
+	if !errors.Is(err, ErrBufferFull) {
+		t.Fatalf("expected ErrBufferFull, got %v", err)
+	}
+}
+
+func TestQueueChannel_OverflowBlock_BlocksUntilCtxExpires(t *testing.T) {
+	t.Parallel()
+
+	ch := NewQueueChannel[int]("q-block",
+		WithBufferSize(1),
+		WithOverflowPolicy(OverflowBlock),
+	).(*queue[int])
+
+	err := ch.Send(context.Background(), NewMessage[int](1, nil))
+	if err != nil {
+		t.Fatalf("first Send returned %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	err = ch.Send(ctx, NewMessage[int](2, nil))
+	if !errors.Is(err, ErrTimeout) {
+		t.Fatalf("expected ErrTimeout, got %v", err)
+	}
+}
+
+func TestQueueChannel_OverflowDropNewest_DropsNewMessage(t *testing.T) {
+	t.Parallel()
+
+	var captured []Message[int]
+	hook := func(_ context.Context, msg any, _ error) {
+		captured = append(captured, msg.(Message[int]))
+	}
+
+	ch := NewQueueChannel[int]("q-newest",
+		WithBufferSize(1),
+		WithOverflowPolicy(OverflowDropNewest),
+		WithErrorHandler(hook),
+	).(*queue[int])
+
+	_ = ch.Send(context.Background(), NewMessage[int](1, nil))
+
+	err := ch.Send(context.Background(), NewMessage[int](2, nil))
+	if err != nil {
+		t.Fatalf("DropNewest Send should return nil, got %v", err)
+	}
+
+	if len(captured) != 1 || captured[0].Payload != 2 {
+		t.Fatalf("expected new msg (2) dropped, got %+v", captured)
+	}
+}
+
+func TestQueueChannel_OverflowDropOldest_EvictsAndAcceptsNew(t *testing.T) {
+	t.Parallel()
+
+	var captured []Message[int]
+	hook := func(_ context.Context, msg any, _ error) {
+		captured = append(captured, msg.(Message[int]))
+	}
+
+	ch := NewQueueChannel[int]("q-oldest",
+		WithBufferSize(2),
+		WithOverflowPolicy(OverflowDropOldest),
+		WithErrorHandler(hook),
+	).(*queue[int])
+
+	_ = ch.Send(context.Background(), NewMessage[int](1, nil))
+	_ = ch.Send(context.Background(), NewMessage[int](2, nil))
+
+	err := ch.Send(context.Background(), NewMessage[int](3, nil))
+	if err != nil {
+		t.Fatalf("DropOldest Send should return nil, got %v", err)
+	}
+
+	if len(captured) != 1 || captured[0].Payload != 1 {
+		t.Fatalf("expected oldest (1) evicted, got %+v", captured)
+	}
+}

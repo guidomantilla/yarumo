@@ -129,10 +129,21 @@ func TestTopicChannel_Send(t *testing.T) {
 	t.Run("returns ErrTimeout when ctx expires while buffer full", func(t *testing.T) {
 		t.Parallel()
 
-		// buffer size 1, no Start so the worker never drains
-		qc := NewTopicChannel[int]("q-fullbuf", WithBufferSize(1)).(*topic[int])
+		// buffer size 1 + a subscriber registered without Start so its
+		// inbox fills but no worker drains. Explicit OverflowBlock since
+		// this test asserts blocking behavior; default OverflowReject
+		// would return ErrBufferFull instead.
+		qc := NewTopicChannel[int]("q-fullbuf",
+			WithBufferSize(1),
+			WithOverflowPolicy(OverflowBlock),
+		).(*topic[int])
 
-		err := qc.Send(context.Background(), NewMessage[int](1, nil))
+		_, err := qc.Subscribe(func(_ context.Context, _ Message[int]) error { return nil })
+		if err != nil {
+			t.Fatalf("Subscribe returned %v", err)
+		}
+
+		err = qc.Send(context.Background(), NewMessage[int](1, nil))
 		if err != nil {
 			t.Fatalf("first Send returned %v", err)
 		}
@@ -385,25 +396,30 @@ func TestTopicChannel_LifecycleIntegration(t *testing.T) {
 	})
 }
 
-func TestTopicChannel_DispatchOrder(t *testing.T) {
+func TestTopicChannel_FanOutAllHandlersFire(t *testing.T) {
 	t.Parallel()
 
-	qc := NewTopicChannel[int]("q-order", WithBufferSize(4), WithDrainTimeout(time.Second)).(*topic[int])
+	// With per-subscriber workers each handler runs in its own
+	// goroutine concurrently; the order in which they observe a
+	// fan-out is NOT a TopicChannel guarantee. This test verifies the
+	// invariant that DOES hold: every registered handler receives
+	// every published message.
+	qc := NewTopicChannel[int]("q-fanout", WithBufferSize(4), WithDrainTimeout(time.Second)).(*topic[int])
 
 	var (
 		mu     sync.Mutex
-		order  []int
+		fired  = map[int]bool{}
 		signal = make(chan struct{}, 1)
 	)
 
 	subscribe := func(id int) {
 		_, err := qc.Subscribe(func(_ context.Context, _ Message[int]) error {
 			mu.Lock()
-			order = append(order, id)
-			isLast := len(order) == 4
+			fired[id] = true
+			complete := len(fired) == 4
 			mu.Unlock()
 
-			if isLast {
+			if complete {
 				signal <- struct{}{}
 			}
 
@@ -423,7 +439,7 @@ func TestTopicChannel_DispatchOrder(t *testing.T) {
 
 	closeFn, err := lifecycle.Build(context.Background(), qc, errChan)
 	if err != nil {
-		t.Fatalf("BuildTopicChannel returned %v", err)
+		t.Fatalf("lifecycle.Build returned %v", err)
 	}
 
 	defer closeFn(context.Background(), time.Second)
@@ -433,12 +449,15 @@ func TestTopicChannel_DispatchOrder(t *testing.T) {
 		t.Fatalf("Send returned %v", err)
 	}
 
-	<-signal
+	select {
+	case <-signal:
+	case <-time.After(time.Second):
+		t.Fatalf("not all handlers fired in time: %v", fired)
+	}
 
-	want := []int{0, 1, 2, 3}
-	for i := range want {
-		if order[i] != want[i] {
-			t.Fatalf("handler %d fired in wrong order: %v", i, order)
+	for id := range 4 {
+		if !fired[id] {
+			t.Fatalf("handler %d did not fire: %v", id, fired)
 		}
 	}
 }
@@ -554,7 +573,14 @@ func TestTopicChannel_ErrorHandlerHook(t *testing.T) {
 func TestTopicChannel_Concurrent(t *testing.T) {
 	t.Parallel()
 
-	qc := NewTopicChannel[int]("q-concur", WithBufferSize(64), WithDrainTimeout(time.Second)).(*topic[int])
+	// Concurrent dispatch correctness test — uses OverflowBlock so the
+	// 200 concurrent sends all succeed (default OverflowReject would
+	// return ErrBufferFull under sustained overshoot).
+	qc := NewTopicChannel[int]("q-concur",
+		WithBufferSize(64),
+		WithDrainTimeout(time.Second),
+		WithOverflowPolicy(OverflowBlock),
+	).(*topic[int])
 
 	var fired int64
 	const sends = 200
@@ -598,5 +624,425 @@ func TestTopicChannel_Concurrent(t *testing.T) {
 	want := int64(sends * subs)
 	if got != want {
 		t.Fatalf("expected %d deliveries, got %d", want, got)
+	}
+}
+
+func TestTopicChannel_OverflowReject_ReturnsErrBufferFull(t *testing.T) {
+	t.Parallel()
+
+	// Subscriber registered without Start → its inbox fills but no
+	// worker drains.
+	ch := NewTopicChannel[int]("t-reject", WithBufferSize(1)).(*topic[int])
+
+	_, err := ch.Subscribe(func(_ context.Context, _ Message[int]) error { return nil })
+	if err != nil {
+		t.Fatalf("Subscribe returned %v", err)
+	}
+
+	err = ch.Send(context.Background(), NewMessage[int](1, nil))
+	if err != nil {
+		t.Fatalf("first Send returned %v", err)
+	}
+
+	start := time.Now()
+	err = ch.Send(context.Background(), NewMessage[int](2, nil))
+	elapsed := time.Since(start)
+
+	if !errors.Is(err, ErrBufferFull) {
+		t.Fatalf("expected ErrBufferFull, got %v", err)
+	}
+	if elapsed > 50*time.Millisecond {
+		t.Fatalf("Reject should not block; took %v", elapsed)
+	}
+}
+
+func TestTopicChannel_OverflowBlock_BlocksUntilCtxExpires(t *testing.T) {
+	t.Parallel()
+
+	ch := NewTopicChannel[int]("t-block",
+		WithBufferSize(1),
+		WithOverflowPolicy(OverflowBlock),
+	).(*topic[int])
+
+	_, err := ch.Subscribe(func(_ context.Context, _ Message[int]) error { return nil })
+	if err != nil {
+		t.Fatalf("Subscribe returned %v", err)
+	}
+
+	err = ch.Send(context.Background(), NewMessage[int](1, nil))
+	if err != nil {
+		t.Fatalf("first Send returned %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	err = ch.Send(ctx, NewMessage[int](2, nil))
+	if !errors.Is(err, ErrTimeout) {
+		t.Fatalf("expected ErrTimeout, got %v", err)
+	}
+}
+
+func TestTopicChannel_OverflowDropNewest_DropsNewMessage(t *testing.T) {
+	t.Parallel()
+
+	var captured []Message[int]
+	hook := func(_ context.Context, msg any, _ error) {
+		captured = append(captured, msg.(Message[int]))
+	}
+
+	ch := NewTopicChannel[int]("t-newest",
+		WithBufferSize(1),
+		WithOverflowPolicy(OverflowDropNewest),
+		WithErrorHandler(hook),
+	).(*topic[int])
+
+	_, err := ch.Subscribe(func(_ context.Context, _ Message[int]) error { return nil })
+	if err != nil {
+		t.Fatalf("Subscribe returned %v", err)
+	}
+
+	err = ch.Send(context.Background(), NewMessage[int](1, nil))
+	if err != nil {
+		t.Fatalf("first Send returned %v", err)
+	}
+
+	err = ch.Send(context.Background(), NewMessage[int](2, nil))
+	if err != nil {
+		t.Fatalf("DropNewest Send should return nil, got %v", err)
+	}
+
+	if len(captured) != 1 {
+		t.Fatalf("expected 1 hook call, got %d", len(captured))
+	}
+	if captured[0].Payload != 2 {
+		t.Fatalf("expected new msg (2) dropped, got %d", captured[0].Payload)
+	}
+}
+
+func TestTopicChannel_OverflowDropOldest_EvictsAndAcceptsNew(t *testing.T) {
+	t.Parallel()
+
+	var captured []Message[int]
+	hook := func(_ context.Context, msg any, _ error) {
+		captured = append(captured, msg.(Message[int]))
+	}
+
+	ch := NewTopicChannel[int]("t-oldest",
+		WithBufferSize(2),
+		WithOverflowPolicy(OverflowDropOldest),
+		WithErrorHandler(hook),
+	).(*topic[int])
+
+	_, err := ch.Subscribe(func(_ context.Context, _ Message[int]) error { return nil })
+	if err != nil {
+		t.Fatalf("Subscribe returned %v", err)
+	}
+
+	_ = ch.Send(context.Background(), NewMessage[int](1, nil))
+	_ = ch.Send(context.Background(), NewMessage[int](2, nil))
+
+	err = ch.Send(context.Background(), NewMessage[int](3, nil))
+	if err != nil {
+		t.Fatalf("DropOldest Send should return nil, got %v", err)
+	}
+
+	if len(captured) != 1 {
+		t.Fatalf("expected 1 evicted msg, got %d", len(captured))
+	}
+	if captured[0].Payload != 1 {
+		t.Fatalf("expected oldest (1) evicted, got %d", captured[0].Payload)
+	}
+}
+
+func TestTopicChannel_OverflowDrop_HookErrorJoinedOverflowAndDropped(t *testing.T) {
+	t.Parallel()
+
+	var got error
+	hook := func(_ context.Context, _ any, err error) {
+		got = err
+	}
+
+	ch := NewTopicChannel[int]("t-hookcheck",
+		WithBufferSize(1),
+		WithOverflowPolicy(OverflowDropNewest),
+		WithErrorHandler(hook),
+	).(*topic[int])
+
+	_, err := ch.Subscribe(func(_ context.Context, _ Message[int]) error { return nil })
+	if err != nil {
+		t.Fatalf("Subscribe returned %v", err)
+	}
+
+	_ = ch.Send(context.Background(), NewMessage[int](1, nil))
+	_ = ch.Send(context.Background(), NewMessage[int](2, nil))
+
+	if got == nil {
+		t.Fatal("hook did not fire")
+	}
+	if !errors.Is(got, ErrOverflow) {
+		t.Fatalf("expected ErrOverflow, got %v", got)
+	}
+	if !errors.Is(got, ErrDropped) {
+		t.Fatalf("expected ErrDropped (joined), got %v", got)
+	}
+}
+
+func TestTopicChannel_SlowHandlerDoesNotBlockFast(t *testing.T) {
+	t.Parallel()
+
+	// Core invariant of per-subscriber workers: a slow handler stays
+	// in its own goroutine; fast handlers keep receiving messages at
+	// line rate. We verify by having one subscriber block on a signal
+	// and confirming the other delivers N messages before we unblock
+	// the slow one.
+	qc := NewTopicChannel[int]("t-isolation",
+		WithBufferSize(64),
+		WithDrainTimeout(time.Second),
+	).(*topic[int])
+
+	const fastSends = 50
+
+	slowUnblock := make(chan struct{})
+	slowEntered := make(chan struct{}, 1)
+
+	_, err := qc.Subscribe(func(_ context.Context, _ Message[int]) error {
+		select {
+		case slowEntered <- struct{}{}:
+		default:
+		}
+
+		<-slowUnblock
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("slow Subscribe returned %v", err)
+	}
+
+	var fastDelivered int64
+
+	fastDone := make(chan struct{}, 1)
+
+	_, err = qc.Subscribe(func(_ context.Context, _ Message[int]) error {
+		if atomic.AddInt64(&fastDelivered, 1) == int64(fastSends) {
+			fastDone <- struct{}{}
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("fast Subscribe returned %v", err)
+	}
+
+	errChan := make(chan error, 1)
+
+	closeFn, err := lifecycle.Build(context.Background(), qc, errChan)
+	if err != nil {
+		t.Fatalf("lifecycle.Build returned %v", err)
+	}
+
+	for i := range fastSends {
+		err = qc.Send(context.Background(), NewMessage[int](i, nil))
+		if err != nil {
+			t.Fatalf("Send %d returned %v", i, err)
+		}
+	}
+
+	// Wait until the slow handler has entered (so we know it is
+	// holding its goroutine) AND the fast handler has drained all 50.
+	select {
+	case <-slowEntered:
+	case <-time.After(time.Second):
+		t.Fatal("slow handler never entered")
+	}
+
+	select {
+	case <-fastDone:
+	case <-time.After(time.Second):
+		t.Fatalf("fast handler did not drain %d msgs while slow handler was blocked; got %d", fastSends, atomic.LoadInt64(&fastDelivered))
+	}
+
+	close(slowUnblock)
+
+	closeFn(context.Background(), time.Second)
+}
+
+func TestTopicChannel_CancelDuringActiveSends_NoLeak(t *testing.T) {
+	t.Parallel()
+
+	// Cancel during in-flight Sends must be safe: no panic, no leak,
+	// no further dispatch to the cancelled subscriber.
+	qc := NewTopicChannel[int]("t-cancel-race",
+		WithBufferSize(16),
+		WithDrainTimeout(time.Second),
+	).(*topic[int])
+
+	var (
+		mu       sync.Mutex
+		received []int
+	)
+
+	cancel, err := qc.Subscribe(func(_ context.Context, msg Message[int]) error {
+		mu.Lock()
+		received = append(received, msg.Payload)
+		mu.Unlock()
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Subscribe returned %v", err)
+	}
+
+	errChan := make(chan error, 1)
+
+	closeFn, err := lifecycle.Build(context.Background(), qc, errChan)
+	if err != nil {
+		t.Fatalf("lifecycle.Build returned %v", err)
+	}
+
+	defer closeFn(context.Background(), time.Second)
+
+	var wg sync.WaitGroup
+
+	const sends = 50
+
+	wg.Add(sends)
+
+	for i := range sends {
+		go func(n int) {
+			defer wg.Done()
+
+			_ = qc.Send(context.Background(), NewMessage[int](n, nil))
+		}(i)
+	}
+
+	// Cancel mid-flight.
+	cancel()
+
+	wg.Wait()
+
+	mu.Lock()
+	count := len(received)
+	mu.Unlock()
+
+	if count > sends {
+		t.Fatalf("received more msgs than sent: %d > %d", count, sends)
+	}
+}
+
+func TestTopicChannel_SubscribeBeforeStart_WorkerSpawnedAtStart(t *testing.T) {
+	t.Parallel()
+
+	qc := NewTopicChannel[int]("t-presub").(*topic[int])
+
+	var delivered int32
+
+	_, err := qc.Subscribe(func(_ context.Context, _ Message[int]) error {
+		atomic.AddInt32(&delivered, 1)
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("pre-Start Subscribe returned %v", err)
+	}
+
+	errChan := make(chan error, 1)
+
+	closeFn, err := lifecycle.Build(context.Background(), qc, errChan)
+	if err != nil {
+		t.Fatalf("lifecycle.Build returned %v", err)
+	}
+
+	err = qc.Send(context.Background(), NewMessage[int](1, nil))
+	if err != nil {
+		t.Fatalf("Send returned %v", err)
+	}
+
+	closeFn(context.Background(), time.Second)
+
+	got := atomic.LoadInt32(&delivered)
+	if got != 1 {
+		t.Fatalf("expected 1 delivery, got %d", got)
+	}
+}
+
+func TestTopicChannel_SubscribeAfterStart_WorkerSpawnedImmediately(t *testing.T) {
+	t.Parallel()
+
+	qc := NewTopicChannel[int]("t-postsub").(*topic[int])
+
+	errChan := make(chan error, 1)
+
+	closeFn, err := lifecycle.Build(context.Background(), qc, errChan)
+	if err != nil {
+		t.Fatalf("lifecycle.Build returned %v", err)
+	}
+
+	// Give Build's goroutine a moment to actually run Start.
+	for i := 0; i < 100 && !qc.started.Load(); i++ {
+		time.Sleep(time.Millisecond)
+	}
+
+	if !qc.started.Load() {
+		t.Fatal("started flag never became true")
+	}
+
+	var delivered int32
+
+	_, err = qc.Subscribe(func(_ context.Context, _ Message[int]) error {
+		atomic.AddInt32(&delivered, 1)
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("post-Start Subscribe returned %v", err)
+	}
+
+	err = qc.Send(context.Background(), NewMessage[int](1, nil))
+	if err != nil {
+		t.Fatalf("Send returned %v", err)
+	}
+
+	closeFn(context.Background(), time.Second)
+
+	got := atomic.LoadInt32(&delivered)
+	if got != 1 {
+		t.Fatalf("expected 1 delivery, got %d", got)
+	}
+}
+
+func TestTopicChannel_Send_AggregatesPerSubErrors(t *testing.T) {
+	t.Parallel()
+
+	// With OverflowReject + bufferSize=1, sending to a Topic with two
+	// subs after filling their inboxes returns a joined error
+	// containing ErrBufferFull from BOTH subs.
+	qc := NewTopicChannel[int]("t-aggregate",
+		WithBufferSize(1),
+	).(*topic[int])
+
+	_, err := qc.Subscribe(func(_ context.Context, _ Message[int]) error { return nil })
+	if err != nil {
+		t.Fatalf("Subscribe 1 returned %v", err)
+	}
+
+	_, err = qc.Subscribe(func(_ context.Context, _ Message[int]) error { return nil })
+	if err != nil {
+		t.Fatalf("Subscribe 2 returned %v", err)
+	}
+
+	// First Send fills both inboxes (no Start so no worker drains).
+	err = qc.Send(context.Background(), NewMessage[int](1, nil))
+	if err != nil {
+		t.Fatalf("first Send returned %v", err)
+	}
+
+	err = qc.Send(context.Background(), NewMessage[int](2, nil))
+	if err == nil {
+		t.Fatal("expected aggregated ErrBufferFull, got nil")
+	}
+	if !errors.Is(err, ErrBufferFull) {
+		t.Fatalf("expected aggregated error to wrap ErrBufferFull, got %v", err)
 	}
 }

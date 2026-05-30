@@ -65,6 +65,17 @@ var (
 	// through the ErrorHandler hook so test/observability paths see
 	// the drop without it being a hard error to the Send caller.
 	ErrDropped = errors.New("message dropped")
+	// ErrOverflow indicates a buffer overflow under DropNewest or
+	// DropOldest policy. Joined with ErrDropped in the hook payload so
+	// errors.Is(err, ErrDropped) also matches; use
+	// errors.Is(err, ErrOverflow) to distinguish overflow drops from
+	// NullChannel drops.
+	ErrOverflow = errors.New("buffer overflow")
+	// ErrBufferFull indicates Send rejected the message because the
+	// buffer is at capacity and the OverflowReject policy is active.
+	// Returned from Send (NOT routed through the hook) so callers can
+	// implement their own retry / backoff / shedding logic.
+	ErrBufferFull = errors.New("buffer full")
 )
 
 // StepStatus classifies the outcome of a single pipeline step in a
