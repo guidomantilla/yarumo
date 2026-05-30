@@ -422,3 +422,77 @@ func TestQueueChannel_OverflowDropOldest_EvictsAndAcceptsNew(t *testing.T) {
 		t.Fatalf("expected oldest (1) evicted, got %+v", captured)
 	}
 }
+
+func TestQueueChannel_ConcurrentSubscribeStop_NoLeak(t *testing.T) {
+	t.Parallel()
+
+	// Per YA-0171 the closed check + handler registration must be
+	// atomic so a Subscribe racing with Stop either bails with
+	// ErrClosed or registers before Stop closes the inbound channel.
+	qc := NewQueueChannel[int]("q-race",
+		WithBufferSize(8),
+		WithDrainTimeout(time.Second),
+	).(*queue[int])
+
+	err := qc.Start(context.Background())
+	if err != nil {
+		t.Fatalf("Start returned %v", err)
+	}
+
+	const subs = 64
+
+	var wg sync.WaitGroup
+
+	wg.Add(subs)
+
+	for range subs {
+		go func() {
+			defer wg.Done()
+
+			_, _ = qc.Subscribe(func(_ context.Context, _ Message[int]) error { return nil })
+		}()
+	}
+
+	go func() {
+		_ = qc.Stop(context.Background())
+	}()
+
+	wg.Wait()
+
+	_ = qc.Stop(context.Background())
+
+	select {
+	case <-qc.Done():
+	case <-time.After(2 * time.Second):
+		t.Fatal("Done never closed after concurrent Subscribe + Stop")
+	}
+}
+
+func TestQueueChannel_Stop_DrainTimeoutDefaultWhenFieldZero(t *testing.T) {
+	t.Parallel()
+
+	qc := &queue[int]{
+		name:         "q-zero-drain",
+		bufferSize:   1,
+		workerCount:  1,
+		drainTimeout: 0,
+		inbound:      make(chan envelope[int], 1),
+		done:         make(chan struct{}),
+		byID:         map[uint64]Handler[int]{},
+	}
+
+	start := time.Now()
+
+	err := qc.Stop(context.Background())
+	elapsed := time.Since(start)
+
+	if err == nil {
+		t.Fatal("expected ErrShutdownTimeout (no workers, no Start)")
+	}
+	if !errors.Is(err, lifecycle.ErrShutdownTimeout) {
+		t.Fatalf("expected ErrShutdownTimeout, got %v", err)
+	}
+	if elapsed < 100*time.Millisecond {
+		t.Fatalf("Stop returned in %v — guard did not apply default timeout", elapsed)
+	}
+}

@@ -126,7 +126,14 @@ func (c *queue[T]) Stop(ctx context.Context) error {
 		close(c.inbound)
 	})
 
+	// Defensive: WithDrainTimeout rejects non-positive values, but a
+	// struct constructed outside NewQueueChannel could land here with
+	// drainTimeout == 0, which would cancel waitCtx immediately and
+	// skip the drain entirely. Fall back to the package default.
 	timeout := c.drainTimeout
+	if timeout <= 0 {
+		timeout = defaultDrainTimeout
+	}
 
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -182,11 +189,17 @@ func (c *queue[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 		return nil, ErrSubscribe(ErrHandlerNil)
 	}
 
+	// closed check + register under the same lock as Stop's
+	// close-of-inbound so a Subscribe racing with Stop either bails
+	// out cleanly or completes before Stop closes the channel. No
+	// handler is left registered against a closed inbound channel.
+	c.mu.Lock()
 	if c.closed.Load() {
+		c.mu.Unlock()
+
 		return nil, ErrSubscribe(ErrClosed)
 	}
 
-	c.mu.Lock()
 	c.nextID++
 	id := c.nextID
 	c.byID[id] = handler

@@ -1046,3 +1046,82 @@ func TestTopicChannel_Send_AggregatesPerSubErrors(t *testing.T) {
 		t.Fatalf("expected aggregated error to wrap ErrBufferFull, got %v", err)
 	}
 }
+
+func TestTopicChannel_ConcurrentSubscribeStop_NoLeak(t *testing.T) {
+	t.Parallel()
+
+	// Stress: many concurrent Subscribe vs Stop. Per YA-0171 the
+	// closed check + sub registration must be atomic so a Subscribe
+	// racing with Stop either bails with ErrClosed or completes and
+	// gets its inbox closed by Stop. No goroutine leak, no panic.
+	qc := NewTopicChannel[int]("t-race",
+		WithBufferSize(8),
+		WithDrainTimeout(time.Second),
+	).(*topic[int])
+
+	err := qc.Start(context.Background())
+	if err != nil {
+		t.Fatalf("Start returned %v", err)
+	}
+
+	const subs = 64
+
+	var wg sync.WaitGroup
+
+	wg.Add(subs)
+
+	for range subs {
+		go func() {
+			defer wg.Done()
+
+			_, _ = qc.Subscribe(func(_ context.Context, _ Message[int]) error { return nil })
+		}()
+	}
+
+	// Stop racing concurrently with all those Subscribes.
+	go func() {
+		_ = qc.Stop(context.Background())
+	}()
+
+	wg.Wait()
+
+	// Drain whatever lingering work remains; second Stop is idempotent.
+	_ = qc.Stop(context.Background())
+
+	select {
+	case <-qc.Done():
+	case <-time.After(2 * time.Second):
+		t.Fatal("Done never closed after concurrent Subscribe + Stop")
+	}
+}
+
+func TestTopicChannel_Stop_DrainTimeoutDefaultWhenFieldZero(t *testing.T) {
+	t.Parallel()
+
+	// Direct struct construction (bypassing NewTopicChannel) with
+	// drainTimeout = 0. The defensive guard in Stop must fall back
+	// to defaultDrainTimeout instead of cancelling waitCtx
+	// immediately.
+	qc := &topic[int]{
+		name:         "t-zero-drain",
+		bufferSize:   1,
+		drainTimeout: 0,
+		done:         make(chan struct{}),
+		subs:         map[uint64]*subscriber[int]{},
+	}
+
+	start := time.Now()
+
+	err := qc.Stop(context.Background())
+	elapsed := time.Since(start)
+
+	if err == nil {
+		t.Fatal("expected ErrShutdownTimeout (no workers, no Start)")
+	}
+	if !errors.Is(err, lifecycle.ErrShutdownTimeout) {
+		t.Fatalf("expected ErrShutdownTimeout, got %v", err)
+	}
+	if elapsed < 100*time.Millisecond {
+		t.Fatalf("Stop returned in %v — guard did not apply default timeout", elapsed)
+	}
+}

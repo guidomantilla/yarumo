@@ -220,7 +220,16 @@ func (c *topic[T]) Stop(ctx context.Context) error {
 		}
 	})
 
-	waitCtx, cancel := context.WithTimeout(ctx, c.drainTimeout)
+	// Defensive: WithDrainTimeout rejects non-positive values, but a
+	// struct constructed outside NewTopicChannel could land here with
+	// drainTimeout == 0, which would cancel waitCtx immediately and
+	// skip the drain entirely. Fall back to the package default.
+	timeout := c.drainTimeout
+	if timeout <= 0 {
+		timeout = defaultDrainTimeout
+	}
+
+	waitCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	select {
@@ -301,17 +310,25 @@ func (c *topic[T]) Subscribe(handler Handler[T]) (Cancel, error) {
 		return nil, ErrSubscribe(ErrHandlerNil)
 	}
 
-	if c.closed.Load() {
-		return nil, ErrSubscribe(ErrClosed)
-	}
-
 	sub := &subscriber[T]{
 		handler: handler,
 		inbox:   make(chan envelope[T], c.bufferSize),
 		done:    make(chan struct{}),
 	}
 
+	// closed check + register happen under the same lock as Stop's
+	// close-of-inboxes so a Subscribe racing with Stop either (a)
+	// observes closed=true and bails out cleanly, or (b) inserts
+	// before Stop's inbox-close pass and gets its inbox closed by
+	// Stop along with the rest. No registration with an unreachable
+	// inbox is possible.
 	c.mu.Lock()
+	if c.closed.Load() {
+		c.mu.Unlock()
+
+		return nil, ErrSubscribe(ErrClosed)
+	}
+
 	c.nextID++
 	id := c.nextID
 	c.subs[id] = sub
