@@ -271,6 +271,30 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
 **Patrones futuros** (`transformer/`, `splitter/`, `delayer/`, `wiretap/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+**Patrones futuros** (`transformer/`, `splitter/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+
+### Capa 3: Support primitives (sub-paquetes)
+
+Storage / utility contracts consumidos por los patterns de Capa 2 — no son endpoints ni transforms, son primitivas de soporte. Ship interface + impl canónica in-memory bajo el mismo `go.mod` (paralelo a `core/common/cache/`); backends pesados (Redis, Postgres, S3, …) viven en `extension/messaging/store/<backend>/` con `go.mod` propio para aislar MVS.
+
+| Sub-paquete | Interfaces | Impls in-memory | Consumers EIP | Qué hace |
+|---|---|---|---|---|
+| `store/` | `MessageStore[T]` (Put/Get/Delete) + `MetadataStore` (Has/Add) | `inMemoryMessageStore[T]` (passive, mutex+map) + `inMemoryMetadataStore` (lifecycle.Component con sweeper goroutine) | Claim Check (YA-0229) consume `MessageStore[T]`; Idempotent Receiver (YA-0228) consume `MetadataStore` | Persiste envelopes completos por key opaca (`MessageStore[T]`) y presencia booleana con TTL (`MetadataStore`). Storage layer reusable por múltiples EIP patterns. |
+
+**Constructores:**
+- `NewInMemoryMessageStore[T]() MessageStore[T]` — passive, sin lifecycle.
+- `NewInMemoryMetadataStore(name, opts...) MetadataStore` — implementa `lifecycle.Component` por el sweeper; type-assert para wirear vía `lifecycle.Build`.
+
+**Sweeper goroutine (metadata only).** `inMemoryMetadataStore` arranca un único goroutine en `Start` que evicta entries expirados cada `WithSweepInterval` (default 1m). `Has` hace su propia freshness check on-call — un entry expirado pero aún no swept retorna false correctamente. El sweeper sólo libera el slot del map. Stop cierra `stopCh`, espera al goroutine (bounded por `ctx`) y cierra `Done`.
+
+**Errores.** `ErrStore(causes...)` factory + sentinels `ErrStoreFailed`/`ErrStoreNotFound`/`ErrStoreClosed`/`ErrInvalidTTL`. `MessageStore.Get` retorna `ErrNotFound()` (matchable via `errors.Is(err, ErrStoreNotFound)`). `Add` con TTL ≤ 0 retorna `ErrStore(ErrInvalidTTL)`. Operaciones post-Stop sobre `MetadataStore` retornan `ErrStore(ErrStoreClosed)` para distinguir "store muerto" de "key no presente".
+
+**Estructura de archivos:**
+- `types.go` — package doc + interfaces (`MessageStore[T]`, `MetadataStore`) + compliance vars + `Fn` types.
+- `errors.go` — `StoreType` constant, sentinels, `Error` struct, `ErrStore`/`ErrNotFound` factories.
+- `options.go` — `Options` + `Option` + `WithSweepInterval` (consumido sólo por `inMemoryMetadataStore`).
+- `messagestore.go` — `inMemoryMessageStore[T]` + `NewInMemoryMessageStore`.
+- `metadatastore.go` — `inMemoryMetadataStore` + `NewInMemoryMetadataStore` + sweeper.
 
 ## Módulo `modules/core/security/authn/`
 

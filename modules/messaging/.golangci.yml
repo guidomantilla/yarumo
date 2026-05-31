@@ -136,6 +136,15 @@ linters:
           - contextcheck
           - wrapcheck
       - path: scattergather/scattergather\.go
+      # store/{message,metadata}store.go: cassert.NotNil guards the
+      # receiver invariant on every method; contextcheck false positive
+      # on the assert call. wrapcheck: Stop wraps ctx.Err with
+      # lifecycle.ErrShutdown — that is the domain factory, additional
+      # wrapping adds no value.
+      - path: store/messagestore\.go
+        linters:
+          - contextcheck
+      - path: store/metadatastore\.go
         linters:
           - contextcheck
           - wrapcheck
