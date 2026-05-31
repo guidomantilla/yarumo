@@ -119,6 +119,15 @@ linters:
         linters:
           - contextcheck
           - wrapcheck
+      - path: transformer/transformer\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: wiretap/wiretap\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: splitter/splitter\.go
       # channel_pollable / channel_scheduled: same cassert.NotNil
       # receiver-guard pattern as channel_topic / channel_queue
       # (contextcheck false positive); channel_scheduled.Stop also

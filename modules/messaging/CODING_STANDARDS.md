@@ -36,6 +36,13 @@ Current sub-packages:
 | `bridge/` | One-to-one channel forwarder (identity transform, sync↔async decoupling) |
 | `filter/` | Message Filter (predicate-gated forwarding with separate error/drop hooks) |
 | `router/` | Content-Based Router (key → Channel[T]) |
+| `transformer/` | Message Translator (T→U mapping via TransformFn) |
+| `wiretap/` | Wire Tap (non-intrusive copy to a side channel) |
+| `splitter/` | Splitter (1 msg → N msgs with SequenceNumber/Size headers populated) |
+
+Future sub-packages (aggregator, delayer, endpoint, controlbus, ...) get
+added one at a time when a real consumer asks for them. Do not pre-create
+empty sub-packages.
 | `delayer/` | Delayer (forward after a fixed/computed/Headers.ExpirationTime delay; composes ScheduledChannel internally) |
 | `pollingconsumer/` | Polling Consumer endpoint (worker pool that pulls from a PollableChannel and dispatches to a Handler) |
 
