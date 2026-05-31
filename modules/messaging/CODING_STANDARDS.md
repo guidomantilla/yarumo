@@ -36,6 +36,9 @@ Current sub-packages:
 | `bridge/` | One-to-one channel forwarder (identity transform, sync↔async decoupling) |
 | `filter/` | Message Filter (predicate-gated forwarding with separate error/drop hooks) |
 | `router/` | Content-Based Router (key → Channel[T]) |
+| `resequencer/` | Resequencer (buffer + reorder by Headers.SequenceNumber, timeout sweeper) |
+| `barrier/` | Barrier (hold N msgs per CorrelationID, release on quorum or timeout) |
+| `history/` | Message History (append endpoint name to Headers.Custom["History"]) |
 
 Future sub-packages (transformer, splitter, aggregator, delayer, endpoint,
 controlbus, ...) get added one at a time when a real consumer asks for
