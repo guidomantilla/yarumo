@@ -254,11 +254,21 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 | `bridge/` | `bridge[T]` | `lifecycle.Component` | One-to-one channel forwarder: subscribe a `src`, reenvía cada `Message[T]` a `dst` sin alteración. Patrón identity transform — valor estructural (sync↔async decoupling, etiqueta nombrada en wiring graph, hook point de observabilidad). |
 | `filter/` | `filter[T]` | `lifecycle.Component` | Message Filter: subscribe a `src`, reenvía a `dst` solo cuando `PredicateFn` retorna true. Dos hooks separados — `WithErrorHandler` (fallos reales: predicate error/panic, forward fail) y `WithDropHandler` (drops intencionales, silent default). |
 | `router/` | `router[T]` | `lifecycle.Component` | Content-Based Router (key → `Channel[T]`): subscribe a `src`, evalúa `RouteFn(msg) → key`, busca destino en `routes[key]` y reenvía. `WithDefaultChannel` opcional para política NoRoute; sin él, NoRoute drops + reporta vía `ErrorHandler`. |
+| `aggregator/` | `aggregator[T,U]` | `lifecycle.Component` | Aggregator: N→1 collection con `CorrelationID` (default) + multiple completion strategies (`WithCompletionSize`, `WithCompletionFn`, `WithGroupTimeout`) + memory bounding (`WithMaxGroups`, default 1000). Sweeper goroutine para timeout completion; Stop drena partial groups por el mismo release path. Dos hooks: `WithErrorHandler` (AggregateFn error/panic, ForwardFailed, MaxGroups exceeded) y `WithDropHandler` (empty correlation, expired). |
+| `recipientlist/` | `recipientList[T]` | `lifecycle.Component` | Recipient List: 1→N rule-based fan-out via `SelectorFn`. Subscribe a `src`, evalúa `SelectorFn(msg) → []keys`, reenvía a TODOS los `routes[key]` resueltos. Per-recipient error reporting (missing key + forward fail no abortan otros sends); `WithDropHandler` para selección vacía. |
+| `headerfilter/` | `headerFilter[T]` | `lifecycle.Component` | Header Filter: subscribe a `src`, reenvía a `dst` con los `Headers` configurados borrados (campos struct conocidos zeroed + keys de `Custom` map deleted via `WithClearHeader`/`WithHeadersToClear`). Payload sin tocar. Source msg nunca mutado. |
+| `enricher/` | `enricher[T]` | `lifecycle.Component` | Header/Content Enricher: subscribe a `src`, aplica `EnrichFn(msg) → enrichedMsg` y reenvía a `dst`. Un solo callback cubre AMBOS Header y Content enrichment — el caller decide qué tocar. Enrich error/panic NO forward + reporta vía `ErrorHandler`. |
+| `scattergather/` | `scatterGather[T,U]` | `lifecycle.Component` | Scatter-Gather: composes Recipient List (scatter) + Aggregator (gather) con per-correlation expected-size tracking. Internal RecipientList fan-outs a workers via `SelectorFn`; internal Aggregator collects replies en `replyChan` via `CorrelationID` y emite `Message[U]` via `AggregateFn` cuando todos los workers seleccionados respondieron. `WithGroupTimeout` REQUERIDO (drop partial via DropHandler en timeout); `WithMaxConcurrentScatters` (default 1000); orphan sweeper limpia entradas que nunca recibieron reply. |
 
 **Constructores:**
 - `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
 - `NewFilter[T](name, src, dst, predicate, opts...) lifecycle.Component`
 - `NewRouter[T](name, src, decide, routes, opts...) lifecycle.Component`
+- `NewAggregator[T,U](name, src, dst, aggregate, opts...) lifecycle.Component`
+- `NewRecipientList[T](name, src, selector, routes, opts...) lifecycle.Component`
+- `NewHeaderFilter[T](name, src, dst, opts...) lifecycle.Component`
+- `NewEnricher[T](name, src, dst, enrich, opts...) lifecycle.Component`
+- `NewScatterGather[T,U](name, src, workers, replyChan, aggregateDst, selector, aggregate, opts...) ScatterGather[T,U]`
 
 **Override de la regla universal — errors no propagan al source channel.** Cada pattern subscribe a `src` con un handler que **siempre retorna nil**. Fallos de routing/filtering/forwarding NO son fallos del source channel; el caller del source no debe verlos. Los errores del pattern fluyen vía el `WithErrorHandler` propio (default: `messaging.DefaultErrorHandler` que loguea via `common/log`; opt-out con `messaging.SilentErrorHandler`). Documentado en `modules/messaging/CODING_STANDARDS.md`.
 
@@ -270,7 +280,31 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx`.
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
-**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+**Patrones futuros** (`transformer/`, `splitter/`, `delayer/`, `wiretap/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+**Patrones futuros** (`transformer/`, `splitter/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+
+### Capa 3: Support primitives (sub-paquetes)
+
+Storage / utility contracts consumidos por los patterns de Capa 2 — no son endpoints ni transforms, son primitivas de soporte. Ship interface + impl canónica in-memory bajo el mismo `go.mod` (paralelo a `core/common/cache/`); backends pesados (Redis, Postgres, S3, …) viven en `extension/messaging/store/<backend>/` con `go.mod` propio para aislar MVS.
+
+| Sub-paquete | Interfaces | Impls in-memory | Consumers EIP | Qué hace |
+|---|---|---|---|---|
+| `store/` | `MessageStore[T]` (Put/Get/Delete) + `MetadataStore` (Has/Add) | `inMemoryMessageStore[T]` (passive, mutex+map) + `inMemoryMetadataStore` (lifecycle.Component con sweeper goroutine) | Claim Check (YA-0229) consume `MessageStore[T]`; Idempotent Receiver (YA-0228) consume `MetadataStore` | Persiste envelopes completos por key opaca (`MessageStore[T]`) y presencia booleana con TTL (`MetadataStore`). Storage layer reusable por múltiples EIP patterns. |
+
+**Constructores:**
+- `NewInMemoryMessageStore[T]() MessageStore[T]` — passive, sin lifecycle.
+- `NewInMemoryMetadataStore(name, opts...) MetadataStore` — implementa `lifecycle.Component` por el sweeper; type-assert para wirear vía `lifecycle.Build`.
+
+**Sweeper goroutine (metadata only).** `inMemoryMetadataStore` arranca un único goroutine en `Start` que evicta entries expirados cada `WithSweepInterval` (default 1m). `Has` hace su propia freshness check on-call — un entry expirado pero aún no swept retorna false correctamente. El sweeper sólo libera el slot del map. Stop cierra `stopCh`, espera al goroutine (bounded por `ctx`) y cierra `Done`.
+
+**Errores.** `ErrStore(causes...)` factory + sentinels `ErrStoreFailed`/`ErrStoreNotFound`/`ErrStoreClosed`/`ErrInvalidTTL`. `MessageStore.Get` retorna `ErrNotFound()` (matchable via `errors.Is(err, ErrStoreNotFound)`). `Add` con TTL ≤ 0 retorna `ErrStore(ErrInvalidTTL)`. Operaciones post-Stop sobre `MetadataStore` retornan `ErrStore(ErrStoreClosed)` para distinguir "store muerto" de "key no presente".
+
+**Estructura de archivos:**
+- `types.go` — package doc + interfaces (`MessageStore[T]`, `MetadataStore`) + compliance vars + `Fn` types.
+- `errors.go` — `StoreType` constant, sentinels, `Error` struct, `ErrStore`/`ErrNotFound` factories.
+- `options.go` — `Options` + `Option` + `WithSweepInterval` (consumido sólo por `inMemoryMetadataStore`).
+- `messagestore.go` — `inMemoryMessageStore[T]` + `NewInMemoryMessageStore`.
+- `metadatastore.go` — `inMemoryMetadataStore` + `NewInMemoryMetadataStore` + sweeper.
 
 ## Módulo `modules/core/security/authn/`
 
