@@ -7,7 +7,7 @@ import (
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 	"github.com/guidomantilla/yarumo/messaging"
-	"github.com/guidomantilla/yarumo/messaging/store"
+	"github.com/guidomantilla/yarumo/messaging/stores"
 )
 
 // claimCheckIn is the heavy-payload producer side of Claim Check. It
@@ -20,7 +20,7 @@ type claimCheckIn[T any] struct {
 	name         string
 	src          messaging.Channel[T]
 	dst          messaging.Channel[ClaimCheckReference]
-	msgStore     store.MessageStore[T]
+	msgStore     stores.MessageStore[T]
 	keyGen       KeyGenFn
 	errorHandler messaging.ErrorHandler
 
@@ -51,7 +51,7 @@ type claimCheckIn[T any] struct {
 //     custom hook for store-put errors and forward failures.
 //
 // WithDeleteAfterRetrieve is silently ignored — In never deletes.
-func NewClaimCheckIn[T any](name string, src messaging.Channel[T], dst messaging.Channel[ClaimCheckReference], msgStore store.MessageStore[T], opts ...Option) ClaimCheckIn[T] {
+func NewClaimCheckIn[T any](name string, src messaging.Channel[T], dst messaging.Channel[ClaimCheckReference], msgStore stores.MessageStore[T], opts ...Option) ClaimCheckIn[T] {
 	cassert.NotEmpty(name, "name is empty")
 	cassert.NotNil(src, "source channel is nil")
 	cassert.NotNil(dst, "destination channel is nil")
@@ -202,7 +202,7 @@ type claimCheckOut[T any] struct {
 	name                string
 	src                 messaging.Channel[ClaimCheckReference]
 	dst                 messaging.Channel[T]
-	msgStore            store.MessageStore[T]
+	msgStore            stores.MessageStore[T]
 	deleteAfterRetrieve bool
 	errorHandler        messaging.ErrorHandler
 
@@ -231,7 +231,7 @@ type claimCheckOut[T any] struct {
 //     custom hook for store-get/delete errors and forward failures.
 //
 // WithKeyGen is silently ignored — Out never generates keys.
-func NewClaimCheckOut[T any](name string, src messaging.Channel[ClaimCheckReference], dst messaging.Channel[T], msgStore store.MessageStore[T], opts ...Option) ClaimCheckOut[T] {
+func NewClaimCheckOut[T any](name string, src messaging.Channel[ClaimCheckReference], dst messaging.Channel[T], msgStore stores.MessageStore[T], opts ...Option) ClaimCheckOut[T] {
 	cassert.NotEmpty(name, "name is empty")
 	cassert.NotNil(src, "source channel is nil")
 	cassert.NotNil(dst, "destination channel is nil")

@@ -8,7 +8,7 @@ import (
 	cassert "github.com/guidomantilla/yarumo/core/common/assert"
 	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 	"github.com/guidomantilla/yarumo/messaging"
-	"github.com/guidomantilla/yarumo/messaging/store"
+	"github.com/guidomantilla/yarumo/messaging/stores"
 )
 
 // idempotent is the Idempotent Receiver implementation. It owns a
@@ -21,7 +21,7 @@ type idempotent[T any] struct {
 	name         string
 	src          messaging.Channel[T]
 	dst          messaging.Channel[T]
-	metaStore    store.MetadataStore
+	metaStore    stores.MetadataStore
 	ttl          time.Duration
 	keyFn        KeyFn[T]
 	errorHandler messaging.ErrorHandler
@@ -52,7 +52,7 @@ type idempotent[T any] struct {
 //     custom hook for store errors and forward failures.
 //   - WithDropHandler installs an optional hook for observing
 //     intentional drops; nil by default (silent drop).
-func NewIdempotent[T any](name string, src messaging.Channel[T], dst messaging.Channel[T], metaStore store.MetadataStore, opts ...Option[T]) Idempotent[T] {
+func NewIdempotent[T any](name string, src messaging.Channel[T], dst messaging.Channel[T], metaStore stores.MetadataStore, opts ...Option[T]) Idempotent[T] {
 	cassert.NotEmpty(name, "name is empty")
 	cassert.NotNil(src, "source channel is nil")
 	cassert.NotNil(dst, "destination channel is nil")

@@ -73,8 +73,8 @@ import (
 
 	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 	"github.com/guidomantilla/yarumo/messaging"
-	"github.com/guidomantilla/yarumo/messaging/aggregator"
-	"github.com/guidomantilla/yarumo/messaging/recipientlist"
+	"github.com/guidomantilla/yarumo/messaging/patterns/routers/aggregator"
+	"github.com/guidomantilla/yarumo/messaging/patterns/routers/recipientlist"
 )
 
 var (
