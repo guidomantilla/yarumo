@@ -128,6 +128,65 @@ linters:
           - contextcheck
           - wrapcheck
       - path: splitter/splitter\.go
+      # channel_pollable / channel_scheduled: same cassert.NotNil
+      # receiver-guard pattern as channel_topic / channel_queue
+      # (contextcheck false positive); channel_scheduled.Stop also
+      # wraps ctx.Err via the lifecycle.ErrShutdown factory.
+      # containedctx covers two private structs (scheduled itself
+      # and scheduledItem) that intentionally carry sendCtx and
+      # workerCtx so the dispatcher can merge them later — same
+      # design choice as envelope[T] in context.go.
+      - path: channel_pollable\.go
+        linters:
+          - contextcheck
+      - path: channel_scheduled\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+          - containedctx
+      # delayer / pollingconsumer: same cassert.NotNil receiver-guard
+      # pattern (contextcheck false positive). delayer.Stop wraps ctx.Err
+      # via the lifecycle.ErrShutdown factory and bubbles internal
+      # ScheduledChannel.Stop errors unchanged (wrapping them again
+      # would double-wrap an already-typed messaging error). delayer
+      # carries an internalLifecycle field that holds a Component
+      # reference for its embedded ScheduledChannel; that's deliberate
+      # composition, not stored context.
+      - path: delayer/delayer\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: pollingconsumer/pollingconsumer\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+          - containedctx
+      - path: aggregator/aggregator\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: recipientlist/recipientlist\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: headerfilter/headerfilter\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: enricher/enricher\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: scattergather/scattergather\.go
+      # store/{message,metadata}store.go: cassert.NotNil guards the
+      # receiver invariant on every method; contextcheck false positive
+      # on the assert call. wrapcheck: Stop wraps ctx.Err with
+      # lifecycle.ErrShutdown — that is the domain factory, additional
+      # wrapping adds no value.
+      - path: store/messagestore\.go
+        linters:
+          - contextcheck
+      - path: store/metadatastore\.go
         linters:
           - contextcheck
           - wrapcheck

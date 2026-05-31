@@ -174,29 +174,34 @@ Top-level module que aloja **dos capas** de la stack de mensajería in-process: 
 
 ### Capa 1: Primitives (root del módulo)
 
-Expone una sola interface pública `Channel[T]` con cinco implementaciones equivalentes que cubren los ejes ortogonales sync/async × fan-out/point-to-point + sink. Sigue **Shape B con múltiples peers de una interface sin canónica** — file naming `<variant>.go`, structs `<variant>` per R1.
+Expone una interface principal `Channel[T]` con cinco implementaciones equivalentes que cubren los ejes ortogonales sync/async × fan-out/point-to-point + sink, más dos interfaces hermanas (`PollableChannel[T]`, `ScheduledChannel[T]`) que cubren los ejes pull-based y delayed delivery. Sigue **Shape B con múltiples peers de una interface sin canónica** — file naming `channel_<variant>.go`, structs `<variant>` per R1.
 
 | Variante | Archivo | Struct | Roles | Qué hace |
 |---|---|---|---|---|
-| Pipeline | `pipeline.go` | `pipeline[T]` | `Channel[T]` | Sync sequential fan-out en la goroutine del caller. Fail-fast con `*ChainError` trace (step por step: ok / error / panic / skipped). Patrón "Transactional Handler Chain" (cf. MediatR pipeline behaviors). |
-| Broadcast | `broadcast.go` | `broadcast[T]` | `Channel[T]` | Sync parallel fan-out con barrier (`sync.WaitGroup`). Send dispara N goroutines, espera a todas, joina errores con `errors.Join`. Sin fail-fast — todos los handlers corren. |
-| Topic | `topic.go` | `topic[T]` | `Channel[T]` + `lifecycle.Component` | Async buffered fan-out con **cola y worker dedicado por subscriber** (per-sub model). Cada Subscribe asigna su propio inbox + goroutine; un handler lento solo bloquea su propia cola. Send hace fan-out sequential a TODOS los inboxes via `sendWithPolicy` y agrega errores per-sub con `errors.Join`. Implementa lifecycle.Component; callers wirean via type assertion `ch.(lifecycle.Component)` + `lifecycle.Build`. Subscribe pre-Start difiere el worker hasta Start; post-Start spawn inmediato. |
-| Queue | `queue.go` | `queue[T]` | `Channel[T]` + `lifecycle.Component` | Async point-to-point distribution: 1 msg → 1 subscriber via round-robin. Worker pool configurable con `WithWorkerCount(n)`. Caller fire-and-forget. Errores via hook. |
-| Null | `null.go` | `null[T]` | `Channel[T]` | Sink `/dev/null` — Send descarta el mensaje y dispara el `ErrorHandler` hook con `ErrDropped`. Subscribe acepta handlers para shape compatibility pero nunca los invoca. Sin estado, sin goroutines, sin buffering, sin lifecycle. Para test doubles o wiring "flujo deshabilitado". |
+| Pipeline | `channel_pipeline.go` | `pipeline[T]` | `Channel[T]` | Sync sequential fan-out en la goroutine del caller. Fail-fast con `*ChainError` trace (step por step: ok / error / panic / skipped). Patrón "Transactional Handler Chain" (cf. MediatR pipeline behaviors). |
+| Broadcast | `channel_broadcast.go` | `broadcast[T]` | `Channel[T]` | Sync parallel fan-out con barrier (`sync.WaitGroup`). Send dispara N goroutines, espera a todas, joina errores con `errors.Join`. Sin fail-fast — todos los handlers corren. |
+| Topic | `channel_topic.go` | `topic[T]` | `Channel[T]` + `lifecycle.Component` | Async buffered fan-out con **cola y worker dedicado por subscriber** (per-sub model). Cada Subscribe asigna su propio inbox + goroutine; un handler lento solo bloquea su propia cola. Send hace fan-out sequential a TODOS los inboxes via `sendWithPolicy` y agrega errores per-sub con `errors.Join`. Implementa lifecycle.Component; callers wirean via type assertion `ch.(lifecycle.Component)` + `lifecycle.Build`. Subscribe pre-Start difiere el worker hasta Start; post-Start spawn inmediato. |
+| Queue | `channel_queue.go` | `queue[T]` | `Channel[T]` + `lifecycle.Component` | Async point-to-point distribution: 1 msg → 1 subscriber via round-robin. Worker pool configurable con `WithWorkerCount(n)`. Caller fire-and-forget. Errores via hook. |
+| Null | `channel_null.go` | `null[T]` | `Channel[T]` | Sink `/dev/null` — Send descarta el mensaje y dispara el `ErrorHandler` hook con `ErrDropped`. Subscribe acepta handlers para shape compatibility pero nunca los invoca. Sin estado, sin goroutines, sin buffering, sin lifecycle. Para test doubles o wiring "flujo deshabilitado". |
+| Pollable | `channel_pollable.go` | `pollable[T]` | `PollableChannel[T]` | Pull-based primitive paralela a Spring `PollableChannel`: producers `Send`, consumers `Receive` explícitamente (sin Handler / sin Subscribe). Buffered con `WithBufferSize`. Send block con backpressure hasta ctx-expire / Close; Receive block hasta msg / ctx-expire / drained-then-closed. Close drena el buffer antes de retornar `ErrChannelClosed`. Sin lifecycle (no spawna goroutines). |
+| Scheduled | `channel_scheduled.go` | `scheduled[T]` | `ScheduledChannel[T]` + `lifecycle.Component` | Async deferred delivery via min-heap (`container/heap`) ordenado por deliveryTime + scheduler goroutine único. `Send` entrega ASAP; `SendAt(t, msg)` entrega en deadline absoluto; `SendAfter(d, msg)` entrega tras delay relativo. Fan-out sincrónico a todos los subscribers (single-dispatcher model). Stop deja items pendientes sin entregar (best-effort semantics). Mismo race-fix sentinel/workerWG que Topic. |
 
 **Tipos públicos del paquete:**
 - `Channel[T]` — interface (Send/Subscribe), en `types.go`.
+- `PollableChannel[T]` — interface paralela (Send/Receive/Close), pull-based; no embebe `Channel[T]`. En `types.go`.
+- `ScheduledChannel[T]` — interface que embebe `Channel[T]` y añade `SendAt` / `SendAfter` para delayed delivery. En `types.go`.
 - `Handler[T] func(ctx, Message[T]) error` — signature del subscriber, en `types.go`.
 - `Cancel func()` — handle idempotente retornado por Subscribe, en `types.go`.
 - `ErrorHandler func(ctx, msg any, err error)` — hook de observabilidad para impls async/sink, en `types.go`.
 - `DeadLetter[T]` envelope (en `message.go` junto a `Message[T]`) + **`WithDLQChannel[T any]` Option** (channel-wide): Topic/Queue publican automáticamente un `DeadLetter[T]` a un `Channel[DeadLetter[T]]` cuando un handler falla. Paralelo a `WithErrorHandler` (observability vs reprocess queue, complementarios). Type parameter T se valida en el constructor vía `extractDLQ` + cassert. Publish es best-effort (errores del DLQ Send se ignoran).
+- `ErrorMessage[T]` envelope (en `message.go`) — par `{Original Message[T], Cause error}` para flujos de error channel (`Channel[ErrorMessage[T]]`). Counterpart síncrono del `DeadLetter[T]` asíncrono: más simple (sin `FailedAt` timestamp) porque el productor sigue en scope. Constructor `NewErrorMessage[T](original, cause) Message[ErrorMessage[T]]`.
 - `Message[T]` — envelope con `Payload T` + `Headers`, en `message.go`.
 - `Headers` — 13 campos curados desde Spring Integration (MessageID, CorrelationID, CausationID, ReplyTo, Type, Priority, ContentType, ExpirationTime, SequenceNumber, SequenceSize, Timestamp, Source, Custom). Detalle field-by-field en la memoria [[reference-message-headers]].
 - `OverflowPolicy` enum con 4 valores: `OverflowBlock`, `OverflowDropNewest`, `OverflowDropOldest`, `OverflowReject` (default).
 - `Options` + Option pattern: `WithBufferSize`, `WithDrainTimeout`, `WithWorkerCount`, `WithErrorHandler`, `WithOverflowPolicy`, `WithDLQChannel[T]` (generic; channel-wide DLQ for Topic/Queue dispatchers).
 - `DefaultErrorHandler` / `SilentErrorHandler` — defaults para configurar `WithErrorHandler`, en `functions.go`.
 - `StepStatus` enum + `StepResult` + `ChainError` — trace de PipelineChannel, en `errors.go`.
-- `Error` struct con sentinels: `ErrSendFailed`, `ErrSubscribeFailed`, `ErrClosed`, `ErrHandlerNil`, `ErrContextNil`, `ErrTimeout`, `ErrDrainTimeout`, `ErrHandlerPanic`, `ErrChainFailed`, `ErrNoSubscribers`, `ErrDropped`, `ErrOverflow`, `ErrBufferFull`.
+- `Error` struct con sentinels: `ErrSendFailed`, `ErrSubscribeFailed`, `ErrReceiveFailed`, `ErrClosed`, `ErrChannelClosed`, `ErrHandlerNil`, `ErrContextNil`, `ErrTimeout`, `ErrDrainTimeout`, `ErrHandlerPanic`, `ErrChainFailed`, `ErrNoSubscribers`, `ErrDropped`, `ErrOverflow`, `ErrBufferFull`.
 
 **Constructores:**
 - `NewPipelineChannel[T]() Channel[T]`
@@ -204,9 +209,12 @@ Expone una sola interface pública `Channel[T]` con cinco implementaciones equiv
 - `NewTopicChannel[T](name, opts...) Channel[T]`
 - `NewQueueChannel[T](name, opts...) Channel[T]`
 - `NewNullChannel[T](opts...) Channel[T]`
+- `NewPollableChannel[T](opts...) PollableChannel[T]`
+- `NewScheduledChannel[T](name, opts...) ScheduledChannel[T]`
 - `NewMessage[T](payload, cuids.UID) Message[T]` — constructor de envelope con MessageID y CorrelationID auto-populados.
+- `NewErrorMessage[T](original, cause) Message[ErrorMessage[T]]` — wrapper para flujos de error channel.
 
-**Patrón "Channel + lifecycle.Component" via assertion.** `topic` y `queue` implementan `lifecycle.Component` además de `Channel[T]`. El constructor retorna `Channel[T]` (interfaz minimal); callers que quieren lifecycle hacen `ch.(lifecycle.Component)` y wirean con `lifecycle.Build`. Esto mantiene la API de Channel pura y la composición lifecycle opcional. Pattern reusable cuando una primitiva implementa interfaces ortogonales.
+**Patrón "Channel + lifecycle.Component" via assertion.** `topic`, `queue` y `scheduled` implementan `lifecycle.Component` además de `Channel[T]` (o `ScheduledChannel[T]`). El constructor retorna la interfaz minimal; callers que quieren lifecycle hacen `ch.(lifecycle.Component)` y wirean con `lifecycle.Build`. Esto mantiene la API de Channel pura y la composición lifecycle opcional. Pattern reusable cuando una primitiva implementa interfaces ortogonales.
 
 **Context propagation en async channels.** `topic` y `queue` no propagan la cancelación del `ctx` del publisher al handler — el dispatch async debe sobrevivir al request del publisher. El handler recibe un ctx fusionado (`mergeContexts` en `context.go`) cuyo Done/Deadline/Err siguen al ctx del worker pero cuyos Value lookups caen primero en el ctx del publisher (propaga trace span, correlation id, slogctx attrs). Detalle en el package doc de `types.go`.
 
@@ -221,19 +229,21 @@ Expone una sola interface pública `Channel[T]` con cinco implementaciones equiv
 **Breaking change YA-0180**: el default cambió de `OverflowBlock` a `OverflowReject`. Código que asuma que `Send` bloquea hasta drain debe pasar `WithOverflowPolicy(OverflowBlock)` explícitamente. La motivación es forzar al operador a tomar una decisión consciente sobre saturación en producción en lugar de heredar bloqueo silencioso. Dispatch implementado en `sendWithPolicy` (`internals.go`); helper compartido entre `topic.Send` y `queue.Send`.
 
 **Estructura de archivos del root package:**
-- `types.go` — `Channel[T]` interface + `Handler`/`Cancel`/`ErrorHandler` types + compliance vars + package doc.
+- `types.go` — `Channel[T]` / `PollableChannel[T]` / `ScheduledChannel[T]` interfaces + `Handler`/`Cancel`/`ErrorHandler` types + compliance vars + package doc.
 - `functions.go` — funciones libres públicas: `DefaultErrorHandler`, `SilentErrorHandler`.
 - `internals.go` — helpers libres privados compartidos: `snapshotHandlers`, `invokeHandler`, `invokeStep`, `generateID`, `sendWithPolicy`, `extractDLQ`, `publishDeadLetter`.
-- `message.go` — `Message[T]` + `Headers` + `NewMessage` + `DeadLetter[T]` envelope.
+- `message.go` — `Message[T]` + `Headers` + `NewMessage` + `DeadLetter[T]` + `ErrorMessage[T]` + `NewErrorMessage`.
 - `context.go` — `envelope[T]` + `mergedContext` + `mergeContexts` (concern de propagación async).
-- `errors.go` — `Error` struct, sentinels, `ErrXxx` factories, `ChainError` + `StepResult`.
+- `errors.go` — `Error` struct, sentinels, `ErrXxx` factories (`ErrSend`/`ErrSubscribe`/`ErrReceive`), `ChainError` + `StepResult`.
 - `options.go` — `Options` + `Option` + `WithXxx`.
-- `pipeline.go` + tests.
-- `broadcast.go` + tests.
-- `topic.go` + tests — incluye `subscriber[T]` struct privado (inbox + done + handler) por R1 (concern del archivo de impl).
-- `queue.go` + tests.
-- `null.go` + tests.
-- `examples/` — submódulo propio con `go.mod`, demos runnable de los 5 channels + features cross-cutting.
+- `channel_pipeline.go` + tests.
+- `channel_broadcast.go` + tests.
+- `channel_topic.go` + tests — incluye `subscriber[T]` struct privado (inbox + done + handler) por R1.
+- `channel_queue.go` + tests.
+- `channel_null.go` + tests.
+- `channel_pollable.go` + tests — `pollable[T]` struct, no lifecycle.
+- `channel_scheduled.go` + tests — `scheduled[T]` struct + `scheduledItem[T]` + `scheduledHeap[T]` (min-heap implementing `container/heap.Interface`) en el mismo archivo por R1.
+- `examples/` — submódulo propio con `go.mod`, demos runnable de los channels + features cross-cutting.
 
 ### Capa 2: EIP Patterns (sub-paquetes)
 
@@ -247,6 +257,13 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 | `transformer/` | `transformer[T,U]` | `lifecycle.Component` | Message Translator: T→U mapping via `TransformFn`. Único pattern que cruza type parameters — input y output payload types pueden diferir. TransformFn owns la política de Headers translation (preserve CorrelationID, mutate Type, etc.). |
 | `wiretap/` | `wiretap[T]` | `lifecycle.Component` | Wire Tap: non-intrusive copy a un side channel. Subscribe a `src`, reenvía cada msg a `dst` (primary) AND `tap` (observability sink). Tap failures NEVER alteran el primary flow — solo se reportan vía `ErrorHandler` (observabilidad de la observabilidad). |
 | `splitter/` | `splitter[T,U]` | `lifecycle.Component` | Splitter: 1 msg → N msgs con `Headers.SequenceNumber`/`SequenceSize` populated. Para cada item del slice retornado por `SplitFn`, emite un child con CorrelationID preservado, CausationID=source MessageID, MessageID=`<source-id>-<index>`. Empty slice → DropHandler. |
+| `delayer/` | `delayer[T]` | `lifecycle.Component` | Delayer: subscribe a `src`, retiene cada `Message[T]` y la reenvía a `dst` tras un delay computado por estrategia. Tres modos en orden de precedencia: `WithFixedDelay` (constante por msg), `WithDelayFn[T]` (caller computa), fallback `Headers.ExpirationTime`. Internamente compone una `ScheduledChannel[T]` (min-heap + scheduler goroutine); `WithMaxPending` acota in-flight con drop via `WithDropHandler` (silent default). Delay `<= 0` reenvía inmediato sin schedule. |
+| `pollingconsumer/` | `pollingConsumer[T]` | `lifecycle.Component` | Polling Consumer endpoint: pull-based counterpart de Subscribe. Spawnea `WithMaxConcurrency` workers (default 1) que pollean `PollableChannel[T].Receive` en loop y dispatchan cada `Message[T]` al `Handler[T]` del caller con panic recovery. `WithPollInterval` opcional para rate-limit; backpressure natural viene del Receive blocante del pollable. Workers exit en ErrChannelClosed / ctx-cancel / Stop. Sin DropHandler (no hay gating). |
+| `aggregator/` | `aggregator[T,U]` | `lifecycle.Component` | Aggregator: N→1 collection con `CorrelationID` (default) + multiple completion strategies (`WithCompletionSize`, `WithCompletionFn`, `WithGroupTimeout`) + memory bounding (`WithMaxGroups`, default 1000). Sweeper goroutine para timeout completion; Stop drena partial groups por el mismo release path. Dos hooks: `WithErrorHandler` (AggregateFn error/panic, ForwardFailed, MaxGroups exceeded) y `WithDropHandler` (empty correlation, expired). |
+| `recipientlist/` | `recipientList[T]` | `lifecycle.Component` | Recipient List: 1→N rule-based fan-out via `SelectorFn`. Subscribe a `src`, evalúa `SelectorFn(msg) → []keys`, reenvía a TODOS los `routes[key]` resueltos. Per-recipient error reporting (missing key + forward fail no abortan otros sends); `WithDropHandler` para selección vacía. |
+| `headerfilter/` | `headerFilter[T]` | `lifecycle.Component` | Header Filter: subscribe a `src`, reenvía a `dst` con los `Headers` configurados borrados (campos struct conocidos zeroed + keys de `Custom` map deleted via `WithClearHeader`/`WithHeadersToClear`). Payload sin tocar. Source msg nunca mutado. |
+| `enricher/` | `enricher[T]` | `lifecycle.Component` | Header/Content Enricher: subscribe a `src`, aplica `EnrichFn(msg) → enrichedMsg` y reenvía a `dst`. Un solo callback cubre AMBOS Header y Content enrichment — el caller decide qué tocar. Enrich error/panic NO forward + reporta vía `ErrorHandler`. |
+| `scattergather/` | `scatterGather[T,U]` | `lifecycle.Component` | Scatter-Gather: composes Recipient List (scatter) + Aggregator (gather) con per-correlation expected-size tracking. Internal RecipientList fan-outs a workers via `SelectorFn`; internal Aggregator collects replies en `replyChan` via `CorrelationID` y emite `Message[U]` via `AggregateFn` cuando todos los workers seleccionados respondieron. `WithGroupTimeout` REQUERIDO (drop partial via DropHandler en timeout); `WithMaxConcurrentScatters` (default 1000); orphan sweeper limpia entradas que nunca recibieron reply. |
 
 **Constructores:**
 - `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
@@ -255,6 +272,13 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `NewTransformer[T,U](name, src, dst, transform, opts...) lifecycle.Component`
 - `NewWiretap[T](name, src, dst, tap, opts...) lifecycle.Component`
 - `NewSplitter[T,U](name, src, dst, split, opts...) lifecycle.Component`
+- `NewDelayer[T](name, src, dst, opts...) lifecycle.Component`
+- `NewPollingConsumer[T](name, src, handler, opts...) lifecycle.Component`
+- `NewAggregator[T,U](name, src, dst, aggregate, opts...) lifecycle.Component`
+- `NewRecipientList[T](name, src, selector, routes, opts...) lifecycle.Component`
+- `NewHeaderFilter[T](name, src, dst, opts...) lifecycle.Component`
+- `NewEnricher[T](name, src, dst, enrich, opts...) lifecycle.Component`
+- `NewScatterGather[T,U](name, src, workers, replyChan, aggregateDst, selector, aggregate, opts...) ScatterGather[T,U]`
 
 **Override de la regla universal — errors no propagan al source channel.** Cada pattern subscribe a `src` con un handler que **siempre retorna nil**. Fallos de routing/filtering/forwarding NO son fallos del source channel; el caller del source no debe verlos. Los errores del pattern fluyen vía el `WithErrorHandler` propio (default: `messaging.DefaultErrorHandler` que loguea via `common/log`; opt-out con `messaging.SilentErrorHandler`). Documentado en `modules/messaging/CODING_STANDARDS.md`.
 
@@ -267,6 +291,32 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
 **Patrones futuros** (`aggregator/`, `scattergather/`, `delayer/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+**Patrones futuros** (`transformer/`, `splitter/`, `delayer/`, `wiretap/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+**Patrones futuros** (`transformer/`, `splitter/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+
+### Capa 3: Support primitives (sub-paquetes)
+
+Storage / utility contracts consumidos por los patterns de Capa 2 — no son endpoints ni transforms, son primitivas de soporte. Ship interface + impl canónica in-memory bajo el mismo `go.mod` (paralelo a `core/common/cache/`); backends pesados (Redis, Postgres, S3, …) viven en `extension/messaging/store/<backend>/` con `go.mod` propio para aislar MVS.
+
+| Sub-paquete | Interfaces | Impls in-memory | Consumers EIP | Qué hace |
+|---|---|---|---|---|
+| `store/` | `MessageStore[T]` (Put/Get/Delete) + `MetadataStore` (Has/Add) | `inMemoryMessageStore[T]` (passive, mutex+map) + `inMemoryMetadataStore` (lifecycle.Component con sweeper goroutine) | Claim Check (YA-0229) consume `MessageStore[T]`; Idempotent Receiver (YA-0228) consume `MetadataStore` | Persiste envelopes completos por key opaca (`MessageStore[T]`) y presencia booleana con TTL (`MetadataStore`). Storage layer reusable por múltiples EIP patterns. |
+
+**Constructores:**
+- `NewInMemoryMessageStore[T]() MessageStore[T]` — passive, sin lifecycle.
+- `NewInMemoryMetadataStore(name, opts...) MetadataStore` — implementa `lifecycle.Component` por el sweeper; type-assert para wirear vía `lifecycle.Build`.
+
+**Sweeper goroutine (metadata only).** `inMemoryMetadataStore` arranca un único goroutine en `Start` que evicta entries expirados cada `WithSweepInterval` (default 1m). `Has` hace su propia freshness check on-call — un entry expirado pero aún no swept retorna false correctamente. El sweeper sólo libera el slot del map. Stop cierra `stopCh`, espera al goroutine (bounded por `ctx`) y cierra `Done`.
+
+**Errores.** `ErrStore(causes...)` factory + sentinels `ErrStoreFailed`/`ErrStoreNotFound`/`ErrStoreClosed`/`ErrInvalidTTL`. `MessageStore.Get` retorna `ErrNotFound()` (matchable via `errors.Is(err, ErrStoreNotFound)`). `Add` con TTL ≤ 0 retorna `ErrStore(ErrInvalidTTL)`. Operaciones post-Stop sobre `MetadataStore` retornan `ErrStore(ErrStoreClosed)` para distinguir "store muerto" de "key no presente".
+
+**Estructura de archivos:**
+- `types.go` — package doc + interfaces (`MessageStore[T]`, `MetadataStore`) + compliance vars + `Fn` types.
+- `errors.go` — `StoreType` constant, sentinels, `Error` struct, `ErrStore`/`ErrNotFound` factories.
+- `options.go` — `Options` + `Option` + `WithSweepInterval` (consumido sólo por `inMemoryMetadataStore`).
+- `messagestore.go` — `inMemoryMessageStore[T]` + `NewInMemoryMessageStore`.
+- `metadatastore.go` — `inMemoryMetadataStore` + `NewInMemoryMetadataStore` + sweeper.
 
 ## Módulo `modules/core/security/authn/`
 
