@@ -36,10 +36,12 @@ Current sub-packages:
 | `bridge/` | One-to-one channel forwarder (identity transform, sync↔async decoupling) |
 | `filter/` | Message Filter (predicate-gated forwarding with separate error/drop hooks) |
 | `router/` | Content-Based Router (key → Channel[T]) |
+| `controlbus/` | Control Bus (admin commands via Channel[Command] → Channel[Result]) |
+| `gateway/` | Messaging Gateway (sync request-reply over async messaging via correlation ID) |
 
 Future sub-packages (transformer, splitter, aggregator, delayer, endpoint,
-controlbus, ...) get added one at a time when a real consumer asks for
-them. Do not pre-create empty sub-packages.
+...) get added one at a time when a real consumer asks for them. Do not
+pre-create empty sub-packages.
 
 ## Applicable Criteria
 

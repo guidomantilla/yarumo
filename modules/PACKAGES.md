@@ -244,11 +244,15 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 | `bridge/` | `bridge[T]` | `lifecycle.Component` | One-to-one channel forwarder: subscribe a `src`, reenvía cada `Message[T]` a `dst` sin alteración. Patrón identity transform — valor estructural (sync↔async decoupling, etiqueta nombrada en wiring graph, hook point de observabilidad). |
 | `filter/` | `filter[T]` | `lifecycle.Component` | Message Filter: subscribe a `src`, reenvía a `dst` solo cuando `PredicateFn` retorna true. Dos hooks separados — `WithErrorHandler` (fallos reales: predicate error/panic, forward fail) y `WithDropHandler` (drops intencionales, silent default). |
 | `router/` | `router[T]` | `lifecycle.Component` | Content-Based Router (key → `Channel[T]`): subscribe a `src`, evalúa `RouteFn(msg) → key`, busca destino en `routes[key]` y reenvía. `WithDefaultChannel` opcional para política NoRoute; sin él, NoRoute drops + reporta vía `ErrorHandler`. |
+| `controlbus/` | `controlBus` | `lifecycle.Component` | Control Bus: dispatch admin commands (start/stop/stats/reload-config/custom verbs) vía `Channel[Command]` → `Channel[Result]`, con registry `map[verb]Handler` y `WithUnknownVerbHandler` fallback. Handler corre bajo panic recovery; panic → `Result{Success:false}` + `ErrorHandler` con `ErrHandlerPanic`. |
+| `gateway/` | `gateway[Req, Res]` | `lifecycle.Component` + `Request(ctx, req) (Res, error)` | Messaging Gateway: expone API sincrónica request-reply sobre messaging asíncrono. Genera `CorrelationID` con `cuids.UID`, stampa `Headers.ReplyTo = name`, publica a `requestChan`, espera reply matching en `replyChan`. `WithRequestTimeout` (default 5s) + ctx-deadline (el más estricto gana). `Stop` falla todo pending con `ErrGatewayShuttingDown`. |
 
 **Constructores:**
 - `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
 - `NewFilter[T](name, src, dst, predicate, opts...) lifecycle.Component`
 - `NewRouter[T](name, src, decide, routes, opts...) lifecycle.Component`
+- `NewControlBus(name, cmdChan, resChan, handlers, opts...) ControlBus`
+- `NewGateway[Req, Res](name, requestChan, replyChan, opts...) Gateway[Req, Res]`
 
 **Override de la regla universal — errors no propagan al source channel.** Cada pattern subscribe a `src` con un handler que **siempre retorna nil**. Fallos de routing/filtering/forwarding NO son fallos del source channel; el caller del source no debe verlos. Los errores del pattern fluyen vía el `WithErrorHandler` propio (default: `messaging.DefaultErrorHandler` que loguea via `common/log`; opt-out con `messaging.SilentErrorHandler`). Documentado en `modules/messaging/CODING_STANDARDS.md`.
 
@@ -260,7 +264,7 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx`.
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
-**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 
 ## Módulo `modules/core/security/authn/`
 
