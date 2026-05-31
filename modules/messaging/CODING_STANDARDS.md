@@ -40,6 +40,7 @@ Current sub-packages:
 | `recipientlist/` | Recipient List (1→N rule-based fan-out via SelectorFn) |
 | `headerfilter/` | Header Filter (remove/redact configured Headers fields) |
 | `enricher/` | Header/Content Enricher (add/override Headers and/or Payload via EnrichFn) |
+| `scattergather/` | Scatter-Gather (composes Recipient List + Aggregator with per-correlation expected-size tracking) |
 
 Future sub-packages (transformer, splitter, delayer, endpoint,
 controlbus, ...) get added one at a time when a real consumer asks for

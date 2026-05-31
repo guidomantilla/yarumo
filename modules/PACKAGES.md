@@ -248,6 +248,7 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 | `recipientlist/` | `recipientList[T]` | `lifecycle.Component` | Recipient List: 1→N rule-based fan-out via `SelectorFn`. Subscribe a `src`, evalúa `SelectorFn(msg) → []keys`, reenvía a TODOS los `routes[key]` resueltos. Per-recipient error reporting (missing key + forward fail no abortan otros sends); `WithDropHandler` para selección vacía. |
 | `headerfilter/` | `headerFilter[T]` | `lifecycle.Component` | Header Filter: subscribe a `src`, reenvía a `dst` con los `Headers` configurados borrados (campos struct conocidos zeroed + keys de `Custom` map deleted via `WithClearHeader`/`WithHeadersToClear`). Payload sin tocar. Source msg nunca mutado. |
 | `enricher/` | `enricher[T]` | `lifecycle.Component` | Header/Content Enricher: subscribe a `src`, aplica `EnrichFn(msg) → enrichedMsg` y reenvía a `dst`. Un solo callback cubre AMBOS Header y Content enrichment — el caller decide qué tocar. Enrich error/panic NO forward + reporta vía `ErrorHandler`. |
+| `scattergather/` | `scatterGather[T,U]` | `lifecycle.Component` | Scatter-Gather: composes Recipient List (scatter) + Aggregator (gather) con per-correlation expected-size tracking. Internal RecipientList fan-outs a workers via `SelectorFn`; internal Aggregator collects replies en `replyChan` via `CorrelationID` y emite `Message[U]` via `AggregateFn` cuando todos los workers seleccionados respondieron. `WithGroupTimeout` REQUERIDO (drop partial via DropHandler en timeout); `WithMaxConcurrentScatters` (default 1000); orphan sweeper limpia entradas que nunca recibieron reply. |
 
 **Constructores:**
 - `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
@@ -257,6 +258,7 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `NewRecipientList[T](name, src, selector, routes, opts...) lifecycle.Component`
 - `NewHeaderFilter[T](name, src, dst, opts...) lifecycle.Component`
 - `NewEnricher[T](name, src, dst, enrich, opts...) lifecycle.Component`
+- `NewScatterGather[T,U](name, src, workers, replyChan, aggregateDst, selector, aggregate, opts...) ScatterGather[T,U]`
 
 **Override de la regla universal — errors no propagan al source channel.** Cada pattern subscribe a `src` con un handler que **siempre retorna nil**. Fallos de routing/filtering/forwarding NO son fallos del source channel; el caller del source no debe verlos. Los errores del pattern fluyen vía el `WithErrorHandler` propio (default: `messaging.DefaultErrorHandler` que loguea via `common/log`; opt-out con `messaging.SilentErrorHandler`). Documentado en `modules/messaging/CODING_STANDARDS.md`.
 
@@ -268,7 +270,7 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx`.
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
-**Patrones futuros** (`transformer/`, `splitter/`, `scattergather/`, `delayer/`, `wiretap/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+**Patrones futuros** (`transformer/`, `splitter/`, `delayer/`, `wiretap/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 
 ## Módulo `modules/core/security/authn/`
 
