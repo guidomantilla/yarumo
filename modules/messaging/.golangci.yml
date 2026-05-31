@@ -119,6 +119,11 @@ linters:
         linters:
           - contextcheck
           - wrapcheck
+      - path: controlbus/controlbus\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: gateway/gateway\.go
       - path: transformer/transformer\.go
         linters:
           - contextcheck

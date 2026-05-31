@@ -254,6 +254,8 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 | `bridge/` | `bridge[T]` | `lifecycle.Component` | One-to-one channel forwarder: subscribe a `src`, reenvía cada `Message[T]` a `dst` sin alteración. Patrón identity transform — valor estructural (sync↔async decoupling, etiqueta nombrada en wiring graph, hook point de observabilidad). |
 | `filter/` | `filter[T]` | `lifecycle.Component` | Message Filter: subscribe a `src`, reenvía a `dst` solo cuando `PredicateFn` retorna true. Dos hooks separados — `WithErrorHandler` (fallos reales: predicate error/panic, forward fail) y `WithDropHandler` (drops intencionales, silent default). |
 | `router/` | `router[T]` | `lifecycle.Component` | Content-Based Router (key → `Channel[T]`): subscribe a `src`, evalúa `RouteFn(msg) → key`, busca destino en `routes[key]` y reenvía. `WithDefaultChannel` opcional para política NoRoute; sin él, NoRoute drops + reporta vía `ErrorHandler`. |
+| `controlbus/` | `controlBus` | `lifecycle.Component` | Control Bus: dispatch admin commands (start/stop/stats/reload-config/custom verbs) vía `Channel[Command]` → `Channel[Result]`, con registry `map[verb]Handler` y `WithUnknownVerbHandler` fallback. Handler corre bajo panic recovery; panic → `Result{Success:false}` + `ErrorHandler` con `ErrHandlerPanic`. |
+| `gateway/` | `gateway[Req, Res]` | `lifecycle.Component` + `Request(ctx, req) (Res, error)` | Messaging Gateway: expone API sincrónica request-reply sobre messaging asíncrono. Genera `CorrelationID` con `cuids.UID`, stampa `Headers.ReplyTo = name`, publica a `requestChan`, espera reply matching en `replyChan`. `WithRequestTimeout` (default 5s) + ctx-deadline (el más estricto gana). `Stop` falla todo pending con `ErrGatewayShuttingDown`. |
 | `recipientlist/` | `recipientList[T]` | `lifecycle.Component` | Recipient List: 1→N rule-based fan-out via `SelectorFn`. Subscribe a `src`, evalúa `SelectorFn(msg) → []keys`, reenvía a TODOS los `routes[key]` resueltos. Per-recipient error reporting (missing key + forward fail no abortan otros sends); `WithDropHandler` para selección vacía. |
 | `headerfilter/` | `headerFilter[T]` | `lifecycle.Component` | Header Filter: subscribe a `src`, reenvía a `dst` con los `Headers` configurados borrados (campos struct conocidos zeroed + keys de `Custom` map deleted via `WithClearHeader`/`WithHeadersToClear`). Payload sin tocar. Source msg nunca mutado. |
 | `enricher/` | `enricher[T]` | `lifecycle.Component` | Header/Content Enricher: subscribe a `src`, aplica `EnrichFn(msg) → enrichedMsg` y reenvía a `dst`. Un solo callback cubre AMBOS Header y Content enrichment — el caller decide qué tocar. Enrich error/panic NO forward + reporta vía `ErrorHandler`. |
@@ -272,6 +274,8 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
 - `NewFilter[T](name, src, dst, predicate, opts...) lifecycle.Component`
 - `NewRouter[T](name, src, decide, routes, opts...) lifecycle.Component`
+- `NewControlBus(name, cmdChan, resChan, handlers, opts...) ControlBus`
+- `NewGateway[Req, Res](name, requestChan, replyChan, opts...) Gateway[Req, Res]`
 - `NewRecipientList[T](name, src, selector, routes, opts...) lifecycle.Component`
 - `NewHeaderFilter[T](name, src, dst, opts...) lifecycle.Component`
 - `NewEnricher[T](name, src, dst, enrich, opts...) lifecycle.Component`
@@ -296,6 +300,7 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx`.
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
+**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`aggregator/`, `scattergather/`, `delayer/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
