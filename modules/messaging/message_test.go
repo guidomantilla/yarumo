@@ -221,3 +221,45 @@ func TestNewMessage(t *testing.T) {
 		}
 	})
 }
+
+func TestNewErrorMessage(t *testing.T) {
+	t.Parallel()
+
+	t.Run("wraps original and cause into Message envelope", func(t *testing.T) {
+		t.Parallel()
+
+		orig := NewMessage[int](42, nil)
+		cause := errors.New("boom")
+
+		out := NewErrorMessage(orig, cause)
+
+		if out.Payload.Original.Payload != 42 {
+			t.Fatalf("expected original payload 42, got %d", out.Payload.Original.Payload)
+		}
+
+		if !errors.Is(out.Payload.Cause, cause) {
+			t.Fatalf("expected cause %v, got %v", cause, out.Payload.Cause)
+		}
+	})
+
+	t.Run("envelope has a recent timestamp", func(t *testing.T) {
+		t.Parallel()
+
+		before := time.Now()
+		out := NewErrorMessage(NewMessage[int](1, nil), errors.New("x"))
+		after := time.Now()
+
+		if out.Headers.Timestamp.Before(before) || out.Headers.Timestamp.After(after) {
+			t.Fatalf("timestamp %v not within [%v, %v]", out.Headers.Timestamp, before, after)
+		}
+	})
+
+	t.Run("preserves nil cause", func(t *testing.T) {
+		t.Parallel()
+
+		out := NewErrorMessage(NewMessage[int](7, nil), nil)
+		if out.Payload.Cause != nil {
+			t.Fatalf("expected nil cause, got %v", out.Payload.Cause)
+		}
+	})
+}

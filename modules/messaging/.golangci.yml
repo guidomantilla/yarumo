@@ -119,6 +119,22 @@ linters:
         linters:
           - contextcheck
           - wrapcheck
+      # channel_pollable / channel_scheduled: same cassert.NotNil
+      # receiver-guard pattern as channel_topic / channel_queue
+      # (contextcheck false positive); channel_scheduled.Stop also
+      # wraps ctx.Err via the lifecycle.ErrShutdown factory.
+      # containedctx covers two private structs (scheduled itself
+      # and scheduledItem) that intentionally carry sendCtx and
+      # workerCtx so the dispatcher can merge them later — same
+      # design choice as envelope[T] in context.go.
+      - path: channel_pollable\.go
+        linters:
+          - contextcheck
+      - path: channel_scheduled\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+          - containedctx
       - path: aggregator/aggregator\.go
         linters:
           - contextcheck
