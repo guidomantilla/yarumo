@@ -36,6 +36,8 @@ Current sub-packages:
 | `bridge/` | One-to-one channel forwarder (identity transform, sync↔async decoupling) |
 | `filter/` | Message Filter (predicate-gated forwarding with separate error/drop hooks) |
 | `router/` | Content-Based Router (key → Channel[T]) |
+| `idempotent/` | Idempotent Receiver (dedup via `store.MetadataStore`, drop duplicates) |
+| `claimcheck/` | Claim Check In + Out (payload offload via `store.MessageStore`) |
 | `controlbus/` | Control Bus (admin commands via Channel[Command] → Channel[Result]) |
 | `gateway/` | Messaging Gateway (sync request-reply over async messaging via correlation ID) |
 
