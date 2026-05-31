@@ -42,6 +42,29 @@ Current sub-packages:
 Future sub-packages (transformer, splitter, aggregator, delayer, endpoint,
 ...) get added one at a time when a real consumer asks for them. Do not
 pre-create empty sub-packages.
+| `recipientlist/` | Recipient List (1→N rule-based fan-out via SelectorFn) |
+| `headerfilter/` | Header Filter (remove/redact configured Headers fields) |
+| `enricher/` | Header/Content Enricher (add/override Headers and/or Payload via EnrichFn) |
+| `transformer/` | Message Translator (T→U mapping via TransformFn) |
+| `wiretap/` | Wire Tap (non-intrusive copy to a side channel) |
+| `splitter/` | Splitter (1 msg → N msgs with SequenceNumber/Size headers populated) |
+
+Future sub-packages (aggregator, delayer, endpoint, controlbus, ...) get
+added one at a time when a real consumer asks for them. Do not pre-create
+empty sub-packages.
+| `delayer/` | Delayer (forward after a fixed/computed/Headers.ExpirationTime delay; composes ScheduledChannel internally) |
+| `pollingconsumer/` | Polling Consumer endpoint (worker pool that pulls from a PollableChannel and dispatches to a Handler) |
+
+Future sub-packages (transformer, splitter, aggregator, endpoint,
+| `aggregator/` | Aggregator (N→1 correlation + completion strategies) |
+| `recipientlist/` | Recipient List (1→N rule-based fan-out via SelectorFn) |
+| `headerfilter/` | Header Filter (remove/redact configured Headers fields) |
+| `enricher/` | Header/Content Enricher (add/override Headers and/or Payload via EnrichFn) |
+| `scattergather/` | Scatter-Gather (composes Recipient List + Aggregator with per-correlation expected-size tracking) |
+
+Future sub-packages (transformer, splitter, delayer, endpoint,
+controlbus, ...) get added one at a time when a real consumer asks for
+them. Do not pre-create empty sub-packages.
 
 ## Applicable Criteria
 
