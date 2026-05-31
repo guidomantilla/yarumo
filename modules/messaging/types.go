@@ -1,7 +1,9 @@
 // Package messaging provides typed in-process messaging primitives.
 //
 // The package centers on a generic Channel[T] abstraction that delivers
-// Message[T] envelopes to registered handlers. Four channel
+// Message[T] envelopes to registered handlers, plus two sibling
+// interfaces (PollableChannel[T] for pull-based delivery and
+// ScheduledChannel[T] for delayed delivery). Seven channel
 // implementations are provided in-process:
 //
 //   - PipelineChannel[T]: synchronous, sequential fan-out in the
@@ -22,6 +24,17 @@
 //     robin among the registered handlers. Buffered with a worker
 //     pool (WithWorkerCount). Implements lifecycle.Component.
 //     Use for work distribution among equivalent workers.
+//   - NullChannel[T]: sink that drops every message and fires the
+//     ErrorHandler hook with ErrDropped. Useful as a test double or
+//     to wire a disabled flow explicitly.
+//   - PollableChannel[T] (via NewPollableChannel): pull-based channel
+//     where consumers call Receive instead of subscribing. Bounded
+//     buffer; Send blocks on full / Receive blocks on empty until ctx
+//     or Close. No lifecycle.
+//   - ScheduledChannel[T] (via NewScheduledChannel): delayed delivery
+//     primitive. Send delivers ASAP; SendAt / SendAfter defer to a
+//     wall-clock deadline or relative delay via an internal min-heap
+//     ordered by deliveryTime. Implements lifecycle.Component.
 //
 // Concurrency: all public types in this package are safe for concurrent
 // use by multiple goroutines.
@@ -69,6 +82,7 @@ package messaging
 
 import (
 	"context"
+	"time"
 )
 
 var (
@@ -77,6 +91,9 @@ var (
 	_ Channel[any] = (*topic[any])(nil)
 	_ Channel[any] = (*queue[any])(nil)
 	_ Channel[any] = (*null[any])(nil)
+
+	_ PollableChannel[any]  = (*pollable[any])(nil)
+	_ ScheduledChannel[any] = (*scheduled[any])(nil)
 
 	_ ErrorHandler = DefaultErrorHandler
 	_ ErrorHandler = SilentErrorHandler
@@ -141,4 +158,63 @@ type Channel[T any] interface {
 	// it. Cancel is idempotent. Subscribe returns an error if the
 	// channel is closed or if handler is nil.
 	Subscribe(handler Handler[T]) (Cancel, error)
+}
+
+// PollableChannel defines a consumer-driven message channel: producers
+// publish via Send and consumers explicitly pull the next message via
+// Receive instead of subscribing a Handler. The shape mirrors Spring
+// Integration's PollableChannel and complements the push-based
+// Channel[T] — pollable is useful when the consumer wants to gate
+// dequeuing on its own readiness (worker that fetches the next item
+// only after the previous one is committed, REPL-style draining,
+// adapters into pull-based runtimes).
+//
+// Implementations are safe for concurrent use; multiple producers and
+// multiple consumers may call Send and Receive at once. Send returns
+// ErrSend(ErrClosed) and Receive returns ErrReceive(ErrChannelClosed)
+// after Close. Cancellation of the caller's ctx aborts a blocked
+// Send (when the buffer is full) or a blocked Receive (when the
+// buffer is empty) with the wrapped ctx.Err.
+type PollableChannel[T any] interface {
+	// Send enqueues msg into the channel's internal buffer. When the
+	// buffer has capacity Send returns nil immediately; otherwise Send
+	// blocks until a slot opens or ctx expires (returning
+	// ErrSend(ErrTimeout, ctx.Err)). Send returns ErrSend(ErrClosed)
+	// after Close.
+	Send(ctx context.Context, msg Message[T]) error
+	// Receive blocks until a message is available, ctx expires, or the
+	// channel is closed. On success returns the message and nil. On
+	// ctx cancellation returns the zero Message[T] and
+	// ErrReceive(ErrTimeout, ctx.Err). After Close, Receive drains
+	// any remaining buffered messages and then returns the zero
+	// Message[T] with ErrReceive(ErrChannelClosed).
+	Receive(ctx context.Context) (Message[T], error)
+	// Close marks the channel as closed for further sends. Buffered
+	// messages remain receivable until drained. Close is idempotent.
+	Close() error
+}
+
+// ScheduledChannel defines a Channel[T] variant with delayed delivery.
+// Messages sent via Send are dispatched as soon as possible (same
+// semantics as a plain async channel); SendAt and SendAfter defer
+// dispatch until a specified wall-clock instant or after a relative
+// delay.
+//
+// Internally a min-heap orders pending deliveries by deliverAt; a
+// single scheduler goroutine sleeps until the head is due, dispatches
+// it to every subscriber, and re-arms the timer. Implementations are
+// safe for concurrent use and implement lifecycle.Component
+// (worker-style) — the scheduler goroutine starts on Start and stops
+// on Stop, bounded by the configured drain timeout.
+type ScheduledChannel[T any] interface {
+	Channel[T]
+	// SendAt schedules msg for delivery at deliverAt (wall clock). A
+	// deliverAt in the past is treated as "deliver immediately".
+	// Returns ErrSend(ErrClosed) after Stop and ErrSend(ErrContextNil)
+	// when ctx is nil.
+	SendAt(ctx context.Context, deliverAt time.Time, msg Message[T]) error
+	// SendAfter schedules msg for delivery after delay has elapsed.
+	// Non-positive delays deliver immediately. Returns the same error
+	// set as SendAt.
+	SendAfter(ctx context.Context, delay time.Duration, msg Message[T]) error
 }
