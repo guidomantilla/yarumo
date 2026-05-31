@@ -254,6 +254,9 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 | `bridge/` | `bridge[T]` | `lifecycle.Component` | One-to-one channel forwarder: subscribe a `src`, reenvía cada `Message[T]` a `dst` sin alteración. Patrón identity transform — valor estructural (sync↔async decoupling, etiqueta nombrada en wiring graph, hook point de observabilidad). |
 | `filter/` | `filter[T]` | `lifecycle.Component` | Message Filter: subscribe a `src`, reenvía a `dst` solo cuando `PredicateFn` retorna true. Dos hooks separados — `WithErrorHandler` (fallos reales: predicate error/panic, forward fail) y `WithDropHandler` (drops intencionales, silent default). |
 | `router/` | `router[T]` | `lifecycle.Component` | Content-Based Router (key → `Channel[T]`): subscribe a `src`, evalúa `RouteFn(msg) → key`, busca destino en `routes[key]` y reenvía. `WithDefaultChannel` opcional para política NoRoute; sin él, NoRoute drops + reporta vía `ErrorHandler`. |
+| `recipientlist/` | `recipientList[T]` | `lifecycle.Component` | Recipient List: 1→N rule-based fan-out via `SelectorFn`. Subscribe a `src`, evalúa `SelectorFn(msg) → []keys`, reenvía a TODOS los `routes[key]` resueltos. Per-recipient error reporting (missing key + forward fail no abortan otros sends); `WithDropHandler` para selección vacía. |
+| `headerfilter/` | `headerFilter[T]` | `lifecycle.Component` | Header Filter: subscribe a `src`, reenvía a `dst` con los `Headers` configurados borrados (campos struct conocidos zeroed + keys de `Custom` map deleted via `WithClearHeader`/`WithHeadersToClear`). Payload sin tocar. Source msg nunca mutado. |
+| `enricher/` | `enricher[T]` | `lifecycle.Component` | Header/Content Enricher: subscribe a `src`, aplica `EnrichFn(msg) → enrichedMsg` y reenvía a `dst`. Un solo callback cubre AMBOS Header y Content enrichment — el caller decide qué tocar. Enrich error/panic NO forward + reporta vía `ErrorHandler`. |
 | `transformer/` | `transformer[T,U]` | `lifecycle.Component` | Message Translator: T→U mapping via `TransformFn`. Único pattern que cruza type parameters — input y output payload types pueden diferir. TransformFn owns la política de Headers translation (preserve CorrelationID, mutate Type, etc.). |
 | `wiretap/` | `wiretap[T]` | `lifecycle.Component` | Wire Tap: non-intrusive copy a un side channel. Subscribe a `src`, reenvía cada msg a `dst` (primary) AND `tap` (observability sink). Tap failures NEVER alteran el primary flow — solo se reportan vía `ErrorHandler` (observabilidad de la observabilidad). |
 | `splitter/` | `splitter[T,U]` | `lifecycle.Component` | Splitter: 1 msg → N msgs con `Headers.SequenceNumber`/`SequenceSize` populated. Para cada item del slice retornado por `SplitFn`, emite un child con CorrelationID preservado, CausationID=source MessageID, MessageID=`<source-id>-<index>`. Empty slice → DropHandler. |
@@ -269,6 +272,9 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
 - `NewFilter[T](name, src, dst, predicate, opts...) lifecycle.Component`
 - `NewRouter[T](name, src, decide, routes, opts...) lifecycle.Component`
+- `NewRecipientList[T](name, src, selector, routes, opts...) lifecycle.Component`
+- `NewHeaderFilter[T](name, src, dst, opts...) lifecycle.Component`
+- `NewEnricher[T](name, src, dst, enrich, opts...) lifecycle.Component`
 - `NewTransformer[T,U](name, src, dst, transform, opts...) lifecycle.Component`
 - `NewWiretap[T](name, src, dst, tap, opts...) lifecycle.Component`
 - `NewSplitter[T,U](name, src, dst, split, opts...) lifecycle.Component`
@@ -290,6 +296,7 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx`.
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
+**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`aggregator/`, `scattergather/`, `delayer/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`transformer/`, `splitter/`, `delayer/`, `wiretap/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.

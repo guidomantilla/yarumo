@@ -36,6 +36,9 @@ Current sub-packages:
 | `bridge/` | One-to-one channel forwarder (identity transform, sync↔async decoupling) |
 | `filter/` | Message Filter (predicate-gated forwarding with separate error/drop hooks) |
 | `router/` | Content-Based Router (key → Channel[T]) |
+| `recipientlist/` | Recipient List (1→N rule-based fan-out via SelectorFn) |
+| `headerfilter/` | Header Filter (remove/redact configured Headers fields) |
+| `enricher/` | Header/Content Enricher (add/override Headers and/or Payload via EnrichFn) |
 | `transformer/` | Message Translator (T→U mapping via TransformFn) |
 | `wiretap/` | Wire Tap (non-intrusive copy to a side channel) |
 | `splitter/` | Splitter (1 msg → N msgs with SequenceNumber/Size headers populated) |
