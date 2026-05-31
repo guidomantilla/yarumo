@@ -254,6 +254,9 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 | `bridge/` | `bridge[T]` | `lifecycle.Component` | One-to-one channel forwarder: subscribe a `src`, reenvía cada `Message[T]` a `dst` sin alteración. Patrón identity transform — valor estructural (sync↔async decoupling, etiqueta nombrada en wiring graph, hook point de observabilidad). |
 | `filter/` | `filter[T]` | `lifecycle.Component` | Message Filter: subscribe a `src`, reenvía a `dst` solo cuando `PredicateFn` retorna true. Dos hooks separados — `WithErrorHandler` (fallos reales: predicate error/panic, forward fail) y `WithDropHandler` (drops intencionales, silent default). |
 | `router/` | `router[T]` | `lifecycle.Component` | Content-Based Router (key → `Channel[T]`): subscribe a `src`, evalúa `RouteFn(msg) → key`, busca destino en `routes[key]` y reenvía. `WithDefaultChannel` opcional para política NoRoute; sin él, NoRoute drops + reporta vía `ErrorHandler`. |
+| `resequencer/` | `resequencer[T]` | `lifecycle.Component` | Resequencer: buffer + reorder by `Headers.SequenceNumber` per `CorrelationID`, with timeout cleanup. Sweeper goroutine evicts groups whose missing position never arrives (REQUIRES `WithGroupTimeout`). Drops via `WithDropHandler`; forward fails via `WithErrorHandler`. |
+| `barrier/` | `barrier[T]` | `lifecycle.Component` | Barrier: hold N msgs per `CorrelationID`, release on quorum or timeout. Emits the originals (no combine) in arrival order. Sweeper drops groups that miss quorum (REQUIRES `WithGroupTimeout`). |
+| `history/` | `history[T]` | `lifecycle.Component` | Message History: append endpoint name to `Headers.Custom["History"]` for path tracking. Pure header manipulation; no group state, no timeouts. `WithHistoryKey` overrides the map key. |
 | `idempotent/` | `idempotent[T]` | `lifecycle.Component` | Idempotent Receiver: subscribe a `src`, extrae dedup key via `KeyFn[T]` (default: `Headers.MessageID`), consulta `store.MetadataStore.Has`, reenvía a `dst` solo si la key no fue vista dentro del TTL. Duplicates y keyless dropean via `WithDropHandler` (con `DropReason` — `DropReasonDuplicate` / `DropReasonNoKey`). Fail-closed en `Has` (no forward); fail-open en `Add` (sí forward, log el error). |
 | `claimcheck/` | `claimCheckIn[T]` + `claimCheckOut[T]` | `lifecycle.Component` (ambos) | Claim Check (par In + Out): `In` subscribe a `src` (heavy `Message[T]`), guarda original en `store.MessageStore[T]` bajo key generada via `KeyGenFn` (default crypto/rand 128-bit hex), reenvía `Message[ClaimCheckReference]{Key}` a `dst` (preservando `Headers.CorrelationID` del original). `Out` subscribe a `src` (referencias), retrieve original del store, reenvía a `dst` (`Message[T]`), opcionalmente borra del store via `WithDeleteAfterRetrieve` (default true). Fail-closed en Put/Get; fail-open en Delete. |
 | `controlbus/` | `controlBus` | `lifecycle.Component` | Control Bus: dispatch admin commands (start/stop/stats/reload-config/custom verbs) vía `Channel[Command]` → `Channel[Result]`, con registry `map[verb]Handler` y `WithUnknownVerbHandler` fallback. Handler corre bajo panic recovery; panic → `Result{Success:false}` + `ErrorHandler` con `ErrHandlerPanic`. |
@@ -276,6 +279,9 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
 - `NewFilter[T](name, src, dst, predicate, opts...) lifecycle.Component`
 - `NewRouter[T](name, src, decide, routes, opts...) lifecycle.Component`
+- `NewResequencer[T](name, src, dst, opts...) lifecycle.Component`
+- `NewBarrier[T](name, src, dst, quorum, opts...) lifecycle.Component`
+- `NewHistory[T](name, src, dst, opts...) lifecycle.Component`
 - `NewIdempotent[T](name, src, dst, metaStore, opts...) lifecycle.Component`
 - `NewClaimCheckIn[T](name, src, dst, msgStore, opts...) lifecycle.Component`
 - `NewClaimCheckOut[T](name, src, dst, msgStore, opts...) lifecycle.Component`
@@ -305,6 +311,7 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx`.
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
+**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `controlbus/`, `gateway/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
