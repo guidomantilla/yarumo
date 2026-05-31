@@ -135,3 +135,20 @@ linters:
           - contextcheck
           - wrapcheck
           - containedctx
+      # delayer / pollingconsumer: same cassert.NotNil receiver-guard
+      # pattern (contextcheck false positive). delayer.Stop wraps ctx.Err
+      # via the lifecycle.ErrShutdown factory and bubbles internal
+      # ScheduledChannel.Stop errors unchanged (wrapping them again
+      # would double-wrap an already-typed messaging error). delayer
+      # carries an internalLifecycle field that holds a Component
+      # reference for its embedded ScheduledChannel; that's deliberate
+      # composition, not stored context.
+      - path: delayer/delayer\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: pollingconsumer/pollingconsumer\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+          - containedctx
