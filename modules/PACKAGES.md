@@ -254,6 +254,8 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 | `bridge/` | `bridge[T]` | `lifecycle.Component` | One-to-one channel forwarder: subscribe a `src`, reenvía cada `Message[T]` a `dst` sin alteración. Patrón identity transform — valor estructural (sync↔async decoupling, etiqueta nombrada en wiring graph, hook point de observabilidad). |
 | `filter/` | `filter[T]` | `lifecycle.Component` | Message Filter: subscribe a `src`, reenvía a `dst` solo cuando `PredicateFn` retorna true. Dos hooks separados — `WithErrorHandler` (fallos reales: predicate error/panic, forward fail) y `WithDropHandler` (drops intencionales, silent default). |
 | `router/` | `router[T]` | `lifecycle.Component` | Content-Based Router (key → `Channel[T]`): subscribe a `src`, evalúa `RouteFn(msg) → key`, busca destino en `routes[key]` y reenvía. `WithDefaultChannel` opcional para política NoRoute; sin él, NoRoute drops + reporta vía `ErrorHandler`. |
+| `delayer/` | `delayer[T]` | `lifecycle.Component` | Delayer: subscribe a `src`, retiene cada `Message[T]` y la reenvía a `dst` tras un delay computado por estrategia. Tres modos en orden de precedencia: `WithFixedDelay` (constante por msg), `WithDelayFn[T]` (caller computa), fallback `Headers.ExpirationTime`. Internamente compone una `ScheduledChannel[T]` (min-heap + scheduler goroutine); `WithMaxPending` acota in-flight con drop via `WithDropHandler` (silent default). Delay `<= 0` reenvía inmediato sin schedule. |
+| `pollingconsumer/` | `pollingConsumer[T]` | `lifecycle.Component` | Polling Consumer endpoint: pull-based counterpart de Subscribe. Spawnea `WithMaxConcurrency` workers (default 1) que pollean `PollableChannel[T].Receive` en loop y dispatchan cada `Message[T]` al `Handler[T]` del caller con panic recovery. `WithPollInterval` opcional para rate-limit; backpressure natural viene del Receive blocante del pollable. Workers exit en ErrChannelClosed / ctx-cancel / Stop. Sin DropHandler (no hay gating). |
 | `aggregator/` | `aggregator[T,U]` | `lifecycle.Component` | Aggregator: N→1 collection con `CorrelationID` (default) + multiple completion strategies (`WithCompletionSize`, `WithCompletionFn`, `WithGroupTimeout`) + memory bounding (`WithMaxGroups`, default 1000). Sweeper goroutine para timeout completion; Stop drena partial groups por el mismo release path. Dos hooks: `WithErrorHandler` (AggregateFn error/panic, ForwardFailed, MaxGroups exceeded) y `WithDropHandler` (empty correlation, expired). |
 | `recipientlist/` | `recipientList[T]` | `lifecycle.Component` | Recipient List: 1→N rule-based fan-out via `SelectorFn`. Subscribe a `src`, evalúa `SelectorFn(msg) → []keys`, reenvía a TODOS los `routes[key]` resueltos. Per-recipient error reporting (missing key + forward fail no abortan otros sends); `WithDropHandler` para selección vacía. |
 | `headerfilter/` | `headerFilter[T]` | `lifecycle.Component` | Header Filter: subscribe a `src`, reenvía a `dst` con los `Headers` configurados borrados (campos struct conocidos zeroed + keys de `Custom` map deleted via `WithClearHeader`/`WithHeadersToClear`). Payload sin tocar. Source msg nunca mutado. |
@@ -264,6 +266,8 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
 - `NewFilter[T](name, src, dst, predicate, opts...) lifecycle.Component`
 - `NewRouter[T](name, src, decide, routes, opts...) lifecycle.Component`
+- `NewDelayer[T](name, src, dst, opts...) lifecycle.Component`
+- `NewPollingConsumer[T](name, src, handler, opts...) lifecycle.Component`
 - `NewAggregator[T,U](name, src, dst, aggregate, opts...) lifecycle.Component`
 - `NewRecipientList[T](name, src, selector, routes, opts...) lifecycle.Component`
 - `NewHeaderFilter[T](name, src, dst, opts...) lifecycle.Component`
@@ -280,6 +284,7 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx`.
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
+**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`transformer/`, `splitter/`, `delayer/`, `wiretap/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 **Patrones futuros** (`transformer/`, `splitter/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 
