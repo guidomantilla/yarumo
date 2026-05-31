@@ -126,3 +126,31 @@ type DeadLetter[T any] struct {
 	// FailedAt is the wall-clock time the failure was observed.
 	FailedAt time.Time
 }
+
+// ErrorMessage carries a Message that failed processing alongside the
+// error that caused the failure. It is the payload of an error
+// channel (Channel[ErrorMessage[T]]) — the synchronous counterpart to
+// DeadLetter[T], which is the asynchronous DLQ envelope.
+//
+// Use an error channel when the producer is still in scope and wants
+// failures routed back through the same Channel[T] machinery as
+// successes — for example, a request/reply pattern where the reply
+// channel carries either the result or an ErrorMessage. DeadLetter[T]
+// is structurally richer (FailedAt timestamp) because the DLQ flow is
+// asynchronous and downstream consumers need provenance; ErrorMessage
+// stays minimal because the failure context is already alive on the
+// producer side.
+type ErrorMessage[T any] struct {
+	// Original is the message whose handler returned the failure.
+	Original Message[T]
+	// Cause is the non-nil error reported by the failing handler.
+	Cause error
+}
+
+// NewErrorMessage wraps original and cause into a Message[ErrorMessage[T]]
+// suitable for publishing on an error channel. Headers are populated
+// the usual way (Timestamp now; MessageID/CorrelationID left empty
+// because the uid generator is nil).
+func NewErrorMessage[T any](original Message[T], cause error) Message[ErrorMessage[T]] {
+	return NewMessage(ErrorMessage[T]{Original: original, Cause: cause}, nil)
+}
