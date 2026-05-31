@@ -244,11 +244,16 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 | `bridge/` | `bridge[T]` | `lifecycle.Component` | One-to-one channel forwarder: subscribe a `src`, reenvía cada `Message[T]` a `dst` sin alteración. Patrón identity transform — valor estructural (sync↔async decoupling, etiqueta nombrada en wiring graph, hook point de observabilidad). |
 | `filter/` | `filter[T]` | `lifecycle.Component` | Message Filter: subscribe a `src`, reenvía a `dst` solo cuando `PredicateFn` retorna true. Dos hooks separados — `WithErrorHandler` (fallos reales: predicate error/panic, forward fail) y `WithDropHandler` (drops intencionales, silent default). |
 | `router/` | `router[T]` | `lifecycle.Component` | Content-Based Router (key → `Channel[T]`): subscribe a `src`, evalúa `RouteFn(msg) → key`, busca destino en `routes[key]` y reenvía. `WithDefaultChannel` opcional para política NoRoute; sin él, NoRoute drops + reporta vía `ErrorHandler`. |
+| `idempotent/` | `idempotent[T]` | `lifecycle.Component` | Idempotent Receiver: subscribe a `src`, extrae dedup key via `KeyFn[T]` (default: `Headers.MessageID`), consulta `store.MetadataStore.Has`, reenvía a `dst` solo si la key no fue vista dentro del TTL. Duplicates y keyless dropean via `WithDropHandler` (con `DropReason` — `DropReasonDuplicate` / `DropReasonNoKey`). Fail-closed en `Has` (no forward); fail-open en `Add` (sí forward, log el error). |
+| `claimcheck/` | `claimCheckIn[T]` + `claimCheckOut[T]` | `lifecycle.Component` (ambos) | Claim Check (par In + Out): `In` subscribe a `src` (heavy `Message[T]`), guarda original en `store.MessageStore[T]` bajo key generada via `KeyGenFn` (default crypto/rand 128-bit hex), reenvía `Message[ClaimCheckReference]{Key}` a `dst` (preservando `Headers.CorrelationID` del original). `Out` subscribe a `src` (referencias), retrieve original del store, reenvía a `dst` (`Message[T]`), opcionalmente borra del store via `WithDeleteAfterRetrieve` (default true). Fail-closed en Put/Get; fail-open en Delete. |
 
 **Constructores:**
 - `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
 - `NewFilter[T](name, src, dst, predicate, opts...) lifecycle.Component`
 - `NewRouter[T](name, src, decide, routes, opts...) lifecycle.Component`
+- `NewIdempotent[T](name, src, dst, metaStore, opts...) lifecycle.Component`
+- `NewClaimCheckIn[T](name, src, dst, msgStore, opts...) lifecycle.Component`
+- `NewClaimCheckOut[T](name, src, dst, msgStore, opts...) lifecycle.Component`
 
 **Override de la regla universal — errors no propagan al source channel.** Cada pattern subscribe a `src` con un handler que **siempre retorna nil**. Fallos de routing/filtering/forwarding NO son fallos del source channel; el caller del source no debe verlos. Los errores del pattern fluyen vía el `WithErrorHandler` propio (default: `messaging.DefaultErrorHandler` que loguea via `common/log`; opt-out con `messaging.SilentErrorHandler`). Documentado en `modules/messaging/CODING_STANDARDS.md`.
 
@@ -260,7 +265,7 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx`.
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
-**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 
 ### Capa 3: Support primitives (sub-paquetes)
 

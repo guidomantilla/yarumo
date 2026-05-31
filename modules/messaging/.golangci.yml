@@ -119,6 +119,19 @@ linters:
         linters:
           - contextcheck
           - wrapcheck
+      # idempotent/idempotent.go and claimcheck/claimcheck.go follow the
+      # same shape as router/filter/bridge: cassert.NotNil guards the
+      # receiver invariant on every method (contextcheck false positive),
+      # and Stop wraps ctx.Err with lifecycle.ErrShutdown — the domain
+      # factory, additional wrapping adds no value.
+      - path: idempotent/idempotent\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: claimcheck/claimcheck\.go
+        linters:
+          - contextcheck
+          - wrapcheck
       # store/{message,metadata}store.go: cassert.NotNil guards the
       # receiver invariant on every method; contextcheck false positive
       # on the assert call. wrapcheck: Stop wraps ctx.Err with
