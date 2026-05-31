@@ -19,6 +19,7 @@ var (
 
 	_ ErrSendFn      = ErrSend
 	_ ErrSubscribeFn = ErrSubscribe
+	_ ErrReceiveFn   = ErrReceive
 )
 
 // ErrSendFn is the function type for ErrSend.
@@ -26,6 +27,9 @@ type ErrSendFn func(causes ...error) error
 
 // ErrSubscribeFn is the function type for ErrSubscribe.
 type ErrSubscribeFn func(causes ...error) error
+
+// ErrReceiveFn is the function type for ErrReceive.
+type ErrReceiveFn func(causes ...error) error
 
 // Sentinel errors for messaging operations.
 var (
@@ -76,6 +80,16 @@ var (
 	// Returned from Send (NOT routed through the hook) so callers can
 	// implement their own retry / backoff / shedding logic.
 	ErrBufferFull = errors.New("buffer full")
+	// ErrReceiveFailed indicates that a Receive operation failed.
+	// Wrapped by ErrReceive(...) factory on PollableChannel.Receive
+	// returns.
+	ErrReceiveFailed = errors.New("receive failed")
+	// ErrChannelClosed indicates that a PollableChannel.Receive was
+	// invoked (or unblocked) after the channel was closed and the
+	// internal buffer is drained. Distinct from ErrClosed (which
+	// covers Send/Subscribe on a stopped Channel[T]) to make the
+	// pollable consumer's drain-then-exit loop unambiguous.
+	ErrChannelClosed = errors.New("channel closed for receive")
 )
 
 // StepStatus classifies the outcome of a single pipeline step in a
@@ -205,6 +219,17 @@ func ErrSubscribe(causes ...error) error {
 		TypedError: cerrs.TypedError{
 			Type: MessagingType,
 			Err:  errors.Join(append(causes, ErrSubscribeFailed)...),
+		},
+	}
+}
+
+// ErrReceive wraps the given causes into a domain Error for Receive
+// failures on a PollableChannel.
+func ErrReceive(causes ...error) error {
+	return &Error{
+		TypedError: cerrs.TypedError{
+			Type: MessagingType,
+			Err:  errors.Join(append(causes, ErrReceiveFailed)...),
 		},
 	}
 }
