@@ -244,11 +244,13 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 | `bridge/` | `bridge[T]` | `lifecycle.Component` | One-to-one channel forwarder: subscribe a `src`, reenvía cada `Message[T]` a `dst` sin alteración. Patrón identity transform — valor estructural (sync↔async decoupling, etiqueta nombrada en wiring graph, hook point de observabilidad). |
 | `filter/` | `filter[T]` | `lifecycle.Component` | Message Filter: subscribe a `src`, reenvía a `dst` solo cuando `PredicateFn` retorna true. Dos hooks separados — `WithErrorHandler` (fallos reales: predicate error/panic, forward fail) y `WithDropHandler` (drops intencionales, silent default). |
 | `router/` | `router[T]` | `lifecycle.Component` | Content-Based Router (key → `Channel[T]`): subscribe a `src`, evalúa `RouteFn(msg) → key`, busca destino en `routes[key]` y reenvía. `WithDefaultChannel` opcional para política NoRoute; sin él, NoRoute drops + reporta vía `ErrorHandler`. |
+| `aggregator/` | `aggregator[T,U]` | `lifecycle.Component` | Aggregator: N→1 collection con `CorrelationID` (default) + multiple completion strategies (`WithCompletionSize`, `WithCompletionFn`, `WithGroupTimeout`) + memory bounding (`WithMaxGroups`, default 1000). Sweeper goroutine para timeout completion; Stop drena partial groups por el mismo release path. Dos hooks: `WithErrorHandler` (AggregateFn error/panic, ForwardFailed, MaxGroups exceeded) y `WithDropHandler` (empty correlation, expired). |
 
 **Constructores:**
 - `NewBridge[T](name, src, dst, opts...) lifecycle.Component`
 - `NewFilter[T](name, src, dst, predicate, opts...) lifecycle.Component`
 - `NewRouter[T](name, src, decide, routes, opts...) lifecycle.Component`
+- `NewAggregator[T,U](name, src, dst, aggregate, opts...) lifecycle.Component`
 
 **Override de la regla universal — errors no propagan al source channel.** Cada pattern subscribe a `src` con un handler que **siempre retorna nil**. Fallos de routing/filtering/forwarding NO son fallos del source channel; el caller del source no debe verlos. Los errores del pattern fluyen vía el `WithErrorHandler` propio (default: `messaging.DefaultErrorHandler` que loguea via `common/log`; opt-out con `messaging.SilentErrorHandler`). Documentado en `modules/messaging/CODING_STANDARDS.md`.
 
@@ -260,7 +262,7 @@ Cada patrón vive en su propio sub-paquete bajo `modules/messaging/`, importa el
 - `options.go` — `Options` + `Option[T]`/`Option` + `WithXxx`.
 - `<name>.go` — struct privado `<name>[T]` + constructor `New<Name>` + métodos lifecycle.
 
-**Patrones futuros** (`transformer/`, `splitter/`, `aggregator/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
+**Patrones futuros** (`transformer/`, `splitter/`, `scattergather/`, `delayer/`, `wiretap/`, `recipientlist/`, `enricher/`, `headerfilter/`, `claimcheck/`, `idempotent/`, `history/`, `controlbus/`, `gateway/`, `resequencer/`, `barrier/`) se agregan uno a uno cuando un consumer real los pida. No pre-crear sub-packages vacíos.
 
 ### Capa 3: Support primitives (sub-paquetes)
 
