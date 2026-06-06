@@ -1,4 +1,4 @@
-// Package store provides support-primitive storage contracts for the
+// Package stores provides support-primitive storage contracts for the
 // messaging EIP patterns and a canonical in-memory backend for each
 // contract.
 //
@@ -31,7 +31,7 @@
 //     sweeper; Stop drains it.
 //
 // Heavy-dep backends (Redis, Postgres, S3, …) belong in
-// extension/messaging/store/<backend>/ — they get their own go-module
+// extension/messaging/stores/<backend>/ — they get their own go-module
 // per the workspace MVS isolation rule. This sub-package owns no
 // external dependencies beyond core/common.
 //
@@ -39,7 +39,7 @@
 //
 // All public types in this package are safe for concurrent use by
 // multiple goroutines.
-package store
+package stores
 
 import (
 	"context"

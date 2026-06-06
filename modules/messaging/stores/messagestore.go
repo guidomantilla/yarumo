@@ -1,4 +1,4 @@
-package store
+package stores
 
 import (
 	"context"
@@ -21,7 +21,7 @@ type inMemoryMessageStore[T any] struct {
 // The returned store is ready to use immediately; it holds no
 // external resources and does not implement lifecycle.Component.
 // Heavy-dep backends (Redis, Postgres, S3, …) live in
-// extension/messaging/store/<backend>/.
+// extension/messaging/stores/<backend>/.
 func NewInMemoryMessageStore[T any]() MessageStore[T] {
 	return &inMemoryMessageStore[T]{
 		data: map[string]messaging.Message[T]{},

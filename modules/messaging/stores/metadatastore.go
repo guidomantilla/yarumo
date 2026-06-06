@@ -1,4 +1,4 @@
-package store
+package stores
 
 import (
 	"context"
@@ -40,7 +40,7 @@ type inMemoryMetadataStore struct {
 // name is used in lifecycle logs and must be non-empty. The returned
 // store is not running; call lifecycle.Build (or Start directly) to
 // spawn the sweeper goroutine. Heavy-dep backends (Redis SETEX,
-// Postgres TTL tables, …) live in extension/messaging/store/<backend>/.
+// Postgres TTL tables, …) live in extension/messaging/stores/<backend>/.
 func NewInMemoryMetadataStore(name string, opts ...Option) MetadataStore {
 	cassert.NotEmpty(name, "name is empty")
 

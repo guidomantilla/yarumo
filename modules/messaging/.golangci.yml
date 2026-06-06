@@ -103,49 +103,80 @@ linters:
       - path: types\.go
         linters:
           - gochecknoglobals
-      # router.go / bridge.go: cassert.NotNil guards the receiver
-      # invariant on lifecycle methods; contextcheck false positive.
-      # wrapcheck: Stop wraps ctx.Err with lifecycle.ErrShutdown —
-      # that is the domain factory, additional wrapping adds no value.
-      - path: router/router\.go
+      # EIP pattern impls under patterns/<bucket>/<eip>/<eip>.go:
+      # cassert.NotNil guards the receiver invariant on every method
+      # (contextcheck false positive); Stop wraps ctx.Err with
+      # lifecycle.ErrShutdown — the domain factory, additional wrapping
+      # adds no value.
+      - path: patterns/routers/router/router\.go
         linters:
           - contextcheck
           - wrapcheck
-      - path: bridge/bridge\.go
+      - path: patterns/routers/filter/filter\.go
         linters:
           - contextcheck
           - wrapcheck
-      - path: filter/filter\.go
+      - path: patterns/routers/recipientlist/recipientlist\.go
         linters:
           - contextcheck
           - wrapcheck
-      # idempotent/idempotent.go and claimcheck/claimcheck.go follow the
-      # same shape as router/filter/bridge: cassert.NotNil guards the
-      # receiver invariant on every method (contextcheck false positive),
-      # and Stop wraps ctx.Err with lifecycle.ErrShutdown — the domain
-      # factory, additional wrapping adds no value.
-      - path: idempotent/idempotent\.go
+      - path: patterns/routers/splitter/splitter\.go
         linters:
           - contextcheck
           - wrapcheck
-      - path: claimcheck/claimcheck\.go
+      - path: patterns/routers/scattergather/scattergather\.go
         linters:
           - contextcheck
           - wrapcheck
-      - path: controlbus/controlbus\.go
+      - path: patterns/routers/aggregator/aggregator\.go
         linters:
           - contextcheck
           - wrapcheck
-      - path: gateway/gateway\.go
-      - path: transformer/transformer\.go
+      - path: patterns/transformers/transformer/transformer\.go
         linters:
           - contextcheck
           - wrapcheck
-      - path: wiretap/wiretap\.go
+      - path: patterns/transformers/enricher/enricher\.go
         linters:
           - contextcheck
           - wrapcheck
-      - path: splitter/splitter\.go
+      - path: patterns/transformers/claimcheck/claimcheck\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: patterns/transformers/headerfilter/headerfilter\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: patterns/endpoints/gateway/gateway\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: patterns/endpoints/pollingconsumer/pollingconsumer\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+          - containedctx
+      - path: patterns/endpoints/bridge/bridge\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: patterns/endpoints/idempotent/idempotent\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: patterns/coordination/delayer/delayer\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: patterns/sysmgmt/wiretap/wiretap\.go
+        linters:
+          - contextcheck
+          - wrapcheck
+      - path: patterns/sysmgmt/controlbus/controlbus\.go
+        linters:
+          - contextcheck
+          - wrapcheck
       # channel_pollable / channel_scheduled: same cassert.NotNil
       # receiver-guard pattern as channel_topic / channel_queue
       # (contextcheck false positive); channel_scheduled.Stop also
@@ -162,49 +193,15 @@ linters:
           - contextcheck
           - wrapcheck
           - containedctx
-      # delayer / pollingconsumer: same cassert.NotNil receiver-guard
-      # pattern (contextcheck false positive). delayer.Stop wraps ctx.Err
-      # via the lifecycle.ErrShutdown factory and bubbles internal
-      # ScheduledChannel.Stop errors unchanged (wrapping them again
-      # would double-wrap an already-typed messaging error). delayer
-      # carries an internalLifecycle field that holds a Component
-      # reference for its embedded ScheduledChannel; that's deliberate
-      # composition, not stored context.
-      - path: delayer/delayer\.go
-        linters:
-          - contextcheck
-          - wrapcheck
-      - path: pollingconsumer/pollingconsumer\.go
-        linters:
-          - contextcheck
-          - wrapcheck
-          - containedctx
-      - path: aggregator/aggregator\.go
-        linters:
-          - contextcheck
-          - wrapcheck
-      - path: recipientlist/recipientlist\.go
-        linters:
-          - contextcheck
-          - wrapcheck
-      - path: headerfilter/headerfilter\.go
-        linters:
-          - contextcheck
-          - wrapcheck
-      - path: enricher/enricher\.go
-        linters:
-          - contextcheck
-          - wrapcheck
-      - path: scattergather/scattergather\.go
-      # store/{message,metadata}store.go: cassert.NotNil guards the
+      # stores/{message,metadata}store.go: cassert.NotNil guards the
       # receiver invariant on every method; contextcheck false positive
       # on the assert call. wrapcheck: Stop wraps ctx.Err with
       # lifecycle.ErrShutdown — that is the domain factory, additional
       # wrapping adds no value.
-      - path: store/messagestore\.go
+      - path: stores/messagestore\.go
         linters:
           - contextcheck
-      - path: store/metadatastore\.go
+      - path: stores/metadatastore\.go
         linters:
           - contextcheck
           - wrapcheck

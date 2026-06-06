@@ -9,7 +9,7 @@ import (
 
 	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 	"github.com/guidomantilla/yarumo/messaging"
-	"github.com/guidomantilla/yarumo/messaging/store"
+	"github.com/guidomantilla/yarumo/messaging/stores"
 )
 
 // captureErrors returns a thread-safe ErrorHandler that appends every
@@ -65,7 +65,7 @@ func TestNewClaimCheckIn(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[int]()
 		dst := messaging.NewPipelineChannel[ClaimCheckReference]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		c := NewClaimCheckIn("test", src, dst, ms)
 		if c == nil {
@@ -78,7 +78,7 @@ func TestNewClaimCheckIn(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[int]()
 		dst := messaging.NewPipelineChannel[ClaimCheckReference]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		c := NewClaimCheckIn("orders-claim-in", src, dst, ms)
 		if c.Name() != "orders-claim-in" {
@@ -95,7 +95,7 @@ func TestNewClaimCheckOut(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[ClaimCheckReference]()
 		dst := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		c := NewClaimCheckOut("test", src, dst, ms)
 		if c == nil {
@@ -108,7 +108,7 @@ func TestNewClaimCheckOut(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[ClaimCheckReference]()
 		dst := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		c := NewClaimCheckOut("orders-claim-out", src, dst, ms)
 		if c.Name() != "orders-claim-out" {
@@ -125,7 +125,7 @@ func TestClaimCheckIn_HappyPath(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[int]()
 		dst := messaging.NewPipelineChannel[ClaimCheckReference]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		var seen messaging.Message[ClaimCheckReference]
 
@@ -181,7 +181,7 @@ func TestClaimCheckIn_HappyPath(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[int]()
 		dst := messaging.NewPipelineChannel[ClaimCheckReference]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		var seen messaging.Message[ClaimCheckReference]
 
@@ -281,7 +281,7 @@ func TestClaimCheckIn_StoreErrors(t *testing.T) {
 		boom := errors.New("dst down")
 		dst := &failingChannel[ClaimCheckReference]{err: boom}
 
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		errHandler, getErrs := captureErrors()
 
@@ -320,7 +320,7 @@ func TestClaimCheckIn_KeyGenCustomization(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[int]()
 		dst := messaging.NewPipelineChannel[ClaimCheckReference]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		var (
 			mu   sync.Mutex
@@ -388,7 +388,7 @@ func TestClaimCheckOut_HappyPath(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[ClaimCheckReference]()
 		dst := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		// Seed the store as ClaimCheckIn would have done.
 		original := messaging.Message[int]{
@@ -440,7 +440,7 @@ func TestClaimCheckOut_HappyPath(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[ClaimCheckReference]()
 		dst := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		err := ms.Put(context.Background(), "k-1", messaging.Message[int]{Payload: 1})
 		if err != nil {
@@ -469,7 +469,7 @@ func TestClaimCheckOut_HappyPath(t *testing.T) {
 		}
 
 		_, err = ms.Get(context.Background(), "k-1")
-		if !errors.Is(err, store.ErrStoreNotFound) {
+		if !errors.Is(err, stores.ErrStoreNotFound) {
 			t.Fatalf("expected key deleted after retrieve, got Get err %v", err)
 		}
 	})
@@ -479,7 +479,7 @@ func TestClaimCheckOut_HappyPath(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[ClaimCheckReference]()
 		dst := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		err := ms.Put(context.Background(), "k-1", messaging.Message[int]{Payload: 1})
 		if err != nil {
@@ -526,7 +526,7 @@ func TestClaimCheckOut_StoreErrors(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[ClaimCheckReference]()
 		dst := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		h, get := counter[int]()
 
@@ -565,7 +565,7 @@ func TestClaimCheckOut_StoreErrors(t *testing.T) {
 			t.Fatalf("expected ErrStoreGet, got %v", errs[0])
 		}
 
-		if !errors.Is(errs[0], store.ErrStoreNotFound) {
+		if !errors.Is(errs[0], stores.ErrStoreNotFound) {
 			t.Fatalf("expected wrapped ErrStoreNotFound, got %v", errs[0])
 		}
 	})
@@ -581,7 +581,7 @@ func TestClaimCheckRoundTrip(t *testing.T) {
 		src := messaging.NewPipelineChannel[int]()
 		middle := messaging.NewPipelineChannel[ClaimCheckReference]()
 		final := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		var seen messaging.Message[int]
 
@@ -640,7 +640,7 @@ func TestClaimCheckRoundTrip(t *testing.T) {
 		// Default WithDeleteAfterRetrieve(true) means the store
 		// should have been cleaned up after Out forwarded.
 		_, err = ms.Get(context.Background(), "rt-1")
-		if !errors.Is(err, store.ErrStoreNotFound) {
+		if !errors.Is(err, stores.ErrStoreNotFound) {
 			t.Fatalf("expected store cleaned up after round trip, got %v", err)
 		}
 	})
@@ -654,7 +654,7 @@ func TestClaimCheckIn_Lifecycle(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[int]()
 		dst := messaging.NewPipelineChannel[ClaimCheckReference]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		h, get := counter[ClaimCheckReference]()
 
@@ -690,7 +690,7 @@ func TestClaimCheckIn_Lifecycle(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[int]()
 		dst := messaging.NewPipelineChannel[ClaimCheckReference]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		in := NewClaimCheckIn("test", src, dst, ms)
 
@@ -715,7 +715,7 @@ func TestClaimCheckIn_Lifecycle(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[int]()
 		dst := messaging.NewPipelineChannel[ClaimCheckReference]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		in := NewClaimCheckIn("test", src, dst, ms)
 
@@ -747,7 +747,7 @@ func TestClaimCheckIn_Lifecycle(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[int]()
 		dst := messaging.NewPipelineChannel[ClaimCheckReference]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		in := NewClaimCheckIn("test", src, dst, ms)
 
@@ -774,7 +774,7 @@ func TestClaimCheckOut_Lifecycle(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[ClaimCheckReference]()
 		dst := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		err := ms.Put(context.Background(), "k-1", messaging.Message[int]{Payload: 1})
 		if err != nil {
@@ -817,7 +817,7 @@ func TestClaimCheckOut_Lifecycle(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[ClaimCheckReference]()
 		dst := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		out := NewClaimCheckOut("test", src, dst, ms)
 
@@ -842,7 +842,7 @@ func TestClaimCheckOut_Lifecycle(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[ClaimCheckReference]()
 		dst := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		out := NewClaimCheckOut("test", src, dst, ms)
 
@@ -874,7 +874,7 @@ func TestClaimCheckOut_Lifecycle(t *testing.T) {
 
 		src := messaging.NewPipelineChannel[ClaimCheckReference]()
 		dst := messaging.NewPipelineChannel[int]()
-		ms := store.NewInMemoryMessageStore[int]()
+		ms := stores.NewInMemoryMessageStore[int]()
 
 		out := NewClaimCheckOut("test", src, dst, ms)
 

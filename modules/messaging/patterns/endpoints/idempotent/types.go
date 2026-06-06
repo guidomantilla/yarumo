@@ -11,7 +11,7 @@
 // # Dedup state is external
 //
 // The dedup history is not kept in the idempotent struct itself; it is
-// kept in a `store.MetadataStore` instance the caller injects. The
+// kept in a `stores.MetadataStore` instance the caller injects. The
 // store decides:
 //
 //   - Where the history lives (in-process map, Redis, Postgres, …).

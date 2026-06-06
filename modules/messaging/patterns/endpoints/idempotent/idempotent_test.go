@@ -10,7 +10,7 @@ import (
 
 	"github.com/guidomantilla/yarumo/core/common/lifecycle"
 	"github.com/guidomantilla/yarumo/messaging"
-	"github.com/guidomantilla/yarumo/messaging/store"
+	"github.com/guidomantilla/yarumo/messaging/stores"
 )
 
 // captureErrors returns a thread-safe ErrorHandler that appends every
@@ -87,10 +87,10 @@ func counter() (messaging.Handler[int], func() int32) {
 
 // startMetaStore starts an in-memory MetadataStore and registers a
 // Cleanup hook that stops it. The returned store is ready for use.
-func startMetaStore(t *testing.T) store.MetadataStore {
+func startMetaStore(t *testing.T) stores.MetadataStore {
 	t.Helper()
 
-	s := store.NewInMemoryMetadataStore("test", store.WithSweepInterval(20*time.Millisecond))
+	s := stores.NewInMemoryMetadataStore("test", stores.WithSweepInterval(20*time.Millisecond))
 
 	c, ok := s.(lifecycle.Component)
 	if !ok {
