@@ -38,7 +38,7 @@ type Options struct {
 // NewOptions creates a new Options with defaults and applies the given options.
 func NewOptions(opts ...Option) *Options {
 	options := &Options{
-		endpoint:                    "localhost:4317",
+		endpoint:                    "",
 		secure:                      true,
 		resource:                    &resource.Resource{},
 		tracerPropagators:           []propagation.TextMapPropagator{},
@@ -60,6 +60,10 @@ func NewOptions(opts ...Option) *Options {
 }
 
 // WithEndpoint sets the OTLP endpoint. Empty values are ignored.
+//
+// When no endpoint is configured, the underlying SDK falls back to the
+// standard OTEL_EXPORTER_OTLP_ENDPOINT environment variable per the
+// OpenTelemetry specification.
 func WithEndpoint(endpoint string) Option {
 	return func(opts *Options) {
 		if endpoint != "" {

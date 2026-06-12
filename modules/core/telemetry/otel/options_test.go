@@ -23,8 +23,8 @@ func TestNewOptions(t *testing.T) {
 
 		opts := NewOptions()
 
-		if opts.endpoint != "localhost:4317" {
-			t.Fatalf("expected endpoint localhost:4317, got %s", opts.endpoint)
+		if opts.endpoint != "" {
+			t.Fatalf("expected empty endpoint (SDK env-var fallback), got %s", opts.endpoint)
 		}
 		if !opts.secure {
 			t.Fatal("expected secure true")
@@ -118,8 +118,8 @@ func TestWithEndpoint(t *testing.T) {
 
 		opts := NewOptions(WithEndpoint(""))
 
-		if opts.endpoint != "localhost:4317" {
-			t.Fatalf("expected default endpoint localhost:4317, got %s", opts.endpoint)
+		if opts.endpoint != "" {
+			t.Fatalf("expected empty endpoint (default unchanged), got %s", opts.endpoint)
 		}
 	})
 }

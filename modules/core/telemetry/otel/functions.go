@@ -99,10 +99,11 @@ func Tracer(ctx context.Context, options ...Option) (lifecycle.CloseFn, error) {
 	opts.tracerPropagators = append(opts.tracerPropagators, propagation.TraceContext{}, propagation.Baggage{})
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(opts.tracerPropagators...))
 
-	if opts.secure {
+	if opts.endpoint != "" {
 		opts.tracerExporterOptions = append(opts.tracerExporterOptions, otlptracegrpc.WithEndpoint(opts.endpoint))
-	} else {
-		opts.tracerExporterOptions = append(opts.tracerExporterOptions, otlptracegrpc.WithEndpoint(opts.endpoint), otlptracegrpc.WithInsecure())
+	}
+	if !opts.secure {
+		opts.tracerExporterOptions = append(opts.tracerExporterOptions, otlptracegrpc.WithInsecure())
 	}
 	exporter, err := otlptracegrpc.New(ctx, opts.tracerExporterOptions...)
 	if err != nil {
@@ -137,10 +138,11 @@ func Meter(ctx context.Context, options ...Option) (lifecycle.CloseFn, error) {
 
 	opts := NewOptions(options...)
 
-	if opts.secure {
+	if opts.endpoint != "" {
 		opts.meterExporterOptions = append(opts.meterExporterOptions, otlpmetricgrpc.WithEndpoint(opts.endpoint))
-	} else {
-		opts.meterExporterOptions = append(opts.meterExporterOptions, otlpmetricgrpc.WithEndpoint(opts.endpoint), otlpmetricgrpc.WithInsecure())
+	}
+	if !opts.secure {
+		opts.meterExporterOptions = append(opts.meterExporterOptions, otlpmetricgrpc.WithInsecure())
 	}
 	exporter, err := otlpmetricgrpc.New(ctx, opts.meterExporterOptions...)
 	if err != nil {
@@ -184,10 +186,11 @@ func Logger(ctx context.Context, options ...Option) (lifecycle.CloseFn, error) {
 
 	opts := NewOptions(options...)
 
-	if opts.secure {
+	if opts.endpoint != "" {
 		opts.loggerExporterOptions = append(opts.loggerExporterOptions, otlploggrpc.WithEndpoint(opts.endpoint))
-	} else {
-		opts.loggerExporterOptions = append(opts.loggerExporterOptions, otlploggrpc.WithEndpoint(opts.endpoint), otlploggrpc.WithInsecure())
+	}
+	if !opts.secure {
+		opts.loggerExporterOptions = append(opts.loggerExporterOptions, otlploggrpc.WithInsecure())
 	}
 	exporter, err := otlploggrpc.New(ctx, opts.loggerExporterOptions...)
 	if err != nil {

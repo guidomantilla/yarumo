@@ -15,7 +15,7 @@ type Options struct {
 // NewOptions creates Options with safe defaults and applies the given functional options.
 func NewOptions(name string, version string, env string, opts ...Option) *Options {
 	options := &Options{
-		logger: buildDefaultLogger(name, version, env),
+		logger: SlogLogger(name, version, env),
 	}
 
 	for _, opt := range opts {
